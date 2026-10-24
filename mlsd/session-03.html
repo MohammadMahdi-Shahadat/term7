@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۳ · مهندسی داده (۱)</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+</head>
+<body data-session="3">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۳ از ۲۰ · بخش الف: بنیان‌ها و داده</div>
+  <h1>مهندسی داده (۱): منابع، فرمت‌ها و مدل‌های داده</h1>
+  <p class="lead">داده از کجا می‌آید، با چه فرمتی ذخیره می‌شود و با چه «مدلی» نمایش داده می‌شود؟ این انتخاب‌ها روی سرعت آموزش، هزینه‌ی ذخیره‌سازی و حتی کیفیت مدل اثر مستقیم دارند.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۶۰ تا ۸۰ دقیقه</span><span>📚 منبع: اسلاید Lec4 (بخش ۱ تا ۳)، کتاب Huyen فصل ۳، تمرین ۱ (سؤال ۴ بخش ۱)</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>چهار منبع داده را بشناسی و داده‌ی کاربر را از داده‌ی سیستم جدا کنی.</li>
+      <li>فرمت‌های JSON، CSV، Parquet، Avro، Protobuf و Pickle را مقایسه کنی و بگویی row-major یا column-major، و متنی یا باینری‌اند.</li>
+      <li>مدل رابطه‌ای، نرمال‌سازی، SQL اعلانی و مدل‌های NoSQL (سندی و گرافی) را توضیح بدهی.</li>
+      <li>داده‌ی ساخت‌یافته و بی‌ساختار، و انبار داده و دریاچه‌ی داده را مقایسه کنی.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن فکر کن</div>
+  یک فایل CSV با ۱۰ میلیون سطر و ۲۰۰ ستون داری. برای آموزش مدل فقط میانگین <b>یک</b> ستون را لازم داری. چرا ممکن است این کار با CSV خیلی کند باشد؟ چه نوع ذخیره‌سازی‌ای سریع‌تر است؟
+</div>
+
+<section id="de">
+<h2><span class="num">۱</span> مهندسی داده چیست؟ <span class="tag core">اسلاید</span></h2>
+<p>مهندسی داده یعنی ساختن و نگه‌داشتن سیستم‌هایی که داده را <b>جمع‌آوری، ذخیره، پردازش و در دسترس</b> می‌گذارند تا دیگران (تحلیل‌گر، دانشمند داده، مدل ML) از آن استفاده کنند.</p>
+<div class="vs">
+<div><h4>مهندس داده</h4>pipeline، ذخیره‌سازی، ETL، کیفیت و دسترس‌پذیری داده را می‌سازد. سؤالش: «داده چطور با اطمینان و به‌موقع به جای درست برسد؟»</div>
+<div><h4>دانشمند داده</h4>از داده برای تحلیل، مدل‌سازی و تصمیم‌گیری استفاده می‌کند. سؤالش: «از این داده چه می‌فهمیم و چه چیزی را پیش‌بینی کنیم؟»</div>
+</div>
+<p>در تیم‌های کوچک یک نفر هر دو کار را می‌کند. ولی مهندس ML باید مهندسی داده را بفهمد، چون بیشتر خطاهای سیستم ML از داده است.</p>
+</section>
+
+<section id="sources">
+<h2><span class="num">۲</span> منابع داده <span class="tag core">اسلاید</span></h2>
+<ol>
+  <li><b>داده‌ی تولیدشده توسط کاربر:</b> هر چیزی که کاربر وارد می‌کند. متن، عکس، فرم، کلیک.</li>
+  <li><b>داده‌ی تولیدشده توسط سیستم:</b> لاگ‌ها، متادیتا، خروجی پیش‌بینی مدل‌ها.</li>
+  <li><b>پایگاه‌داده‌های داخلی:</b> کاربران، موجودی انبار، مدیریت ارتباط با مشتری (CRM).</li>
+  <li><b>داده‌ی شخص ثالث:</b> داده‌ای که از بیرون می‌خری یا می‌گیری.</li>
+</ol>
+<div class="tablewrap"><table>
+<tr><th></th><th>داده‌ی کاربر</th><th>داده‌ی سیستم</th></tr>
+<tr><td>نمونه</td><td>ورودی‌های کاربر</td><td>لاگ، متادیتا، پیش‌بینی‌ها</td></tr>
+<tr><td>فرمت</td><td><b>به‌راحتی بدفرمت است</b> (کاربر هر چیزی می‌نویسد)</td><td>استانداردسازی‌اش آسان‌تر است</td></tr>
+<tr><td>سرعت پردازش</td><td>باید <b>هرچه زودتر</b> پردازش شود (کاربر منتظر است)</td><td>پردازش دوره‌ای کافی است (مگر برای تشخیص سریع مشکل)</td></tr>
+<tr><td>حجم</td><td></td><td>می‌تواند خیلی سریع خیلی بزرگ شود. ابزارهای زیادی مثل Logstash و DataDog برایش هست. وقتی دیگر لازم نیست می‌شود پاکش کرد.</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی ظریف اسلاید</div>داده‌ی <b>رفتاری</b> کاربر (کلیک، مدت ماندن در صفحه و...) معمولاً توسط <b>سیستم</b> تولید و ثبت می‌شود، ولی <b>داده‌ی کاربر</b> حساب می‌شود (از نظر حریم خصوصی و قانون).</div>
+<div class="box note"><div class="bt">داده‌ی شخص ثالث: «ترسناک ولی جذاب»</div>
+  شرکت‌ها داده‌ی اجتماعی، درآمد، شغل و گروه جمعیتی (مثلاً «مرد، ۲۵ تا ۳۴ سال، شاغل در فناوری») را می‌خرند و می‌فروشند. با شناسه‌ی تبلیغاتی موبایل (Mobile Advertiser ID) این داده در دسترس‌تر شد. برای یادگیری ویژگی‌هایی مثل «کسانی که A را دوست دارند B را هم دوست دارند» مفید است. ولی اپل با محدود کردن IDFA این ردیابی را سخت‌تر کرد و شرکت‌هایی مثل TikTok دنبال راه دور زدنش بودند.
+</div>
+</section>
+
+<section id="formats">
+<h2><span class="num">۳</span> فرمت‌های داده <span class="tag core">اسلاید</span> <span class="tag exam">مهم</span></h2>
+<p>ذخیره کردن داده فقط وقتی معنی دارد که بخواهی بعداً به آن دسترسی داشته باشی.</p>
+<div class="box def"><div class="bt">تعریف ۳.۱ · سریال‌سازی</div>
+  <b>Serialization (سریال‌سازی):</b> تبدیل یک ساختار داده یا شیء در حافظه به فرمتی که بشود ذخیره یا منتقل کرد. <b>Deserialization:</b> برعکسش.
+  <b>فرمت داده</b> یک استاندارد توافق‌شده برای سریال‌سازی است تا داده بعداً منتقل و دوباره ساخته شود.
+</div>
+<p><b>سؤال‌هایی که موقع انتخاب فرمت باید پرسید:</b> داده‌ی چندوجهی (multimodal) را چطور ذخیره کنیم؟ مثلاً <span class="ltr"><code>{'image': [[200,155,0], ...], 'label': 'car', 'id': 1}</code></span>. <b>الگوی دسترسی</b> چیست و چقدر مکرر خوانده می‌شود؟ روی چه <b>سخت‌افزاری</b> اجرا می‌شود (CPU، GPU، TPU)؟</p>
+<div class="tablewrap"><table>
+<tr><th>فرمت</th><th>باینری/متنی</th><th>قابل‌خواندن برای انسان</th><th>ترتیب</th><th>کاربرد نمونه</th></tr>
+<tr><td><b>JSON</b></td><td>متنی</td><td>بله</td><td>—</td><td>همه‌جا</td></tr>
+<tr><td><b>CSV</b></td><td>متنی</td><td>بله</td><td><b>row-major</b></td><td>همه‌جا</td></tr>
+<tr><td><b>Parquet</b></td><td>باینری</td><td>خیر</td><td><b>column-major</b></td><td>Hadoop، Amazon Redshift</td></tr>
+<tr><td><b>Avro</b></td><td>عمدتاً باینری</td><td>خیر</td><td>row</td><td>Hadoop</td></tr>
+<tr><td><b>Protobuf</b></td><td>عمدتاً باینری</td><td>خیر</td><td>row</td><td>گوگل، TensorFlow (TFRecord)</td></tr>
+<tr><td><b>Pickle</b></td><td>باینری</td><td>خیر</td><td>—</td><td>سریال‌سازی Python و PyTorch</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ هشدار امنیتی دربارهٔ Pickle (تکمیلی)</div>باز کردن فایل pickle ناشناس خطرناک است، چون هنگام deserialize می‌تواند کد دلخواه اجرا کند. فایل pickle را فقط از منبع مطمئن بخوان.</div>
+
+<h3>۳.۱ row-major در برابر column-major</h3>
+<figure class="fig">
+<svg viewBox="0 0 560 200" width="560" role="img" aria-label="ترتیب row-major و column-major">
+  <g font-family="ui-monospace,Consolas" font-size="12" text-anchor="middle" fill="currentColor">
+  <text x="140" y="18" font-family="Vazirmatn,Tahoma" font-weight="700">Row-major (CSV)</text>
+  <text x="420" y="18" font-family="Vazirmatn,Tahoma" font-weight="700">Column-major (Parquet)</text>
+  <g>
+    <rect x="40" y="30" width="200" height="30" rx="5" fill="#0f6e6a" opacity=".22"/><text x="140" y="50">s1: c1 c2 c3</text>
+    <rect x="40" y="65" width="200" height="30" rx="5" fill="#0f6e6a" opacity=".22"/><text x="140" y="85">s2: c1 c2 c3</text>
+    <rect x="40" y="100" width="200" height="30" rx="5" fill="#0f6e6a" opacity=".22"/><text x="140" y="120">s3: c1 c2 c3</text>
+    <text x="140" y="160" font-family="Vazirmatn,Tahoma">پشت‌سرهم: نمونه‌به‌نمونه</text>
+    <text x="140" y="180" font-family="Vazirmatn,Tahoma">خوب برای دسترسی به «نمونه‌ها»</text>
+  </g>
+  <g>
+    <rect x="320" y="30" width="60" height="100" rx="5" fill="#2456a6" opacity=".22"/><text x="350" y="60">c1</text><text x="350" y="80">s1</text><text x="350" y="96">s2</text><text x="350" y="112">s3</text>
+    <rect x="390" y="30" width="60" height="100" rx="5" fill="#2456a6" opacity=".22"/><text x="420" y="60">c2</text><text x="420" y="80">s1</text><text x="420" y="96">s2</text><text x="420" y="112">s3</text>
+    <rect x="460" y="30" width="60" height="100" rx="5" fill="#2456a6" opacity=".22"/><text x="490" y="60">c3</text><text x="490" y="80">s1</text><text x="490" y="96">s2</text><text x="490" y="112">s3</text>
+    <text x="420" y="160" font-family="Vazirmatn,Tahoma">پشت‌سرهم: ستون‌به‌ستون</text>
+    <text x="420" y="180" font-family="Vazirmatn,Tahoma">خوب برای دسترسی به «ویژگی‌ها»</text>
+  </g>
+  </g>
+</svg>
+</figure>
+<div class="vs">
+<div><h4>Row-major</h4>داده سطربه‌سطر ذخیره و خوانده می‌شود. <b>برای دسترسی به نمونه‌ها خوب است.</b> مثال: «همه‌ی اطلاعات تراکنش شماره‌ی ۱۲۳ را بده». نوشتن نمونه‌ی جدید هم سریع است: فقط به ته فایل اضافه می‌شود.</div>
+<div><h4>Column-major</h4>داده ستون‌به‌ستون ذخیره و خوانده می‌شود. <b>برای دسترسی به ویژگی‌ها خوب است.</b> مثال: «میانگین قیمت همه‌ی تراکنش‌ها». فقط ستون‌های لازم خوانده می‌شوند. فشرده‌سازی هم بهتر است، چون مقدارهای یک ستون شبیه هم‌اند.</div>
+</div>
+<div class="box ex"><div class="bt">DataFrame در برابر ndarray (اسلاید و مخزن just-pandas-things)</div>
+<ul>
+  <li><b>Pandas DataFrame</b> روی ستون‌ها ساخته شده (column-major). دسترسی به یک <b>سطر</b> خیلی کندتر از دسترسی به یک <b>ستون</b> است. در آزمایش کتاب، پیمایش سطری DataFrame ده‌ها برابر کندتر از پیمایش ستونی بود.</li>
+  <li><b>NumPy ndarray</b> به‌طور پیش‌فرض row-major است (ترتیب C)، ولی می‌شود column-major خواست: <span class="ltr"><code>np.array(..., order='F')</code></span>.</li>
+</ul>
+<pre class="code">import pandas as pd, numpy as np
+df = pd.DataFrame(np.random.rand(100_000, 50))
+# fast: column access
+df[3].mean()
+# slow: row-by-row iteration
+for i in range(len(df)): df.iloc[i]      # avoid! prefer vectorized ops
+</pre>
+</div>
+
+<h3>۳.۲ متنی در برابر باینری</h3>
+<div class="vs">
+<div><h4>متنی (CSV، JSON)</h4>مزیت: <b>انسان می‌تواند بخواند</b>، دیباگ و ویرایش آسان است.</div>
+<div><h4>باینری (Parquet و...)</h4>مزیت: <b>فشرده</b>. مثال اسلاید: عدد 1000000 در متن ۷ کاراکتر یعنی ۷ بایت است، ولی به‌صورت int32 فقط ۴ بایت.</div>
+</div>
+<p>طبق کتاب، فایل CSV با حجم ۱۴ مگابایت در قالب Parquet حدود ۶ مگابایت شد. AWS هم می‌گوید Parquet تا ۲ برابر سریع‌تر خالی (unload) می‌شود و تا ۶ برابر حجم کمتری روی S3 می‌گیرد.</p>
+<div data-widget="bytes"></div>
+</section>
+
+<section id="models">
+<h2><span class="num">۴</span> مدل‌های داده <span class="tag core">اسلاید</span></h2>
+<p><b>مدل داده</b> توصیف می‌کند داده <b>چطور نمایش داده می‌شود</b>. دو پارادایم اصلی: <b>رابطه‌ای</b> و <b>NoSQL</b>.</p>
+<h3>۴.۱ مدل رابطه‌ای (۱۹۷۰، Codd)</h3>
+<p>ریشه‌اش پردازش داده‌ی تجاری است: <b>پردازش تراکنش</b> (فروش، بانک، رزرو هواپیما، انبار) و <b>پردازش دسته‌ای</b> (صورت‌حساب، حقوق، گزارش). ولی خیلی فراتر از این حوزه تعمیم پیدا کرد.</p>
+<div class="box def"><div class="bt">تعریف ۳.۲ · رابطه (relation)</div>
+  داده در <b>رابطه‌ها</b> (جدول‌ها) سازمان می‌گیرد. هر رابطه مجموعه‌ای از <b>tuple</b>ها (سطرها) است. <b>ترتیب سطرها و ستون‌ها مهم نیست</b> (unordered). جدول یک «سرستون» (heading) دارد. فرمت‌هایی مثل CSV و Parquet برای ذخیره‌ی جدول‌ها استفاده می‌شوند.
+</div>
+<h3>۴.۲ نرمال‌سازی (Normalization)</h3>
+<p><b>مثال اسلاید:</b> جدول کتاب‌ها با ستون‌های عنوان، نویسنده، فرمت، ناشر، کشور، قیمت. ناشر «Banana Press» در سه سطر تکرار شده. اگر اسمش به «Pineapple Press» عوض شود، باید <b>هر سه سطر</b> را عوض کنی و اگر یکی را فراموش کنی، داده ناسازگار می‌شود.</p>
+<div class="two">
+<div class="tablewrap"><table style="font-size:.82em">
+<tr><th colspan="4">Book (بعد از نرمال‌سازی)</th></tr>
+<tr><th>Title</th><th>Format</th><th>Pub ID</th><th>Price</th></tr>
+<tr><td>Harry Potter</td><td>Paperback</td><td>1</td><td>$20</td></tr>
+<tr><td>Harry Potter</td><td>E-book</td><td>1</td><td>$10</td></tr>
+<tr><td>Sherlock Holmes</td><td>Paperback</td><td>2</td><td>$30</td></tr>
+<tr><td>The Hobbit</td><td>Paperback</td><td>1</td><td>$30</td></tr>
+</table></div>
+<div class="tablewrap"><table style="font-size:.82em">
+<tr><th colspan="3">Publisher</th></tr>
+<tr><th>Pub ID</th><th>Publisher</th><th>Country</th></tr>
+<tr><td>1</td><td>Banana Press</td><td>UK</td></tr>
+<tr><td>2</td><td>Guava Press</td><td>US</td></tr>
+</table>
+<p style="font-size:.9em">حالا تغییر اسم ناشر فقط یک سطر را عوض می‌کند.</p></div>
+</div>
+<div class="vs">
+<div><h4>✓ مزایا</h4><ul><li>اشتباه کمتر (املای استاندارد)</li><li>به‌روزرسانی آسان‌تر</li><li>بومی‌سازی (localization) آسان‌تر: ترجمه‌ی اسم ناشر فقط در یک جا</li></ul></div>
+<div><h4>✗ عیب</h4><ul><li><b>join</b> بین چند جدول بزرگ <b>کند</b> است</li></ul></div>
+</div>
+
+<h3>۴.۳ مدل رابطه‌ای و SQL</h3>
+<ul>
+  <li>مدل SQL کمی با مدل رابطه‌ای فرق دارد. مثلاً جدول SQL می‌تواند سطر <b>تکراری</b> داشته باشد ولی رابطه‌ی واقعی نه (رابطه یک «مجموعه» است).</li>
+  <li><b>SQL یک زبان پرس‌وجو است</b>: مشخص می‌کنی چه داده‌ای می‌خواهی.</li>
+  <li><b>SQL اعلانی (declarative) است:</b> تو می‌گویی <b>چه</b> می‌خواهی، سیستم تصمیم می‌گیرد <b>چطور</b> اجرا کند (query optimization). در مقابل، Python دستوری (imperative) است: مرحله‌به‌مرحله می‌گویی چه کن.</li>
+  <li>توصیه‌ی اسلاید با حروف درشت: <b>SQL یاد بگیر!</b> ابزار ضروری دانشمند داده است.</li>
+</ul>
+
+<h3>۴.۴ NoSQL: «نه فقط SQL»</h3>
+<div class="vs">
+<div><h4>مدل سندی (Document)</h4>مفهوم مرکزی <b>سند</b> است، معمولاً JSON. هر کتاب یک سند است. رابطه بین سندها <b>نادر</b> است. نیازی به schema ثابت نیست (هر سند می‌تواند فیلدهای متفاوت داشته باشد): <b>schema در زمان خواندن</b>.
+<pre class="code">{ "Title": "Harry Potter",
+  "Author": "J.K. Rowling",
+  "Publisher": "Banana Press",
+  "Country": "UK",
+  "Sold as": [
+    {"Format": "Paperback", "Price": "$20"},
+    {"Format": "E-book",    "Price": "$10"} ] }</pre>
+خوبی: همه‌ی اطلاعات یک کتاب در یک جاست (locality). بدی: پرس‌وجوی «همه‌ی کتاب‌های زیر ۲۵ دلار» باید همه‌ی سندها را بخواند.</div>
+<div><h4>مدل گرافی (Graph)</h4>مفهوم مرکزی <b>گراف</b> است: گره‌ها و یال‌ها. <b>رابطه‌ها اولویت‌اند</b>. مثال اسلاید: آدم‌ها (born_in، lives_in، friend، coworker)، شهرها، ایالت‌ها و کشورها (within).<br>
+پرس‌وجویی مثل «همه‌ی کسانی که در آمریکا به دنیا آمده‌اند» در گراف با پیمایش یال‌های <span class="ltr">born_in → within → within</span> ساده است. در SQL نمی‌دانی چند join لازم است (شهر ← ایالت ← کشور، یا مستقیم شهر ← کشور).</div>
+</div>
+<p><b>فناوری‌های NoSQL:</b> پایگاه سندی (MongoDB)، کلید-مقدار (Redis)، ستونی (Cassandra)، گرافی (Neo4J)، جست‌وجو (Elastic)، سری زمانی (InfluxDB).</p>
+</section>
+
+<section id="structured">
+<h2><span class="num">۵</span> ساخت‌یافته در برابر بی‌ساختار <span class="tag core">اسلاید</span></h2>
+<div class="tablewrap"><table>
+<tr><th>ساخت‌یافته (Structured)</th><th>بی‌ساختار (Unstructured)</th></tr>
+<tr><td>schema دقیق تعریف شده</td><td>هر چیزی</td></tr>
+<tr><td>جست‌وجو و تحلیلش آسان است</td><td>رسیدنش سریع است (لازم نیست اول تمیز شود)</td></tr>
+<tr><td>فقط داده با schema مشخص را می‌پذیرد</td><td>داده از هر منبعی را می‌پذیرد</td></tr>
+<tr><td>تغییر schema دردسر زیادی دارد</td><td>نگرانی از تغییر schema ندارد</td></tr>
+<tr><td><b>ساختار هنگام نوشتن</b> فرض می‌شود (schema-on-write)</td><td><b>ساختار هنگام خواندن</b> فرض می‌شود (schema-on-read)</td></tr>
+<tr><td>ذخیره در <b>انبار داده (Data Warehouse)</b></td><td>ذخیره در <b>دریاچه‌ی داده (Data Lake)</b></td></tr>
+</table></div>
+<div class="two">
+<div class="box note"><div class="bt">وقتی SQL را در نظر بگیر که…</div><ul><li>داده‌ات خیلی ساخت‌یافته است و ساختارش زیاد عوض نمی‌شود</li><li>سیستم تراکنشی داری (حسابداری، مالی)</li><li>یکپارچگی و امنیت بالای داده لازم داری</li><li>به مقیاس‌پذیری افقی (scale-out) NoSQL نیاز نداری</li></ul></div>
+<div class="box note"><div class="bt">وقتی NoSQL را در نظر بگیر که…</div><ul><li>حجم زیادی داده‌ی بی‌ساختار یا نیمه‌ساخت‌یافته داری که در مدل رابطه‌ای جا نمی‌شود</li><li>schema پویا یا انتخاب بیشتر در مدل داده می‌خواهی</li><li>می‌خواهی توسعه سریع‌تر باشد و سربار ساختار را نداشته باشی</li><li>به سطح یکپارچگی SQL نیاز نداری</li></ul></div>
+</div>
+</section>
+
+<section id="hw">
+<h2><span class="num">۶</span> مسئله‌ی حل‌شده <span class="tag exam">تمرین ۱، سؤال ۴ (بخش ۱)</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله</div>
+یک شرکت تجارت الکترونیک بزرگ سیستم پیشنهاد بلادرنگ دارد. داده‌های کاربران از طریق Kafka لحظه‌ای ارسال می‌شود و مدل‌های ML از آن استفاده می‌کنند. شرکت می‌خواهد قالب پیام‌ها را از JSON به Protobuf تغییر دهد تا کارایی و سرعت سیستم بالا برود. توضیح بده چرا در سامانه‌های بلادرنگ قالب‌های باینری مثل Protobuf از قالب‌های متنی مثل JSON بهترند.
+</div>
+<details><summary>پاسخ کامل</summary>
+<ol>
+  <li><b>حجم کمتر:</b> JSON اسم هر فیلد را در هر پیام تکرار می‌کند (<span class="ltr"><code>"user_id": 123456</code></span>) و عددها را به‌صورت رشته‌ی کاراکتری می‌نویسد. Protobuf به‌جای اسم فیلد یک شماره‌ی کوچک (tag) می‌گذارد و عددها را باینری و با طول متغیر (varint) ذخیره می‌کند. پیام معمولاً چند برابر کوچک‌تر می‌شود، یعنی پهنای باند کمتر روی Kafka، دیسک کمتر و پیام بیشتر در ثانیه.</li>
+  <li><b>سریال‌سازی و parse سریع‌تر:</b> parse کردن JSON یعنی خواندن کاراکتربه‌کاراکتر، پیدا کردن کوتیشن‌ها و تبدیل رشته به عدد. این کار CPU می‌خورد و latency را بالا می‌برد. در Protobuf ساختار از قبل معلوم است و decode تقریباً مستقیم است. در سیستم بلادرنگ هر میلی‌ثانیه مهم است (جلسه‌ی ۱).</li>
+  <li><b>schema و نوع‌دهی قوی:</b> فایل <span class="ltr"><code>.proto</code></span> نوع هر فیلد را مشخص می‌کند. پیام بدفرمت (مثلاً قیمت به‌شکل رشته) در زمان سریال‌سازی رد می‌شود، نه وسط آموزش مدل. این یعنی داده‌ی تمیزتر برای ML.</li>
+  <li><b>تکامل schema (سازگاری عقب‌رو و جلورو):</b> با شماره‌ی فیلد می‌شود فیلد جدید اضافه کرد بدون این‌که مصرف‌کننده‌های قدیمی خراب شوند. در pipeline‌ای که تیم‌های مختلف تولیدکننده و مصرف‌کننده‌اند، این خیلی مهم است.</li>
+</ol>
+<p><b>هزینه‌ها (برای پاسخ کامل بنویس):</b> انسان نمی‌تواند پیام را مستقیم بخواند (دیباگ سخت‌تر)، باید schema را مدیریت و کد را از روی آن تولید کرد، و برای پیام‌های خیلی کوچک یا کم‌تعداد سود ناچیز است.</p>
+</details>
+</section>
+
+<section id="exercises">
+<h2><span class="num">۷</span> تمرین</h2>
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl">· آسان</span></div>
+هرکدام داده‌ی کاربر است یا داده‌ی سیستم؟ (الف) متن نظر یک مشتری، (ب) لاگ خطای سرور، (ج) مدت زمانی که کاربر روی یک محصول مانده، (د) خروجی پیش‌بینی مدل تقلب.
+<details><summary>راه‌حل</summary>(الف) کاربر. (ب) سیستم. (ج) سیستم آن را ثبت می‌کند، ولی چون رفتار کاربر است <b>داده‌ی کاربر</b> حساب می‌شود. (د) سیستم.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl">· متوسط</span> <span class="tag exam">محاسباتی</span></div>
+جدولی با $10^6$ سطر و ۱۰۰ ستون عدد اعشاری داری. (الف) اگر هر عدد در CSV به‌طور متوسط ۸ کاراکتر باشد (به‌اضافه‌ی یک جداکننده)، حجم CSV چقدر است؟ در float32 باینری چقدر؟ (ب) برای خواندن فقط <b>یک</b> ستون، در ذخیره‌سازی row-major و column-major (هر دو باینری) چند بایت باید از دیسک خواند؟
+<details><summary>راه‌حل</summary>(الف) CSV: $10^6\times100\times9\approx9\times10^8$ بایت، یعنی حدود ۹۰۰MB. float32: $10^6\times100\times4=4\times10^8$ بایت، یعنی ۴۰۰MB (بدون فشرده‌سازی). (ب) row-major: ستون‌ها لای هم هستند، پس عملاً کل فایل یعنی ۴۰۰MB خوانده می‌شود. column-major: فقط آن ستون، $10^6\times4=4$MB، یعنی ۱۰۰ برابر کمتر. Parquet فشرده‌سازی ستونی هم دارد و عدد واقعی کمتر هم می‌شود.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl">· آسان</span></div>
+برای هر کار بگو row-major بهتر است یا column-major: (الف) ثبت هزاران تراکنش جدید در ثانیه، (ب) محاسبه‌ی میانگین قیمت ماه گذشته، (ج) آموزش مدلی که در هر قدم یک minibatch از نمونه‌ها می‌خواهد، (د) بررسی همبستگی دو ویژگی در کل داده.
+<details><summary>راه‌حل</summary>(الف) row: نوشتن سطر کامل به ته فایل. (ب) column: فقط ستون قیمت و تاریخ. (ج) row: نمونه‌ها کامل لازم‌اند. (د) column: فقط دو ستون.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl">· متوسط</span></div>
+داده‌ی یک شبکه‌ی اجتماعی (کاربر، دوستی، عضویت در گروه، لایک پست) را می‌خواهی ذخیره کنی تا پرس‌وجوی «دوستانِ دوستانِ کاربر X که عضو گروه Y هستند» سریع باشد. کدام مدل داده و چرا؟
+<details><summary>راه‌حل</summary>مدل گرافی (مثل Neo4J). پرس‌وجو پیمایش رابطه‌هاست (friend ← friend ← member_of). در مدل رابطه‌ای این چند self-join روی جدول بزرگ دوستی است که با عمق بیشتر خیلی کند می‌شود. در مدل سندی رابطه‌ها نادرند و چنین پرس‌وجویی طبیعی نیست.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl">· متوسط</span></div>
+تیمی همه‌ی لاگ‌های خام (JSON با فیلدهای متغیر)، عکس‌ها و فایل‌های صوتی را بدون پردازش در S3 می‌ریزد و بعداً هر تیم به روش خودش می‌خواندش. این انبار داده است یا دریاچه‌ی داده؟ یک مزیت و یک ریسکش را بگو.
+<details><summary>راه‌حل</summary>دریاچه‌ی داده (schema-on-read). مزیت: داده سریع و بدون از دست رفتن اطلاعات می‌رسد و تغییر schema مشکلی ایجاد نمی‌کند. ریسک: «باتلاق داده» (data swamp). بدون مستندسازی و کنترل کیفیت، کسی نمی‌داند چه داده‌ای کجاست و هر خواننده باید خودش تمیز کند (کار تکراری و ناسازگار).</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl">· آسان</span></div>
+این دو را مقایسه کن و بگو کدام اعلانی و کدام دستوری است: <span class="ltr"><code>SELECT AVG(price) FROM rides WHERE city='Tehran'</code></span> و یک حلقه‌ی for در Python که مجموع و تعداد را می‌شمارد.
+<details><summary>راه‌حل</summary>SQL اعلانی است: فقط می‌گویی «میانگین قیمت سفرهای تهران» را می‌خواهی و optimizer تصمیم می‌گیرد از کدام index، کدام ترتیب و کدام موازی‌سازی استفاده کند. حلقه‌ی Python دستوری است: دقیقاً می‌گویی چطور پیمایش کند.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl">· چالشی</span></div>
+مدلی را با PyTorch آموزش دادی و با <span class="ltr"><code>pickle</code></span> ذخیره کردی تا سرویس دیگری آن را بارگذاری کند. دو مشکل احتمالی این روش در production را بگو و یک جایگزین پیشنهاد کن.
+<details><summary>راه‌حل</summary>(۱) امنیت: unpickle کردن فایل نامطمئن می‌تواند کد دلخواه اجرا کند. (۲) شکنندگی: pickle به نسخه‌ی Python، کتابخانه و حتی مسیر کلاس‌ها وابسته است و با تغییر نسخه ممکن است باز نشود. (۳) وابستگی به زبان: سرویس غیر Python نمی‌تواند بخواندش. جایگزین: فرمت‌های مستقل و امن‌تر مثل ONNX، TorchScript، یا فقط وزن‌ها با safetensors.</details>
+</div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۸</span> تست</h2>
+<div class="quiz"></div>
+</section>
+
+<section id="summary">
+<h2><span class="num">۹</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="lf">
+  <div class="s"><h4>حتماً بلد باش</h4><ul>
+    <li>جدول ۶ فرمت: متنی یا باینری، row یا column.</li>
+    <li>row-major برای نمونه‌ها، column-major برای ویژگی‌ها.</li>
+    <li>DataFrame ستونی است، ndarray پیش‌فرض سطری است.</li>
+    <li>نرمال‌سازی: خطای کمتر، به‌روزرسانی آسان، بومی‌سازی آسان، ولی join کند.</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul>
+    <li>رابطه‌ای، سندی و گرافی.</li>
+    <li>schema-on-write (warehouse) در برابر schema-on-read (lake).</li>
+    <li>SQL اعلانی در برابر کد دستوری.</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul>
+    <li>داده‌ی رفتاری را سیستم ثبت می‌کند ولی داده‌ی کاربر است.</li>
+    <li>جدول SQL می‌تواند سطر تکراری داشته باشد، رابطه‌ی واقعی نه.</li>
+    <li>پیمایش سطری روی DataFrame خیلی کند است.</li></ul></div>
+</div>
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>serialization</b>: سریال‌سازی</div>
+  <div><b>row-major / column-major</b>: ذخیره‌ی سطری / ستونی</div>
+  <div><b>Parquet</b>: فرمت باینری ستونی</div>
+  <div><b>Protobuf</b>: فرمت باینری گوگل با schema</div>
+  <div><b>relational model</b>: مدل رابطه‌ای</div>
+  <div><b>normalization</b>: نرمال‌سازی</div>
+  <div><b>join</b>: ترکیب جدول‌ها بر اساس کلید</div>
+  <div><b>declarative</b>: اعلانی</div>
+  <div><b>query optimizer</b>: بهینه‌ساز پرس‌وجو</div>
+  <div><b>document / graph model</b>: مدل سندی / گرافی</div>
+  <div><b>schema-on-read</b>: ساختار در زمان خواندن</div>
+  <div><b>data warehouse / data lake</b>: انبار داده / دریاچه‌ی داده</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`کدام فرمت <b>column-major</b> است؟`, o:[`CSV`,`JSON`,`Parquet`,`Pickle`], a:2, e:`Parquet ستونی و باینری است. CSV سطری است.`},
+ {q:`برای محاسبه‌ی میانگین یک ویژگی روی میلیون‌ها نمونه، کدام ذخیره‌سازی مناسب‌تر است؟`, o:[`row-major`,`column-major`,`فرقی ندارد`,`JSON`], a:1, e:`فقط ستون لازم خوانده می‌شود.`},
+ {q:`عدد 1000000 در CSV چند بایت و در int32 چند بایت جا می‌گیرد؟`, o:[`۷ و ۴`,`۴ و ۷`,`۸ و ۸`,`۱ و ۴`], a:0, e:`هفت کاراکتر در برابر ۴ بایت.`},
+ {q:`کدام جمله درباره‌ی Pandas DataFrame درست است؟`, o:[`row-major است و دسترسی به سطر سریع است`,`column-major است و دسترسی به سطر خیلی کندتر از ستون است`,`فقط برای متن است`,`همیشه از NumPy کندتر است`], a:1, e:`برای همین باید از پیمایش سطری (iterrows یا iloc در حلقه) دوری کرد.`},
+ {q:`کدام عیب اصلی نرمال‌سازی است؟`, o:[`اشتباه املایی بیشتر`,`به‌روزرسانی سخت‌تر`,`join کند روی جدول‌های بزرگ`,`بومی‌سازی سخت‌تر`], a:2, e:`داده در چند جدول پخش شده و برای ساختن رکورد کامل باید join کرد.`},
+ {q:`«SQL اعلانی است» یعنی چه؟`, o:[`فقط داده را اعلام می‌کند`,`می‌گویی چه می‌خواهی و سیستم تصمیم می‌گیرد چطور اجرا کند`,`باید مرحله‌به‌مرحله مسیر اجرا را نوشت`,`فقط برای NoSQL است`], a:1, e:`این کار query optimizer است.`},
+ {q:`در کدام مدل داده «رابطه‌ها اولویت دارند»؟`, o:[`سندی`,`گرافی`,`کلید-مقدار`,`سری زمانی`], a:1, e:`در مدل سندی رابطه بین سندها نادر است.`},
+ {q:`schema-on-read ویژگی کدام است؟`, o:[`انبار داده`,`دریاچه‌ی داده`,`جدول SQL`,`OLTP`], a:1, e:`در دریاچه‌ی داده، داده خام ذخیره می‌شود و ساختار در زمان خواندن تفسیر می‌شود.`},
+ {q:`کدام مورد دلیل برتری Protobuf بر JSON در سیستم بلادرنگ <b>نیست</b>؟`, o:[`حجم پیام کمتر`,`parse سریع‌تر`,`schema با نوع‌دهی قوی`,`انسان راحت‌تر می‌خواندش`], a:3, e:`قابل‌خواندن بودن مزیت JSON است، نه Protobuf.`},
+ {q:`کدام پایگاه‌داده نمونه‌ی key-value store است؟`, o:[`MongoDB`,`Redis`,`Neo4J`,`PostgreSQL`], a:1, e:`MongoDB سندی، Neo4J گرافی و PostgreSQL رابطه‌ای است.`},
+];
+</script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>درس‌های ترم · پاییز ۱۴۰۵</title>
+<link rel="stylesheet" href="mlsd/assets/style.css">
+<style>
+.courses{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:16px 0}
+.course{display:block;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);transition:border-color .15s,transform .15s}
+a.course:hover{border-color:var(--accent);transform:translateY(-2px)}
+.course .ic{font-size:1.7em}
+.course h3{margin:.3em 0 .2em;font-size:1.15em}
+.course p{margin:0;color:var(--ink-2);font-size:.92em;line-height:1.8}
+.course .st{display:inline-block;margin-top:10px;font-size:.78em;font-weight:700;border-radius:999px;padding:1px 10px;background:var(--accent-soft);color:var(--accent)}
+.course.soon{opacity:.55;box-shadow:none}
+.course.soon .st{background:var(--proof-bg);color:var(--ink-3)}
+</style>
+</head>
+<body>
+<main>
+<section class="hero">
+  <div class="kicker">نیم‌سال اول ۱۴۰۵–۱۴۰۶</div>
+  <h1>درس‌های این ترم</h1>
+  <p class="lead">هر درس به ۲۰ جلسه تقسیم شده. هر جلسه یک صفحه است با توضیح کامل، مثال، تمرین با راه‌حل، تست و ابزار تعاملی. پیشرفت و نمره‌ی تست‌ها در همین مرورگر ذخیره می‌شود.</p>
+</section>
+<div class="courses">
+  <a class="course" href="mlsd/index.html">
+    <div class="ic">🤖</div><h3>طراحی سیستم‌های یادگیری ماشین</h3>
+    <p>از مدل تا محصول: داده، برچسب، مهندسی ویژگی، استقرار و پایش.</p>
+    <span class="st">جلسه‌های ۱ تا ۸ آماده</span>
+  </a>
+  <a class="course" href="dynamics/index.html">
+    <div class="ic">🌀</div><h3>آشنایی با سیستم‌های دینامیکی</h3>
+    <p>مدار، نقطه‌ی ثابت، لجستیک، انشعاب، آشوب و دینامیک دوبعدی.</p>
+    <span class="st">جلسه‌های ۱ تا ۱۱ آماده</span>
+  </a>
+  <div class="course soon"><div class="ic">📊</div><h3>تحلیل داده‌ها</h3><p>به‌زودی</p><span class="st">در صف</span></div>
+  <div class="course soon"><div class="ic">📐</div><h3>ریاضی مهندسی</h3><p>به‌زودی</p><span class="st">در صف</span></div>
+  <div class="course soon"><div class="ic">🎲</div><h3>شبیه‌سازی کامپیوتری</h3><p>به‌زودی</p><span class="st">در صف</span></div>
+  <div class="course soon"><div class="ic">💡</div><h3>مبانی کارآفرینی</h3><p>به‌زودی</p><span class="st">در صف</span></div>
+</div>
+</main>
+</body>
+</html>

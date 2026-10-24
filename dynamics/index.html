@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سیستم‌های دینامیکی · فهرست جلسه‌ها</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0 18px}
+.card{display:block;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;position:relative;box-shadow:var(--shadow);transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .n{font-weight:900;color:var(--accent);font-size:1.25em}
+.card .t{font-weight:700;line-height:1.6;margin-top:2px}
+.card .s{font-size:.8em;color:var(--ink-3);margin-top:4px}
+.card.locked{opacity:.55;box-shadow:none;cursor:default}
+.card.done{border-color:var(--good)}
+.card .badge{position:absolute;top:10px;left:12px;font-size:.75em;font-weight:700;border-radius:999px;padding:0 8px}
+.card.done .badge{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.card.locked .badge{background:var(--proof-bg);color:var(--ink-3)}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0}
+.bar>i{display:block;height:100%;background:var(--accent);width:0}
+.plan td:first-child{white-space:nowrap;font-weight:700}
+</style>
+</head>
+<body data-session="0">
+<main>
+<section class="hero">
+  <p style="margin:0 0 6px"><a href="../index.html" style="text-decoration:none;font-size:.9em">→ همه‌ی درس‌های ترم</a></p>
+  <div class="kicker">درس آشنایی با سیستم‌های دینامیکی · دکتر امین طالبی · نیم‌سال اول ۱۴۰۵–۱۴۰۶</div>
+  <h1>دوره‌ی کامل یادگیری در ۲۰ جلسه</h1>
+  <p class="lead">هر جلسه یک صفحه است با شهود، تعریف دقیق، قضیه و اثبات، مثال حل‌شده، شبیه‌سازی تعاملی، تمرین با راه‌حل، تست و یک بخش آماده برای «فایل یادگیری»ات. جلسه‌های ۱ تا ۱۱ <b>همه‌ی چیزهایی است که تا ۱ آبان در کلاس گفته شده</b>. بقیه هم‌پای کلاس ساخته می‌شوند.</p>
+  <div id="prog"></div>
+</section>
+
+<section id="how">
+<h2><span class="num">◆</span> روش استفاده (هماهنگ با روش استاد)</h2>
+<ol>
+  <li><b>اول کاوش، بعد منبع.</b> استاد می‌خواهد قبل از دیدن «چیزهای دانسته‌شده»، خودت با سیستم کار کنی. هر جلسه با یک کادر صورتی «✋ قبل از خواندن فکر کن» شروع می‌شود. واقعاً انجامش بده.</li>
+  <li><b>متن را با قلم و کاغذ بخوان.</b> هر اثبات را قبل از باز کردن، خودت امتحان کن.</li>
+  <li><b>تمرین‌ها</b> را بدون نگاه کردن به راه‌حل حل کن و بعد چک کن.</li>
+  <li><b>تست</b> را بزن. نمره در مرورگرت ذخیره می‌شود و این‌جا نشان داده می‌شود.</li>
+  <li><b>فایل یادگیری</b>ات را به‌روز کن. بخش آخر هر جلسه پیشنهادهایی برای سه زیربخش «سؤال‌ها و حدس‌ها»، «تصویر کلی» و «فهم تثبیت‌شده» دارد. با زبان خودت بنویس.</li>
+</ol>
+<div class="box warn"><div class="bt">⚠ درباره‌ی بخش دوبعدی (جلسه‌های ۱۲ تا ۱۵)</div>
+  استاد صریحاً گفته تا <b>یک‌شنبه ۳ آبان</b> تمرکز روی کاوش خودت در دینامیک ۲بعدی باشد: مشاهده، سؤال، حدس و دید کلی، با شبیه‌ساز <span class="ltr">map2d-explorer</span>، <b>قبل</b> از رجوع به منبع یا AI. برای همین جلسه‌های ۱۲ تا ۱۵ را بعد از تحویل کاوش ۲ می‌سازیم. موعد تحویل «تکمیل دانش دوبعدی» یک‌شنبه ۱۰ آبان است.
+</div>
+</section>
+
+<section id="sessions">
+<h2><span class="num">◆</span> جلسه‌ها</h2>
+<div id="cards"></div>
+</section>
+
+<section id="plan">
+<h2><span class="num">◆</span> برنامه‌ی سریع پیشنهادی</h2>
+<div class="tablewrap"><table class="plan">
+<tr><th>روز</th><th>کار</th></tr>
+<tr><td>جمعه ۱ آبان</td><td>جلسه‌ی ۱ و ۲ · ۳۰ دقیقه کاوش آزاد با شبیه‌ساز دوبعدی (نگاشت خطی و هنون)</td></tr>
+<tr><td>شنبه ۲ آبان</td><td>جلسه‌ی ۳ و ۴ · نوشتن بخش «دینامیک ۲ بعدی» فایل یادگیری (فقط سؤال‌ها، حدس‌ها، دید کلی)</td></tr>
+<tr><td>یک‌شنبه ۳ آبان</td><td>تحویل کاوش ۲ در CW · جلسه‌ی ۵</td></tr>
+<tr><td>دوشنبه ۴ آبان</td><td>جلسه‌ی ۶ و ۷</td></tr>
+<tr><td>سه‌شنبه ۵ آبان</td><td>جلسه‌ی ۸ و ۹</td></tr>
+<tr><td>چهارشنبه ۶ آبان</td><td>جلسه‌ی ۱۰</td></tr>
+<tr><td>پنج‌شنبه ۷ آبان</td><td>جلسه‌ی ۱۱ (کارگاه + آزمون جامع) · انتقال موارد به «فهم تثبیت‌شده» در بخش یک‌بعدی فایل</td></tr>
+<tr><td>تا یک‌شنبه ۱۰ آبان</td><td>جلسه‌های ۱۲ تا ۱۵ (دوبعدی) · تحویل «تکمیل دانش دوبعدی»</td></tr>
+</table></div>
+</section>
+
+<section id="cheat">
+<h2><span class="num">◆</span> برگه‌ی خلاصه‌ی فرمول‌ها</h2>
+<div class="tablewrap"><table>
+<tr><th>موضوع</th><th>فرمول / حکم</th><th>جلسه</th></tr>
+<tr><td>دوره</td><td>$f^n(p)=p\iff k\mid n$ ($k$ = دوره‌ی کمینه)</td><td>۱</td></tr>
+<tr><td>دوبرابرکردن</td><td>$|\mathrm{Fix}(D^n)|=2^n-1$، نقاط $\frac{k}{2^n-1}$</td><td>۱</td></tr>
+<tr><td>Grand orbit</td><td>$x\sim y\iff\exists m,n:\ f^m(x)=f^n(y)$</td><td>۲</td></tr>
+<tr><td>دینامیک متناهی</td><td>هر grand orbit = یک دور + درخت‌ها؛ یک‌به‌یک ⇒ فقط دور</td><td>۲</td></tr>
+<tr><td>مزدوجی</td><td>$h\circ f=g\circ h\Rightarrow h\circ f^n=g^n\circ h$</td><td>۳</td></tr>
+<tr><td>آفین</td><td>$a\ne1$: $\;p=\frac b{1-a}$، $\;f^n(x)=p+a^n(x-p)$</td><td>۳</td></tr>
+<tr><td>محک مشتق</td><td>$|f'(p)|\lt 1$ جاذب، $\gt 1$ دافع، $=1$ نامعلوم</td><td>۴</td></tr>
+<tr><td>ضریب مدار</td><td>$\mu=\prod_{j=0}^{k-1}f'(f^jp)$</td><td>۵</td></tr>
+<tr><td>لیاپانوف</td><td>$\lambda=\lim\frac1n\sum\log|f'(f^jx)|$؛ برای مدار تناوبی $\frac1k\log|\mu|$</td><td>۵</td></tr>
+<tr><td>لجستیک</td><td>$p_r=1-\frac1r$، $\;f'(0)=r$، $\;f'(p_r)=2-r$</td><td>۶</td></tr>
+<tr><td>دوره‌ی ۲ لجستیک</td><td>$q_\pm=\frac{(r+1)\pm\sqrt{(r+1)(r-3)}}{2r}$، $\;\mu=-r^2+2r+4$، جاذب روی $(3,1+\sqrt6)$</td><td>۵</td></tr>
+<tr><td>$x^2+c$</td><td>$p_\pm=\frac{1\pm\sqrt{1-4c}}2$؛ زینی $c=\frac14$؛ برگردان $c=-\frac34$؛ دوره‌ی ۲ با $\mu=4(c+1)$</td><td>۷</td></tr>
+<tr><td>لجستیک ↔ $x^2+c$</td><td>$h(x)=-rx+\frac r2$، $\;c=\frac r2-\frac{r^2}4$</td><td>۷</td></tr>
+<tr><td>آبشار</td><td>$r_1=3$، $r_2=1+\sqrt6$، $r_\infty\approx3.5699$، $\delta\approx4.6692$؛ پنجره‌ی ۳ از $1+\sqrt8$</td><td>۸</td></tr>
+<tr><td>شارکوفسکی</td><td>$3\rhd5\rhd\cdots\rhd2\cdot3\rhd\cdots\rhd4\rhd2\rhd1$</td><td>۹</td></tr>
+<tr><td>خیمه / اولام</td><td>$f_4\circ h=h\circ T$، $\;h=\sin^2\frac{\pi t}{2}$؛ $\;|\mathrm{Fix}(T^n)|=2^n$</td><td>۱۰</td></tr>
+<tr><td>شوارتزی</td><td>$Sf=\frac{f'''}{f'}-\frac32\big(\frac{f''}{f'}\big)^2$؛ لجستیک: $-\frac{6}{(1-2x)^2}$</td><td>۱۰</td></tr>
+</table></div>
+</section>
+
+<section id="sources">
+<h2><span class="num">◆</span> منابع درس و راهنمای خواندن</h2>
+<div class="tablewrap"><table>
+<tr><th>منبع</th><th>چه بخشی برای کدام جلسه</th></tr>
+<tr><td><b>نقشه‌ی یادگیری استاد</b> (مهم‌ترین)</td><td>کل جلسه‌های ۱ تا ۱۰. برچسب «هسته‌ی اصلی» = اولویت</td></tr>
+<tr><td><b>کارگاه حل مسئله‌ی ۱</b></td><td>جلسه‌ی ۱۱ (و ۵، ۷، ۱۰)</td></tr>
+<tr><td><b>Hasselblatt & Katok</b></td><td>§2.1–2.3 (جلسه‌ی ۳ و ۴، ص ۳۱–۴۹) · §2.5 (جلسه‌ی ۶، ص ۵۷) · §3.1 (نگاشت‌های خطی صفحه، جلسه‌ی ۱۲، ص ۷۳) · §7.1–7.3 (جلسه‌ی ۱۰، ص ۱۹۶–۲۲۰) · فصل ۱۱ (جلسه‌ی ۸ و ۱۰، ص ۲۹۹)</td></tr>
+<tr><td><b>جزوه‌ی Knill</b></td><td>هفته‌ی ۲ «Feigenbaum» (جلسه‌ی ۴ تا ۸) · هفته‌ی ۳ «Henon» (جلسه‌ی ۱۲ تا ۱۵)</td></tr>
+<tr><td><b>شبیه‌ساز لجستیک استاد</b> · <b>شبیه‌ساز دوبعدی</b></td><td>کاوش‌ها. ابزارهای داخل جلسه‌ها مکمل این‌ها هستند.</td></tr>
+</table></div>
+</section>
+
+<section id="glossary">
+<h2><span class="num">◆</span> واژه‌نامه (برای خواندن کتاب‌های انگلیسی)</h2>
+<div class="tablewrap"><table>
+<tr><th>فارسی</th><th>English</th><th>فارسی</th><th>English</th></tr>
+<tr><td>فضای فاز</td><td class="ltr">phase space</td><td>مدار رو به جلو</td><td class="ltr">forward orbit</td></tr>
+<tr><td>نقطه‌ی ثابت / تناوبی</td><td class="ltr">fixed / periodic point</td><td>دوره‌ی کمینه</td><td class="ltr">minimal (prime) period</td></tr>
+<tr><td>سرانجام تناوبی</td><td class="ltr">eventually periodic</td><td>شاخه‌ی معکوس</td><td class="ltr">inverse branch</td></tr>
+<tr><td>مزدوج / مزدوجی</td><td class="ltr">conjugate / conjugacy</td><td>جاذب / دافع</td><td class="ltr">attracting / repelling</td></tr>
+<tr><td>حوضه‌ی جذب</td><td class="ltr">basin of attraction</td><td>ضریب مدار</td><td class="ltr">multiplier</td></tr>
+<tr><td>نمای لیاپانوف</td><td class="ltr">Lyapunov exponent</td><td>ابرجاذب / ابرپایدار</td><td class="ltr">superattracting / superstable</td></tr>
+<tr><td>انشعاب زینی</td><td class="ltr">saddle-node (tangent) bifurcation</td><td>انشعاب برگردان</td><td class="ltr">flip (period-doubling) bifurcation</td></tr>
+<tr><td>نمودار انشعاب</td><td class="ltr">bifurcation diagram</td><td>آبشار دوبرابرشدن</td><td class="ltr">period-doubling cascade</td></tr>
+<tr><td>بازبهنجارش</td><td class="ltr">renormalization</td><td>بازه‌ی محدودکننده</td><td class="ltr">restrictive interval</td></tr>
+<tr><td>نگاشت خیمه</td><td class="ltr">tent map</td><td>مسیرنامه</td><td class="ltr">itinerary</td></tr>
+<tr><td>مشتق شوارتزی</td><td class="ltr">Schwarzian derivative</td><td>هذلولوی</td><td class="ltr">hyperbolic</td></tr>
+</table></div>
+</section>
+</main>
+<script>
+window.PAGE_INIT=function(DS){
+  const P=DS.loadProg(), S=DS.SESSIONS, built=S.filter(s=>s.built), done=built.filter(s=>P[s.n]&&P[s.n].done).length;
+  document.getElementById("prog").innerHTML=`<div style="display:flex;justify-content:space-between;font-size:.9em;color:var(--ink-2)"><span>پیشرفت: ${DS.fa(done)} از ${DS.fa(built.length)} جلسه‌ی آماده</span><span>${DS.fa(Math.round(100*done/Math.max(1,built.length)))}٪</span></div><div class="bar"><i style="width:${100*done/Math.max(1,built.length)}%"></i></div>`;
+  const host=document.getElementById("cards");
+  Object.keys(DS.PARTS).forEach(k=>{
+    const h=document.createElement("h3"); h.textContent=`بخش ${k}: ${DS.PARTS[k]}`; host.appendChild(h);
+    const g=document.createElement("div"); g.className="cards";
+    S.filter(s=>s.part===k).forEach(s=>{
+      const p=P[s.n]||{}; const a=document.createElement(s.built?"a":"div");
+      a.className="card"+(s.built?"":" locked")+(p.done?" done":"");
+      if(s.built) a.href=DS.fileOf(s.n);
+      const q=p.quiz?`بهترین نمره‌ی تست: ${DS.fa(p.quiz[0])}/${DS.fa(p.quiz[1])}`:(s.built?"تست زده نشده":"");
+      a.innerHTML=`<span class="badge">${p.done?"✓ تمام":(s.built?"":"به‌زودی")}</span><div class="n">${DS.fa(s.n)}</div><div class="t">${s.title}</div><div class="s">${q}</div>`;
+      g.appendChild(a);
+    });
+    host.appendChild(g);
+  });
+};
+</script>
+</body>
+</html>

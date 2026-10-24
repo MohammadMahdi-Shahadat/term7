@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>طراحی سیستم‌های ML · فهرست جلسه‌ها</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:10px 0 18px}
+.card{display:block;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 14px;position:relative;box-shadow:var(--shadow);transition:border-color .15s}
+.card:hover{border-color:var(--accent)}
+.card .n{font-weight:900;color:var(--accent);font-size:1.25em}
+.card .t{font-weight:700;line-height:1.6;margin-top:2px}
+.card .s{font-size:.8em;color:var(--ink-3);margin-top:4px}
+.card.locked{opacity:.55;box-shadow:none;cursor:default}
+.card.done{border-color:var(--good)}
+.card .badge{position:absolute;top:10px;left:12px;font-size:.75em;font-weight:700;border-radius:999px;padding:0 8px}
+.card.done .badge{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.card.locked .badge{background:var(--proof-bg);color:var(--ink-3)}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0}
+.bar>i{display:block;height:100%;background:var(--accent);width:0}
+.plan td:first-child{white-space:nowrap;font-weight:700}
+.cheat td:first-child{white-space:nowrap;font-weight:700}
+</style>
+</head>
+<body data-session="0">
+<main>
+<section class="hero">
+  <p style="margin:0 0 6px"><a href="../index.html" style="text-decoration:none;font-size:.9em">→ همه‌ی درس‌های ترم</a></p>
+  <div class="kicker">درس طراحی سیستم‌های یادگیری ماشین · CS 22-193 · دانشکده‌ی علوم ریاضی شریف</div>
+  <h1>دوره‌ی کامل یادگیری در ۲۰ جلسه</h1>
+  <p class="lead">هر جلسه یک صفحه است با توضیح کامل، مثال واقعی، جدول مقایسه، مسئله‌ی حل‌شده به سبک تمرین‌های درس، ابزار تعاملی، تمرین با راه‌حل، تست و اصطلاح‌نامه. <b>جلسه‌های ۱ تا ۸ همه‌ی مطالب تا هفته‌ی چهارم</b> را پوشش می‌دهند (اسلاید Lec1 تا Lec6). بقیه هم‌پای کلاس ساخته می‌شوند.</p>
+  <div id="prog"></div>
+</section>
+
+<section id="how">
+<h2><span class="num">◆</span> روش استفاده</h2>
+<ol>
+  <li><b>کادر صورتی «قبل از خواندن فکر کن»</b> را واقعاً ۵ دقیقه انجام بده. بعد از یک فکر اولیه، مطلب خیلی بهتر در ذهن می‌نشیند.</li>
+  <li>متن را بخوان. هر <b>جدول مقایسه</b> و هر کادر «حفظ کن» را روی کاغذ خلاصه کن. امتحان این درس پر از «مقایسه کن» و «مزیت و ریسک» است.</li>
+  <li><b>مسئله‌ی حل‌شده</b> را اول خودت حل کن، بعد پاسخ را باز کن. این‌ها دقیقاً سؤال‌های تمرین ۱ پارسال‌اند.</li>
+  <li>با <b>ابزار تعاملی</b> بازی کن تا شهود پیدا کنی (مثلاً ببین با عوض کردن آستانه precision و recall چطور جابه‌جا می‌شوند).</li>
+  <li><b>تمرین‌ها</b> را بدون نگاه به راه‌حل حل کن. <b>تست</b> را بزن. نمره در مرورگرت ذخیره می‌شود و این‌جا نشان داده می‌شود.</li>
+</ol>
+<div class="box warn"><div class="bt">⚠ درباره‌ی منابع</div>
+  منبع این صفحه‌ها اسلایدها و تمرین‌های <b>پاییز ۱۴۰۴</b> (دکتر سیدصالحی) از گیت‌هاب درس است. به گفته‌ی خودت درس امسال هم همین مسیر را می‌رود. اگر استاد مطلب جدیدی گفت یا ترتیب را عوض کرد، فایل‌هایش را در پوشه‌ی درس بگذار تا جلسه‌ها به‌روز شوند. بخش‌هایی که فقط در کتاب Huyen بودند با برچسب <span class="tag book">کتاب</span> مشخص شده‌اند.
+</div>
+</section>
+
+<section id="sessions">
+<h2><span class="num">◆</span> جلسه‌ها</h2>
+<div id="cards"></div>
+</section>
+
+<section id="plan">
+<h2><span class="num">◆</span> برنامه‌ی سریع پیشنهادی برای جبران جلسه‌های ۱ تا ۸</h2>
+<div class="tablewrap"><table class="plan">
+<tr><th>روز</th><th>کار</th><th>زمان</th></tr>
+<tr><td>جمعه ۱ آبان</td><td>جلسه‌ی ۱ (تحقیق در برابر production، latency، مسئله‌ی ensemble)</td><td>~۱٫۵ ساعت</td></tr>
+<tr><td>شنبه ۲ آبان</td><td>جلسه‌ی ۲ (قاب‌بندی، اهداف، جداسازی اهداف) + جلسه‌ی ۳ (فرمت‌ها و مدل‌های داده)</td><td>~۲٫۵ ساعت</td></tr>
+<tr><td>یک‌شنبه ۳ آبان</td><td>جلسه‌ی ۴ (جریان داده، OLTP/OLAP، مسئله‌ی batch یا stream)</td><td>~۱٫۵ ساعت</td></tr>
+<tr><td>دوشنبه ۴ آبان</td><td>جلسه‌ی ۵ (کیفیت داده، برچسب‌گذاری، weak و semi supervision، active learning)</td><td>~۱٫۵ ساعت</td></tr>
+<tr><td>سه‌شنبه ۵ آبان</td><td>جلسه‌ی ۶ (نمونه‌گیری، عدم‌توازن، F1، focal loss): جلسه‌ی بلند و خیلی مهم</td><td>~۲ ساعت</td></tr>
+<tr><td>چهارشنبه ۶ آبان</td><td>جلسه‌ی ۷ (مهندسی ویژگی) + بخش ۱ تا ۶ جلسه‌ی ۸ (نشت داده)</td><td>~۲٫۵ ساعت</td></tr>
+<tr><td>پنج‌شنبه ۷ آبان</td><td><b>آزمون جامع</b> جلسه‌ی ۸ با تایمر ۶۰ دقیقه + مرور جدول‌ها و برگه‌ی خلاصه‌ی پایین همین صفحه</td><td>~۲ ساعت</td></tr>
+</table></div>
+<p>بعد از این هفته، از جلسه‌ی ۹ (توسعه‌ی مدل) هم‌پای کلاس جلو می‌رویم.</p>
+</section>
+
+<section id="exam">
+<h2><span class="num">◆</span> سؤال‌های امتحان این درس چه شکلی‌اند؟</h2>
+<p>از روی تمرین‌های پارسال، سؤال‌ها سه نوع‌اند:</p>
+<div class="tablewrap"><table>
+<tr><th>نوع</th><th>نمونه</th><th>چطور آماده شوی</th></tr>
+<tr><td><b>تصمیم طراحی با چند معیار</b></td><td>انتخاب بین مدل A، B و C با دقت، تأخیر، انصاف و تفسیرپذیری؛ JSON یا Protobuf؛ کدام جریان داده</td><td>هر ذی‌نفع را به قید یا هدف تبدیل کن. مدل‌هایی که قید را نقض می‌کنند حذف کن و بین بقیه trade-off کن. همیشه «مزیت + ریسک + راه جبران» بنویس.</td></tr>
+<tr><td><b>محاسبه و بهینه‌سازی</b></td><td>$n^*$ در ensemble، $\Delta t^*$ برای تازگی ویژگی، F1 و micro و macro، احتمال رأی اکثریت، focal loss، PSI، احتمال برخورد hash</td><td>مشتق بگیر، مساوی صفر بگذار، شرط بیشینه یا کمینه را چک کن، عدد صحیح را با کف و سقف مقایسه کن و <b>نتیجه را تفسیر کن</b>.</td></tr>
+<tr><td><b>مقایسه و تحلیل</b></td><td>loss ترکیبی در برابر مدل‌های جدا؛ undersampling، SMOTE و focal؛ چهار روش جایگزینی گم‌شده؛ تشخیص نشت، افزونگی و drift</td><td>جدول بکش. محورهای رایج: سوگیری، تفسیرپذیری، هزینه‌ی بازآموزی، نگهداشت، امکان‌پذیری در production.</td></tr>
+</table></div>
+</section>
+
+<section id="cheat">
+<h2><span class="num">◆</span> برگه‌ی خلاصه‌ی جلسه‌های ۱ تا ۸</h2>
+<div class="tablewrap"><table class="cheat">
+<tr><th>موضوع</th><th>چیزی که باید بلد باشی</th></tr>
+<tr><td>Ensemble و تأخیر (ج۱)</td><td>$U=\alpha n-\lambda L_0 1.3^n\Rightarrow n^*=\ln\!\big(\tfrac{\alpha}{\lambda L_0\ln1.3}\big)/\ln1.3$؛ با سقف تأخیر: $n\le\ln(L_{\max}/L_0)/\ln1.3$</td></tr>
+<tr><td>latency و throughput (ج۱)</td><td>تک‌به‌تک: $\text{thr}=1/\ell$؛ دسته‌ای: $\text{thr}=B/\ell_B$ با latency بیشتر. گزارش با p50، p90 و p99</td></tr>
+<tr><td>تحقیق در برابر production (ج۱)</td><td>هدف‌ها، اولویت محاسباتی، داده، انصاف، تفسیرپذیری</td></tr>
+<tr><td>نگاشت ML به کسب‌وکار (ج۲)</td><td>baseline، آستانه‌ی مفید بودن، FP در برابر FN، تفسیرپذیری، اطمینان؛ ۴ فاز پذیرش؛ ۳ مزیت جداسازی اهداف</td></tr>
+<tr><td>داده (ج۳)</td><td>row برای نمونه‌ها، column برای ویژگی‌ها؛ CSV سطری و متنی، Parquet ستونی و باینری؛ DataFrame ستونی؛ نرمال‌سازی؛ سندی و گرافی؛ warehouse و lake</td></tr>
+<tr><td>جریان و پردازش (ج۴)</td><td>DB، REST/RPC، Kafka؛ ACID؛ OLTP سطری، OLAP ستونی؛ ETL و ELT؛ $\beta\lambda\Delta t^2e^{-\lambda\Delta t}=C$ و $\Delta t^*\approx\sqrt{C/(\beta\lambda)}$</td></tr>
+<tr><td>برچسب (ج۵)</td><td>۴ عیب برچسب‌زنی دستی؛ LF: noisy، overlapping، conflicting، narrow؛ weak، semi، transfer، active و نیازشان به برچسب؛ $1-p_{(1)}$، margin، entropy</td></tr>
+<tr><td>نمونه‌گیری (ج۶)</td><td>reservoir: ورود $k/i$ و نهایی $k/n$؛ importance: $\mathbb E_P[f]=\mathbb E_Q[fP/Q]$</td></tr>
+<tr><td>عدم‌توازن (ج۶)</td><td>$P=\frac{TP}{TP+FP}$، $R=\frac{TP}{TP+FN}$، $F_1=\frac{2TP}{2TP+FP+FN}$؛ micro = accuracy؛ $w_c=\frac{N}{Kn_c}$؛ $\mathrm{FL}=-(1-p_t)^\gamma\log p_t$؛ SMOTE و Tomek فقط کم‌بعد</td></tr>
+<tr><td>ویژگی (ج۷)</td><td>MNAR، MAR، MCAR؛ min-max، z، log؛ گم‌شده را با مقدار ممکن پر نکن؛ hashing: $P\approx1-e^{-n/m}$؛ crossing یعنی $|A|\cdot|B|$ دسته</td></tr>
+<tr><td>نشت (ج۸)</td><td>۵ علت، ۳ روش تشخیص، ۶ قاعده؛ PSI $=\sum(a_i-e_i)\ln(a_i/e_i)$: کمتر از ۰٫۱ خوب، بیشتر از ۰٫۲۵ جدی</td></tr>
+</table></div>
+</section>
+</main>
+<script>
+window.PAGE_INIT = function(ML){
+  const {SESSIONS,PARTS,fa,fileOf,loadProg} = ML;
+  const prog = loadProg();
+  const host = document.getElementById("cards");
+  let built=0, done=0;
+  Object.keys(PARTS).forEach(p=>{
+    const list = SESSIONS.filter(s=>s.part===p);
+    const h3 = document.createElement("h3"); h3.textContent = `بخش ${p}: ${PARTS[p]}`; host.appendChild(h3);
+    const grid = document.createElement("div"); grid.className="cards";
+    list.forEach(s=>{
+      const st = prog[s.n]||{};
+      if(s.built) built++; if(st.done) done++;
+      const a = document.createElement(s.built?"a":"div");
+      a.className = "card"+(s.built?"":" locked")+(st.done?" done":"");
+      if(s.built) a.href = fileOf(s.n);
+      const quiz = st.quiz ? `بهترین نمره‌ی تست: ${fa(st.quiz[0])} از ${fa(st.quiz[1])}` : (s.built?"هنوز تست نزده‌ای":"هم‌پای کلاس ساخته می‌شود");
+      a.innerHTML = `<span class="badge">${st.done?"✓ تمام":(s.built?"":"به‌زودی")}</span><div class="n">${fa(s.n)}</div><div class="t">${s.title}</div><div class="s">${quiz}</div>`;
+      grid.appendChild(a);
+    });
+    host.appendChild(grid);
+  });
+  document.getElementById("prog").innerHTML = `<div class="bar"><i style="width:${100*done/SESSIONS.length}%"></i></div><div style="font-size:.9em;color:var(--ink-3)">${fa(done)} جلسه از ${fa(SESSIONS.length)} تمام شده · ${fa(built)} جلسه ساخته شده</div>`;
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۷ · انشعاب زینی و برگردان؛ خانواده‌ی x²+c</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+</head>
+<body data-session="7">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۷ از ۲۰ · بخش ب: دینامیک یک‌بعدی و لجستیک</div>
+  <h1>انشعاب زینی و برگردان؛ خانواده‌ی $Q_c(x)=x^2+c$</h1>
+  <p class="lead">«انشعاب» یعنی لحظه‌ای که با تغییر پیوسته‌ی پارامتر، <b>ساختار مدارها</b> ناگهان عوض شود: نقطه‌ی ثابتی متولد شود، بمیرد، یا پایداری‌اش را از دست بدهد و مدار جدیدی بزاید. در این جلسه دو انشعاب پایه را در خانواده‌ی $x^2+c$ می‌بینیم و آن را با لجستیک یکی می‌کنیم. سؤال‌های ۲، ۳ و ۶ کارگاه همین‌جا حل می‌شوند.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۹۰ دقیقه</span><span>📚 منبع: کارگاه ۱ (سؤال‌های ۲، ۳، ۶)، H–K §2.3 و §11.2، Devaney §1.12</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>انشعاب زینی (saddle-node) و انشعاب برگردان (flip یا period-doubling) را تعریف کنی و شرطشان را روی مشتق بگویی.</li>
+      <li>برای $Q_c$ هر دو انشعاب را پیدا کنی ($c=\frac14$ و $c=-\frac34$) و پایداری را در دو طرف بررسی کنی.</li>
+      <li>مزدوجی $L_r\leftrightarrow Q_c$ را استخراج کنی و «فرهنگ لغت» پارامترها را بسازی.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن فکر کن</div>
+  نمودار $y=x^2+c$ را با قطر $y=x$ برای $c=0.5$، $c=0.25$ و $c=0$ تصور کن (یا با ابزار پایین ببین). وقتی $c$ را کم می‌کنی، تقاطع‌ها چطور ظاهر می‌شوند؟ در لحظه‌ی تولد، شیب نمودار در نقطه‌ی تماس چند است؟
+</div>
+
+<section id="sn">
+<h2><span class="num">۱</span> انشعاب زینی <span class="tag core">کارگاه</span></h2>
+<div class="box def"><div class="bt">تعریف ۷.۱ · انشعاب زینی (طبق پانویس کارگاه)</div>
+  حالتی است که با تغییر پارامتر، <b>دو نقطه‌ی ثابت</b> (معمولاً یکی جاذب و دیگری دافع) به هم می‌رسند و سپس ناپدید می‌شوند، یا برعکس، از هیچ پدید می‌آیند. در لحظه‌ی انشعاب، نمودار $f$ بر قطر <b>مماس</b> است، پس $f'(p)=1$. (اسم دیگرش «انشعاب مماسی» است.)
+</div>
+<details class="proofd"><summary>شرط‌های عمومی <span class="tag extra">مسیر تکمیلی</span></summary>
+  برای خانواده‌ی $f_\mu$، اگر در $(\mu_0,p)$ داشته باشیم $f_{\mu_0}(p)=p$، $\;f'_{\mu_0}(p)=1$، $\;f''_{\mu_0}(p)\ne0$ و $\partial_\mu f_\mu(p)\big|_{\mu_0}\ne0$، آنگاه در یک طرف $\mu_0$ دقیقاً دو نقطه‌ی ثابت نزدیک $p$ داریم (یکی جاذب و یکی دافع) و در طرف دیگر هیچ. اثباتش با قضیه‌ی تابع ضمنی روی $g(\mu,x)=f_\mu(x)-x$ است. H–K §9.3 و §2.3.
+</details>
+
+<h3>کارگاه، سؤال ۲: $Q_c$</h3>
+<p>نقاط ثابت: $x^2+c=x\iff x^2-x+c=0$:</p>
+$$p_\pm(c)=\frac{1\pm\sqrt{1-4c}}{2},\qquad\text{که برای } c\le\tfrac14 \text{ وجود دارند}.$$
+<div class="box ex"><div class="bt">(الف) پیدا کردن انشعاب زینی</div>
+  دو نقطه‌ی ثابت وقتی یکی می‌شوند که $\sqrt{1-4c}=0$، یعنی $\boxed{c=\frac14}$ و $p=\frac12$. چک: $Q'_{1/4}(\frac12)=2\cdot\frac12=1$ ✓ (مماس). برای $c\gt \frac14$ هیچ نقطه‌ی ثابتی نیست و برای $c\lt \frac14$ دو تا داریم.
+</div>
+<div class="box ex"><div class="bt">(ب) پایداری در دو طرف</div>
+  $Q_c'(x)=2x$، پس
+  $$Q_c'(p_+)=1+\sqrt{1-4c},\qquad Q_c'(p_-)=1-\sqrt{1-4c}.$$
+  برای $c\lt \frac14$ (و نزدیک آن): $Q'(p_+)\gt 1$ پس $p_+$ <b>دافع</b> است، و $0\lt Q'(p_-)\lt 1$ پس $p_-$ <b>جاذب</b> است. این دقیقاً سناریوی «یکی جاذب، یکی دافع» است. به‌طور کلی‌تر، $p_-$ تا وقتی جاذب است که $|1-\sqrt{1-4c}|\lt 1\iff0\lt \sqrt{1-4c}\lt 2\iff -\frac34\lt c\lt \frac14$.
+</div>
+<div class="box ex"><div class="bt">(ج) وقتی نقطه‌ی ثابت نداریم ($c\gt \frac14$)</div>
+  $$Q_c(x)-x=x^2-x+c=\big(x-\tfrac12\big)^2+\big(c-\tfrac14\big)\ \ge\ c-\tfrac14=:\varepsilon\gt 0.$$
+  پس $x_{n+1}\ge x_n+\varepsilon$ و در نتیجه $x_n\ge x_0+n\varepsilon\to\infty$. <b>همه‌ی</b> مدارها به $+\infty$ می‌روند. حتی وقتی $c$ فقط کمی بزرگ‌تر از $\frac14$ است، مدار نزدیک $\frac12$ مدت زیادی «کند» می‌شود (از یک «تنگه» عبور می‌کند)، و این پدیده‌ی <b>تناوب‌آمیزی</b> (intermittency) است که در پنجره‌ی دوره‌ی ۳ دوباره می‌بینیم.
+</div>
+</section>
+
+<section id="flip">
+<h2><span class="num">۲</span> انشعاب برگردان (دوبرابرشدن دوره) <span class="tag core">کارگاه</span></h2>
+<div class="box def"><div class="bt">تعریف ۷.۲ · انشعاب برگردان (طبق پانویس کارگاه)</div>
+  حالتی است که یک نقطه‌ی ثابت با عبور ضریبش از $-1$ پایداری خود را از دست می‌دهد و یک مدار با دوره‌ی <b>دوبرابر</b> ظاهر می‌شود. در لحظه‌ی انشعاب $f'(p)=-1$، پس $(f^2)'(p)=(-1)^2=1$. یعنی برای $f^2$ این یک «انشعاب چنگالی» است: نقطه‌ی ثابت $p$ برای $f^2$ باقی می‌ماند و دو نقطه‌ی ثابت جدید $f^2$ (که دو نقطه‌ی یک مدار دوره‌ی ۲ برای $f$ هستند) کنارش متولد می‌شوند.
+</div>
+
+<h3>کارگاه، سؤال ۳</h3>
+<div class="box ex"><div class="bt">(الف) $c=-\frac12$ و $c=-1$</div>
+  <b>$c=-\frac12$:</b> $\;p_\pm=\frac{1\pm\sqrt3}{2}$، یعنی $p_-\approx-0.366$ و $p_+\approx1.366$. $\;Q'(p_-)=1-\sqrt3\approx-0.732$، پس جاذب است (زیگزاگ). $\;Q'(p_+)=1+\sqrt3$، پس دافع است.
+  <br><b>$c=-1$:</b> $\;p_\pm=\frac{1\pm\sqrt5}{2}$، یعنی $p_-\approx-0.618$ و $p_+\approx1.618$ (نسبت طلایی!). $\;Q'(p_-)=1-\sqrt5\approx-1.236$، پس <b>دافع</b> است، و $p_+$ هم دافع است. پس هیچ نقطه‌ی ثابت جاذبی نداریم. ولی مدار $0\to-1\to0$ دوره‌ی ۲ دارد و ضریبش $Q'(0)Q'(-1)=0$ است، پس <b>ابرجاذب</b> است. همان کاری را که استاد خواسته بود برای $c=-1$ انجام دادیم: بین $-\frac12$ و $-1$، نقطه‌ی ثابت پایداری‌اش را به یک مدار دوره‌ی ۲ داده است.
+</div>
+<div class="box ex"><div class="bt">(ب) ثابت کن انشعاب برگردان در $c=-\frac34$ رخ می‌دهد</div>
+  <ol>
+    <li><b>ضریب $p_-$ از $-1$ عبور می‌کند:</b> $\;Q'(p_-)=1-\sqrt{1-4c}=-1\iff\sqrt{1-4c}=2\iff c=-\frac34$ (با $p_-=-\frac12$). برای $c$ کمی بزرگ‌تر از $-\frac34$ داریم $Q'(p_-)\gt -1$ (جاذب)، و برای $c$ کمی کوچک‌تر $Q'(p_-)\lt -1$ (دافع).</li>
+    <li><b>مدار دوره‌ی ۲ ظاهر می‌شود:</b>
+      $$Q_c^2(x)-x=(x^2-x+c)\,(x^2+x+c+1).$$
+      عامل اول نقاط ثابت را می‌دهد. نقاط دوره‌ی ۲ ریشه‌های عامل دوم‌اند:
+      $$q_\pm=\frac{-1\pm\sqrt{-3-4c}}{2},$$
+      که فقط برای $c\lt -\frac34$ حقیقی و متمایزند. در $c=-\frac34$ هر دو برابر $-\frac12=p_-$ هستند، یعنی مدار جدید دقیقاً از نقطه‌ی ثابت متولد می‌شود.</li>
+    <li><b>مدار جدید جاذب است:</b> ضریبش $\mu=Q'(q_+)Q'(q_-)=4q_+q_-=4(c+1)$ است. در $c=-\frac34$ داریم $\mu=1$ و برای $c$ کمی کمتر داریم $0\lt\mu\lt 1$. مدار جاذب است اگر و تنها اگر $-\frac54\lt c\lt -\frac34$.</li>
+  </ol>
+  پس در $c=-\frac34$: نقطه‌ی ثابت جاذب $p_-$ با ضریب $-1$ دافع می‌شود و یک مدار جاذب دوره‌ی ۲ پدید می‌آید. این همان انشعاب برگردان است. <span class="qed">■</span>
+</div>
+<div class="box warn"><div class="bt">⚠ حواست باشد</div>
+  برای پیدا کردن نقاط دوره‌ی ۲ معادله‌ی درجه‌ی ۴ را از اول حل نکن. همیشه اول عامل نقاط ثابت ($x^2-x+c$) را بیرون بکش، چون هر نقطه‌ی ثابت جواب $f^2(x)=x$ هم هست. تقسیم چندجمله‌ای یا مقایسه‌ی ضرایب کافی است.
+</div>
+
+<div class="widget" id="cbif"><div class="wt">آزمایش: نقاط ثابت و مدار دوره‌ی ۲ در صفحه‌ی $(c,x)$</div>
+  <div class="wd">خط ضخیم = جاذب، خط نازک و کم‌رنگ = دافع. نقاط خاکستری مدار نقطه‌ی بحرانی ۰ هستند (بعد از حذف گذرا)، یعنی نمودار انشعاب $Q_c$. روی نمودار کلیک کن تا c انتخاب شود.</div>
+  <div class="canvases one"><canvas class="wide"></canvas></div><div class="readout"></div></div>
+
+<div class="widget" data-widget="cobweb" data-fns="quad" data-p='{"c":-0.8}' data-x0="0.1" data-n="60"
+  data-title="آزمایش: نمودار تارعنکبوتی Qc" data-desc="c=0.3 (فرار، با کندی نزدیک ½)، c=0.2، c=−0.5، c=−0.8 (دوره‌ی ۲)، c=−1 (ابرجاذب)، c=−1.3 (دوره‌ی ۴) و c=−2 را امتحان کن."></div>
+</section>
+
+<section id="conj">
+<h2><span class="num">۳</span> کارگاه، سؤال ۶: لجستیک همان $x^2+c$ است <span class="tag core">کارگاه</span></h2>
+<p>به دنبال $h(x)=\alpha x+\beta$ و $c=c(r)$ هستیم که $h\circ L_r=Q_c\circ h$.</p>
+$$h(L_r(x))=-\alpha r x^2+\alpha r x+\beta,\qquad Q_c(h(x))=\alpha^2x^2+2\alpha\beta x+\beta^2+c.$$
+<p>با برابر گذاشتن ضرایب: $x^2$: $\;\alpha^2=-\alpha r\Rightarrow\alpha=-r$. $\;x$: $\;2\alpha\beta=\alpha r\Rightarrow\beta=\frac r2$. ثابت: $\;\beta^2+c=\beta\Rightarrow c=\frac r2-\frac{r^2}4$.</p>
+<div class="box thm"><div class="bt">نتیجه ۷.۳</div>
+  $$h(x)=-r x+\frac r2,\qquad c(r)=\frac r2-\frac{r^2}{4}=\frac{r(2-r)}{4},\qquad h\circ L_r=Q_{c(r)}\circ h\quad(r\ne0).$$
+  $c(r)$ یک سهمی رو به پایین با بیشینه‌ی $c(1)=\frac14$ است. $c(0)=c(2)=0$ و $c(4)=-2$. پس:
+  <ul>
+    <li><b>$r\in[1,4]\longmapsto c\in[-2,\tfrac14]$ دوسویی و نزولی</b> است. این بخشی است که همه‌ی دینامیک جالب در آن رخ می‌دهد.</li>
+    <li>$r\in[0,1]\mapsto c\in[0,\frac14]$. پارامترهای $r$ و $2-r$ همان $c$ را می‌دهند، پس روی $\mathbb R$ مزدوج‌اند.</li>
+    <li>بازه‌ی $[0,1]$ به $[-\frac r2,\frac r2]$ نگاشته می‌شود. نقطه‌ی بحرانی $\frac12\mapsto0$ (نقطه‌ی بحرانی $Q_c$)، $\;0\mapsto\frac r2=p_+$ و $\;p_r\mapsto1-\frac r2=p_-$ (برای $r\ge1$).</li>
+  </ul>
+</div>
+<div class="tablewrap"><table>
+<tr><th>رویداد</th><th>$r$ (لجستیک)</th><th>$c$ (درجه‌دو)</th></tr>
+<tr><td>تولد/برخورد نقاط ثابت</td><td>$1$ (ترابحرانی در $r$)</td><td>$\frac14$ (زینی در $c$)</td></tr>
+<tr><td>نقطه‌ی ثابت ابرجاذب</td><td>$2$</td><td>$0$</td></tr>
+<tr><td>انشعاب برگردان اول (تولد دوره‌ی ۲)</td><td>$3$</td><td>$-\frac34$</td></tr>
+<tr><td>دوره‌ی ۲ ابرجاذب</td><td>$1+\sqrt5\approx3.236$</td><td>$-1$</td></tr>
+<tr><td>برگردان دوم (تولد دوره‌ی ۴)</td><td>$1+\sqrt6\approx3.449$</td><td>$-\frac54$</td></tr>
+<tr><td>پایان آبشار (نقطه‌ی فایگنباوم)</td><td>$\approx3.5699456$</td><td>$\approx-1.401155$</td></tr>
+<tr><td>شروع پنجره‌ی دوره‌ی ۳ (زینی برای $f^3$)</td><td>$1+\sqrt8\approx3.828$</td><td>$-\frac74$</td></tr>
+<tr><td>آشوب کامل</td><td>$4$</td><td>$-2$</td></tr>
+</table></div>
+<div class="box note"><div class="bt">💡 چرا در $r=1$ «زینی» دیده نمی‌شود؟</div>
+  در خانواده‌ی لجستیک، در $r=1$ نقاط ثابت $0$ و $p_r$ از هم <b>عبور</b> می‌کنند و پایداری‌شان را عوض می‌کنند (انشعاب ترابحرانی، transcritical). علتش این است که نگاشت $r\mapsto c(r)$ در $r=1$ «تا می‌شود» (بیشینه دارد). پس در $c$ به $\frac14$ می‌رسیم و برمی‌گردیم. یک انشعاب واحد بسته به نحوه‌ی پارامتری‌کردن، شکل متفاوتی به خودش می‌گیرد.
+</div>
+</section>
+
+<section id="exercises">
+<h2><span class="num">۴</span> تمرین</h2>
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl">· آسان</span></div>
+  تحقیق کن که $r=1+\sqrt6$ به $c=-\frac54$ و $r=1+\sqrt8$ به $c=-\frac74$ نگاشته می‌شوند.
+  <details><summary>راه‌حل</summary>$c=\frac{2r-r^2}4$. برای $r=1+\sqrt6$: $\;r^2=7+2\sqrt6$ و $2r=2+2\sqrt6$، پس $c=\frac{2-7}4=-\frac54$. برای $r=1+\sqrt8$: $\;c=\frac{2+2\sqrt8-9-2\sqrt8}{4}=-\frac74$.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl">· آسان</span></div>
+  نشان بده برای $c\lt -2$ مدار نقطه‌ی بحرانی $0$ زیر $Q_c$ به بی‌نهایت فرار می‌کند.
+  <details><summary>راه‌حل</summary>$Q_c(0)=c$ و $Q_c^2(0)=c^2+c$. قرار بده $s=\sqrt{1-4c}$. برای $c\lt -2$ داریم $s\gt 3$، $\;c=\frac{1-s^2}{4}$ و $p_+=\frac{1+s}{2}$. آنگاه $c^2+c=c(c+1)=\frac{(s^2-1)(s^2-5)}{16}$، و $c^2+c\gt p_+\iff(s-1)(s^2-5)\gt 8$. این برای $s=3$ تساوی است و برای $s\gt 3$ اکیداً برقرار است (طرف چپ صعودی است). پس $Q_c^2(0)\gt p_+$. حالا برای هر $x\gt p_+$: $\;Q_c(x)-p_+=x^2-p_+^2=(x-p_+)(x+p_+)\ge 2p_+\,(x-p_+)$ و $2p_+\gt 1$، پس فاصله از $p_+$ هندسی رشد می‌کند و مدار به $+\infty$ می‌رود. (این آغاز مجموعه‌ی کانتور، همتای $r\gt 4$ است.)</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl">· متوسط</span></div>
+  مقدار حقیقی $c$ را پیدا کن که در آن $0$ نقطه‌ی تناوبی با دوره‌ی ۳ برای $Q_c$ باشد (مدار دوره‌ی ۳ ابرجاذب).
+  <details><summary>راه‌حل</summary>$0\to c\to c^2+c\to(c^2+c)^2+c=0$. پس $c(c^3+2c^2+c+1)=0$. ریشه‌ی حقیقی معادله‌ی درجه‌ی ۳ برابر $c\approx-1.7549$ است (معروف به «هواپیما» در مجموعه‌ی ماندلبرو). این عدد بین $-\frac74$ و $-2$ است، یعنی داخل پنجره‌ی دوره‌ی ۳.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl">· متوسط</span></div>
+  برای خانواده‌ی $f_\mu(x)=\mu+x-x^2$ (یا هر خانواده‌ی دلخواه) انشعاب زینی را پیدا کن و شرط‌های تعریف را چک کن.
+  <details><summary>راه‌حل</summary>نقاط ثابت: $\mu=x^2$، یعنی $x=\pm\sqrt\mu$ برای $\mu\ge0$. در $\mu=0$ و $x=0$: $\;f'=1-2x=1$ ✓، $\;f''=-2\ne0$ ✓، $\;\partial_\mu f=1\ne0$ ✓. برای $\mu\gt 0$: $\;f'(\sqrt\mu)=1-2\sqrt\mu\lt 1$ (جاذب برای $\mu$ کوچک) و $f'(-\sqrt\mu)=1+2\sqrt\mu\gt 1$ (دافع).</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl">· چالشی</span></div>
+  با استفاده از مزدوجی، بدون محاسبه‌ی جدید، بازه‌ی $r$ را پیدا کن که در آن مدار دوره‌ی ۲ لجستیک جاذب است. نتیجه را با جلسه‌ی ۵ مقایسه کن.
+  <details><summary>راه‌حل</summary>برای $Q_c$ مدار دوره‌ی ۲ روی $-\frac54\lt c\lt -\frac34$ جاذب است. با $c=\frac{2r-r^2}{4}$ و $r\gt 1$: $\;c=-\frac34\iff r^2-2r-3=0\iff r=3$، و $c=-\frac54\iff r^2-2r-5=0\iff r=1+\sqrt6$. پس $3\lt r\lt 1+\sqrt6$ ✓. مزدوجی $C^1$ (آفین) ضریب‌ها را حفظ می‌کند. در واقع $4(c+1)=-r^2+2r+4$ ✓.</details>
+</div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۵</span> تست</h2>
+<div class="quiz"></div>
+</section>
+
+<section id="learning-file">
+<h2><span class="num">۶</span> برای فایل یادگیری‌ات</h2>
+<div class="lf">
+  <div class="q"><h4>سؤال‌ها و حدس‌ها</h4><ul>
+    <li>بعد از $c=-\frac54$ مدار دوره‌ی ۲ هم دافع می‌شود. آیا الگو (دوره‌ی ۴، ۸، …) تا ابد ادامه دارد؟</li>
+    <li>آیا انشعاب‌های دیگری هم هست (مثلاً برای $f^3$)؟</li></ul></div>
+  <div class="p"><h4>تصویر کلی</h4><ul>
+    <li>زینی: $f'=1$، دو نقطه‌ی ثابت با هم متولد/نابود می‌شوند.</li>
+    <li>برگردان: $f'=-1$، دوره دوبرابر می‌شود.</li>
+    <li>لجستیک و $x^2+c$ یک خانواده‌اند با پارامتری‌کردن متفاوت.</li></ul></div>
+  <div class="s"><h4>فهم تثبیت‌شده</h4><ul>
+    <li>نقاط ثابت $Q_c$، زینی در $\frac14$ و برگردان در $-\frac34$ با استدلال کامل.</li>
+    <li>$Q_c^2(x)-x=(x^2-x+c)(x^2+x+c+1)$ و ضریب $4(c+1)$.</li>
+    <li>$h(x)=-rx+\frac r2$ و $c=\frac r2-\frac{r^2}4$.</li></ul></div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:R`در لحظه‌ی انشعاب زینی برای نقطه‌ی ثابت $p$:`, o:[R`$f'(p)=1$`,R`$f'(p)=-1$`,R`$f'(p)=0$`,R`$f(p)=0$`], a:0, e:R`نمودار بر قطر مماس است.`},
+ {q:R`برای $Q_c$ با $c=0.2$، کدام درست است؟`, o:[`دو نقطه‌ی ثابت، یکی جاذب و یکی دافع`,`هیچ نقطه‌ی ثابتی نیست`,`دو نقطه‌ی ثابت دافع`,`یک مدار دوره‌ی ۲ جاذب`], a:0, e:R`$c\lt \tfrac14$. داریم $Q'(p_-)=1-\sqrt{0.2}\approx0.55$.`},
+ {q:R`برای $c=-0.9$ رفتار تیپیک $Q_c$ کدام است؟`, o:[`نقطه‌ی ثابت جاذب`,`مدار جاذب دوره‌ی ۲`,`مدار جاذب دوره‌ی ۴`,`فرار به بی‌نهایت`], a:1, e:R`$-\tfrac54\lt -0.9\lt -\tfrac34$.`},
+ {q:R`ضریب مدار دوره‌ی ۲ $Q_c$ چیست؟`, o:[R`$4(c+1)$`,R`$-4c$`,R`$1-\sqrt{1-4c}$`,R`$4c^2$`], a:0, e:R`$4q_+q_-=4(c+1)$ (ویتا).`},
+ {q:R`مقدار $c$ نظیر $r=3.2$ کدام است؟`, o:[R`$-0.96$`,R`$-0.8$`,R`$-1.6$`,R`$0.96$`], a:0, e:R`$1.6-2.56=-0.96$.`},
+ {q:R`در $Q_{-1}$، مدار $\{0,-1\}$:`, o:[`ابرجاذب است`,`دافع است`,`مرزی است`,`ثابت است`], a:0, e:R`از نقطه‌ی بحرانی $0$ می‌گذرد، پس $\mu=0$.`},
+ {q:R`$h(x)=-rx+\tfrac r2$ نقطه‌ی بحرانی لجستیک را به کجا می‌برد؟`, o:[R`$0$`,R`$\tfrac r2$`,R`$c$`,R`$\tfrac12$`], a:0, e:R`$h(\tfrac12)=-\tfrac r2+\tfrac r2=0$، نقطه‌ی بحرانی $Q_c$.`},
+ {q:R`برای $c\gt \tfrac14$ چرا همه‌ی مدارها به بی‌نهایت می‌روند؟`, o:[R`چون $Q_c(x)-x\ge c-\tfrac14\gt 0$`,R`چون $Q_c$ یک‌به‌یک است`,R`چون $Q_c'\gt 1$ همه‌جا`,R`چون $c$ مثبت است`], a:0, e:R`هر گام حداقل $\varepsilon$ به راست می‌رود.`},
+];
+</script>
+<script>
+window.PAGE_INIT=function(DS){
+  const el=document.getElementById("cbif"), cv=el.querySelector("canvas"), ro=el.querySelector(".readout");
+  const pl=new DS.Plot(cv,{}); let sel=null;
+  function curve(fn,c0,c1,col,dashF){ const N=400; let prev=null;
+    for(let i=0;i<=N;i++){ const c=c0+(c1-c0)*i/N, v=fn(c); if(v===null){prev=null;continue;}
+      if(prev){ pl.line(prev[0],prev[1],c,v[0],col,v[1]?2.6:1.3,v[1]?1:0.55); } prev=[c,v[0]]; } }
+  function draw(){
+    pl.resize(); pl.v={xmin:-2.05,xmax:0.5,ymin:-2.05,ymax:2.05}; pl.clear(); pl.axes({xl:"c",yl:"x"});
+    const g=pl.ctx, col=DS.css("--plot-axis");
+    for(let i=0;i<500;i++){ const c=-2+2.25*i/500; let x=0; let esc=false; for(let t=0;t<600;t++){ x=x*x+c; if(Math.abs(x)>10){esc=true;break;} }
+      if(esc) continue; for(let k=0;k<120;k++){ x=x*x+c; g.fillStyle=col; g.globalAlpha=0.35; g.fillRect(pl.X(c),pl.Y(x),1.3,1.3);} g.globalAlpha=1; }
+    const s1=c=>c<=0.25?Math.sqrt(1-4*c):null;
+    curve(c=>{const s=s1(c); return s===null?null:[(1+s)/2,false];},-2,0.25,DS.css("--plot-c2"));
+    curve(c=>{const s=s1(c); return s===null?null:[(1-s)/2, Math.abs(1-s)<1];},-2,0.25,DS.css("--plot-c1"));
+    const s2=c=>c< -0.75?Math.sqrt(-3-4*c):null;
+    [1,-1].forEach(sg=>curve(c=>{const s=s2(c); return s===null?null:[(-1+sg*s)/2, Math.abs(4*(c+1))<1];},-2,-0.75,DS.css("--plot-c3")));
+    [[0.25,"زینی c=¼"],[-0.75,"برگردان c=−¾"],[-1.25,"c=−5/4"],[-1.75,"پنجره‌ی ۳"]].forEach(([c,t])=>{ pl.line(c,-2.05,c,2.05,DS.css("--plot-diag"),1,0.6,[2,3]); g.fillStyle=DS.css("--ink-3"); g.font="11px Vazirmatn"; g.fillText(t,pl.X(c)+3,pl.Y(1.95)); });
+    if(sel!==null) pl.line(sel,-2.05,sel,2.05,DS.css("--plot-c2"),1.5);
+    ro.textContent = sel===null ? "قرمز: p₊ (دافع)  ·  سبز: p₋ (ضخیم=جاذب، نازک=دافع)  ·  آبی: مدار دوره‌ی ۲" : describe(sel);
+  }
+  function describe(c){ const s=1-4*c; let t=`c = ${DS.fmt(c,4)}:  `;
+    if(s<0) t+="نقطه‌ی ثابت حقیقی ندارد → همه به +∞";
+    else { const pm=(1-Math.sqrt(s))/2, pp=(1+Math.sqrt(s))/2; t+=`p₋=${DS.fmt(pm,4)} (Q′=${DS.fmt(2*pm,3)})، p₊=${DS.fmt(pp,4)} (Q′=${DS.fmt(2*pp,3)})`;
+      if(c<-0.75){ const q=Math.sqrt(-3-4*c); t+=`\nمدار دوره‌ی ۲: {${DS.fmt((-1+q)/2,4)}, ${DS.fmt((-1-q)/2,4)}}، ضریب 4(c+1) = ${DS.fmt(4*(c+1),3)}`; } }
+    return t; }
+  cv.addEventListener("pointerdown",e=>{ const r=cv.getBoundingClientRect(); sel=pl.invX(e.clientX-r.left); draw(); });
+  DS.onResize(el,draw); draw();
+};
+</script>
+</body>
+</html>
