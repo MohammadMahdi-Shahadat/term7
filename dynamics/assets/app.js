@@ -15,7 +15,7 @@ const SESSIONS = [
   {n:9,  part:"ب",   title:"دوره‌ی ۳ و قضیه‌ی شارکوفسکی", built:true},
   {n:10, part:"ب",   title:"نگاشت خیمه و نگاشت اولام؛ فضای پارامترها", built:true},
   {n:11, part:"ب",   title:"حل کامل کارگاه ۱ و آزمون جامع یک‌بعدی", built:true},
-  {n:12, part:"ج",   title:"نگاشت‌های خطی صفحه (۱): مقادیر ویژه و رده‌بندی", built:false},
+  {n:12, part:"ج",   title:"نگاشت‌های خطی صفحه (۱): مقادیر ویژه و رده‌بندی", built:true},
   {n:13, part:"ج",   title:"نگاشت‌های خطی صفحه (۲): trace–det، حفظ مساحت، نگاشت گربه", built:false},
   {n:14, part:"ج",   title:"نگاشت غیرخطی صفحه: ژاکوبین و خطی‌سازی", built:false},
   {n:15, part:"ج",   title:"نگاشت هنون", built:false},
