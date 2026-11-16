@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۱۳ · صفحه‌ی trace–det، حفظ مساحت و نگاشت گربه</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+/* فقط برای شکل‌های همین صفحه */
+.fig svg{display:block;margin:auto}
+.fig.wideflow{overflow-x:auto}
+.regkey{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px 14px;font-size:.88em;margin:8px 0 2px}
+.regkey span{display:flex;gap:7px;align-items:center}
+.regkey i{width:14px;height:14px;border-radius:4px;border:1px solid var(--line-2);flex:none}
+.ntab{font-size:.9em}
+.ntab td,.ntab th{text-align:center;padding:4px 7px}
+.ntab td.hl{background:var(--accent-soft);font-weight:700;color:var(--accent)}
+/* رفع سرریز افقی در چیدمان راست‌به‌چپ: ظرف اسکرول جدول باید بافت نقاشی خودش را داشته باشد */
+.tablewrap{position:relative}
+</style>
+</head>
+<body data-session="13">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۱۳ از ۲۰ · بخش ج: دینامیک دوبعدی</div>
+  <h1>نگاشت‌های خطی صفحه (۲): صفحه‌ی trace–det، حفظ مساحت و نگاشت گربه</h1>
+  <p class="lead">جلسه‌ی ۱۲ رده‌بندی نگاشت‌های خطی صفحه را بر حسب <b>مقادیر ویژه</b> به دست داد. امروز همان رده‌بندی را روی دو عدد مشاهده‌پذیر و خیلی ساده‌تر می‌نشانیم: اثر و دترمینان. نتیجه یک نقشه‌ی کامل در صفحه‌ی $(\tau,\delta)$ است با یک <b>مثلث پایداری</b> که ثابتش می‌کنیم. بعد به خط $|\delta|=1$ می‌رویم — نگاشت‌های حافظ مساحت — و از آن‌جا به اولین سیستم واقعاً آشوبی این درس: <b>نگاشت گربه‌ی آرنولد</b> روی چنبره، که در آن هذلولوی بودن یک ماتریس عدد صحیح، آشوب تولید می‌کند.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۲۰ دقیقه</span><span>📚 منبع: Hasselblatt–Katok §۳.۱، §۳.۳، §۷.۱.۴ · Knill (Integrable maps، Entropy and chaos)</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>چندجمله‌ای مشخصه را فقط با $\tau=\operatorname{tr}A$ و $\delta=\det A$ بنویسی و از علامت مبیّن $\Delta=\tau^2-4\delta$ نوع مقادیر ویژه را بخوانی.</li>
+      <li>نواحی جاذب / دافع / زینی / بیضوی را روی صفحه‌ی $(\tau,\delta)$ رسم کنی و <b>مثلث پایداری</b> ($|\delta|<1$ و $|\tau|<1+\delta$) را از صفر ثابت کنی.</li>
+      <li>ثابت کنی $|\det A|=1$ معادل حفظ مساحت است و توضیح دهی چرا یک نگاشت حافظ مساحت هیچ جاذبی ندارد.</li>
+      <li>تعریف ماتریس هذلولوی را بگویی، $E^s$ و $E^u$ را بسازی و تجزیه‌ی $\mathbb{R}^2=E^s\oplus E^u$ را ثابت کنی.</li>
+      <li>نشان دهی $\begin{pmatrix}2&1\\1&1\end{pmatrix}$ روی $\mathbb{T}^2$ خوش‌تعریف و دوسویی است، $\#\mathrm{Fix}(F^n)=\lambda^n+\lambda^{-n}-2$ را ثابت کنی و بگویی چرا نقاط تناوبی دقیقاً نقاط گویا و چگال‌اند.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<section id="think">
+<h2><span class="num">۰</span> قبل از خواندن فکر کن</h2>
+<div class="box think"><div class="bt">✋ ده دقیقه با کاغذ و شبیه‌ساز</div>
+<p>در جلسه‌ی ۱۲ برای هر ماتریس اول مقادیر ویژه را حساب می‌کردیم و بعد رده را می‌گفتیم. حالا این سؤال‌ها:</p>
+<ol>
+  <li>برای $A=\begin{pmatrix}a&b\\c&d\end{pmatrix}$ چند عدد لازم است تا <b>مقادیر ویژه</b> معلوم شوند؟ چهار عدد $a,b,c,d$ یا کمتر؟</li>
+  <li>اگر فقط $\operatorname{tr}A$ و $\det A$ را بدانی، آیا می‌توانی بگویی مدارها به مبدأ میل می‌کنند یا نه؟ حدس بزن شرط «همه‌ی مقادیر ویژه درون دایره‌ی واحد» روی صفحه‌ی $(\operatorname{tr},\det)$ چه <b>شکلی</b> است: دیسک؟ مثلث؟ نیم‌صفحه؟</li>
+  <li>در شبیه‌ساز استاد (<span class="ltr">map2d-explorer</span>، گزینه‌ی «نگاشت خطی») یک مربع کوچک از نقاط اولیه بگذار و ببین بعد از یک گام <b>مساحتش</b> چه می‌شود. برای چه ماتریس‌هایی مساحت ثابت می‌ماند؟ آن ماتریس‌ها می‌توانند نقطه‌ی ثابت جاذب داشته باشند؟</li>
+  <li>ماتریس $A=\begin{pmatrix}2&1\\1&1\end{pmatrix}$ را روی مربع $[0,1)^2$ اعمال کن و نتیجه را «به پیچ $1$» برگردان (یعنی هر مختصه را مد ۱ بگیر). چه حسی داری؟ آیا این کار روی چنبره خوش‌تعریف است؟ اگر درایه‌ها صحیح نبودند چه می‌شد؟</li>
+</ol>
+<p>جواب‌هایت را در «سؤال‌ها و حدس‌ها»ی فایل یادگیری بنویس. بعد بخوان.</p>
+</div>
+</section>
+
+<section id="tracedet">
+<h2><span class="num">۱</span> صفحه‌ی trace–det <span class="tag core">هسته‌ی اصلی</span></h2>
+
+<h3>۱.۱ همه‌چیز در دو عدد</h3>
+<div class="box def"><div class="bt">تعریف ۱۳.۱ — اثر، دترمینان، مبیّن</div>
+برای $A=\begin{pmatrix}a&b\\c&d\end{pmatrix}\in M_2(\mathbb{R})$ بگذار
+$$\tau:=\operatorname{tr}A=a+d,\qquad \delta:=\det A=ad-bc,\qquad \Delta:=\tau^2-4\delta .$$
+$\tau$ را <b>اثر</b> (<span class="ltr">trace</span>)، $\delta$ را <b>دترمینان</b> و $\Delta$ را <b>مبیّن</b> (<span class="ltr">discriminant</span>) می‌نامیم.
+</div>
+
+<div class="box thm"><div class="bt">گزاره ۱۳.۲ — چندجمله‌ای مشخصه</div>
+$$\det(A-\lambda I)=\lambda^2-(\operatorname{tr}A)\lambda+\det A=\lambda^2-\tau\lambda+\delta,$$
+و بنابراین
+$$\lambda_{1,2}=\frac{\tau\pm\sqrt{\Delta}}{2},\qquad \lambda_1+\lambda_2=\tau,\qquad \lambda_1\lambda_2=\delta .$$
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+مستقیم بسط می‌دهیم:
+$$\det(A-\lambda I)=(a-\lambda)(d-\lambda)-bc=\lambda^2-(a+d)\lambda+(ad-bc).$$
+فرمول ریشه‌های معادله‌ی درجه‌دو $2\lambda=\tau\pm\sqrt{\tau^2-4\delta}$ را می‌دهد. دو رابطه‌ی آخر همان ضرایب چندجمله‌ای‌اند: اگر $\lambda^2-\tau\lambda+\delta=(\lambda-\lambda_1)(\lambda-\lambda_2)$ باشد، مقایسه‌ی ضرایب نتیجه می‌دهد. <span class="qed">∎</span>
+</div>
+
+<p><b>نتیجه‌ی مفهومی.</b> دینامیک $x\mapsto Ax$ تا حد مزدوج بودن خطی، فقط به مقادیر ویژه بستگی دارد (جلسه‌ی ۱۲)، و مقادیر ویژه فقط به $(\tau,\delta)$ بستگی دارند. پس <b>همه‌ی رده‌بندی جلسه‌ی ۱۲ را می‌شود روی یک صفحه‌ی دوبعدی کشید</b> — صفحه‌ی $(\tau,\delta)$. این صفحه‌ی <b>trace–det</b> است. (یک تذکر دقیق: $(\tau,\delta)$ مقادیر ویژه را تعیین می‌کند، ولی در حالت مقدار ویژه‌ی مضاعف نمی‌گوید $A$ قطری‌شدنی است یا از نوع $\begin{pmatrix}\lambda&s\\0&\lambda\end{pmatrix}$؛ یعنی روی سهمی $\Delta=0$ صفحه‌ی trace–det رده‌ی مزدوجی را کامل مشخص نمی‌کند.)</p>
+
+<h3>۱.۲ سه ناحیه بر حسب علامت مبیّن</h3>
+<ul>
+  <li>$\Delta>0$ ⟺ دو مقدار ویژه‌ی <b>حقیقی و متمایز</b>؛ $A$ قطری‌شدنی است و در مختصات ویژه $\operatorname{diag}(\lambda_1,\lambda_2)$ می‌شود. <span class="tag core">هسته‌ی اصلی</span></li>
+  <li>$\Delta=0$ ⟺ یک مقدار ویژه‌ی <b>مضاعف</b> $\lambda=\tau/2$؛ یا $A=\lambda I$ (همسانی) یا مزدوج با $\begin{pmatrix}\lambda&1\\0&\lambda\end{pmatrix}$ (برشی).</li>
+  <li>$\Delta<0$ ⟺ جفت مقدار ویژه‌ی <b>مختلط مزدوج</b> $\lambda=\rho e^{\pm i\theta}$ با
+  $$\rho=|\lambda|=\sqrt{\lambda\bar\lambda}=\sqrt{\delta},\qquad \cos\theta=\frac{\tau}{2\sqrt\delta};$$
+  در این حالت $A$ مزدوج با $\rho\begin{pmatrix}\cos\theta&-\sin\theta\\ \sin\theta&\cos\theta\end{pmatrix}$ است، یعنی «دوران به اندازه‌ی $\theta$ و تغییر مقیاس به اندازه‌ی $\rho$».</li>
+</ul>
+<p>مرز دو حالت اول و سوم، <b>سهمی</b> $\;\delta=\tau^2/4\;$ است. توجه کن که $\Delta<0$ خودبه‌خود $\delta>\tau^2/4\ge0$ می‌دهد: <b>مقادیر ویژه‌ی مختلط فقط بالای سهمی و فقط برای $\delta>0$ ممکن‌اند</b>، و آن‌جا $|\lambda|=\sqrt\delta$ — پس در ناحیه‌ی مختلط، «جاذب یا دافع بودن» تنها به $\delta$ بستگی دارد: $\delta<1$ جاذب، $\delta>1$ دافع، $\delta=1$ دوران محض.</p>
+
+<h3>۱.۳ ناحیه‌ی پایداری: مثلث</h3>
+<div class="box def"><div class="bt">تعریف ۱۳.۳</div>
+می‌گوییم $A$ <b>پایدار</b> (یا مبدأ برای $A$ نقطه‌ی ثابت جاذب) است اگر هر دو مقدار ویژه قدرمطلق اکید کوچک‌تر از ۱ داشته باشند، یعنی شعاع طیفی $r(A)=\max(|\lambda_1|,|\lambda_2|)<1$. در این حالت (جلسه‌ی ۱۲، و <span class="ltr">HK</span> گزاره‌ی ۳.۱.۱۰) $A$ نهایتاً انقباضی است و $A^nx\to0$ برای هر $x$.
+</div>
+
+<div class="box thm"><div class="bt">قضیه ۱۳.۴ — مثلث پایداری <span class="tag core">هسته‌ی اصلی</span></div>
+برای $A\in M_2(\mathbb{R})$ با $\tau=\operatorname{tr}A$ و $\delta=\det A$:
+$$\max\big(|\lambda_1|,\,|\lambda_2|\big)<1
+\qquad\Longleftrightarrow\qquad
+\begin{cases}|\delta|<1,\\[2pt] |\tau|<1+\delta.\end{cases}$$
+این دو نامساوی در صفحه‌ی $(\tau,\delta)$ درون <b>مثلث باز</b> با رأس‌های $(-2,1)$، $(2,1)$ و $(0,-1)$ را توصیف می‌کنند.
+</div>
+<div class="box proof"><div class="bt">طرح اثبات</div>
+همه‌چیز از سه عدد می‌آید: $p(1)$، $p(-1)$ و $\delta$، که در آن $p(\lambda)=\lambda^2-\tau\lambda+\delta$ چندجمله‌ای مشخصه است. محاسبه می‌کنیم
+$$p(1)=1-\tau+\delta,\qquad p(-1)=1+\tau+\delta .$$
+پس شرط‌های $|\tau|<1+\delta$ دقیقاً یعنی $p(1)>0$ و $p(-1)>0$. چون $p$ سهمی رو به بالا است، علامت $p(\pm1)$ می‌گوید $\pm1$ بیرون بازه‌ی $[\lambda_1,\lambda_2]$ است، و $|\delta|=|\lambda_1\lambda_2|<1$ جلوی «هر دو ریشه بیرون $[-1,1]$» را می‌گیرد. حالت مختلط هم جداگانه و سریع حل می‌شود چون آن‌جا $|\lambda|^2=\delta$.
+</div>
+<div class="box proof"><div class="bt">اثبات کامل</div>
+<p><b>گام ۰ (معادل‌سازی نامساوی‌ها).</b> $|\tau|<1+\delta$ یعنی $-(1+\delta)<\tau<1+\delta$، که معادل است با مثبت بودن هر دو عدد $p(1)$ و $p(-1)$:
+$$p(1)=1-\tau+\delta>0,\qquad p(-1)=1+\tau+\delta>0 .$$
+(ضمناً $|\tau|<1+\delta$ به‌تنهایی ایجاب می‌کند $1+\delta>0$، یعنی $\delta>-1$؛ پس در شرط دوگانه‌ی قضیه، از $|\delta|<1$ فقط $\delta<1$ تازه است.)</p>
+
+<p><b>گام ۱ ($\Rightarrow$).</b> فرض کن $|\lambda_1|,|\lambda_2|<1$. آن‌گاه $|\delta|=|\lambda_1||\lambda_2|<1$. برای $p(\pm1)$ دو حالت:</p>
+<ul>
+<li><i>مقادیر ویژه حقیقی.</i> $p(1)=(1-\lambda_1)(1-\lambda_2)>0$ چون هر دو عامل مثبت‌اند ($\lambda_i<1$)، و $p(-1)=(1+\lambda_1)(1+\lambda_2)>0$ چون هر دو عامل مثبت‌اند ($\lambda_i>-1$).</li>
+<li><i>مقادیر ویژه مختلط</i>، $\lambda_2=\bar\lambda_1$. آن‌گاه
+$p(1)=(1-\lambda_1)(1-\bar\lambda_1)=|1-\lambda_1|^2>0$ و $p(-1)=|1+\lambda_1|^2>0$ (اکید، چون $\lambda_1\notin\mathbb{R}$ پس $\lambda_1\ne\pm1$).</li>
+</ul>
+
+<p><b>گام ۲ ($\Leftarrow$).</b> فرض کن $|\delta|<1$، $p(1)>0$ و $p(-1)>0$.</p>
+<p><i>حالت $\Delta<0$ (مختلط).</i> $\lambda_2=\bar\lambda_1$ و $|\lambda_1|^2=\lambda_1\bar\lambda_1=\lambda_1\lambda_2=\delta$. پس $|\lambda_1|=|\lambda_2|=\sqrt{\delta}<1$ (توجه: $\Delta<0$ ایجاب می‌کند $\delta>\tau^2/4\ge0$، پس $\sqrt\delta$ معنا دارد و $\delta<1$ از $|\delta|<1$ می‌آید). تمام.</p>
+<p><i>حالت $\Delta\ge0$ (حقیقی).</i> ریشه‌ها حقیقی‌اند؛ بگذار $\lambda_1\le\lambda_2$. چون $p$ سهمی رو به بالا با ریشه‌های $\lambda_1,\lambda_2$ است،
+$$p(x)<0\iff x\in(\lambda_1,\lambda_2),\qquad p(x)>0\iff x\notin[\lambda_1,\lambda_2] .$$
+از $p(1)>0$ و $p(-1)>0$ نتیجه می‌گیریم $1\notin[\lambda_1,\lambda_2]$ و $-1\notin[\lambda_1,\lambda_2]$. چون مکمل $[\lambda_1,\lambda_2]$ اجتماع دو نیم‌خط $(-\infty,\lambda_1)$ و $(\lambda_2,+\infty)$ است، برای جای $-1$ و $1$ فقط چهار امکان هست:
+<ol>
+<li>هر دو در $(\lambda_2,\infty)$: پس $\lambda_2<-1$ و در نتیجه $\lambda_1\le\lambda_2<-1$، یعنی $\delta=\lambda_1\lambda_2>1$ — با $|\delta|<1$ ناسازگار.</li>
+<li>هر دو در $(-\infty,\lambda_1)$: پس $1<\lambda_1\le\lambda_2$، یعنی $\delta>1$ — باز ناسازگار.</li>
+<li>$-1\in(-\infty,\lambda_1)$ و $1\in(\lambda_2,\infty)$: یعنی $-1<\lambda_1\le\lambda_2<1$ — همان حکم مطلوب.</li>
+<li>$1\in(-\infty,\lambda_1)$ و $-1\in(\lambda_2,\infty)$: یعنی $\lambda_1>1$ و $\lambda_2<-1$، که با $\lambda_1\le\lambda_2$ ناسازگار است.</li>
+</ol>
+پس تنها حالت ممکن سومی است و $|\lambda_1|,|\lambda_2|<1$. <span class="qed">∎</span></p>
+
+<p><b>رأس‌های مثلث.</b> ناحیه با سه نامساوی $\delta<1$، $\tau<1+\delta$ و $-\tau<1+\delta$ توصیف می‌شود؛ یعنی اشتراک سه نیم‌صفحه، که یک مثلث است. خط $\delta=1$ با خط $\tau=1+\delta$ در $(2,1)$ و با $\tau=-(1+\delta)$ در $(-2,1)$ برمی‌خورد، و دو خط اخیر در $(0,-1)$ یکدیگر را قطع می‌کنند. <span class="qed">∎</span></p>
+</div>
+
+<div class="box note"><div class="bt">نکته‌ی هندسی قشنگ</div>
+سهمی $\delta=\tau^2/4$ از دو رأس بالای مثلث می‌گذرد ($\tau=\pm2\Rightarrow\delta=1$) و در آن‌ها بر ضلع‌های مایل <b>مماس</b> است: از $\tau^2/4=\tau-1$ می‌آید $(\tau-2)^2=0$، ریشه‌ی مضاعف. پس درون مثلث، ناحیه‌ی بالای سهمی یک «عدسی» است که در آن مقادیر ویژه مختلط و جاذب‌اند (<b>مارپیچ جاذب</b>)، و زیر سهمی مقادیر ویژه حقیقی و جاذب‌اند (<b>گره جاذب</b>).
+</div>
+
+<h3>۱.۴ بقیه‌ی نقشه: زینی و دافع</h3>
+<p>یک اتحاد کوچک همه‌ی کار را می‌کند:</p>
+$$p(1)\,p(-1)=(1-\tau+\delta)(1+\tau+\delta)=(1+\delta)^2-\tau^2,$$
+و از طرف دیگر، با تجزیه‌ی $p(\lambda)=(\lambda-\lambda_1)(\lambda-\lambda_2)$،
+$$p(1)\,p(-1)=(1-\lambda_1)(1-\lambda_2)(1+\lambda_1)(1+\lambda_2)=(1-\lambda_1^2)(1-\lambda_2^2).$$
+پس
+$$\boxed{\;(1-\lambda_1^2)(1-\lambda_2^2)=(1+\delta)^2-\tau^2\;}$$
+
+<div class="box thm"><div class="bt">گزاره ۱۳.۵ — ناحیه‌ی زینی <span class="tag core">هسته‌ی اصلی</span></div>
+$A$ از نوع <b>زینی</b> است (یعنی $|\lambda_1|<1<|\lambda_2|$ پس از شماره‌گذاری مناسب) اگر و تنها اگر
+$$\tau^2>(1+\delta)^2\qquad\big(\Longleftrightarrow\ |\tau|>|1+\delta|\big).$$
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p>($\Rightarrow$) اگر $|\lambda_1|<1<|\lambda_2|$ باشد، مقادیر ویژه حقیقی‌اند (جفت مختلط مزدوج قدرمطلق‌های برابر دارند). پس $1-\lambda_1^2>0$ و $1-\lambda_2^2<0$، لذا $(1-\lambda_1^2)(1-\lambda_2^2)<0$ و با اتحاد بالا $(1+\delta)^2-\tau^2<0$.</p>
+<p>($\Leftarrow$) فرض کن $\tau^2>(1+\delta)^2$. اول حقیقی بودن: 
+$$\Delta=\tau^2-4\delta>(1+\delta)^2-4\delta=(1-\delta)^2\ge0 .$$
+پس $\lambda_1\le\lambda_2$ حقیقی و متمایزند. حالا $p(1)p(-1)=(1+\delta)^2-\tau^2<0$، پس $p(1)$ و $p(-1)$ علامت مخالف دارند، یعنی <b>دقیقاً یکی</b> از $1$ و $-1$ در بازه‌ی باز $(\lambda_1,\lambda_2)$ است.
+<ul>
+<li>اگر $1\in(\lambda_1,\lambda_2)$ و $-1\notin[\lambda_1,\lambda_2]$: چون $\lambda_2>1>-1$، تنها راه بیرون بودن $-1$ این است که $-1<\lambda_1$. پس $-1<\lambda_1<1<\lambda_2$ و $|\lambda_1|<1<|\lambda_2|$.</li>
+<li>اگر $-1\in(\lambda_1,\lambda_2)$ و $1\notin[\lambda_1,\lambda_2]$: چون $\lambda_1<-1<1$، باید $\lambda_2<1$. پس $\lambda_1<-1<\lambda_2<1$ و $|\lambda_2|<1<|\lambda_1|$.</li>
+</ul>
+در هر دو حالت $A$ زینی است. <span class="qed">∎</span></p>
+</div>
+
+<div class="box thm"><div class="bt">نتیجه ۱۳.۶ — نقشه‌ی کامل صفحه‌ی trace–det</div>
+<p>بگذار $N:=\{(\tau,\delta):\tau^2=(1+\delta)^2\}\cup\{(\tau,\delta):\delta=1,\ \tau^2\le4\}$. آن‌گاه:</p>
+<ol>
+  <li>$A$ <b>هذلولوی</b> است (هیچ مقدار ویژه‌ای روی دایره‌ی واحد ندارد) اگر و تنها اگر $(\tau,\delta)\notin N$.</li>
+  <li>اگر $(\tau,\delta)\notin N$، دقیقاً یکی از سه حالت رخ می‌دهد:
+  <br>• <b>جاذب</b> (هر دو $|\lambda|<1$): $\;\tau^2<(1+\delta)^2$ و $|\delta|<1$ — یعنی درون مثلث.
+  <br>• <b>زینی</b>: $\;\tau^2>(1+\delta)^2$.
+  <br>• <b>دافع</b> (هر دو $|\lambda|>1$): $\;\tau^2<(1+\delta)^2$ و $|\delta|>1$.</li>
+</ol>
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>(۱)</b> $A$ مقدار ویژه‌ای روی دایره‌ی واحد دارد یعنی یا $\lambda=\pm1$ (که معادل است با $p(1)=0$ یا $p(-1)=0$، یعنی $(1+\delta)^2=\tau^2$)، یا یک جفت مختلط با $|\lambda|=1$، که معادل است با $\Delta<0$ و $\delta=|\lambda|^2=1$، یعنی $\delta=1$ و $\tau^2<4$. اجتماع این دو مجموعه همان $N$ است (نقاط $(\pm2,1)$ در هر دو هستند: آن‌جا $\lambda=\pm1$ مضاعف است).</p>
+<p><b>(۲)</b> اگر $A$ هذلولوی باشد، هر مقدار ویژه یا درون دایره‌ی واحد است یا بیرونش، و جفت مختلط مزدوج هر دو در یک طرف‌اند. پس دقیقاً سه حالت ممکن است: هر دو درون، هر دو بیرون، یکی درون و یکی بیرون. قضیه‌ی ۱۳.۴ حالت اول را و گزاره‌ی ۱۳.۵ حالت سوم را توصیف کرد؛ پس حالت دوم همان باقی‌مانده است، یعنی $\tau^2<(1+\delta)^2$ و $|\delta|\ge1$ — و $|\delta|=1$ با $\tau^2<(1+\delta)^2$ فقط $\delta=1,\ \tau^2<4$ را می‌دهد که در $N$ است (برای $\delta=-1$ می‌شد $\tau^2<0$، ناممکن). پس $|\delta|>1$.</p>
+<p>برای بررسی مستقیم حالت دافع می‌توان به‌جای این «باقی‌مانده‌گیری» از ترفند وارون استفاده کرد: اگر $\delta\ne0$، آن‌گاه $A^{-1}$ مقادیر ویژه‌ی $1/\lambda_i$ دارد با
+$$\operatorname{tr}A^{-1}=\frac{\tau}{\delta},\qquad \det A^{-1}=\frac1\delta,$$
+و «هر دو $|\lambda_i|>1$» معادل «هر دو $|1/\lambda_i|<1$» است، که با قضیه‌ی ۱۳.۴ روی $A^{-1}$ می‌شود $|1/\delta|<1$ و $|\tau/\delta|<1+1/\delta$. ضرب نامساوی دوم در $|\delta|>0$ می‌دهد $|\tau|<|\delta|+\operatorname{sgn}(\delta)=|1+\delta|$ (برای $\delta>1$: $|\tau|<\delta+1$؛ برای $\delta<-1$: $|\tau|<-\delta-1$)، که همان $\tau^2<(1+\delta)^2$ است. <span class="qed">∎</span></p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 640 470" width="640" height="470" role="img" aria-label="صفحه‌ی trace-det و نواحی رده‌بندی">
+<style>
+.td-gr{stroke:var(--plot-grid);stroke-width:1;fill:none}
+.td-ax{stroke:var(--plot-axis);stroke-width:1.2;fill:none}
+.td-bd{stroke:var(--ink-2);stroke-width:1.7;fill:none}
+.td-par{stroke:var(--thm);stroke-width:2.4;fill:none;stroke-dasharray:7 5}
+.td-a{stroke:var(--warn);stroke-width:2;fill:none;stroke-dasharray:2 4}
+.td-L{font-family:Vazirmatn,sans-serif;font-size:16px;font-weight:600;fill:var(--ink);direction:rtl}
+.td-S{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:500;fill:var(--ink-2);direction:rtl}
+.td-M{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:500;fill:var(--ink-2);direction:ltr}
+.td-T{font-family:ui-monospace,monospace;font-size:12px;fill:var(--ink-3)}
+.td-N{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:700;fill:var(--ink)}
+</style>
+<rect x="44" y="34" width="580" height="398" fill="var(--plot-bg)" stroke="var(--line)" rx="6"/>
+<g opacity="0.55">
+<polygon points="207.9,193.2 460.1,193.2 334.0,352.4" fill="var(--ex-bg)"/>
+<polygon points="397.0,432.0 334.0,352.4 586.2,34.0 624.0,34.0 624.0,432.0" fill="var(--think-bg)"/>
+<polygon points="271.0,432.0 334.0,352.4 81.8,34.0 44.0,34.0 44.0,432.0" fill="var(--think-bg)"/>
+<polygon points="207.9,193.2 460.1,193.2 586.2,34.0 81.8,34.0" fill="var(--def-bg)"/>
+<polygon points="334.0,352.4 397.0,432.0 271.0,432.0" fill="var(--def-bg)"/>
+</g>
+<line class="td-gr" x1="81.8" y1="34" x2="81.8" y2="432"/>
+<line class="td-gr" x1="144.9" y1="34" x2="144.9" y2="432"/>
+<line class="td-gr" x1="207.9" y1="34" x2="207.9" y2="432"/>
+<line class="td-gr" x1="271.0" y1="34" x2="271.0" y2="432"/>
+<line class="td-gr" x1="334.0" y1="34" x2="334.0" y2="432"/>
+<line class="td-gr" x1="397.0" y1="34" x2="397.0" y2="432"/>
+<line class="td-gr" x1="460.1" y1="34" x2="460.1" y2="432"/>
+<line class="td-gr" x1="523.1" y1="34" x2="523.1" y2="432"/>
+<line class="td-gr" x1="586.2" y1="34" x2="586.2" y2="432"/>
+<line class="td-gr" x1="44" y1="432.0" x2="624" y2="432.0"/>
+<line class="td-gr" x1="44" y1="352.4" x2="624" y2="352.4"/>
+<line class="td-gr" x1="44" y1="272.8" x2="624" y2="272.8"/>
+<line class="td-gr" x1="44" y1="193.2" x2="624" y2="193.2"/>
+<line class="td-gr" x1="44" y1="113.6" x2="624" y2="113.6"/>
+<line class="td-gr" x1="44" y1="34.0" x2="624" y2="34.0"/>
+<line class="td-ax" x1="44" y1="272.8" x2="624" y2="272.8"/>
+<line class="td-ax" x1="334.0" y1="34" x2="334.0" y2="432"/>
+<text class="td-T" x="81.8" y="287.8" style="text-anchor:middle">-4</text>
+<text class="td-T" x="144.9" y="287.8" style="text-anchor:middle">-3</text>
+<text class="td-T" x="207.9" y="287.8" style="text-anchor:middle">-2</text>
+<text class="td-T" x="271.0" y="287.8" style="text-anchor:middle">-1</text>
+<text class="td-T" x="397.0" y="287.8" style="text-anchor:middle">1</text>
+<text class="td-T" x="460.1" y="287.8" style="text-anchor:middle">2</text>
+<text class="td-T" x="523.1" y="287.8" style="text-anchor:middle">3</text>
+<text class="td-T" x="586.2" y="287.8" style="text-anchor:middle">4</text>
+<text class="td-T" x="321.0" y="436.0" style="text-anchor:middle">-2</text>
+<text class="td-T" x="321.0" y="356.4" style="text-anchor:middle">-1</text>
+<text class="td-T" x="321.0" y="197.2" style="text-anchor:middle">1</text>
+<text class="td-T" x="321.0" y="117.6" style="text-anchor:middle">2</text>
+<text class="td-T" x="321.0" y="38.0" style="text-anchor:middle">3</text>
+<line class="td-a" x1="44" y1="193.2" x2="624" y2="193.2"/>
+<line class="td-a" x1="44" y1="352.4" x2="624" y2="352.4"/>
+<line class="td-bd" x1="271.0" y1="432.0" x2="586.2" y2="34.0"/>
+<line class="td-bd" x1="397.0" y1="432.0" x2="81.8" y2="34.0"/>
+<polyline class="td-par" points="115.6,34.0 120.5,44.5 125.3,54.8 130.2,64.8 135.0,74.6 139.9,84.1 144.7,93.4 149.6,102.5 154.4,111.4 159.3,120.0 164.1,128.3 169.0,136.5 173.8,144.4 178.7,152.0 183.6,159.5 188.4,166.7 193.3,173.6 198.1,180.3 203.0,186.8 207.8,193.1 212.7,199.1 217.5,204.9 222.4,210.4 227.2,215.7 232.1,220.8 236.9,225.6 241.8,230.2 246.6,234.6 251.5,238.7 256.4,242.6 261.2,246.3 266.1,249.7 270.9,252.9 275.8,255.8 280.6,258.5 285.5,261.0 290.3,263.2 295.2,265.3 300.0,267.0 304.9,268.6 309.7,269.9 314.6,270.9 319.4,271.7 324.3,272.3 329.1,272.7 334.0,272.8 338.9,272.7 343.7,272.3 348.6,271.7 353.4,270.9 358.3,269.9 363.1,268.6 368.0,267.0 372.8,265.3 377.7,263.2 382.5,261.0 387.4,258.5 392.2,255.8 397.1,252.9 401.9,249.7 406.8,246.3 411.6,242.6 416.5,238.7 421.4,234.6 426.2,230.2 431.1,225.6 435.9,220.8 440.8,215.7 445.6,210.4 450.5,204.9 455.3,199.1 460.2,193.1 465.0,186.8 469.9,180.3 474.7,173.6 479.6,166.7 484.4,159.5 489.3,152.0 494.2,144.4 499.0,136.5 503.9,128.3 508.7,120.0 513.6,111.4 518.4,102.5 523.3,93.4 528.1,84.1 533.0,74.6 537.8,64.8 542.7,54.8 547.5,44.5 552.4,34.0"/>
+<polygon points="207.9,193.2 460.1,193.2 334.0,352.4" fill="none" stroke="var(--ex)" stroke-width="2.4"/>
+<text class="td-L" x="334.0" y="226.6" style="text-anchor:middle">مارپیچ جاذب</text>
+<text class="td-L" x="334.0" y="306.2" style="text-anchor:middle">گره جاذب</text>
+<text class="td-L" x="529.4" y="296.7" style="text-anchor:middle">زینی</text>
+<text class="td-L" x="138.6" y="296.7" style="text-anchor:middle">زینی</text>
+<text class="td-S" x="529.4" y="334.9" style="text-anchor:middle">هذلولوی</text>
+<text class="td-S" x="138.6" y="334.9" style="text-anchor:middle">هذلولوی</text>
+<text class="td-L" x="334.0" y="85.7" style="text-anchor:middle">مارپیچ دافع</text>
+<text class="td-S" x="119.7" y="57.9" style="text-anchor:middle">گره دافع</text>
+<text class="td-S" x="334.0" y="409.7" style="text-anchor:middle">دافع</text>
+<text class="td-M" x="53.5" y="117.6" style="text-anchor:start">δ = τ²/4 → مقدار ویژه‌ی مضاعف</text>
+<text class="td-M" x="53.5" y="91.3" style="text-anchor:start">بالای سهمی: مقادیر ویژه‌ی مختلط</text>
+<text class="td-M" x="53.5" y="187.2" style="text-anchor:start">δ = 1</text>
+<text class="td-M" x="53.5" y="346.4" style="text-anchor:start">δ = −1</text>
+<text class="td-N" x="617.0" y="264.8" style="text-anchor:end">τ</text>
+<text class="td-N" x="342.0" y="50.0" style="text-anchor:start">δ</text>
+<circle cx="384.4" cy="260.9" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="384.4" y="249.9" style="text-anchor:middle">A1</text>
+<circle cx="420.9" cy="208.3" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="437.9" y="215.3" style="text-anchor:middle">A2</text>
+<circle cx="523.1" cy="193.2" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="523.1" y="181.2" style="text-anchor:middle">A3</text>
+<circle cx="397.0" cy="352.4" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="397.0" y="369.4" style="text-anchor:middle">A4</text>
+<circle cx="207.9" cy="213.1" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="207.9" y="201.1" style="text-anchor:middle">A5</text>
+<circle cx="460.1" cy="193.2" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="477.1" y="185.2" style="text-anchor:middle">A6</text>
+<circle cx="334.0" cy="193.2" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="317.0" y="185.2" style="text-anchor:middle">A7</text>
+<circle cx="535.7" cy="81.8" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="518.7" y="87.8" style="text-anchor:middle">A8</text>
+<circle cx="416.0" cy="138.3" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="433.0" y="145.3" style="text-anchor:middle">A9</text>
+<circle cx="586.2" cy="34.0" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
+<text class="td-N" x="568.2" y="49.0" style="text-anchor:middle">A10</text>
+</svg>
+<figcaption>صفحه‌ی trace–det. مثلث سبز = ناحیه‌ی پایداری (جاذب). خط‌چین بنفش = سهمی $\delta=\tau^2/4$؛ بالایش مقادیر ویژه مختلط. خط‌چین نارنجی = خط‌های $\delta=\pm1$، یعنی نگاشت‌های حافظ مساحت. نقطه‌های $A_1\dots A_{10}$ مثال‌های جدول پایین‌اند. (مقیاس دو محور یکسان نیست.)</figcaption>
+</figure>
+<div class="regkey">
+<span><i style="background:var(--ex-bg);border-color:var(--ex)"></i>جاذب (مثلث پایداری)</span>
+<span><i style="background:var(--think-bg)"></i>زینی — هذلولوی اصیل</span>
+<span><i style="background:var(--def-bg)"></i>دافع</span>
+<span><i style="background:var(--thm);border:0"></i>سهمی: مقدار ویژه‌ی مضاعف</span>
+<span><i style="background:var(--warn);border:0"></i>$|\delta|=1$: حفظ مساحت</span>
+</div>
+
+<div class="box warn"><div class="bt">⚠ دو تله</div>
+<ol>
+<li>شرط $|\tau|<2$ (یعنی «اثر کوچک») نه لازم است نه کافی. مثلاً $\tau=1.9,\ \delta=0.99$ جاذب است ولی $\tau=1.9,\ \delta=0.5$ زینی است ($|1+\delta|=1.5<1.9$).</li>
+<li>$|\delta|<1$ فقط می‌گوید مساحت منقبض می‌شود؛ <b>نمی‌گوید</b> نگاشت جاذب است. $\begin{pmatrix}-1.5&0\\0&-0.5\end{pmatrix}$ دترمینان $0.75$ دارد ولی زینی است: مساحت کم می‌شود و همزمان یک جهت منفجر می‌شود.</li>
+</ol>
+</div>
+</section>
+
+<section id="examples">
+<h2><span class="num">۲</span> مثال‌های عددی کامل <span class="tag core">هسته‌ی اصلی</span></h2>
+<p>ده ماتریس مشخص، هر یک با $\tau,\delta,\Delta$، مقادیر ویژه و جای دقیقش روی صفحه‌ی trace–det. هر سطر را خودت یک بار از نو حساب کن.</p>
+<div class="tablewrap"><table class="ntab">
+<tr><th>#</th><th>ماتریس</th><th>$\tau$</th><th>$\delta$</th><th>$\Delta$</th><th>مقادیر ویژه</th><th>$(1+\delta)^2-\tau^2$</th><th>رده</th></tr>
+<tr><td>$A_1$</td><td>$\begin{pmatrix}0.5&0\\0&0.3\end{pmatrix}$</td><td>$0.8$</td><td>$0.15$</td><td>$+0.04$</td><td>$0.5,\ 0.3$</td><td>$+0.68$</td><td>گره جاذب (درون مثلث)</td></tr>
+<tr><td>$A_2$</td><td>$0.9\!\begin{pmatrix}\cos40^\circ&-\sin40^\circ\\ \sin40^\circ&\cos40^\circ\end{pmatrix}$</td><td>$1.3789$</td><td>$0.81$</td><td>$-1.3387$</td><td>$0.9e^{\pm i40^\circ}$</td><td>$+1.374$</td><td>مارپیچ جاذب (درون مثلث، بالای سهمی)</td></tr>
+<tr><td class="hl">$A_3$</td><td class="hl">$\begin{pmatrix}2&1\\1&1\end{pmatrix}$</td><td class="hl">$3$</td><td class="hl">$1$</td><td class="hl">$+5$</td><td class="hl">$\frac{3\pm\sqrt5}{2}\approx2.618,\,0.382$</td><td class="hl">$-5$</td><td class="hl">زینی · حافظ مساحت · <b>نگاشت گربه</b></td></tr>
+<tr><td>$A_4$</td><td>$\begin{pmatrix}0&1\\1&1\end{pmatrix}$</td><td>$1$</td><td>$-1$</td><td>$+5$</td><td>$\frac{1\pm\sqrt5}{2}\approx1.618,\,-0.618$</td><td>$-1$</td><td>زینی · $|\delta|=1$ · جهت‌برگردان (فیبوناچی)</td></tr>
+<tr><td>$A_5$</td><td>$\begin{pmatrix}-1.5&0\\0&-0.5\end{pmatrix}$</td><td>$-2$</td><td>$0.75$</td><td>$+1$</td><td>$-1.5,\ -0.5$</td><td>$-0.9375$</td><td>زینی (با $|\delta|<1$!)</td></tr>
+<tr><td>$A_6$</td><td>$\begin{pmatrix}1&1\\0&1\end{pmatrix}$</td><td>$2$</td><td>$1$</td><td>$0$</td><td>$1,\ 1$ (مضاعف)</td><td>$0$</td><td>برشی · غیرهذلولوی · حافظ مساحت</td></tr>
+<tr><td>$A_7$</td><td>$\begin{pmatrix}0&-1\\1&0\end{pmatrix}$</td><td>$0$</td><td>$1$</td><td>$-4$</td><td>$\pm i$</td><td>$+4$</td><td>دوران $90^\circ$ · بیضوی · غیرهذلولوی · هر مدار دوره‌ی ۴</td></tr>
+<tr><td>$A_8$</td><td>$\begin{pmatrix}2&0\\0&1.2\end{pmatrix}$</td><td>$3.2$</td><td>$2.4$</td><td>$+0.64$</td><td>$2,\ 1.2$</td><td>$+1.32$</td><td>گره دافع</td></tr>
+<tr><td>$A_9$</td><td>$1.3\!\begin{pmatrix}\cos60^\circ&-\sin60^\circ\\ \sin60^\circ&\cos60^\circ\end{pmatrix}$</td><td>$1.3$</td><td>$1.69$</td><td>$-5.07$</td><td>$1.3e^{\pm i60^\circ}$</td><td>$+5.55$</td><td>مارپیچ دافع</td></tr>
+<tr><td>$A_{10}$</td><td>$\begin{pmatrix}2&1\\1&2\end{pmatrix}$</td><td>$4$</td><td>$3$</td><td>$+4$</td><td>$1,\ 3$</td><td>$0$</td><td>غیرهذلولوی: روی خط $\tau=1+\delta$ (یک خط از نقاط ثابت)</td></tr>
+</table></div>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۱۳.۷ — خواندن سطر $A_5$ کلمه‌به‌کلمه</div>
+<p>$A_5=\operatorname{diag}(-1.5,-0.5)$. پس $\tau=-2$، $\delta=0.75$ و $\Delta=4-3=1>0$: مقادیر ویژه حقیقی و متمایز، و واقعاً $\lambda=\frac{-2\pm1}{2}=-0.5,-1.5$.</p>
+<p>تست مثلث: $|\delta|=0.75<1$ ✓ ولی $|\tau|=2$ و $1+\delta=1.75$، پس $|\tau|<1+\delta$ <b>برقرار نیست</b>. تست زینی: $(1+\delta)^2-\tau^2=3.0625-4=-0.9375<0$ ✓، پس زینی است. سازگار با مقادیر ویژه: $|-0.5|<1<|-1.5|$.</p>
+<p>دینامیک: $E^s$ محور $y$ است (مقدار ویژه‌ی $-0.5$)، $E^u$ محور $x$ (مقدار ویژه‌ی $-1.5$). هر دو مقدار ویژه منفی‌اند، پس در هر گام نقطه به «سمت مقابل» می‌پرد و همزمان روی محور $x$ دور و روی محور $y$ نزدیک می‌شود: مدار‌ها زیگزاگی روی هذلولی‌های $xy=$ ثابت نیستند، بلکه روی منحنی‌های $|x|^{\log0.5}|y|^{\log1.5}=$ ثابت حرکت می‌کنند. ضریب تغییر مساحت $|\delta|=0.75$ است: مساحت‌ها در هر گام ۲۵٪ آب می‌روند، و با این حال نگاشت هیچ جاذبی ندارد چون در جهت $E^u$ منفجر می‌شود.</p>
+</div>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۱۳.۸ — یک پارامتر، سه رده</div>
+<p>خانواده‌ی $A_t=\begin{pmatrix}t&1\\1&t\end{pmatrix}$ را در نظر بگیر. داریم $\tau=2t$، $\delta=t^2-1$، $\Delta=4t^2-4(t^2-1)=4>0$ (همیشه حقیقی)، و $\lambda=t\pm1$.</p>
+<ul>
+<li>$(1+\delta)^2-\tau^2=t^4-4t^2=t^2(t^2-4)$. پس برای $0<|t|<2$ منفی است: <b>زینی</b>. برای $|t|>2$ مثبت.</li>
+<li>برای $|t|>2$: $|\delta|=|t^2-1|>3>1$، پس <b>دافع</b>. (سازگار: $|t\pm1|>1$.)</li>
+<li>برای $t=0$: $\lambda=\pm1$، غیرهذلولوی (در صفحه، $A_0=\begin{pmatrix}0&1\\1&0\end{pmatrix}$ بازتاب نسبت به قطر است، $A_0^2=I$).</li>
+<li>برای $t=\pm2$: $\lambda\in\{1,3\}$ یا $\{-1,-3\}$، غیرهذلولوی؛ $t=2$ همان $A_{10}$ است.</li>
+</ul>
+<p>یعنی این خانواده هیچ‌وقت جاذب نیست: مسیر $t\mapsto(2t,t^2-1)$ در صفحه‌ی trace–det سهمی $\delta=\tau^2/4-1$ است که کاملاً زیر سهمی $\delta=\tau^2/4$ می‌افتد و مثلث پایداری را قطع نمی‌کند — چون در $\delta<1$ لازم است $|\tau|<1+\delta$، یعنی $2|t|&lt;t^2$، یعنی $|t|>2$، که با $\delta=t^2-1<1$ (یعنی $|t|<\sqrt2$) ناسازگار است.</p>
+</div>
+</section>
+
+<section id="wtd">
+<h2><span class="num">۳</span> ابزار: صفحه‌ی trace–det تعاملی</h2>
+<p>نقطه‌ی $(\tau,\delta)$ را با اسلایدر — یا با کلیک روی خودِ نمودار trace–det — جابه‌جا کن. برای هر $(\tau,\delta)$ نماینده‌ی استانداردِ ماتریس همراه
+$$A_{\tau,\delta}=\begin{pmatrix}0&-\delta\\1&\tau\end{pmatrix},\qquad \operatorname{tr}=\tau,\ \det=\delta,$$
+گرفته می‌شود و صفحه‌ی فازش رسم می‌شود (مدارهای رو به جلو و رو به عقب، جهت‌های ویژه، و تصویر مربع واحد تا تغییر مساحت را ببینی). این ابزار <b>مکمل</b> شبیه‌ساز استاد است: آن‌جا یک نگاشت را می‌کاوی، این‌جا <b>فضای همه‌ی نگاشت‌های خطی</b> را.</p>
+<div class="widget" id="w-td"></div>
+</section>
+
+<section id="area">
+<h2><span class="num">۴</span> حفظ مساحت و گروه $SL(2,\mathbb{Z})$ <span class="tag core">هسته‌ی اصلی</span></h2>
+
+<div class="box thm"><div class="bt">قضیه ۱۳.۹ — دترمینان، ضریب تغییر مساحت</div>
+برای هر $A\in M_2(\mathbb{R})$ و هر مجموعه‌ی اندازه‌پذیر (ژوردان‌اندازه‌پذیر یا لبگ‌اندازه‌پذیر) $E\subset\mathbb{R}^2$:
+$$\operatorname{area}\big(A(E)\big)=|\det A|\cdot\operatorname{area}(E).$$
+در نتیجه $A$ <b>حافظ مساحت</b> است (مساحت هر مجموعه را عوض نمی‌کند) اگر و تنها اگر $|\det A|=1$.
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>حالت $\det A\ne0$.</b> نگاشت $\Phi(u)=Au$ یک دیفئومورفیسم $C^\infty$ از $\mathbb{R}^2$ به خودش است با ژاکوبین ثابت $D\Phi(u)=A$. فرمول تغییر متغیر برای انتگرال می‌گوید برای هر تابع اندازه‌پذیر و کراندار $f$،
+$$\int_{\Phi(E)}f(x)\,dx=\int_{E}f(\Phi(u))\,|\det D\Phi(u)|\,du .$$
+با $f\equiv1$:
+$$\operatorname{area}(A(E))=\int_{A(E)}1\,dx=\int_E|\det A|\,du=|\det A|\operatorname{area}(E).$$</p>
+<p><b>حالت $\det A=0$.</b> آن‌گاه $A(\mathbb{R}^2)$ یک خط (یا $\{0\}$) است، که مساحتش صفر است؛ پس $\operatorname{area}(A(E))=0=0\cdot\operatorname{area}(E)$.</p>
+<p><b>«اگر و تنها اگر».</b> اگر $|\det A|=1$ بود، فرمول می‌گوید مساحت حفظ می‌شود. برعکس اگر مساحت هر مجموعه حفظ شود، $E=[0,1]^2$ را بگذار: $\operatorname{area}(A(E))=|\det A|$ و $\operatorname{area}(E)=1$، پس $|\det A|=1$. <span class="qed">∎</span></p>
+<p style="color:var(--ink-2)"><b>اثبات بدون انتگرال (هندسی).</b> تصویر مربع واحد، متوازی‌الاضلاعی با ضلع‌های $Ae_1,Ae_2$ است و مساحت متوازی‌الاضلاع با این دو ضلع برابر $|\det A|$ است (قدرمطلق ضرب خارجی). چون $A$ خطی است، هر مربع دودویی $2^{-k}([0,1]^2+v)$ به متوازی‌الاضلاعی با مساحت $|\det A|\,4^{-k}$ می‌رود؛ با پوشاندن $E$ از بیرون و از درون با اجتماع متناهی چنین مربع‌هایی و میل دادن $k\to\infty$ همان فرمول به دست می‌آید.</p>
+</div>
+
+<div class="box def"><div class="bt">تعریف ۱۳.۱۰ — گروه‌های $SL$ و $GL$</div>
+$$SL(2,\mathbb{R})=\{A\in M_2(\mathbb{R}):\det A=1\},\qquad
+SL(2,\mathbb{Z})=\{A\in M_2(\mathbb{Z}):\det A=1\},$$
+$$GL(2,\mathbb{Z})=\{A\in M_2(\mathbb{Z}):\det A=\pm1\}.$$
+</div>
+
+<div class="box thm"><div class="bt">گزاره ۱۳.۱۱</div>
+<ol>
+<li>$SL(2,\mathbb{Z})$ زیرگروهی از $SL(2,\mathbb{R})$ است.</li>
+<li>برای $A\in M_2(\mathbb{Z})$: وارون $A^{-1}$ هم درایه‌های صحیح دارد اگر و تنها اگر $\det A=\pm1$. یعنی $GL(2,\mathbb{Z})$ دقیقاً مجموعه‌ی ماتریس‌های صحیحِ وارون‌پذیر روی $\mathbb{Z}$ است.</li>
+</ol>
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>(۱)</b> $I\in SL(2,\mathbb{Z})$. اگر $A,B$ صحیح با دترمینان ۱ باشند، $AB$ صحیح است و $\det(AB)=\det A\det B=1$. و
+$$A^{-1}=\frac{1}{\det A}\begin{pmatrix}d&-b\\-c&a\end{pmatrix}=\begin{pmatrix}d&-b\\-c&a\end{pmatrix}$$
+صحیح است با دترمینان $1/\det A=1$. پس بسته به ضرب و وارون است.</p>
+<p><b>(۲)</b> اگر $\det A=\pm1$، فرمول بالا نشان می‌دهد $A^{-1}$ صحیح است. برعکس اگر $A$ و $A^{-1}$ هر دو صحیح باشند، $\det A$ و $\det A^{-1}$ عددهای صحیح‌اند و $\det A\cdot\det A^{-1}=\det I=1$؛ تنها عددهای صحیحی که حاصل‌ضربشان ۱ است $1\cdot1$ و $(-1)(-1)$ است، پس $\det A=\pm1$. <span class="qed">∎</span></p>
+</div>
+
+<div class="box thm"><div class="bt">قضیه ۱۳.۱۲ — نگاشت حافظ مساحت جاذب ندارد <span class="tag core">هسته‌ی اصلی</span></div>
+<ol>
+<li><b>نسخه‌ی خطی.</b> اگر $|\det A|=1$ باشد، مبدأ نمی‌تواند نقطه‌ی ثابت جاذب باشد؛ یعنی $A$ در ناحیه‌ی مثلث پایداری نیست. به‌علاوه هیچ مدار تناوبی جاذبی هم ندارد.</li>
+<li><b>نسخه‌ی موضعیِ غیرخطی.</b> اگر $f$ دیفئومورفیسمی با $|\det Df(x)|=1$ برای همه‌ی $x$ و $p$ نقطه‌ی ثابتش باشد، $p$ جاذب نیست.</li>
+<li><b>نسخه‌ی اندازه‌ای.</b> اگر $f$ یک‌به‌یک و حافظ مساحت باشد و $U$ مجموعه‌ای باز، کراندار و با $f(U)\subseteq U$ («ناحیه‌ی تله») باشد، آن‌گاه $\Lambda=\bigcap_{n\ge0}f^n(U)$ مساحتی برابر $\operatorname{area}(U)>0$ دارد. پس هیچ «جاذبِ نازک» (با مساحت صفر) وجود ندارد.</li>
+</ol>
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>(۱)</b> اگر مبدأ جاذب بود، طبق تعریف ۱۳.۳ هر دو مقدار ویژه $|\lambda_i|<1$ داشتند، پس
+$$|\det A|=|\lambda_1\lambda_2|=|\lambda_1||\lambda_2|<1,$$
+در تضاد با $|\det A|=1$. برای مدار تناوبی: اگر $x$ دوره‌ی $k$ داشته باشد، «ضریب مدار» همان $A^k$ است و $|\det A^k|=|\det A|^k=1$، پس همان استدلال برای $A^k$ کار می‌کند.</p>
+<p><b>(۲)</b> همان استدلال با $A=Df(p)$: جاذب بودن $p$ ایجاب می‌کند $r(Df(p))\le1$، و در حالت <b>هذلولوی</b> اکیداً $<1$ (محک مشتق دوبعدی، جلسه‌ی ۱۲)، که با $|\det Df(p)|=1$ ناسازگار است. اگر $r(Df(p))=1$ باشد، $p$ غیرهذلولوی است و «جاذب بودنِ نمایی» از دست می‌رود؛ ولی حتی جاذب بودن ساده هم ناممکن است: اگر همسایگی $U$ از $p$ وجود داشت که $f^n(x)\to p$ برای هر $x\in U$، آن‌گاه با همان استدلال بند (۳) روی یک گوی کوچک $B\subset U$ که $f(B)\subset U$ تضمین شود، به تناقض می‌رسیم.</p>
+<p><b>(۳)</b> مجموعه‌های $U_n:=f^n(U)$ نزولی‌اند، چون از $f(U)\subseteq U$ با اعمال $f^n$ داریم $U_{n+1}=f^n(f(U))\subseteq f^n(U)=U_n$. حفظ مساحت می‌دهد $\operatorname{area}(U_n)=\operatorname{area}(U)$ برای هر $n$. همه‌ی $U_n$ در مجموعه‌ی کراندار $U$ جا دارند، پس اندازه‌ها متناهی‌اند و برای دنباله‌ی نزولی از مجموعه‌های با اندازه‌ی متناهی
+$$\operatorname{area}(\Lambda)=\operatorname{area}\Big(\bigcap_n U_n\Big)=\lim_n\operatorname{area}(U_n)=\operatorname{area}(U)>0 .$$
+<span class="qed">∎</span></p>
+</div>
+
+<div class="box note"><div class="bt">پس حافظ مساحت‌ها چه می‌کنند؟</div>
+<p>با $|\delta|=1$ فقط دو ردیف افقی از صفحه‌ی trace–det در دسترس است:</p>
+<ul>
+<li>$\delta=1$: اگر $|\tau|<2$ ⟶ <b>بیضوی</b>، $\lambda=e^{\pm i\theta}$ با $\cos\theta=\tau/2$؛ دینامیک «دوران» است، مدارها روی بیضی‌های ناوردا می‌مانند. اگر $|\tau|=2$ ⟶ <b>پارابولیک</b> (برشی، $\lambda=\pm1$ مضاعف). اگر $|\tau|>2$ ⟶ <b>هذلولوی زینی</b>، با $\lambda,\lambda^{-1}$ ($\lambda>1$).</li>
+<li>$\delta=-1$: همیشه $\Delta=\tau^2+4>0$ و $\lambda_1\lambda_2=-1$، پس $\lambda_2=-1/\lambda_1$ و برای $\tau\ne0$ همیشه <b>زینی جهت‌برگردان</b> است؛ تنها استثنا $\tau=0$ است که $\lambda=\pm1$ می‌دهد (بازتاب).</li>
+</ul>
+<p>یعنی: یک نگاشت خطی حافظ مساحت <b>یا</b> دوران‌گونه و منظم است، <b>یا</b> هذلولوی و آشوب‌ساز. هیچ راه سومی نیست. همین دوگانگی موتور بخش بعد است.</p>
+<p><b>پیش‌نگاه به جلسه‌ی ۱۵:</b> نگاشت هنون $T(x,y)=(1-ax^2+by,\,x)$ ژاکوبین $\begin{pmatrix}-2ax&b\\1&0\end{pmatrix}$ با دترمینان $-b$ دارد. برای $|b|=1$ حافظ مساحت است و جاذبی ندارد؛ برای $|b|<1$ مساحت منقبض می‌شود و جاذب هنون ظاهر می‌شود. این دقیقاً همان مرز $|\delta|=1$ است. <span class="tag extra">تکمیلی</span></p>
+</div>
+</section>
+
+<section id="hyper">
+<h2><span class="num">۵</span> ماتریس هذلولوی و تجزیه‌ی $\mathbb{R}^2=E^s\oplus E^u$ <span class="tag core">هسته‌ی اصلی</span></h2>
+
+<div class="box def"><div class="bt">تعریف ۱۳.۱۳ — هذلولوی</div>
+<p>$A\in GL_2(\mathbb{R})$ را <b>هذلولوی</b> (<span class="ltr">hyperbolic</span>) می‌نامیم اگر هیچ مقدار ویژه‌اش روی دایره‌ی واحد نباشد:
+$$|\lambda|\ne1\qquad\forall\,\lambda\in\operatorname{spec}(A).$$
+اگر به‌علاوه دقیقاً یک مقدار ویژه درون و یکی بیرون دایره‌ی واحد باشد، یعنی پس از شماره‌گذاری
+$$|\lambda_1|<1<|\lambda_2|,$$
+می‌گوییم $A$ <b>از نوع زینی</b> است.</p>
+</div>
+
+<div class="box warn"><div class="bt">⚠ اختلاف اصطلاح در منبع — دقت کن</div>
+<p>در Hasselblatt–Katok دو تعریف با یک نام آمده و باید از هم جدا نگه داشته شوند:</p>
+<ul>
+<li><b>تعریف ۳.۱.۳</b> (فصل ۳، مخصوص صفحه): «نگاشت خطی $\mathbb{R}^2$ با یک مقدار ویژه در $(-1,1)$ و یک مقدار ویژه با قدرمطلق بزرگ‌تر از ۱ را <i>هذلولوی</i> می‌نامیم.» — این همان <b>نوع زینی</b> است.</li>
+<li><b>تعریف ۳.۳.۸</b> (فصل ۳، حالت عمومی $\mathbb{R}^n$): «$A$ هذلولوی است اگر $E^0=\{0\}$، یا به‌طور معادل اگر $\mathbb{R}^n=E^+\oplus E^-$.» — این تعریف جاذب‌های محض و دافع‌های محض را هم هذلولوی می‌شمارد.</li>
+</ul>
+<p>یعنی به‌روایت تعریف ۳.۳.۸ ماتریس $\operatorname{diag}(0.5,0.3)$ هذلولوی است، ولی به‌روایت تعریف ۳.۱.۳ نیست. در این جزوه <b>تعریف عمومی (۳.۳.۸)</b> را «هذلولوی» می‌نامیم و حالت خاصش را «از نوع زینی». هر جا در کتاب در فصل ۳ «هذلولوی» دیدی، چک کن منظور کدام است. در ادبیات سیستم‌های دینامیکی تعریف عمومی استاندارد است.</p>
+</div>
+
+<div class="box def"><div class="bt">تعریف ۱۳.۱۴ — زیرفضاهای پایدار و ناپایدار</div>
+برای $A\in GL_2(\mathbb{R})$ بگذار
+$$E^s(A):=\{v\in\mathbb{R}^2:\ A^nv\to0\ \ (n\to+\infty)\},\qquad
+E^u(A):=\{v\in\mathbb{R}^2:\ A^{-n}v\to0\ \ (n\to+\infty)\}.$$
+$E^s$ را زیرفضای <b>پایدار</b> (یا منقبض‌شونده، $E^-$ در نمادگذاری HK) و $E^u$ را زیرفضای <b>ناپایدار</b> (منبسط‌شونده، $E^+$) می‌نامیم.
+</div>
+<p>توجه کن که این تعریف <b>دینامیکی</b> است، نه جبری: به انتخاب پایه یا ترتیب مقادیر ویژه بستگی ندارد. اینکه این مجموعه‌ها زیرفضا هستند، از خطی بودن $A^n$ و خطی بودن حد می‌آید: اگر $A^nv\to0$ و $A^nw\to0$ آن‌گاه $A^n(av+bw)=aA^nv+bA^nw\to0$. همچنین هر دو $A$-ناوردا هستند: اگر $A^nv\to0$ آن‌گاه $A^n(Av)=A(A^nv)\to A0=0$ (پیوستگی $A$).</p>
+
+<div class="box thm"><div class="bt">لم ۱۳.۱۵ — شعاع طیفی و انقباض</div>
+اگر همه‌ی مقادیر ویژه‌ی $A\in M_2(\mathbb{R})$ قدرمطلق اکید کوچک‌تر از ۱ داشته باشند، آن‌گاه $A^n\to0$ (درایه‌به‌درایه) و بنابراین $A^nv\to0$ برای هر $v$.
+</div>
+<div class="box proof"><div class="bt">اثبات (سه حالت جردن در ابعاد ۲)</div>
+<p>$A^n=CB^nC^{-1}$ با $B$ یکی از سه شکل زیر؛ کافی است $B^n\to0$ را ببینیم.</p>
+<ul>
+<li>$B=\operatorname{diag}(\lambda,\mu)$ با $|\lambda|,|\mu|<1$: $B^n=\operatorname{diag}(\lambda^n,\mu^n)\to0$.</li>
+<li>$B=\begin{pmatrix}\lambda&1\\0&\lambda\end{pmatrix}$ با $|\lambda|<1$: $B^n=\begin{pmatrix}\lambda^n&n\lambda^{n-1}\\0&\lambda^n\end{pmatrix}$ و $n|\lambda|^{n-1}\to0$ (رشد نمایی بر رشد چندجمله‌ای غلبه می‌کند).</li>
+<li>$B=\rho\begin{pmatrix}\cos\theta&-\sin\theta\\ \sin\theta&\cos\theta\end{pmatrix}$ با $\rho<1$: $B^n=\rho^n\begin{pmatrix}\cos n\theta&-\sin n\theta\\ \sin n\theta&\cos n\theta\end{pmatrix}$ و همه‌ی درایه‌ها قدرمطلق $\le\rho^n\to0$ دارند.</li>
+</ul>
+<span class="qed">∎</span>
+</div>
+
+<div class="box thm"><div class="bt">قضیه ۱۳.۱۶ — تجزیه‌ی هذلولوی <span class="tag core">هسته‌ی اصلی</span></div>
+<p>فرض کن $A\in GL_2(\mathbb{R})$ هذلولوی باشد. آن‌گاه $E^s$ و $E^u$ زیرفضاهای $A$-ناوردا هستند و
+$$\mathbb{R}^2=E^s\oplus E^u .$$
+دقیق‌تر:</p>
+<ol>
+<li>اگر $A$ از نوع زینی با $|\lambda_1|<1<|\lambda_2|$ باشد، آن‌گاه $\lambda_1,\lambda_2$ حقیقی و متمایزند و
+$$E^s=\ker(A-\lambda_1I)=\mathbb{R}v_1,\qquad E^u=\ker(A-\lambda_2I)=\mathbb{R}v_2,$$
+دو <b>خط</b> متمایز گذرنده از مبدأ (که لزوماً عمود بر هم نیستند).</li>
+<li>اگر هر دو مقدار ویژه قدرمطلق کوچک‌تر از ۱ داشته باشند، $E^s=\mathbb{R}^2$ و $E^u=\{0\}$.</li>
+<li>اگر هر دو قدرمطلق بزرگ‌تر از ۱ داشته باشند، $E^s=\{0\}$ و $E^u=\mathbb{R}^2$.</li>
+</ol>
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>حالت‌های (۲) و (۳).</b> اگر $r(A)<1$، لم ۱۳.۱۵ می‌دهد $E^s=\mathbb{R}^2$. و $A^{-1}$ مقادیر ویژه‌ی $\lambda_i^{-1}$ با قدرمطلق $>1$ دارد؛ اگر $v\ne0$ و $A^{-n}v\to0$ بود، از $v=A^n(A^{-n}v)$ و کراندار بودن... ساده‌تر: بنویس $v$ را در پایه‌ی جردنی $A^{-1}$؛ در هر سه شکل بالا با $|\lambda^{-1}|>1$ داریم $\|A^{-n}v\|\ge c\,|\lambda_{\min}^{-1}|^{\,n}\,\|v\|\to\infty$ برای $v\ne0$ (برای بلوک جردنی و دوران‌مقیاس هم با کمی حساب همین است). پس $E^u=\{0\}$ و $\mathbb{R}^2=E^s\oplus\{0\}$. حالت (۳) با جایگزینی $A\leftrightarrow A^{-1}$.</p>
+<p><b>حالت (۱): زینی.</b></p>
+<p><i>گام ۱: حقیقی و متمایز بودن.</i> اگر مقادیر ویژه مختلط مزدوج بودند، $|\lambda_1|=|\lambda_2|$ می‌شد، که با $|\lambda_1|<1<|\lambda_2|$ ناسازگار است. اگر مضاعف بودند، $\lambda_1=\lambda_2$ و باز ناسازگار. پس $\lambda_1\ne\lambda_2$ حقیقی‌اند.</p>
+<p><i>گام ۲: پایه‌ی ویژه.</i> بردارهای ویژه‌ی ناصفر $v_1,v_2$ متناظر با $\lambda_1,\lambda_2$ موجودند. این‌ها مستقل خطی‌اند: اگر $v_2=cv_1$ با $c\ne0$، آن‌گاه
+$$\lambda_2 c v_1=\lambda_2v_2=Av_2=A(cv_1)=c\lambda_1v_1\ \Longrightarrow\ c(\lambda_2-\lambda_1)v_1=0,$$
+و چون $c\ne0$، $v_1\ne0$، نتیجه می‌شود $\lambda_1=\lambda_2$ — تناقض. پس $\{v_1,v_2\}$ پایه‌ی $\mathbb{R}^2$ است و
+$$\mathbb{R}^2=\mathbb{R}v_1\oplus\mathbb{R}v_2 .$$</p>
+<p><i>گام ۳: شناسایی $E^s$.</i> هر $v$ را یکتا به‌صورت $v=av_1+bv_2$ بنویس. آن‌گاه
+$$A^nv=a\lambda_1^nv_1+b\lambda_2^nv_2 .$$
+<b>اگر $b=0$:</b> $\;A^nv=a\lambda_1^nv_1\to0$ چون $|\lambda_1|<1$. پس $\mathbb{R}v_1\subseteq E^s$.
+<b>اگر $b\ne0$:</b> چون $\{v_1,v_2\}$ پایه است، تابع «مختص دوم» $\pi_2(av_1+bv_2)=b$ خطی و پیوسته است؛ اگر $A^nv\to0$ بود، $\pi_2(A^nv)=b\lambda_2^n\to\pi_2(0)=0$، در حالی که $|b\lambda_2^n|=|b||\lambda_2|^n\to\infty$. تناقض. پس $v\notin E^s$.
+نتیجه: $E^s=\mathbb{R}v_1=\ker(A-\lambda_1I)$.</p>
+<p><i>گام ۴: شناسایی $E^u$.</i> $A^{-1}$ مقادیر ویژه‌ی $\lambda_1^{-1}$ (با قدرمطلق $>1$) و $\lambda_2^{-1}$ (با قدرمطلق $<1$) و همان بردارهای ویژه را دارد. گام ۳ را روی $A^{-1}$ تکرار کن: $E^u=E^s(A^{-1})=\mathbb{R}v_2=\ker(A-\lambda_2I)$.</p>
+<p><i>گام ۵.</i> پس $E^s\oplus E^u=\mathbb{R}v_1\oplus\mathbb{R}v_2=\mathbb{R}^2$، و ناوردایی را پیش از قضیه دیدیم (یا مستقیماً: $A(\mathbb{R}v_i)=\mathbb{R}v_i$). <span class="qed">∎</span></p>
+</div>
+
+<div class="box thm"><div class="bt">نتیجه ۱۳.۱۷ — نرخ‌ها و نمای لیاپانوف</div>
+فرض کن $A$ از نوع زینی با $|\lambda_1|<1<|\lambda_2|$ و $v=av_1+bv_2$. آن‌گاه
+$$\lim_{n\to\infty}\frac1n\log\|A^nv\|=
+\begin{cases}
+\log|\lambda_2| & b\ne0\ \ (v\notin E^s),\\[2pt]
+\log|\lambda_1| & b=0,\ a\ne0\ \ (v\in E^s\setminus\{0\}).
+\end{cases}$$
+پس <b>نمای لیاپانوف</b> هر مدار غیرصفر مثبت است مگر مدارهایی که روی $E^s$ شروع می‌شوند: «حساسیت به شرط اولیه» در تمام جهت‌ها جز یک خط.
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+نرم $\|av_1+bv_2\|_*:=|a|+|b|$ را بگیر (نرمی روی $\mathbb{R}^2$ است، و همه‌ی نرم‌ها روی فضای متناهی‌البعد هم‌ارزند، پس $\frac1n\log$ حد را عوض نمی‌کند: اگر $c_1\|\cdot\|_*\le\|\cdot\|\le c_2\|\cdot\|_*$ آن‌گاه $\frac1n\log c_i\to0$). برای $b\ne0$:
+$$\|A^nv\|_*=|a||\lambda_1|^n+|b||\lambda_2|^n,$$
+پس $|b||\lambda_2|^n\le\|A^nv\|_*\le(|a|+|b|)|\lambda_2|^n$ برای $n$ بزرگ (چون $|\lambda_1|<|\lambda_2|$)، و لگاریتم تقسیم بر $n$ به $\log|\lambda_2|$ میل می‌کند. برای $b=0$ مستقیماً $\|A^nv\|_*=|a||\lambda_1|^n$. <span class="qed">∎</span>
+</div>
+
+<div class="box note"><div class="bt">تصویر</div>
+در مختصات ویژه، $A$ همان $(u,w)\mapsto(\lambda_1u,\lambda_2w)$ است. منحنی‌های $|u|^{\log|\lambda_2|}|w|^{-\log|\lambda_1|}=$ ثابت ناوردا هستند — «هذلولی‌های تعمیم‌یافته». اگر $|\lambda_1\lambda_2|=1$ (حالت حافظ مساحت) این منحنی‌ها دقیقاً هذلولی‌های $uw=$ ثابت می‌شوند؛ از همین‌جاست که نام «هذلولوی» آمده. $E^s$ و $E^u$ همان دو مجانب این هذلولی‌ها هستند.
+</div>
+</section>
+
+<section id="cat">
+<h2><span class="num">۶</span> نگاشت گربه‌ی آرنولد روی چنبره <span class="tag core">هسته‌ی اصلی</span></h2>
+
+<h3>۶.۱ چنبره و نگاشت‌های خطی روی آن</h3>
+<div class="box def"><div class="bt">تعریف ۱۳.۱۸ — چنبره‌ی دوبعدی</div>
+$$\mathbb{T}^2:=\mathbb{R}^2/\mathbb{Z}^2,$$
+یعنی خارج‌قسمت $\mathbb{R}^2$ به‌ازای رابطه‌ی هم‌ارزی $x\sim y\iff x-y\in\mathbb{Z}^2$. نماد $[x]$ را برای کلاس $x$ و $\pi:\mathbb{R}^2\to\mathbb{T}^2$ را برای نگاشت خارج‌قسمتی می‌نویسیم. مدلش مربع $[0,1)^2$ است که ضلع‌های مقابلش به هم چسبیده‌اند. $\mathbb{T}^2$ با عمل جمع یک <b>گروه</b> آبلی فشرده است، و «مساحت» روی آن همان اندازه‌ی لبگِ مربع واحد است، با $\operatorname{area}(\mathbb{T}^2)=1$.
+</div>
+
+<div class="box thm"><div class="bt">گزاره ۱۳.۱۹ — خوش‌تعریفی و دوسویی بودن</div>
+<p>فرض کن $A\in M_2(\mathbb{Z})$.</p>
+<ol>
+<li>رابطه‌ی $F_A([x]):=[Ax]$ نگاشتی <b>خوش‌تعریف</b> و پیوسته از $\mathbb{T}^2$ به $\mathbb{T}^2$ می‌دهد، که اندریختی گروهی است.</li>
+<li>$F_A$ <b>دوسویی</b> است اگر و تنها اگر $\det A=\pm1$، و در این حالت $F_A^{-1}=F_{A^{-1}}$.</li>
+<li>اگر $\det A\ne0$، آن‌گاه $F_A$ پوشا و دقیقاً $|\det A|$-به-یک است.</li>
+<li>اگر $|\det A|=1$، آن‌گاه $F_A$ مساحت را روی $\mathbb{T}^2$ حفظ می‌کند.</li>
+</ol>
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>(۱)</b> فرض کن $[x]=[x']$، یعنی $x-x'=k\in\mathbb{Z}^2$. چون درایه‌های $A$ صحیح‌اند، $Ak\in\mathbb{Z}^2$، پس
+$$Ax-Ax'=A(x-x')=Ak\in\mathbb{Z}^2\ \Longrightarrow\ [Ax]=[Ax'].$$
+این دقیقاً خوش‌تعریفی است. پیوستگی: $\pi$ نگاشت پوشانه‌ی موضعاً همسان‌ریخت است و $F_A\circ\pi=\pi\circ A$ با $A$ پیوسته، پس $F_A$ پیوسته است. اندریختی گروهی بودن از خطی بودن $A$ می‌آید: $F_A([x]+[y])=[A(x+y)]=F_A([x])+F_A([y])$.</p>
+<p><b>(۲)</b> اگر $\det A=\pm1$، گزاره‌ی ۱۳.۱۱ می‌گوید $A^{-1}\in M_2(\mathbb{Z})$، پس $F_{A^{-1}}$ هم خوش‌تعریف است و
+$$F_{A^{-1}}\circ F_A([x])=[A^{-1}Ax]=[x],\qquad F_A\circ F_{A^{-1}}=\mathrm{id},$$
+یعنی $F_A$ دوسویی با وارون $F_{A^{-1}}$. برعکس اگر $F_A$ دوسویی باشد، بند (۳) می‌گوید $|\det A|=1$ (و $\det A\ne0$، چون اگر $\det A=0$ تصویر $F_A$ در تصویر یک خط می‌افتد و پوشا نیست).</p>
+<p><b>(۳)</b> $\det A\ne0$ ⟹ $A$ پوشای $\mathbb{R}^2$ است، پس $F_A$ پوشای $\mathbb{T}^2$. برای شمارش پیش‌تصویرها: $F_A([x])=[0]$ یعنی $Ax\in\mathbb{Z}^2$ یعنی $x\in A^{-1}\mathbb{Z}^2$. پس
+$$F_A^{-1}([0])=\big(A^{-1}\mathbb{Z}^2\big)/\mathbb{Z}^2,$$
+و تعداد عضوهایش شاخص $[A^{-1}\mathbb{Z}^2:\mathbb{Z}^2]$ است. برای دو مشبکه‌ی تودرتو $L'\supseteq L$ در $\mathbb{R}^2$، شاخص $[L':L]$ برابر نسبت مساحت‌های حوزه‌ی بنیادی است؛ حوزه‌ی بنیادی $\mathbb{Z}^2$ مساحت ۱ و حوزه‌ی بنیادی $A^{-1}\mathbb{Z}^2$ مساحت $|\det A^{-1}|=1/|\det A|$ دارد، پس
+$$\#F_A^{-1}([0])=\frac{1}{1/|\det A|}=|\det A| .$$
+چون $F_A$ اندریختی گروهی است، هر فیبر هم‌ارزِ (انتقال‌یافته‌ی) هسته است، پس همه‌ی فیبرها $|\det A|$ عضو دارند.</p>
+<p><b>(۴)</b> موضعاً $F_A$ همان $A$ است و $|\det A|=1$، پس به‌حکم قضیه‌ی ۱۳.۹ مساحت هر مجموعه‌ی کوچک حفظ می‌شود؛ با افراز یک مجموعه‌ی دلخواه به تکه‌های کوچک و جمع زدن، مساحت روی $\mathbb{T}^2$ حفظ می‌شود. (در عبارت HK: «برای هر ماتریس $L$ با دترمینان $\pm1$، نگاشت $F_L$ مساحت مجموعه‌ها را روی چنبره حفظ می‌کند.») <span class="qed">∎</span></p>
+</div>
+
+<h3>۶.۲ نگاشت گربه</h3>
+<div class="box def"><div class="bt">تعریف ۱۳.۲۰ — نگاشت گربه‌ی آرنولد</div>
+$$A=\begin{pmatrix}2&1\\1&1\end{pmatrix},\qquad
+F:\mathbb{T}^2\to\mathbb{T}^2,\qquad F(x,y)=(2x+y,\ x+y)\ \ (\mathrm{mod}\ 1).$$
+(نام «گربه» از تصویر صورت گربه‌ای می‌آید که آرنولد و آوز برای نمایش درهم‌ریختن این نگاشت استفاده کردند.)
+</div>
+<p>همه‌ی شرط‌ها برقرار است: درایه‌ها صحیح‌اند و</p>
+$$\tau=\operatorname{tr}A=3,\qquad \delta=\det A=2\cdot1-1\cdot1=1,\qquad \Delta=9-4=5>0,$$
+$$\lambda_\pm=\frac{3\pm\sqrt5}{2},\qquad \lambda_+=\frac{3+\sqrt5}{2}\approx2.618034,\qquad \lambda_-=\frac{3-\sqrt5}{2}\approx0.381966,\qquad \lambda_+\lambda_-=1 .$$
+<p>پس به گزاره‌ی ۱۳.۱۹: $F$ خوش‌تعریف، دوسویی (چون $\det=1$) و حافظ مساحت است. به گزاره‌ی ۱۳.۵: چون $\tau^2=9>(1+\delta)^2=4$، ماتریس <b>زینی</b> است، و واقعاً $\lambda_-<1<\lambda_+$. ضمناً $\lambda_+=\varphi^2$ با $\varphi=\frac{1+\sqrt5}{2}$ نسبت طلایی، و $\lambda_-=\varphi^{-2}$.</p>
+
+<div class="box ex"><div class="bt">مثال ۱۳.۲۱ — جهت‌های ویژه</div>
+<p>از $(A-\lambda I)v=0$ سطر اول $(2-\lambda)x+y=0$ می‌دهد $y=(\lambda-2)x$، پس شیب خط ویژه برابر $\lambda-2$ است. شیب‌های $E^u$ و $E^s$ را $m_u$ و $m_s$ بنامیم:</p>
+$$m_u=\lambda_+-2=\frac{\sqrt5-1}{2}=\frac1\varphi\approx0.618034,\qquad
+m_s=\lambda_--2=-\frac{1+\sqrt5}{2}=-\varphi\approx-1.618034 .$$
+<p>بردارهای ویژه: $v_u=(2,\sqrt5-1)$ و $v_s=(2,-1-\sqrt5)$. توجه کن که $v_u\cdot v_s=4+(\sqrt5-1)(-1-\sqrt5)=4-(\sqrt5-1)(\sqrt5+1)=4-4=0$: این‌جا $E^s\perp E^u$ است، چون $A$ متقارن است. (برای ماتریس نامتقارن عمود بودن برقرار نیست.)</p>
+<p><b>نکته‌ی کلیدی:</b> هر دو شیب <b>گنگ</b> هستند. پس تصویر $\pi(E^u)$ روی چنبره یک <b>خط چگال</b> است، نه یک حلقه‌ی بسته: خط با شیب گنگ هیچ‌وقت به نقطه‌ی شروعش برنمی‌گردد و (مثل دوران گنگ در جلسه‌ی ۱) در چنبره چگال می‌شود. همین است که هذلولوی بودن را به آشوب تبدیل می‌کند: جهتی که همه‌چیز در آن کشیده می‌شود، خودش همه‌جای چنبره را جارو می‌کند.</p>
+</div>
+
+<figure class="fig wideflow">
+<svg viewBox="0 0 580 248" width="580" height="248" role="img" aria-label="کشیدن و تا کردن در نگاشت گربه">
+<style>
+.cm-g{stroke:var(--plot-grid);stroke-width:1;fill:none}
+.cm-b{stroke:var(--ink-2);stroke-width:1.4;fill:none}
+.cm-p{stroke:var(--plot-bg);stroke-width:1;stroke-linejoin:round}
+.cm-L{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:600;fill:var(--ink);direction:rtl;text-anchor:middle}
+.cm-M{font-family:ui-monospace,monospace;font-size:11.5px;fill:var(--ink-3);text-anchor:middle}
+.cm-e{stroke-width:1.8;fill:none}
+.cm-n{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;text-anchor:middle}
+</style>
+<polygon class="cm-p" points="422.0,170.0 488.0,170.0 422.0,38.0" fill="var(--plot-c1)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="356.0,38.0 422.0,38.0 290.0,-94.0" fill="var(--plot-c2)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="554.0,302.0 488.0,170.0 422.0,170.0" fill="var(--plot-c3)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="422.0,170.0 422.0,38.0 356.0,38.0" fill="var(--plot-c4)" fill-opacity="0.5"/>
+<rect x="422.0" y="38.0" width="132" height="132" class="cm-b"/>
+<line class="cm-e" x1="422.0" y1="144.8" x2="554.0" y2="63.2" stroke="var(--plot-c1)"/>
+<text class="cm-n" x="563.0" y="75.2" fill="var(--plot-c1)">Eu</text>
+<line class="cm-e" x1="528.8" y1="170.0" x2="447.2" y2="38.0" stroke="var(--plot-c2)"/>
+<text class="cm-n" x="438.2" y="50.0" fill="var(--plot-c2)">Es</text>
+<text class="cm-L" x="488.0" y="25.0">مربع واحد، بریده به ۴ تکه</text>
+<text class="cm-M" x="488.0" y="187.0">[0,1)x[0,1)</text>
+<text class="cm-M" x="402.0" y="108.0" style="font-size:19px">&#8592;</text>
+<text class="cm-M" x="402.0" y="126.0">A</text>
+<polygon class="cm-p" points="238.0,134.0 286.0,110.0 286.0,86.0" fill="var(--plot-c1)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="286.0,110.0 334.0,86.0 286.0,86.0" fill="var(--plot-c2)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="334.0,86.0 334.0,62.0 286.0,86.0" fill="var(--plot-c3)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="334.0,86.0 382.0,38.0 334.0,62.0" fill="var(--plot-c4)" fill-opacity="0.5"/>
+<line class="cm-g" x1="238.0" y1="134.0" x2="238.0" y2="38.0"/>
+<line class="cm-g" x1="286.0" y1="134.0" x2="286.0" y2="38.0"/>
+<line class="cm-g" x1="334.0" y1="134.0" x2="334.0" y2="38.0"/>
+<line class="cm-g" x1="382.0" y1="134.0" x2="382.0" y2="38.0"/>
+<line class="cm-g" x1="238.0" y1="134.0" x2="382.0" y2="134.0"/>
+<line class="cm-g" x1="238.0" y1="86.0" x2="382.0" y2="86.0"/>
+<line class="cm-g" x1="238.0" y1="38.0" x2="382.0" y2="38.0"/>
+<polygon class="cm-b" points="238.0,134.0 334.0,86.0 382.0,38.0 286.0,86.0"/>
+<text class="cm-L" x="310.0" y="25.0">متوازی‌الاضلاع، مساحت ۱</text>
+<text class="cm-M" x="310.0" y="151.0">A([0,1)x[0,1))</text>
+<text class="cm-M" x="216.0" y="108.0" style="font-size:19px">&#8592;</text>
+<text class="cm-M" x="216.0" y="126.0">mod 1</text>
+<polygon class="cm-p" points="62.0,170.0 194.0,104.0 194.0,38.0" fill="var(--plot-c1)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="62.0,104.0 194.0,38.0 62.0,38.0" fill="var(--plot-c2)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="194.0,170.0 194.0,104.0 62.0,170.0" fill="var(--plot-c3)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="62.0,170.0 194.0,38.0 62.0,104.0" fill="var(--plot-c4)" fill-opacity="0.5"/>
+<rect x="62.0" y="38.0" width="132" height="132" class="cm-b"/>
+<text class="cm-L" x="128.0" y="25.0">چیده‌شده روی چنبره</text>
+<text class="cm-M" x="128.0" y="187.0">F(x,y) = A(x,y) mod 1</text>
+</svg>
+<figcaption>کشیدن و تا کردن. راست: مربع واحد با جهت‌های ویژه $E^u$ و $E^s$، بریده به چهار تکه. وسط: تصویر $A([0,1)^2)$ یک متوازی‌الاضلاع با مساحت $|\det A|=1$ که از ۶ خانه‌ی مشبکه عبور می‌کند و از آن‌ها ۴ تکه می‌برد. چپ: هر تکه با انتقال صحیح به مربع واحد برمی‌گردد و دوباره <b>دقیقاً</b> مربع را می‌پوشاند — این «mod 1» گرفتن است. کشیده شدن در جهت $E^u$ با ضریب $\lambda_+\approx2.62$ و فشرده شدن در جهت $E^s$ با ضریب $\lambda_-\approx0.38$ انجام می‌شود؛ حاصل‌ضربشان ۱ است، پس مساحت می‌ماند.</figcaption>
+</figure>
+
+<h3>۶.۳ شمارش نقاط تناوبی</h3>
+<div class="box thm"><div class="bt">قضیه ۱۳.۲۲ — شمارش نقاط ثابتِ تکرارها (HK گزاره‌ی ۷.۱.۱۰) <span class="tag core">هسته‌ی اصلی</span></div>
+برای نگاشت گربه و هر $n\ge1$:
+$$\#\mathrm{Fix}(F^n)=\big|\det(A^n-I)\big|=\lambda_+^{\,n}+\lambda_+^{-n}-2=\operatorname{tr}(A^n)-2 .$$
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>گام ۱: توصیف مجموعه‌ی نقاط ثابت.</b> بنویس $B_n:=A^n-I$. داریم
+$$F^n([x])=[x]\iff A^nx-x\in\mathbb{Z}^2\iff B_nx\in\mathbb{Z}^2 .$$
+مقادیر ویژه‌ی $A^n$ برابر $\lambda_+^n$ و $\lambda_-^n=\lambda_+^{-n}$ هستند؛ چون $\lambda_+>1$، هیچ‌کدام برابر ۱ نیستند، پس $1$ مقدار ویژه‌ی $A^n$ نیست و $B_n$ وارون‌پذیر است. بنابراین
+$$\mathrm{Fix}(F^n)=\big(B_n^{-1}\mathbb{Z}^2\big)\big/\mathbb{Z}^2 .$$</p>
+<p><b>گام ۲: شمارش.</b> $B_n$ ماتریسی صحیح است، پس $B_n\mathbb{Z}^2\subseteq\mathbb{Z}^2\subseteq B_n^{-1}\mathbb{Z}^2$. دقیقاً مثل بند (۳) گزاره‌ی ۱۳.۱۹، شاخص دو مشبکه نسبت مساحت حوزه‌های بنیادی است:
+$$\#\mathrm{Fix}(F^n)=\big[B_n^{-1}\mathbb{Z}^2:\mathbb{Z}^2\big]=\frac{1}{|\det B_n^{-1}|}=|\det B_n| .$$
+(روایت HK: نقاط ثابت $F^n$ همان پیش‌تصویرهای $[0]$ تحت $G=F_{B_n}$ هستند، و تعداد آن‌ها برابر تعداد نقاط مشبکه‌ی $\mathbb{Z}^2$ در متوازی‌الاضلاع $B_n([0,1)^2)$ است، که به‌حکم لم ۷.۱.۱۱ — «مساحت متوازی‌الاضلاع با رأس‌های صحیح برابر تعداد نقاط مشبکه‌ی آن است» — همان $|\det B_n|$ است.)</p>
+<p><b>گام ۳: محاسبه‌ی دترمینان.</b> اگر $\mu_1,\mu_2$ مقادیر ویژه‌ی $A^n$ باشند، مقادیر ویژه‌ی $A^n-I$ برابر $\mu_i-1$ است، پس
+$$\det(A^n-I)=(\lambda_+^n-1)(\lambda_+^{-n}-1)=\underbrace{\lambda_+^n\lambda_+^{-n}}_{=1}-\lambda_+^n-\lambda_+^{-n}+1=2-\big(\lambda_+^n+\lambda_+^{-n}\big).$$
+چون $\lambda_+>1$، نامساوی $\lambda_+^n+\lambda_+^{-n}>2$ برقرار است (از $t+1/t>2$ برای $t>1$)، پس دترمینان منفی و
+$$\big|\det(A^n-I)\big|=\lambda_+^n+\lambda_+^{-n}-2 .$$
+و بالاخره $\lambda_+^n+\lambda_+^{-n}=\lambda_+^n+\lambda_-^n=\operatorname{tr}(A^n)$. <span class="qed">∎</span></p>
+</div>
+
+<div class="box ex"><div class="bt">مثال ۱۳.۲۳ — عددها</div>
+<p>با القای ساده $A^n=\begin{pmatrix}F_{2n+1}&F_{2n}\\F_{2n}&F_{2n-1}\end{pmatrix}$ که در آن $F_k$ عددهای فیبوناچی ($F_1=F_2=1$) هستند. پس $\operatorname{tr}(A^n)=F_{2n+1}+F_{2n-1}=L_{2n}$ (عددهای لوکاس) و</p>
+$$\#\mathrm{Fix}(F^n)=L_{2n}-2 .$$
+<div class="tablewrap"><table class="ntab">
+<tr><th>$n$</th><td>۱</td><td>۲</td><td>۳</td><td>۴</td><td>۵</td><td>۶</td><td>۷</td><td>۸</td><td>۹</td><td>۱۰</td></tr>
+<tr><th>$\operatorname{tr}(A^n)=L_{2n}$</th><td>۳</td><td>۷</td><td>۱۸</td><td>۴۷</td><td>۱۲۳</td><td>۳۲۲</td><td>۸۴۳</td><td>۲۲۰۷</td><td>۵۷۷۸</td><td>۱۵۱۲۷</td></tr>
+<tr><th>$\#\mathrm{Fix}(F^n)$</th><td>۱</td><td>۵</td><td>۱۶</td><td>۴۵</td><td>۱۲۱</td><td>۳۲۰</td><td>۸۴۱</td><td>۲۲۰۵</td><td>۵۷۷۶</td><td>۱۵۱۲۵</td></tr>
+</table></div>
+<p><b>چک $n=1$:</b> $F(x,y)=(x,y)$ یعنی $(x+y,\,x)\in\mathbb{Z}^2$؛ از $x\in\mathbb{Z}$ و $x+y\in\mathbb{Z}$ می‌آید $y\in\mathbb{Z}$. پس تنها نقطه‌ی ثابت $[(0,0)]$ است: $\#\mathrm{Fix}(F)=1$ ✓.</p>
+<p><b>چک $n=2$:</b> $A^2=\begin{pmatrix}5&3\\3&2\end{pmatrix}$، $A^2-I=\begin{pmatrix}4&3\\3&1\end{pmatrix}$، $\det=4-9=-5$، پس ۵ نقطه ✓. با حل $(A^2-I)^{-1}k$ به‌ازای $k\in\mathbb{Z}^2$ این پنج نقطه به دست می‌آیند:
+$$(0,0),\ \big(\tfrac35,\tfrac15\big),\ \big(\tfrac15,\tfrac25\big),\ \big(\tfrac45,\tfrac35\big),\ \big(\tfrac25,\tfrac45\big).$$
+چهار نقطه‌ی غیرصفر یک مدار با دوره‌ی کمینه‌ی... بشمار: $F(\tfrac35,\tfrac15)=(\tfrac{7}{5},\tfrac45)\equiv(\tfrac25,\tfrac45)$ و $F(\tfrac25,\tfrac45)=(\tfrac85,\tfrac65)\equiv(\tfrac35,\tfrac15)$. پس $\{(\tfrac35,\tfrac15),(\tfrac25,\tfrac45)\}$ یک مدار دوره‌ی ۲ است و $\{(\tfrac15,\tfrac25),(\tfrac45,\tfrac35)\}$ مدار دوره‌ی ۲ دیگری. مجموعاً $1+2+2=5$ ✓.</p>
+<p><b>رشد:</b> $\frac1n\log\#\mathrm{Fix}(F^n)\to\log\lambda_+=\log\frac{3+\sqrt5}{2}\approx0.9624$. این عدد همان <b>آنتروپی توپولوژیک</b> نگاشت گربه است و همان نمای لیاپانوفِ تقریباً هر مدار (نتیجه‌ی ۱۳.۱۷). رشد نمایی تعداد نقاط تناوبی = یکی از نشانه‌های پیچیدگی (HK فصل ۷ و ۸). <span class="tag extra">تکمیلی</span></p>
+</div>
+
+<h3>۶.۴ نقاط تناوبی = نقاط گویا، و چگالی</h3>
+<div class="box thm"><div class="bt">قضیه ۱۳.۲۴ — نقاط تناوبی دقیقاً نقاط گویا هستند <span class="tag core">هسته‌ی اصلی</span></div>
+برای نگاشت گربه:
+$$[x]\in\operatorname{Per}(F)\quad\Longleftrightarrow\quad x\in\mathbb{Q}^2 .$$
+در نتیجه مجموعه‌ی نقاط تناوبی در $\mathbb{T}^2$ <b>چگال</b> است.
+</div>
+<div class="box proof"><div class="bt">اثبات</div>
+<p><b>($\Leftarrow$) هر نقطه‌ی گویا تناوبی است.</b> فرض کن $x=(s/q,\,t/q)$ با $s,t,q\in\mathbb{Z}$، $q\ge1$ (مخرج مشترک). مجموعه‌ی
+$$L_q:=\Big\{\big[\big(\tfrac iq,\tfrac jq\big)\big]:\ 0\le i,j&lt;q\Big\}\subset\mathbb{T}^2$$
+دقیقاً $q^2$ عضو دارد (متناهی!) و شامل $[x]$ است. این مجموعه زیر $F$ <b>ناوردا</b> است: چون $A$ صحیح است،
+$$A\Big(\tfrac sq,\tfrac tq\Big)=\Big(\tfrac{2s+t}{q},\ \tfrac{s+t}{q}\Big),$$
+که باز نقطه‌ای با مخرج $q$ است. پس $F(L_q)\subseteq L_q$. از طرف دیگر $F$ روی $\mathbb{T}^2$ دوسویی است (گزاره‌ی ۱۳.۱۹، چون $\det A=1$)، پس $F|_{L_q}$ یک‌به‌یک است. <b>یک نگاشت یک‌به‌یک از مجموعه‌ای متناهی به خودش، جایگشت است</b>؛ و هر عضو در یک جایگشت روی یک دور قرار دارد. پس $F^m([x])=[x]$ برای $m=$ طول آن دور، و $[x]$ تناوبی است.</p>
+<p><i>(روایت HK:</i> همه‌ی تکرارهای $F^n([x])$ در مجموعه‌ی متناهی $L_q$ می‌افتند، پس تکرار می‌شوند: $F^n([x])=F^m([x])$ برای $n>m$؛ و چون $F$ وارون‌پذیر است، $F^{n-m}([x])=[x]$. <i>دقت کن که وارون‌پذیری ضروری است:</i> برای نگاشت غیروارون‌پذیر $E_m(x)=mx\bmod1$ نقاط گویا فقط <b>نهایتاً</b> تناوبی‌اند، نه تناوبی — مثلاً $E_2$ و $x=1/6$: $\;1/6\mapsto1/3\mapsto2/3\mapsto1/3$.)</p>
+<p><b>($\Rightarrow$) هر نقطه‌ی تناوبی گویا است.</b> فرض کن $F^n([x])=[x]$. بنویس $A^n=\begin{pmatrix}a&b\\c&d\end{pmatrix}$ با $a,b,c,d\in\mathbb{Z}$. آن‌گاه $(A^n-I)x\in\mathbb{Z}^2$، یعنی عددهای صحیح $k,l$ هستند با
+$$\begin{cases}(a-1)x+by=k,\\ cx+(d-1)y=l.\end{cases}$$
+همان‌طور که در گام ۱ قضیه‌ی ۱۳.۲۲ دیدیم، $1$ مقدار ویژه‌ی $A^n$ نیست، پس $\det(A^n-I)=(a-1)(d-1)-bc\ne0$ و دستگاه حل یکتا دارد:
+$$x=\frac{(d-1)k-bl}{(a-1)(d-1)-cb},\qquad y=\frac{(a-1)l-ck}{(a-1)(d-1)-cb}.$$
+صورت و مخرج هر دو صحیح‌اند، پس $x,y\in\mathbb{Q}$. <span class="qed">∎</span></p>
+<p><b>چگالی.</b> $\mathbb{Q}^2$ در $\mathbb{R}^2$ چگال است و $\pi$ پوشا و پیوسته و باز است، پس $\pi(\mathbb{Q}^2)$ در $\mathbb{T}^2$ چگال است: برای هر $[y]\in\mathbb{T}^2$ و هر $\varepsilon>0$، نقطه‌ای گویا در گوی $B(y,\varepsilon)\subset\mathbb{R}^2$ هست و تصویرش در گوی $\varepsilon$ حول $[y]$ می‌افتد. پس مجموعه‌ی نقاط تناوبی چگال است. <span class="qed">∎</span></p>
+</div>
+
+<div class="box note"><div class="bt">دوره‌ها: چقدر دقیق می‌دانیم؟</div>
+قضیه‌ی ۱۳.۲۴ می‌گوید <i>کدام</i> نقاط تناوبی‌اند، ولی دوره‌شان را نمی‌دهد. دوره‌ی یک نقطه با مخرج $q$ (در پایین‌ترین جمله) مقسوم‌علیهی از <b>مرتبه‌ی $A$ در گروه $SL(2,\mathbb{Z}/q)$</b> است، و این عدد به‌طرز شگفت‌آوری نامنظم است. در بخش بعد همین عدد را برای شبکه‌ی $N\times N$ حساب می‌کنیم. <span class="tag extra">تکمیلی</span>
+</div>
+
+<h3>۶.۵ شهود آشوب</h3>
+<div class="box think"><div class="bt">چرا این سیستم آشوبی است</div>
+<ol>
+<li><b>حساسیت به شرط اولیه.</b> دو نقطه‌ی $[x]$ و $[x+v]$ با $v$ کوچک و $v\notin E^s$: فاصله‌شان (تا وقتی کوچک است) مثل $\|A^nv\|\sim c|\lambda_+|^n$ رشد می‌کند، یعنی نمایی. فقط جداکننده‌هایی که دقیقاً در جهت $E^s$ باشند نزدیک می‌مانند؛ و $E^s$ مجموعه‌ای با مساحت صفر است.</li>
+<li><b>کشیدن + تا کردن.</b> کشیدن در جهت $E^u$ بی‌نهایت ادامه می‌یابد ولی چنبره فشرده است، پس «تا خوردن» (mod 1) ناگزیر است — همان شکل بالا. این دو با هم یعنی اختلاط: یک دیسک کوچک به نواری بسیار باریک و بسیار بلند در جهت $E^u$ تبدیل می‌شود، و چون شیب $E^u$ گنگ است، این نوار در چنبره چگال می‌شود. پس هر دیسک کوچک، بعد از زمان کافی، هر دیسک کوچک دیگر را قطع می‌کند: $F$ <b>اختلاطی توپولوژیک</b> است (HK گزاره‌ی ۷.۲.۹) و در نتیجه مدار چگال دارد.</li>
+<li><b>نقاط تناوبی چگال‌اند</b> (قضیه‌ی ۱۳.۲۴) و تعدادشان نمایی رشد می‌کند (قضیه‌ی ۱۳.۲۲).</li>
+<li>بندهای ۲ و ۳ با هم همان <b>آشوب به‌معنای دِوِینی</b> است (جلسه‌ی ۱۰: مجموعه‌ی چگال از مدارهای تناوبی + یک مدار چگال).</li>
+<li>و همه‌ی این‌ها در حالی رخ می‌دهد که <b>مساحت حفظ می‌شود</b>: هیچ جاذبی نیست که آشفتگی را جمع کند (قضیه‌ی ۱۳.۱۲). آشوب این‌جا «آشوب محافظه‌کار» است، نه «آشوب جاذب عجیب» (آن یکی را در جلسه‌ی ۱۵ با هنون می‌بینیم).</li>
+</ol>
+<p><b>مقایسه‌ی روشنگر.</b> نگاشت برشی $S(x,y)=(x+y,y)$ هم روی چنبره خوش‌تعریف و حافظ مساحت است ($\det=1$)، ولی $\tau=2$ یعنی روی مرز $N$: پارابولیک، غیرهذلولوی. آن‌جا $\|S^nv\|$ فقط <b>خطی</b> رشد می‌کند، نمای لیاپانوف صفر است و هیچ آشوبی نیست — خطوط $y=$ ثابت ناوردا می‌مانند و دینامیک روی هر کدام یک دوران است. Knill این را «نوع ضعیفی از آشوب» می‌نامد. پس <b>حفظ مساحت آشوب نمی‌سازد؛ هذلولوی بودن می‌سازد.</b></p>
+<p><span class="tag extra">تکمیلی</span> نگاشت گربه نمونه‌ی اصلی یک <b>دیفئومورفیسم آنوسوف</b> است: دیفئومورفیسمی که کل فضا برایش مجموعه‌ای هذلولوی است (HK فصل ۱۰، تعریف ۱۰.۱.۱: «نگاشت خطی هذلولوی چنبره در بخش ۷.۱.۴ نمونه‌ی این وضع است؛ مجموعه‌ی $\Lambda$ کل چنبره است»). با «افراز مارکوف» می‌شود آن را به یک شیفت متناهی‌نوع نیم‌مزدوج کرد و آنتروپی‌اش را نمادین حساب کرد.</p>
+</div>
+</section>
+
+<section id="wcat">
+<h2><span class="num">۷</span> ابزار: نگاشت گربه روی شبکه و دوره‌ی بازگشت</h2>
+
+<div class="box def"><div class="bt">تعریف و گزاره ۱۳.۲۵ — دوره‌ی بازگشت شبکه‌ی $N\times N$</div>
+<p>شبکه‌ی پیکسلی
+$$L_N=\Big\{\big[\big(\tfrac iN,\tfrac jN\big)\big]:0\le i,j&lt;N\Big\}\cong(\mathbb{Z}/N)^2$$
+زیر $F$ ناوردا است و $F|_{L_N}$ در مختصات $(i,j)$ همان نگاشت خطی
+$$\begin{pmatrix}i\\j\end{pmatrix}\longmapsto A\begin{pmatrix}i\\j\end{pmatrix}=\begin{pmatrix}2i+j\\ i+j\end{pmatrix}\pmod N$$
+است. چون $\det A=1$ در $\mathbb{Z}/N$ یکه است، این نگاشت یک <b>جایگشت</b> روی $N^2$ پیکسل است. کوچک‌ترین $\Pi(N)\ge1$ با
+$$A^{\Pi(N)}\equiv I\pmod N$$
+<b>مرتبه‌ی $A$ در $SL(2,\mathbb{Z}/N)$</b> است، و هر تصویر $N\times N$ پس از $\Pi(N)$ گام <b>عیناً</b> به حالت اول برمی‌گردد. دوره‌ی هر پیکسل مقسوم‌علیهی از $\Pi(N)$ است، و $\Pi(N)$ ک.م.م دوره‌های پیکسل‌ها است.</p>
+</div>
+<div class="box proof"><div class="bt">اثبات (کوتاه)</div>
+جایگشت $\sigma$ روی $L_N$ تصویر را به حالت اول برمی‌گرداند (برای <i>هر</i> رنگ‌آمیزی) اگر و تنها اگر $\sigma=\mathrm{id}$، یعنی $A^k x\equiv x\pmod N$ برای همه‌ی $x\in(\mathbb{Z}/N)^2$؛ با گذاشتن $x=e_1,e_2$ این معادل $A^k\equiv I\pmod N$ است. مجموعه‌ی چنین $k$هایی زیرگروهی از $\mathbb{Z}$ است (اگر $A^k\equiv A^m\equiv I$ آن‌گاه $A^{k\pm m}\equiv I$)، پس همه‌ی مضارب $\Pi(N)$ هستند و بس. (یک تصویر خاص ممکن است <b>زودتر</b> برگردد، اگر خودش زیر $A^k$ ناوردا باشد؛ مثلاً تصویر یک‌رنگ همان گام اول برمی‌گردد.) <span class="qed">∎</span>
+</div>
+
+<p>جدول مرتبه‌ی $A=\begin{pmatrix}2&1\\1&1\end{pmatrix}$ به‌پیمانه‌ی $N$ (محاسبه‌ی مستقیم):</p>
+<div class="tablewrap"><table class="ntab">
+<tr><th>$N$</th><td>۲</td><td>۳</td><td>۴</td><td>۵</td><td>۶</td><td>۷</td><td>۸</td><td>۹</td><td>۱۰</td><td>۱۱</td><td>۱۲</td><td>۱۳</td><td>۱۴</td><td>۱۵</td><td>۱۶</td></tr>
+<tr><th>$\Pi(N)$</th><td>۳</td><td>۴</td><td class="hl">۳</td><td>۱۰</td><td>۱۲</td><td>۸</td><td>۶</td><td>۱۲</td><td>۳۰</td><td class="hl">۵</td><td>۱۲</td><td>۱۴</td><td>۲۴</td><td>۲۰</td><td>۱۲</td></tr>
+</table></div>
+<p>و چند مقدار بزرگ‌تر: $\Pi(24)=12$، $\Pi(32)=24$، $\Pi(48)=12$، $\Pi(64)=48$، $\Pi(72)=12$، $\Pi(100)=150$، $\Pi(128)=96$، $\Pi(144)=12$، $\Pi(256)=192$.</p>
+<div class="box warn"><div class="bt">⚠ $\Pi$ یکنوا نیست — و این نکته‌ی اصلی است</div>
+$\Pi(4)=3$ کوچک‌تر از $\Pi(3)=4$ است! چرا؟ چون $A^3=\begin{pmatrix}13&8\\8&5\end{pmatrix}$ و به‌پیمانه‌ی ۴: $13\equiv1$، $8\equiv0$، $5\equiv1$، پس $A^3\equiv I\pmod 4$. همین‌طور $\Pi(144)=12$ در حالی که $\Pi(100)=150$. «دوره‌ی بازگشت تصویر» هیچ ربط ساده‌ای به اندازه‌ی تصویر ندارد.
+<p><span class="tag extra">تکمیلی</span> با $A^n=\begin{pmatrix}F_{2n+1}&F_{2n}\\F_{2n}&F_{2n-1}\end{pmatrix}$ داریم $A^n\equiv I\pmod N$ ⟺ $F_{2n}\equiv0$ و $F_{2n+1}\equiv1\pmod N$ ⟺ $\pi(N)\mid 2n$، که در آن $\pi(N)$ <b>دوره‌ی پیزانو</b>ی فیبوناچی به‌پیمانه‌ی $N$ است. پس
+$$\Pi(N)=\frac{\pi(N)}{\gcd(\pi(N),2)}.$$
+چک: $\pi(4)=6$ و $\Pi(4)=3$ ✓؛ $\pi(5)=20$ و $\Pi(5)=10$ ✓؛ $\pi(2)=3$ (فرد) و $\Pi(2)=3$ ✓.</p>
+</div>
+
+<p>در ابزار زیر یک تصویر $N\times N$ (صورت گربه) را گام‌به‌گام زیر $F$ می‌بری. نمودار سمت چپ نسبت پیکسل‌هایی را که <b>سر جای خود نیستند</b> در هر گام نشان می‌دهد؛ این نسبت در گام $\Pi(N)$ به صفر می‌رسد و تصویر برمی‌گردد.</p>
+<div class="widget" id="w-cat"></div>
+</section>
+
+<section id="ex">
+<h2><span class="num">۸</span> تمرین‌ها</h2>
+
+<div class="exercise"><div class="et">تمرین ۱ <span class="lvl">· سطح ۱ — گرم‌کردن · ۱۰ دقیقه</span></div>
+برای هر ماتریس $\tau,\delta,\Delta$ را حساب کن، جایش را در صفحه‌ی trace–det بگو و رده‌اش را نام ببر:
+$$B_1=\begin{pmatrix}0&-0.5\\1&1\end{pmatrix},\qquad
+B_2=\begin{pmatrix}1&2\\-1&1\end{pmatrix},\qquad
+B_3=\begin{pmatrix}3&1\\2&1\end{pmatrix},\qquad
+B_4=\begin{pmatrix}0.4&0.9\\-0.9&0.4\end{pmatrix}.$$
+<details><summary>راه‌حل</summary>
+<ul>
+<li>$B_1$: $\tau=1$، $\delta=0.5$، $\Delta=1-2=-1<0$ ⟶ مختلط با $\rho=\sqrt{0.5}\approx0.707<1$: <b>مارپیچ جاذب</b>. تست مثلث: $|\delta|=0.5<1$ ✓، $|\tau|=1<1.5$ ✓.</li>
+<li>$B_2$: $\tau=2$، $\delta=1+2=3$، $\Delta=4-12=-8<0$ ⟶ $\rho=\sqrt3\approx1.73>1$: <b>مارپیچ دافع</b>. و $(1+\delta)^2-\tau^2=16-4=12>0$ با $|\delta|>1$ ✓ سازگار با «دافع».</li>
+<li>$B_3$: $\tau=4$، $\delta=3-2=1$، $\Delta=16-4=12>0$، $\lambda=2\pm\sqrt3$ ⟶ $\lambda_+\approx3.732$، $\lambda_-\approx0.268$: <b>زینی و حافظ مساحت</b>. $(1+\delta)^2-\tau^2=4-16=-12<0$ ✓. (این هم یک ماتریس $SL(2,\mathbb{Z})$ هذلولوی است: «گربه»ی دیگری.)</li>
+<li>$B_4$: $\tau=0.8$، $\delta=0.16+0.81=0.97$، $\Delta=0.64-3.88<0$ ⟶ $\rho=\sqrt{0.97}\approx0.985$: <b>مارپیچ جاذب ولی خیلی کند</b>؛ تقریباً روی مرز $\delta=1$.</li>
+</ul>
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۲ <span class="lvl">· سطح ۱ · ۸ دقیقه</span></div>
+نشان بده شرط دوگانه‌ی «$|\delta|<1$ و $|\tau|<1+\delta$» معادل شرط دوگانه‌ی «$\delta<1$ و $|\tau|<1+\delta$» است. سپس سه رأس مثلث را از حل دستگاه‌های خطی مرزها به دست آور و بگو کدام ضلع‌ها به مثلث تعلق ندارند.
+<details><summary>راه‌حل</summary>
+$|\tau|<1+\delta$ ایجاب می‌کند $1+\delta>|\tau|\ge0$، پس $\delta>-1$؛ یعنی $\delta>-1$ از شرط دوم رایگان می‌آید و از $|\delta|<1$ فقط $\delta<1$ تازه است. رأس‌ها: $\{\delta=1,\tau=1+\delta\}\Rightarrow(2,1)$؛ $\{\delta=1,\tau=-(1+\delta)\}\Rightarrow(-2,1)$؛ $\{\tau=1+\delta,\tau=-(1+\delta)\}\Rightarrow(0,-1)$. هر سه نامساوی اکیدند، پس <b>هیچ</b> نقطه‌ای از مرز (سه ضلع و سه رأس) در ناحیه نیست: روی مرز حتماً مقدار ویژه‌ای روی دایره‌ی واحد هست (نتیجه‌ی ۱۳.۶).
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۳ <span class="lvl">· سطح ۲ — اصلی · ۱۵ دقیقه</span></div>
+اتحاد $(1-\lambda_1^2)(1-\lambda_2^2)=(1+\delta)^2-\tau^2$ را دوباره و این بار <b>بدون</b> استفاده از $p(\pm1)$ ثابت کن (یعنی مستقیماً با $\lambda_1+\lambda_2=\tau$ و $\lambda_1\lambda_2=\delta$). سپس با همین اتحاد نشان بده مجموعه‌ی ماتریس‌های <b>غیر</b>هذلولوی در صفحه‌ی trace–det بسته و با مساحت صفر است.
+<details><summary>راه‌حل</summary>
+$$(1-\lambda_1^2)(1-\lambda_2^2)=1-(\lambda_1^2+\lambda_2^2)+\lambda_1^2\lambda_2^2
+=1-\big((\lambda_1+\lambda_2)^2-2\lambda_1\lambda_2\big)+(\lambda_1\lambda_2)^2
+=1-\tau^2+2\delta+\delta^2=(1+\delta)^2-\tau^2 .$$
+مجموعه‌ی غیرهذلولوی $N=\{\tau^2=(1+\delta)^2\}\cup\{\delta=1,\tau^2\le4\}$ است: اجتماع دو خط و یک پاره‌خط، پس بسته و با مساحت (اندازه‌ی لبگ دوبعدی) صفر. نتیجه‌ی مفهومی: <b>هذلولوی بودن خاصیتی «عام»</b> است — تقریباً هر ماتریسی هذلولوی است و خاصیت زیر اختلال کوچک پایدار می‌ماند (مجموعه‌ی هذلولوی‌ها باز است).
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۴ <span class="lvl">· سطح ۲ · ۱۵ دقیقه</span></div>
+فرض کن $A\in SL(2,\mathbb{Z})$ و $|\operatorname{tr}A|>2$. ثابت کن (الف) $A$ هذلولوی از نوع زینی است؛ (ب) مقادیر ویژه به‌شکل $\lambda,\lambda^{-1}$ با $\lambda$ <b>گنگ</b> درجه‌دو هستند؛ (ج) شیب‌های $E^s$ و $E^u$ گنگ‌اند، و در نتیجه هر دو خط ویژه روی چنبره چگال می‌شوند.
+<details><summary>راه‌حل</summary>
+(الف) $\delta=1$، پس $(1+\delta)^2-\tau^2=4-\tau^2<0$ و گزاره‌ی ۱۳.۵ زینی بودن را می‌دهد.
+(ب) $\lambda_{1,2}=\frac{\tau\pm\sqrt{\tau^2-4}}{2}$ و $\lambda_1\lambda_2=1$. اگر $\lambda$ گویا بود، چون ریشه‌ی $\lambda^2-\tau\lambda+1$ با ضرایب صحیح و ضریب پیشرو ۱ است، با قضیه‌ی ریشه‌ی گویا باید صحیح و مقسوم‌علیه ۱ باشد، یعنی $\lambda=\pm1$ — ولی آن‌گاه $\tau=\lambda+\lambda^{-1}=\pm2$، خلاف فرض. پس گنگ است. (معادلاً: $\tau^2-4$ مربع کامل نیست وگرنه $\lambda$ نصفِ عدد صحیح و گویا می‌شد که رد شد.)
+(ج) شیب خط ویژه از $(a-\lambda)x+by=0$ برابر $(\lambda-a)/b$ است (اگر $b\ne0$). چون $a,b$ صحیح و $\lambda$ گنگ است، شیب گنگ است. اگر $b=0$ آن‌گاه $A$ پایین‌مثلثی است و $\lambda=a$ صحیح، در تضاد با (ب). خط با شیب گنگ $m$ از مبدأ روی چنبره چگال است: نقاط تقاطعش با خط $x=1$ (مد ۱) همان مدار دوران $y\mapsto y+m$ است، که برای $m$ گنگ چگال است (جلسه‌ی ۱) — پس خود خط هم چگال است.
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۵ <span class="lvl">· سطح ۲ · ۱۲ دقیقه</span></div>
+برای $B=\begin{pmatrix}3&1\\2&1\end{pmatrix}$ (که $\det=1$): نگاشت $F_B$ روی $\mathbb{T}^2$ را بررسی کن، $\#\mathrm{Fix}(F_B^n)$ را به‌صورت بسته بنویس و برای $n=1,2,3$ حساب کن.
+<details><summary>راه‌حل</summary>
+$\tau=4$، $\delta=1$، $\lambda_\pm=2\pm\sqrt3$ با $\lambda_+\lambda_-=1$. درایه‌ها صحیح و $\det=1$، پس $F_B$ اندریختی دوسویی و حافظ مساحت است، و هذلولوی زینی. مثل قضیه‌ی ۱۳.۲۲:
+$$\#\mathrm{Fix}(F_B^n)=|\det(B^n-I)|=\big|(\lambda_+^n-1)(\lambda_+^{-n}-1)\big|=\lambda_+^n+\lambda_+^{-n}-2=\operatorname{tr}(B^n)-2 .$$
+$\operatorname{tr}(B^n)$ از بازگشتی $t_{n+1}=4t_n-t_{n-1}$ با $t_0=2,t_1=4$: $\;t_1=4,\ t_2=14,\ t_3=52$. پس $\#\mathrm{Fix}=2,\ 12,\ 50$. (چک $n=1$: $B-I=\begin{pmatrix}2&1\\2&0\end{pmatrix}$، $\det=-2$ ✓. $n=2$: $B^2=\begin{pmatrix}11&4\\8&3\end{pmatrix}$، $B^2-I=\begin{pmatrix}10&4\\8&2\end{pmatrix}$، $\det=20-32=-12$ ✓.) آنتروپی: $\log(2+\sqrt3)\approx1.3170$ — از نگاشت گربه آشوبی‌تر.
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۶ <span class="lvl">· سطح ۲ · ۱۲ دقیقه</span></div>
+همه‌ی نقاط $[x]\in\mathbb{T}^2$ با $F^3([x])=[x]$ را برای نگاشت گربه پیدا کن (تعداد باید ۱۶ باشد) و بگو این ۱۶ نقطه به چند مدار تقسیم می‌شوند و دوره‌ی هر مدار چیست.
+<details><summary>راه‌حل</summary>
+$A^3=\begin{pmatrix}13&8\\8&5\end{pmatrix}$، $A^3-I=\begin{pmatrix}12&8\\8&4\end{pmatrix}$، $\det=48-64=-16$ ✓ پس ۱۶ نقطه. مجموعه‌ی نقاط ثابت $=(A^3-I)^{-1}\mathbb{Z}^2/\mathbb{Z}^2$. از $(A^3-I)=4\begin{pmatrix}3&2\\2&1\end{pmatrix}$ و $\begin{pmatrix}3&2\\2&1\end{pmatrix}^{-1}=\frac{1}{-1}\begin{pmatrix}1&-2\\-2&3\end{pmatrix}$ می‌آید
+$$(A^3-I)^{-1}=\tfrac14\begin{pmatrix}-1&2\\2&-3\end{pmatrix},$$
+پس همه‌ی این نقاط مخرج‌شان مقسوم‌علیه ۴ است و در واقع $\mathrm{Fix}(F^3)=L_4$، تمام $4^2=16$ نقطه‌ی شبکه‌ی $\frac14\mathbb{Z}^2$! این دقیقاً با $\Pi(4)=3$ جور است: تمام شبکه‌ی $4\times4$ دوره‌اش مقسوم‌علیه ۳ است. تقسیم به مدارها: $[0,0]$ ثابت (دوره ۱)؛ ۱۵ نقطه‌ی دیگر دوره‌ی ۳ دارند، یعنی ۵ مدار با دوره‌ی کمینه‌ی ۳. (چون $\#\mathrm{Fix}(F)=1$، هیچ نقطه‌ی دوره‌ی ۱ دیگری نیست و $3$ اول است.) جمع: $1+5\times3=16$ ✓.
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۷ <span class="lvl">· سطح ۳ — چالش · ۲۰ دقیقه</span></div>
+رده‌بندی $SL(2,\mathbb{Z})$ بر حسب اثر: فرض کن $A\in SL(2,\mathbb{Z})$. ثابت کن
+(الف) اگر $|\operatorname{tr}A|<2$، آن‌گاه $\operatorname{tr}A\in\{-1,0,1\}$ و $A$ <b>مرتبه‌ی متناهی</b> دارد (به‌ترتیب مرتبه‌ی ۶، ۴، ۳ به‌جز علامت)؛
+(ب) اگر $|\operatorname{tr}A|=2$، آن‌گاه $A$ پارابولیک است و (به‌جز $A=\pm I$) مرتبه‌ی نامتناهی دارد و نمای لیاپانوفش صفر است؛
+(ج) اگر $|\operatorname{tr}A|>2$، آن‌گاه $F_A$ آنوسوف و آشوبی است.
+<details><summary>راه‌حل</summary>
+(الف) $\operatorname{tr}A$ عدد صحیح است، پس $|\tau|<2$ یعنی $\tau\in\{-1,0,1\}$. چندجمله‌ای مشخصه $\lambda^2-\tau\lambda+1$ است و $\Delta=\tau^2-4<0$، پس $\lambda=e^{\pm i\theta}$ با $\cos\theta=\tau/2$:
+$\tau=1\Rightarrow\theta=\pi/3$، $\tau=0\Rightarrow\theta=\pi/2$، $\tau=-1\Rightarrow\theta=2\pi/3$. در هر سه حالت $\lambda$ ریشه‌ی واحد است و (چون $\lambda\ne\bar\lambda$، $A$ قطری‌شدنی روی $\mathbb{C}$ است) $A^k=I$ برای $k=6,4,3$ به‌ترتیب. مثال‌ها: $\begin{pmatrix}0&-1\\1&0\end{pmatrix}$ با $\tau=0$ و مرتبه‌ی ۴؛ $\begin{pmatrix}0&-1\\1&1\end{pmatrix}$ با $\tau=1$ و مرتبه‌ی ۶.
+(ب) $\tau=\pm2$ یعنی $\Delta=0$ و $\lambda=\pm1$ مضاعف. اگر $A\ne\pm I$، شکل جردنی $\pm\begin{pmatrix}1&s\\0&1\end{pmatrix}$ با $s\ne0$ است و $A^n$ درایه‌ای مثل $ns$ دارد که نامتناهی رشد می‌کند، پس مرتبه نامتناهی است؛ ولی رشد <b>خطی</b> است: $\frac1n\log\|A^n\|\to0$، نمای لیاپانوف صفر.
+(ج) تمرین ۴ می‌گوید زینی است، و روی چنبره تمام فضا هذلولوی می‌شود (آنوسوف). همان استدلال بخش ۶.۵ — نقاط تناوبی چگال (قضیه‌ی ۱۳.۲۴ عیناً برای هر $A\in SL(2,\mathbb{Z})$ هذلولوی کار می‌کند) و اختلاط — آشوب دِوِینی می‌دهد.
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۸ <span class="lvl">· سطح ۳ · ۱۵ دقیقه</span></div>
+(الف) نشان بده $F_C$ برای $C=\begin{pmatrix}2&0\\0&1\end{pmatrix}$ روی چنبره خوش‌تعریف است ولی دوسویی نیست، و تعداد پیش‌تصویرهای هر نقطه را بشمار. (ب) آیا نقاط گویا برای $F_C$ تناوبی‌اند؟ (ج) $\#\mathrm{Fix}(F_C^n)$ را حساب کن.
+<details><summary>راه‌حل</summary>
+(الف) درایه‌ها صحیح‌اند پس خوش‌تعریف است؛ $\det C=2\ne\pm1$، پس به گزاره‌ی ۱۳.۱۹(۲) دوسویی نیست و به بند (۳) هر نقطه $|\det C|=2$ پیش‌تصویر دارد: $F_C(x,y)=(2x,y)$ و $(x,y)$، $(x+\frac12,y)$ یک تصویر دارند.
+(ب) نه همیشه <b>تناوبی</b>، ولی همیشه <b>نهایتاً تناوبی</b>: مؤلفه‌ی اول همان $E_2$ است و مثلاً $x=\frac16$ پیش‌تناوبی است. این دقیقاً نقطه‌ای است که HK تأکید می‌کند: در اثبات قضیه‌ی ۱۳.۲۴ از <b>وارون‌پذیری</b> استفاده شد.
+(ج) $\mathrm{Fix}(F_C^n)$: شرط $(C^n-I)x\in\mathbb{Z}^2$ با $C^n-I=\begin{pmatrix}2^n-1&0\\0&0\end{pmatrix}$. سطر دوم همیشه برقرار است (صفر صحیح است)، پس $y$ <b>آزاد</b> است و مجموعه‌ی نقاط ثابت نامتناهی (اجتماع $2^n-1$ دایره‌ی $x=\frac{k}{2^n-1}$) است. درس: فرمول $|\det(A^n-I)|$ فقط وقتی کار می‌کند که $1$ مقدار ویژه‌ی $A^n$ نباشد — این‌جا $\lambda=1$ مقدار ویژه است.
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۹ <span class="lvl">· سطح ۳ · ۱۵ دقیقه</span></div>
+ثابت کن نگاشت گربه روی <b>صفحه</b> (نه چنبره) <b>انتگرال‌پذیر</b> است: تابع پیوسته و ناثابت $G$ با $G\circ A=G$ پیدا کن. سپس توضیح بده چرا این $G$ روی چنبره خوش‌تعریف نیست. (Knill، تمرین ۲.۵)
+<details><summary>راه‌حل</summary>
+دنبال فرم درجه‌دوی ناوردا می‌رویم: $G(x,y)=\begin{pmatrix}x&y\end{pmatrix}M\begin{pmatrix}x\\y\end{pmatrix}$ با $M$ متقارن، و شرط ناوردایی $A^{T}MA=M$، یعنی (چون $A$ متقارن است) $AMA=M$. با $M=\begin{pmatrix}a&h\\h&c\end{pmatrix}$ و حساب کردن $AMA=\begin{pmatrix}4a+4h+c&2a+3h+c\\2a+3h+c&a+2h+c\end{pmatrix}$ و برابر گذاشتن با $M$:
+$$3a+4h+c=0,\quad 2a+2h+c=0,\quad a+2h=0 .$$
+از آخری $a=-2h$، از دومی $c=2h$، و اولی خودبه‌خود برقرار است. با $h=1$ (و تقسیم بر ۲):
+$$\boxed{G(x,y)=y^2+xy-x^2}$$
+چک مستقیم: $G(2x+y,x+y)=(x+y)^2+(2x+y)(x+y)-(2x+y)^2=-x^2+xy+y^2$ ✓. سطوح تراز $G=c$ هذلولی‌هایی با مجانب‌های $E^s$ و $E^u$ هستند (فرم نامعین است: $\det M=-5<0$) — یعنی مدارها روی هذلولی‌های ناوردا می‌لغزند؛ صفحه کاملاً «منظم» است.
+<br>روی چنبره: $G$ دوره‌ای نیست، $G(x+1,y)-G(x,y)=-2x-1+y\ne0$، پس تابعی روی $\mathbb{T}^2$ تعریف نمی‌کند. و واقعاً نگاشت گربه روی چنبره انتگرال‌پذیر <b>نیست</b>: اگر $G$ پیوسته و ناوردا روی $\mathbb{T}^2$ بود، روی هر مدار ثابت می‌شد؛ چون مداری چگال هست (بخش ۶.۵) و $G$ پیوسته است، $G$ روی کل $\mathbb{T}^2$ ثابت می‌شد. <b>همین فشردگی + اختلاط است که صفحه‌ی منظم را به چنبره‌ی آشوبی تبدیل می‌کند.</b>
+</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۱۰ <span class="lvl">· سطح ۴ — پژوهشی · باز</span></div>
+(الف) با ابزار بالا $\Pi(N)$ را برای $N\le60$ جدول کن. چه الگویی می‌بینی؟ آیا $\Pi(N)\le 3N$ همیشه درست است؟ (ب) ثابت کن $\Pi(N)\mid\Pi(MN)$ برای هر $M$. (ج) حدس بزن برای چه $N$هایی $\Pi(N)$ بسیار کوچک است و با جدول دوره‌ی پیزانو مقایسه کن. (د) برای شبکه‌ی $N\times N$، تعداد پیکسل‌های ثابت زیر $F^n$ را بشمار و با $|\det(A^n-I)|$ مقایسه کن — چه رابطه‌ای هست؟
+<details><summary>راهنمایی و جواب جزئی</summary>
+(ب) اگر $A^k\equiv I\pmod{MN}$ آن‌گاه درایه‌های $A^k-I$ بر $MN$ و در نتیجه بر $N$ بخش‌پذیرند، پس $A^k\equiv I\pmod N$ و $\Pi(N)\mid\Pi(MN)$.
+(ج) $\Pi$ از طریق دوره‌ی پیزانو با تجزیه‌ی $N$ به عوامل اول و رفتار $5$ به‌پیمانه‌ی $p$ (قانون تقابل درجه‌دو) گره خورده است؛ برای $p\equiv\pm1\pmod5$ عدد $5$ مربع کامل مد $p$ است و $\Pi$ مقسوم‌علیه $p-1$ می‌شود (مثل $\Pi(11)=5$)، و برای $p\equiv\pm2\pmod5$ معمولاً $\Pi\mid p+1$ (مثل $\Pi(7)=8$، $\Pi(13)=14$). این یک پروژه‌ی خوب برای فایل یادگیری است.
+(د) تعداد پیکسل‌های ثابت زیر $F^n$ در $L_N$ برابر تعداد جواب‌های $(A^n-I)v\equiv0\pmod N$ است؛ این عدد با فرم نرمال اسمیت $A^n-I$ به‌دست می‌آید و همیشه مقسوم‌علیهی از $\gcd$های مربوط است. مجموع این اعداد روی همه‌ی $N$ها باید $|\det(A^n-I)|$ را بازسازی کند، چون $\mathrm{Fix}(F^n)$ متناهی است و هر عضوش مخرج معینی دارد.
+</details>
+</div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۹</span> تست</h2>
+<p>۱۲ سؤال؛ سه سؤال آخر مرور جلسه‌های قبلی است. نمره در مرورگرت ذخیره می‌شود.</p>
+<div class="quiz"></div>
+</section>
+
+<section id="lfile">
+<h2><span class="num">۱۰</span> برای فایل یادگیری‌ات</h2>
+<div class="box note"><div class="bt">📝 سه زیربخش، با زبان خودت</div>
+این جلسه دو «سیستم» تازه به فایل یادگیری‌ات اضافه می‌کند: <b>خانواده‌ی همه‌ی نگاشت‌های خطی صفحه</b> (با فضای پارامتر دوبعدیِ $(\tau,\delta)$) و <b>نگاشت گربه روی چنبره</b>. برای هر دو، سه زیربخش استاد را پر کن. پیشنهادها پایین است — ولی خودت جمله‌هایت را بنویس، کپی نکن.
+</div>
+<div class="lf">
+<div class="q"><h4>۱) سؤال‌ها و حدس‌ها</h4>
+<ul>
+<li>آیا $(\tau,\delta)$ رده‌ی مزدوجی $A$ را کامل تعیین می‌کند؟ کجا نه؟ (راهنما: سهمی $\Delta=0$.)</li>
+<li>برای یک ماتریس <b>تصادفی</b> با درایه‌های در $[-1,1]$، احتمال اینکه جاذب باشد چقدر است؟ (می‌شود شبیه‌سازی کرد.)</li>
+<li>آیا هر $A\in SL(2,\mathbb{Z})$ هذلولوی، آشوبی است؟ آیا آنتروپی‌اش همیشه $\log\lambda_+$ است؟</li>
+<li>آیا نگاشت گربه مدار چگال دارد؟ می‌توانی یکی <b>بسازی</b> (مثل عدد چمپرناون در جلسه‌ی ۱۰)؟</li>
+<li>آیا $\Pi(N)$ (دوره‌ی بازگشت شبکه) کراندار بالا به‌صورت چندجمله‌ای در $N$ است؟ چرا $\Pi(144)=12$؟</li>
+<li>اگر دترمینان را فقط کمی از ۱ کم کنیم ($\delta=0.99$ با همان $\tau=3$)، آشوب می‌ماند؟ چه چیزی عوض می‌شود؟</li>
+<li>نگاشت‌های حافظ مساحت روی چنبره که هذلولوی نیستند چه می‌کنند؟ (برشی، دوران.)</li>
+</ul>
+</div>
+<div class="p"><h4>۲) تصویر کلی</h4>
+<ul>
+<li>کل رده‌بندی نگاشت‌های خطی صفحه یک <b>نقشه‌ی دوبعدی</b> است: سهمی $\delta=\tau^2/4$ حقیقی/مختلط را جدا می‌کند، مثلث $(\pm2,1),(0,-1)$ ناحیه‌ی جاذب است، بیرون دوگوشه‌ی $|\tau|>|1+δ|$ زینی است، بقیه دافع.</li>
+<li>مرزها = غیرهذلولوی = «جایی که انشعاب رخ می‌دهد». هذلولوی بودن <b>باز و چگال</b> است.</li>
+<li>$\delta$ ضریب تغییر مساحت است. $|\delta|=1$ یک خط باریک است که روی آن «جاذب» ممنوع می‌شود: دینامیک یا دوران‌گونه است یا هذلولوی.</li>
+<li>هذلولوی بودن = تجزیه‌ی $\mathbb{R}^2=E^s\oplus E^u$ = «در یک جهت فشرده، در یک جهت کشیده».</li>
+<li>فشردن فضا (رفتن از $\mathbb{R}^2$ به $\mathbb{T}^2$) کشش بی‌پایان را به <b>تا خوردن</b> مجبور می‌کند؛ کشیدن + تا کردن = آشوب.</li>
+<li>عدد صحیح بودن درایه‌ها = خوش‌تعریفی روی چنبره. $\det=\pm1$ = دوسویی + حفظ مساحت.</li>
+<li>آشوب لازم نیست جاذب داشته باشد. «آشوب محافظه‌کار» (گربه) و «جاذب عجیب» (هنون) دو چیز متفاوت‌اند.</li>
+</ul>
+</div>
+<div class="s"><h4>۳) فهم تثبیت‌شده</h4>
+<p>این‌ها را باید روی کاغذ سفید، بدون کتاب و AI، بتوانی بنویسی و ثابت کنی:</p>
+<ul>
+<li>$\det(A-\lambda I)=\lambda^2-\tau\lambda+\delta$ و خواندن نوع مقادیر ویژه از علامت $\Delta$ (گزاره ۱۳.۲).</li>
+<li><b>قضیه‌ی مثلث پایداری</b> و اثبات کاملش با $p(1),p(-1),\delta$ (قضیه ۱۳.۴) — کل استدلال چهارحالته‌ی گام ۲.</li>
+<li>اتحاد $(1-\lambda_1^2)(1-\lambda_2^2)=(1+\delta)^2-\tau^2$ و معیار زینی (گزاره ۱۳.۵).</li>
+<li>$\operatorname{area}(A(E))=|\det A|\operatorname{area}(E)$ از فرمول تغییر متغیر (قضیه ۱۳.۹).</li>
+<li>$GL(2,\mathbb{Z})=$ ماتریس‌های صحیح وارون‌پذیر روی $\mathbb{Z}$، با اثبات دوخطی (گزاره ۱۳.۱۱).</li>
+<li>«حافظ مساحت ⟹ بدون جاذب»، هر سه نسخه (قضیه ۱۳.۱۲).</li>
+<li>تعریف دینامیکی $E^s,E^u$ و اثبات $\mathbb{R}^2=E^s\oplus E^u$ (قضیه ۱۳.۱۶) — گام استقلال خطی بردارهای ویژه و گام «مختص دوم».</li>
+<li>خوش‌تعریفی $F_A$ روی $\mathbb{T}^2$ و معیار دوسویی $\det=\pm1$ (گزاره ۱۳.۱۹).</li>
+<li>$\#\mathrm{Fix}(F^n)=|\det(A^n-I)|=\lambda_+^n+\lambda_+^{-n}-2$ با اثبات هر دو گام (قضیه ۱۳.۲۲).</li>
+<li>«نقاط تناوبی $=$ نقاط گویا» در هر دو جهت، و نقش وارون‌پذیری (قضیه ۱۳.۲۴).</li>
+<li>مقادیر ویژه و شیب‌های ویژه‌ی $\begin{pmatrix}2&1\\1&1\end{pmatrix}$ از حفظ، و دلیل گنگ بودن شیب‌ها.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section id="gloss">
+<h2><span class="num">۱۱</span> اصطلاح‌نامه‌ی فارسی–انگلیسی</h2>
+<div class="lf">
+<div><h4>صفحه‌ی پارامترها</h4>
+<ul>
+<li>اثر — <span class="ltr">trace</span></li>
+<li>دترمینان — <span class="ltr">determinant</span></li>
+<li>مبیّن — <span class="ltr">discriminant</span></li>
+<li>چندجمله‌ای مشخصه — <span class="ltr">characteristic polynomial</span></li>
+<li>شعاع طیفی — <span class="ltr">spectral radius</span></li>
+<li>ناحیه‌ی پایداری / مثلث پایداری — <span class="ltr">stability region / stability triangle</span></li>
+<li>گره (جاذب/دافع) — <span class="ltr">node (sink/source)</span></li>
+<li>مارپیچ، کانون — <span class="ltr">spiral, focus</span></li>
+<li>زینی — <span class="ltr">saddle</span></li>
+<li>بیضوی، پارابولیک — <span class="ltr">elliptic, parabolic</span></li>
+<li>همسانی، برشی — <span class="ltr">homothety, shear</span></li>
+</ul>
+</div>
+<div><h4>هذلولوی بودن</h4>
+<ul>
+<li>هذلولوی — <span class="ltr">hyperbolic</span></li>
+<li>زیرفضای پایدار / ناپایدار — <span class="ltr">stable / unstable subspace</span></li>
+<li>زیرفضای منقبض‌شونده / منبسط‌شونده — <span class="ltr">contracting / expanding subspace</span></li>
+<li>تجزیه‌ی مستقیم — <span class="ltr">direct sum decomposition</span></li>
+<li>نهایتاً انقباضی — <span class="ltr">eventually contracting</span></li>
+<li>نمای لیاپانوف — <span class="ltr">Lyapunov exponent</span></li>
+<li>خمینه‌ی پایدار / ناپایدار — <span class="ltr">stable / unstable manifold</span></li>
+<li>دیفئومورفیسم آنوسوف — <span class="ltr">Anosov diffeomorphism</span></li>
+<li>حساسیت به شرط اولیه — <span class="ltr">sensitive dependence on initial conditions</span></li>
+</ul>
+</div>
+<div><h4>چنبره و حفظ مساحت</h4>
+<ul>
+<li>چنبره — <span class="ltr">torus</span></li>
+<li>خارج‌قسمت — <span class="ltr">quotient</span></li>
+<li>مشبکه — <span class="ltr">lattice</span></li>
+<li>حوزه‌ی بنیادی — <span class="ltr">fundamental domain</span></li>
+<li>حافظ مساحت — <span class="ltr">area-preserving</span></li>
+<li>اندریختی چنبره‌ای — <span class="ltr">toral automorphism</span></li>
+<li>نگاشت گربه‌ی آرنولد — <span class="ltr">Arnold's cat map</span></li>
+<li>فرمول تغییر متغیر — <span class="ltr">change of variables formula</span></li>
+<li>آنتروپی توپولوژیک — <span class="ltr">topological entropy</span></li>
+<li>اختلاطی توپولوژیک — <span class="ltr">topologically mixing</span></li>
+<li>انتگرال‌پذیر — <span class="ltr">integrable</span></li>
+<li>افراز مارکوف — <span class="ltr">Markov partition</span></li>
+<li>دوره‌ی پیزانو — <span class="ltr">Pisano period</span></li>
+</ul>
+</div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:R`چندجمله‌ای مشخصه‌ی یک ماتریس $2\times2$ بر حسب $\tau=\operatorname{tr}A$ و $\delta=\det A$ کدام است؟`,
+  o:[R`$\lambda^2-\tau\lambda+\delta$`,R`$\lambda^2+\tau\lambda+\delta$`,R`$\lambda^2-\delta\lambda+\tau$`,R`$\lambda^2-\tau\lambda-\delta$`], a:0,
+  e:R`$\det(A-\lambda I)=(a-\lambda)(d-\lambda)-bc=\lambda^2-(a+d)\lambda+(ad-bc)$.`},
+ {q:R`مقادیر ویژه مختلط (ناحقیقی) هستند دقیقاً وقتی:`,
+  o:[R`$\delta>\tau^2/4$`,R`$\delta<\tau^2/4$`,R`$\delta>1$`,R`$\tau<0$`], a:0,
+  e:R`$\Delta=\tau^2-4\delta<0$، یعنی بالای سهمی. توجه کن این حالت $\delta>0$ را ایجاب می‌کند و آن‌جا $|\lambda|=\sqrt\delta$.`},
+ {q:R`ماتریسی با $\tau=1.9$ و $\delta=0.5$ از چه نوعی است؟`,
+  o:[`زینی`,`گره جاذب`,`مارپیچ جاذب`,`گره دافع`], a:0,
+  e:R`$(1+\delta)^2-\tau^2=2.25-3.61=-1.36<0$، پس زینی. (دقت کن $|\delta|<1$ بود ولی $|\tau|<1+\delta$ نبود.)`},
+ {q:R`رأس‌های مثلث پایداری در صفحه‌ی $(\tau,\delta)$ کدام‌اند؟`,
+  o:[R`$(-2,1),(2,1),(0,-1)$`,R`$(-1,1),(1,1),(0,-1)$`,R`$(-2,-1),(2,-1),(0,1)$`,R`$(-1,0),(1,0),(0,1)$`], a:0,
+  e:R`اشتراک $\delta<1$، $\tau<1+\delta$ و $-\tau<1+\delta$.`},
+ {q:R`اگر $|\det A|=0.75$ باشد، کدام گزاره <b>قطعاً</b> درست است؟`,
+  o:[`مساحت هر مجموعه در هر گام در ۰٫۷۵ ضرب می‌شود`,`مبدأ نقطه‌ی ثابت جاذب است`,R`$A$ هذلولوی نیست`,`مقادیر ویژه مختلط‌اند`], a:0,
+  e:R`قضیه‌ی ۱۳.۹. جاذب بودن لازم نیست: $\operatorname{diag}(-1.5,-0.5)$ همین دترمینان را دارد و زینی است.`},
+ {q:R`برای $A=\begin{pmatrix}2&1\\1&1\end{pmatrix}$ روی چنبره، $\#\mathrm{Fix}(F^2)$ چند است؟`,
+  o:[`۵`,`۴`,`۷`,`۱`], a:0,
+  e:R`$A^2-I=\begin{pmatrix}4&3\\3&1\end{pmatrix}$ و $|\det|=|4-9|=5$؛ یا $L_4-2=7-2=5$.`},
+ {q:R`مجموعه‌ی نقاط تناوبی نگاشت گربه دقیقاً کدام است؟`,
+  o:[`نقاط با هر دو مختص گویا`,`نقاط با هر دو مختص گنگ`,R`فقط نقاط شبکه‌ی $\frac12\mathbb{Z}^2$`,`فقط مبدأ`], a:0,
+  e:R`قضیه‌ی ۱۳.۲۴، در هر دو جهت. چون $\mathbb{Q}^2$ چگال است، نقاط تناوبی چگال‌اند.`},
+ {q:R`چرا $F_A(x,y)=A(x,y)\bmod1$ روی $\mathbb{T}^2$ خوش‌تعریف است؟`,
+  o:[R`چون درایه‌های $A$ عدد صحیح‌اند، پس $A\mathbb{Z}^2\subseteq\mathbb{Z}^2$`,R`چون $\det A=1$`,R`چون $A$ متقارن است`,R`چون $A$ هذلولوی است`], a:0,
+  e:R`$x-x'\in\mathbb{Z}^2\Rightarrow Ax-Ax'=A(x-x')\in\mathbb{Z}^2$. صحیح بودن درایه‌ها مسئول خوش‌تعریفی است و $\det=\pm1$ مسئول دوسویی.`},
+ {q:R`$F_A$ روی چنبره دوسویی است اگر و تنها اگر:`,
+  o:[R`$\det A=\pm1$`,R`$\det A>0$`,R`$\operatorname{tr}A>2$`,R`$A$ وارون‌پذیر روی $\mathbb{R}$ باشد`], a:0,
+  e:R`وارون باید درایه‌های صحیح داشته باشد (گزاره‌ی ۱۳.۱۱)؛ در حالت کلی $F_A$ دقیقاً $|\det A|$-به-یک است.`},
+ {q:R`نمای لیاپانوف تقریباً هر مدار نگاشت گربه (و آنتروپی توپولوژیکش) کدام است؟`,
+  o:[R`$\log\frac{3+\sqrt5}{2}\approx0.962$`,R`$\log2$`,R`$\log\frac{1+\sqrt5}{2}\approx0.481$`,R`$0$`], a:0,
+  e:R`$\lambda_+=\frac{3+\sqrt5}{2}$ مقدار ویژه‌ی منبسط‌شونده است؛ و $\frac1n\log\#\mathrm{Fix}(F^n)\to\log\lambda_+$.`},
+ {q:R`نگاشت برشی $S(x,y)=(x+y,y)$ روی چنبره:`,
+  o:[`حافظ مساحت است ولی آشوبی نیست (نمای لیاپانوف صفر)`,`حافظ مساحت نیست`,`جاذب دارد`,`هذلولوی است`], a:0,
+  e:R`$\tau=2$، $\delta=1$: پارابولیک، روی مرز. رشد $\|S^n\|$ خطی است. پس حفظ مساحت برای آشوب کافی نیست.`},
+ {q:R`(مرور جلسه‌ی ۱۰) «آشوب به‌معنای دِوِینی» یعنی:`,
+  o:[`مجموعه‌ی چگالی از مدارهای تناوبی + وجود یک مدار چگال`,`نمای لیاپانوف مثبت`,`وجود جاذب عجیب`,`بی‌نهایت نقطه‌ی ثابت`], a:0,
+  e:R`تعریف توپولوژیک محض؛ نگاشت گربه هر دو شرط را دارد.`},
+ {q:R`(مرور جلسه‌ی ۵) اگر مدار تناوبی دوره‌ی $k$ ضریب $\mu$ داشته باشد، نمای لیاپانوفش:`,
+  o:[R`$\frac1k\log|\mu|$`,R`$\log|\mu|$`,R`$k\log|\mu|$`,R`$|\mu|$`], a:0,
+  e:R`میانگین لگاریتم مشتق روی یک دوره.`},
+ {q:R`(مرور جلسه‌ی ۱) دوران $\theta\mapsto\theta+\alpha$ روی دایره با $\alpha$ گنگ:`,
+  o:[`هیچ نقطه‌ی تناوبی ندارد و هر مدارش چگال است`,`همه‌ی نقاطش تناوبی‌اند`,`یک نقطه‌ی ثابت جاذب دارد`,`نمای لیاپانوف مثبت دارد`], a:0,
+  e:R`همین واقعیت است که چگال بودن خط ویژه‌ی $E^u$ با شیب گنگ روی چنبره را نتیجه می‌دهد (تمرین ۴).`},
+];
+</script>
+<script>
+window.PAGE_INIT=function(DS){
+const {Plot,css,h,slider,select,onResize}=DS;
+
+/* ===================== ابزار ۱: صفحه‌ی trace–det ===================== */
+(function(){
+  const el=document.getElementById("w-td"); if(!el) return;
+  el.innerHTML=`<div class="wt">صفحه‌ی trace–det تعاملی</div>
+<div class="wd">اسلایدرها را حرکت بده یا روی نمودار trace–det کلیک کن. برای هر $(\\tau,\\delta)$ نماینده‌ی ماتریس همراه $\\begin{pmatrix}0&-\\delta\\\\1&\\tau\\end{pmatrix}$ گرفته می‌شود و صفحه‌ی فازش (مدار رو به جلو و رو به عقب، خط‌های ویژه، و تصویر مربع واحد) رسم می‌شود.</div>
+<div class="canvases"><canvas class="td"></canvas><canvas class="ph"></canvas></div>
+<div class="controls c1"></div><div class="controls c2"></div>
+<div class="legend"><span><i style="background:var(--plot-c1)"></i>$E^s$ / مقدار ویژه‌ی کوچک‌تر</span><span><i style="background:var(--plot-c2)"></i>$E^u$ / مقدار ویژه‌ی بزرگ‌تر</span><span><i style="background:var(--ink-3)"></i>مربع واحد</span><span><i style="background:var(--accent)"></i>تصویرش زیر $A$ (مساحت $=|\\delta|$)</span></div>
+<div class="readout"></div>`;
+  let T=3, D=1, showSq=true;
+  const cTD=el.querySelector(".td"), cPH=el.querySelector(".ph");
+  const pTD=new Plot(cTD,{xmin:-4,xmax:4,ymin:-3.5,ymax:4.5});
+  const pPH=new Plot(cPH,{xmin:-3,xmax:3,ymin:-3,ymax:3});
+  pPH.pad={l:26,r:26,t:26,b:26};
+  const c1=el.querySelector(".c1"), c2=el.querySelector(".c2"), ro=el.querySelector(".readout");
+
+  function cls(t,d){
+    const Dl=t*t-4*d, e=1e-7, o={Delta:Dl};
+    if(Dl>e){ const s=Math.sqrt(Dl); o.real=true; o.l1=(t-s)/2; o.l2=(t+s)/2; o.r1=Math.abs(o.l1); o.r2=Math.abs(o.l2); }
+    else if(Dl<-e){ o.real=false; o.rho=Math.sqrt(Math.max(d,0)); o.th=Math.acos(Math.max(-1,Math.min(1,t/(2*o.rho)))); o.r1=o.r2=o.rho; }
+    else { o.real=true; o.dbl=true; o.l1=o.l2=t/2; o.r1=o.r2=Math.abs(t/2); }
+    const g=(1+d)*(1+d)-t*t;
+    o.g=g;
+    o.nonhyp = Math.abs(g)<2e-3 || (Math.abs(d-1)<2e-3 && t*t<4-2e-3);
+    o.kind = o.nonhyp ? "nonhyp" : (g<0 ? "saddle" : (Math.abs(d)<1 ? "sink" : "source"));
+    return o;
+  }
+  function nameOf(o,d){
+    if(o.kind==="nonhyp"){
+      if(Math.abs(d-1)<2e-3 && o.Delta<-1e-7) return "بیضوی: دوران محض — غیرهذلولوی";
+      if(Math.abs(o.Delta)<2e-3) return "پارابولیک (برشی) با مقدار ویژه ±1 — غیرهذلولوی";
+      return "مرزی: مقدار ویژه‌ای برابر +1 یا −1 — غیرهذلولوی";
+    }
+    if(o.kind==="saddle") return "زینی — هذلولوی";
+    if(o.kind==="sink") return o.real ? (o.dbl?"گره جاذب (مقدار ویژه‌ی مضاعف)":"گره جاذب") : "مارپیچ جاذب";
+    return o.real ? (o.dbl?"گره دافع (مقدار ویژه‌ی مضاعف)":"گره دافع") : "مارپیچ دافع";
+  }
+  function poly(p,pts,color,alpha){
+    const g=p.ctx; p.clip(); g.globalAlpha=alpha; g.fillStyle=color; g.beginPath();
+    pts.forEach((q,i)=> i?g.lineTo(p.X(q[0]),p.Y(q[1])):g.moveTo(p.X(q[0]),p.Y(q[1])));
+    g.closePath(); g.fill(); g.globalAlpha=1; p.unclip();
+  }
+  function drawTD(){
+    pTD.clear();
+    poly(pTD,[[-2,1],[2,1],[0,-1]],css("--ex"),0.2);
+    poly(pTD,[[2.5,-3.5],[0,-1],[4,3],[4,-3.5]],css("--think"),0.17);
+    poly(pTD,[[-2.5,-3.5],[0,-1],[-4,3],[-4,-3.5]],css("--think"),0.17);
+    poly(pTD,[[-2,1],[2,1],[4,3],[4,4.5],[-4,4.5],[-4,3]],css("--def"),0.17);
+    poly(pTD,[[0,-1],[2.5,-3.5],[-2.5,-3.5]],css("--def"),0.17);
+    pTD.axes({sx:1,sy:1,xl:"τ",yl:"δ"});
+    pTD.fn(x=>x*x/4, css("--thm"), 2.2);
+    pTD.line(-2.5,-3.5,4,3,css("--ink-2"),1.6);
+    pTD.line(2.5,-3.5,-4,3,css("--ink-2"),1.6);
+    pTD.line(-4,1,4,1,css("--warn"),1.7,1,[3,4]);
+    pTD.line(-4,-1,4,-1,css("--warn"),1.7,1,[3,4]);
+    pTD.line(-2,1,2,1,css("--ex"),2.2); pTD.line(-2,1,0,-1,css("--ex"),2.2); pTD.line(2,1,0,-1,css("--ex"),2.2);
+    const g=pTD.ctx; g.save(); pTD.clip();
+    try{ g.direction="rtl"; }catch(e){}
+    g.font="600 12px Vazirmatn, Tahoma, sans-serif"; g.fillStyle=css("--ink"); g.textAlign="center";
+    const lab=(t,d,s)=>g.fillText(s,pTD.X(t),pTD.Y(d));
+    lab(0,0.55,"مارپیچ جاذب"); lab(0,-0.35,"گره جاذب");
+    lab(2.7,-1.0,"زینی"); lab(-2.7,-1.0,"زینی");
+    lab(0,3.15,"مارپیچ دافع"); lab(3.3,2.6,"گره دافع"); lab(-3.3,2.6,"گره دافع");
+    lab(0,-2.4,"دافع");
+    pTD.unclip(); g.restore();
+    pTD.dot(T,D,5.5,css("--accent"),css("--plot-bg"));
+  }
+  function drawPH(){
+    const A=[[0,-D],[1,T]], o=cls(T,D);
+    pPH.clear(); pPH.axes({sx:1,sy:1});
+    const g=pPH.ctx;
+    const ap=(M,p)=>[M[0][0]*p[0]+M[0][1]*p[1], M[1][0]*p[0]+M[1][1]*p[1]];
+    if(showSq){
+      const S=[[0,0],[1,0],[1,1],[0,1]];
+      poly(pPH,S,css("--ink-3"),0.25);
+      poly(pPH,S.map(p=>ap(A,p)),css("--accent"),0.33);
+    }
+    if(o.real && !o.dbl){
+      [[o.l1,css("--plot-c1")],[o.l2,css("--plot-c2")]].forEach(([lam,col])=>{
+        const v=[lam-T,1], n=Math.hypot(v[0],v[1]), K=9/n;
+        pPH.line(-K*v[0],-K*v[1],K*v[0],K*v[1],col,2.2);
+      });
+    }
+    const Ai = Math.abs(D)>2e-3 ? [[T/D,1],[-1/D,0]] : null;
+    const drawOrbit=(x0,y0,M,ns,col)=>{
+      let x=x0,y=y0; const pts=[[x,y]];
+      for(let k=0;k<ns;k++){
+        const p=ap(M,[x,y]);
+        if(!isFinite(p[0])||!isFinite(p[1])||Math.abs(p[0])>1e5||Math.abs(p[1])>1e5) break;
+        x=p[0]; y=p[1]; pts.push([x,y]);
+        if(Math.abs(x)<1e-7&&Math.abs(y)<1e-7) break;
+      }
+      pPH.clip();
+      g.globalAlpha=0.3; g.strokeStyle=col; g.lineWidth=1; g.beginPath();
+      pts.forEach((p,i)=> i?g.lineTo(pPH.X(p[0]),pPH.Y(p[1])):g.moveTo(pPH.X(p[0]),pPH.Y(p[1])));
+      g.stroke();
+      g.globalAlpha=0.9; g.fillStyle=col;
+      pts.forEach(p=>{ if(Math.abs(p[0])<4&&Math.abs(p[1])<4){ g.beginPath(); g.arc(pPH.X(p[0]),pPH.Y(p[1]),1.8,0,7); g.fill(); } });
+      g.globalAlpha=1; pPH.unclip();
+    };
+    const col1=css("--plot-c3"), col2=css("--plot-c4");
+    for(let k=0;k<20;k++){
+      const a=2*Math.PI*k/20;
+      drawOrbit(2.6*Math.cos(a),2.6*Math.sin(a),A,22,col1);
+      if(Ai) drawOrbit(2.6*Math.cos(a),2.6*Math.sin(a),Ai,22,col2);
+    }
+    for(let k=0;k<8;k++){
+      const a=2*Math.PI*k/8+0.2;
+      drawOrbit(0.45*Math.cos(a),0.45*Math.sin(a),A,22,col1);
+    }
+    pPH.dot(0,0,4,css("--accent"),css("--plot-bg"));
+  }
+  function readout(){
+    const o=cls(T,D);
+    let s="";
+    s+="τ = "+T.toFixed(2)+"    δ = "+D.toFixed(2)+"    Δ = τ²−4δ = "+(T*T-4*D).toFixed(3)+"\n";
+    if(o.real&&!o.dbl) s+="λ₁ = "+o.l1.toFixed(4)+" ,  λ₂ = "+o.l2.toFixed(4)+"   (حقیقی و متمایز)\n";
+    else if(o.dbl)      s+="λ = "+o.l1.toFixed(4)+"   (مقدار ویژه‌ی مضاعف)\n";
+    else                s+="λ = ρ·exp(±iθ) ,  ρ = "+o.rho.toFixed(4)+" ,  θ = "+(o.th*180/Math.PI).toFixed(1)+"°   (مختلط مزدوج)\n";
+    s+="رده: "+nameOf(o,D)+"\n";
+    s+="(1+δ)² − τ² = "+o.g.toFixed(3)+"   →   "+(o.kind==="nonhyp"?"روی مرز (غیرهذلولوی)":(o.kind==="saddle"?"زینی":(o.kind==="sink"?"درون مثلث پایداری":"دافع")))+"\n";
+    s+="ضریب تغییر مساحت |δ| = "+Math.abs(D).toFixed(3)+(Math.abs(Math.abs(D)-1)<5e-3?"   → حافظ مساحت":"");
+    ro.textContent=s;
+  }
+  function draw(){ pTD.resize(); pPH.resize(); drawTD(); drawPH(); readout(); }
+
+  const sT=slider("τ",-4,4,0.01,T,v=>{T=v;draw();});
+  const sD=slider("δ",-3,4,0.01,D,v=>{D=v;draw();});
+  c1.appendChild(sT); c1.appendChild(sD);
+  const lb=h("label"); lb.innerHTML='<input type="checkbox" checked> مربع واحد و تصویرش';
+  lb.querySelector("input").onchange=e=>{showSq=e.target.checked;draw();};
+  c1.appendChild(lb);
+  c2.appendChild(h("span",{style:"color:var(--ink-3)"},"نمونه‌ها:"));
+  [["نگاشت گربه",3,1],["دوران ۹۰°",0,1],["برشی",2,1],["گره جاذب",0.8,0.15],["مارپیچ جاذب",1.38,0.81],
+   ["زینی برگردان",1,-1],["گره دافع",3.2,2.4],["مارپیچ دافع",1.3,1.69]].forEach(([nm,t,d])=>{
+    const b=h("button",{class:"btn ghost",type:"button"},nm);
+    b.onclick=()=>{T=t;D=d;sT.set(t);sD.set(d);draw();};
+    c2.appendChild(b);
+  });
+  cTD.style.cursor="crosshair";
+  const pick=ev=>{
+    const r=cTD.getBoundingClientRect();
+    let t=pTD.invX(ev.clientX-r.left), d=pTD.invY(ev.clientY-r.top);
+    t=Math.max(-4,Math.min(4,Math.round(t*100)/100));
+    d=Math.max(-3,Math.min(4,Math.round(d*100)/100));
+    T=t; D=d; sT.set(t); sD.set(d); draw();
+  };
+  cTD.addEventListener("pointerdown",ev=>{ev.preventDefault(); pick(ev);});
+  onResize(el,draw); draw();
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(draw).catch(()=>{});
+})();
+
+/* ===================== ابزار ۲: نگاشت گربه روی شبکه ===================== */
+(function(){
+  const el=document.getElementById("w-cat"); if(!el) return;
+  el.innerHTML=`<div class="wt">نگاشت گربه روی شبکه‌ی $N\\times N$ — درهم‌ریختن و بازگشت</div>
+<div class="wd">تصویر $N\\times N$ زیر $(i,j)\\mapsto(2i+j,\\,i+j)\\bmod N$ جابه‌جا می‌شود. این یک <b>جایگشت</b> است، پس تصویر پس از $\\Pi(N)$ گام عیناً برمی‌گردد. نمودار، نسبت پیکسل‌های جابه‌جاشده را در هر گام نشان می‌دهد.</div>
+<div class="canvases"><canvas class="img"></canvas><canvas class="chart"></canvas></div>
+<div class="controls c1"></div><div class="controls c2"></div>
+<div class="readout"></div>`;
+  const NS=[8,12,16,24,32,36,40,48,55,64,72,80,96,100,120,128,144,160];
+  let N=72, n=0, P=1, idx=null, base=null, frac=null, timer=null;
+  const cIm=el.querySelector(".img"), cCh=el.querySelector(".chart");
+  const pCh=new Plot(cCh,{xmin:0,xmax:1,ymin:0,ymax:1});
+  const c1=el.querySelector(".c1"), c2=el.querySelector(".c2"), ro=el.querySelector(".readout");
+  const lam=(3+Math.sqrt(5))/2;
+
+  function order(N){
+    let M=[[1,0],[0,1]];
+    for(let k=1;k<=200000;k++){
+      M=[[(M[0][0]*2+M[0][1])%N,(M[0][0]+M[0][1])%N],
+         [(M[1][0]*2+M[1][1])%N,(M[1][0]+M[1][1])%N]];
+      if(M[0][0]===1%N&&M[0][1]===0&&M[1][0]===0&&M[1][1]===1%N) return k;
+    }
+    return 0;
+  }
+  function tri(p,a,b,c){
+    const s=(u,v,w)=>(v[0]-u[0])*(w[1]-u[1])-(v[1]-u[1])*(w[0]-u[0]);
+    const d1=s(a,b,p), d2=s(b,c,p), d3=s(c,a,p);
+    return (d1>=0&&d2>=0&&d3>=0)||(d1<=0&&d2<=0&&d3<=0);
+  }
+  function catColor(u,v){
+    const t=0.5*(u+v);
+    let r=Math.round(26+46*t), g=Math.round(46+74*t), b=Math.round(84+88*t);
+    if(Math.abs(u-v)<0.055){ r=120; g=70; b=150; }
+    const p=[u,v];
+    if(tri(p,[0.19,0.60],[0.29,0.98],[0.52,0.70])||tri(p,[0.81,0.60],[0.71,0.98],[0.48,0.70])){ r=206; g=124; b=58; }
+    const dx=(u-0.5)/0.315, dy=(v-0.46)/0.295, rr=dx*dx+dy*dy;
+    if(rr<1){
+      if(rr>0.88){ r=92; g=48; b=24; }
+      else{
+        r=246; g=186; b=112;
+        [0.385,0.615].forEach(ex=>{
+          const ax=u-ex, ay=v-0.56;
+          if(ax*ax+ay*ay<0.0040){ r=248; g=248; b=238; }
+          if((ax*ax)/0.00055+(ay*ay)/0.0019<1){ r=22; g=28; b=34; }
+        });
+        if(tri(p,[0.462,0.415],[0.538,0.415],[0.5,0.360])){ r=212; g=86; b=104; }
+        if(Math.abs(u-0.5)<0.085 && Math.abs(v-(0.30+0.55*Math.abs(u-0.5)))<0.013){ r=110; g=52; b=36; }
+      }
+    }
+    return [r,g,b];
+  }
+  function build(){
+    base=new Uint8Array(N*N*3);
+    for(let j=0;j<N;j++) for(let i=0;i<N;i++){
+      const c=catColor((i+0.5)/N,(j+0.5)/N), k=(j*N+i)*3;
+      base[k]=c[0]; base[k+1]=c[1]; base[k+2]=c[2];
+    }
+    idx=new Int32Array(N*N); for(let k=0;k<N*N;k++) idx[k]=k;
+    n=0; P=order(N)||1;
+    // نسبت پیکسل‌های جابه‌جاشده در هر گام
+    const Q=Math.min(P,400); frac=new Float64Array(Q+1); frac[0]=0;
+    let cur=new Int32Array(N*N), nxt=new Int32Array(N*N);
+    for(let k=0;k<N*N;k++) cur[k]=k;
+    for(let s=1;s<=Q;s++){
+      for(let j=0;j<N;j++) for(let i=0;i<N;i++){
+        const i2=(2*i+j)%N, j2=(i+j)%N;
+        nxt[j2*N+i2]=cur[j*N+i];
+      }
+      const t=cur; cur=nxt; nxt=t;
+      let fx=0; for(let k=0;k<N*N;k++) if(cur[k]===k) fx++;
+      frac[s]=1-fx/(N*N);
+    }
+    pCh.v={xmin:0,xmax:Q,ymin:-0.05,ymax:1.05};
+  }
+  function step(dir){
+    const nx=new Int32Array(N*N);
+    for(let j=0;j<N;j++) for(let i=0;i<N;i++){
+      let i2,j2;
+      if(dir>0){ i2=(2*i+j)%N; j2=(i+j)%N; }
+      else { i2=((i-j)%N+N)%N; j2=((2*j-i)%N+N)%N; }
+      nx[j2*N+i2]=idx[j*N+i];
+    }
+    idx=nx; n=((n+dir)%P+P)%P;
+  }
+  function render(){
+    const r=cIm.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+    const w=Math.max(140,Math.round(r.width||300));
+    cIm.width=Math.round(w*dpr); cIm.height=Math.round(w*dpr);
+    const g=cIm.getContext("2d"); g.setTransform(1,0,0,1,0,0); g.imageSmoothingEnabled=false;
+    const off=document.createElement("canvas"); off.width=N; off.height=N;
+    const og=off.getContext("2d"), im=og.createImageData(N,N);
+    for(let j=0;j<N;j++) for(let i=0;i<N;i++){
+      const s=idx[j*N+i]*3, p=(((N-1-j)*N)+i)*4;
+      im.data[p]=base[s]; im.data[p+1]=base[s+1]; im.data[p+2]=base[s+2]; im.data[p+3]=255;
+    }
+    og.putImageData(im,0,0);
+    g.drawImage(off,0,0,cIm.width,cIm.height);
+  }
+  function chart(){
+    pCh.resize(); pCh.clear(); pCh.axes({sy:0.25,xl:"n"});
+    const g=pCh.ctx, Q=frac.length-1;
+    pCh.line(0,0,Q,0,css("--plot-axis"),1,0.8,[4,4]);
+    pCh.clip();
+    g.strokeStyle=css("--plot-c1"); g.lineWidth=2; g.beginPath();
+    for(let s=0;s<=Q;s++){ const X=pCh.X(s), Y=pCh.Y(frac[s]); s?g.lineTo(X,Y):g.moveTo(X,Y); }
+    g.stroke();
+    g.fillStyle=css("--plot-c1");
+    for(let s=0;s<=Q;s++){ g.beginPath(); g.arc(pCh.X(s),pCh.Y(frac[s]),2,0,7); g.fill(); }
+    pCh.unclip();
+    pCh.line(n,-0.05,n,1.05,css("--plot-c2"),1.6);
+    if(n<=Q) pCh.dot(n,frac[n],4.5,css("--plot-c2"),css("--plot-bg"));
+    const gg=pCh.ctx; gg.save(); try{gg.direction="rtl";}catch(e){}
+    gg.font="600 12px Vazirmatn, Tahoma, sans-serif"; gg.fillStyle=css("--ink-3"); gg.textAlign="start";
+    gg.fillText("نسبت پیکسل‌های جابه‌جاشده", pCh.pad.l+6, pCh.pad.t+14);
+    gg.restore();
+  }
+  function readout(){
+    let fx=0; for(let k=0;k<N*N;k++) if(idx[k]===k) fx++;
+    const fixT=Math.round(Math.pow(lam,n)+Math.pow(lam,-n)-2);
+    let s="";
+    s+="N = "+N+"    گام n = "+n+"    دوره‌ی بازگشت Π("+N+") = "+P+"\n";
+    s+="پیکسل‌های سر جای خود: "+fx+" از "+(N*N)+"   ("+(100*fx/(N*N)).toFixed(2)+"%)\n";
+    s+="نقاط ثابت F^n روی کل چنبره: |det(A^n − I)| = λ₊^n + λ₊^(−n) − 2 = "+(n===0?"— (همه)":fixT)+"\n";
+    s+="λ₊ = (3+√5)/2 = "+lam.toFixed(6)+"    log λ₊ = "+Math.log(lam).toFixed(4);
+    ro.textContent=s;
+  }
+  function all(){ render(); chart(); readout(); }
+  function reset(){ build(); all(); }
+
+  const selN=select(NS.map(v=>[String(v),String(v)+"×"+String(v)]),String(N),v=>{stop(); N=+v; reset();});
+  const lN=h("label",null,"شبکه: "); lN.appendChild(selN); c1.appendChild(lN);
+  const bNext=h("button",{class:"btn",type:"button"},"گام بعد ▸");
+  bNext.onclick=()=>{step(1); all();};
+  const bPrev=h("button",{class:"btn ghost",type:"button"},"◂ گام قبل");
+  bPrev.onclick=()=>{step(-1); all();};
+  const bPlay=h("button",{class:"btn",type:"button"},"▶ پخش");
+  function stop(){ if(timer){ clearInterval(timer); timer=null; bPlay.textContent="▶ پخش"; } }
+  bPlay.onclick=()=>{
+    if(timer) stop();
+    else { bPlay.textContent="⏸ توقف"; timer=setInterval(()=>{step(1); all();},520); }
+  };
+  const bR=h("button",{class:"btn ghost",type:"button"},"↺ از نو");
+  bR.onclick=()=>{stop(); reset();};
+  [bPrev,bNext,bPlay,bR].forEach(b=>c1.appendChild(b));
+  c2.appendChild(h("span",{style:"color:var(--ink-3)"},"نکته: $\\Pi(4)=3$ و $\\Pi(144)=12$ ولی $\\Pi(100)=150$ — دوره‌ی بازگشت هیچ ربط یکنوایی به $N$ ندارد."));
+  onResize(el,all);
+  reset();
+})();
+};
+</script>
+</body>
+</html>
