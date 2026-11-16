@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۲ · انواع داده و داده‌ی کثیف</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+#w-dirty table.data td.chg{background:color-mix(in srgb,var(--good) 16%,transparent)}
+#w-dirty table.data td.fill{background:color-mix(in srgb,var(--plot-diag) 24%,transparent)}
+#w-dirty table.data tr.rm td{opacity:.45;text-decoration:line-through}
+#w-dirty table.data td.nt{font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;font-size:.92em;text-decoration:none}
+#w-dirty .tablewrap{max-height:none;direction:ltr}
+#w-dirty table.data{font-size:.86em}
+@media (max-width:640px){#w-dirty td.nt,#w-dirty th.nt{display:none}}
+.dimtbl td:first-child{white-space:nowrap}
+</style>
+</head>
+<body data-session="2">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۲ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>انواع داده و داده‌ی کثیف: چک‌لیست کیفیت، گم‌شده، تکراری، پرت و ناممکن</h1>
+  <p class="lead">«سفرهای تکمیل‌شده ۱۲٪ افت کرده.» قبل از این‌که دنبال علت بگردی، باید مطمئن شوی خود این عدد راست می‌گوید. خیلی از «افت»‌هایی که در شرکت‌ها گزارش می‌شود از داده‌ی کثیف می‌آید، نه از دنیای واقعی (مسئله‌ی حل‌شده‌ی بخش ۱۰ یک نمونه‌اش است). این جلسه یاد می‌دهد داده را بازرسی کنی، مشکل‌ها را اسم بگذاری و برای هرکدام <b>تصمیم آگاهانه</b> بگیری، نه این‌که هرچه عجیب بود را پاک کنی.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۲۰ تا ۱۵۰ دقیقه (با ابزارها و تمرین‌ها)</span><span>📚 منبع: slide02 اسلایدهای ۱ تا ۱۲ و ۱۵ تا ۱۶، نوت‌بوک درس (گام ۲ تا ۶)، تکمیلی از McKinney و Practical Statistics for Data Scientists</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>شکل‌های مختلف داده (جدولی، متن، تصویر، صوت، سری زمانی، گراف، لاگ) را بشناسی و برای یک مسئله نماینده‌ی مناسب را انتخاب کنی.</li>
+    <li>با <code>info</code>، <code>describe</code>، <code>isna</code>، <code>value_counts</code> و <code>duplicated</code> یک جدول را در چند دقیقه بازرسی کنی و «پرچم قرمز»ها را ببینی.</li>
+    <li>هشت چهره‌ی داده‌ی کثیف و شش بعد کیفیت داده را نام ببری و هرکدام را با کد بسنجی.</li>
+    <li>برای مقدار گم‌شده بین حذف، جایگذاری، پرچم و پرسیدن انتخاب کنی و سازوکار گم‌شدن (MCAR، MAR، MNAR) را در انتخابت دخالت بدهی.</li>
+    <li>پرت را از ناممکن جدا کنی، IQR و z و z مقاوم را حساب کنی و بدانی هرکدام کجا گول می‌خورد.</li>
+    <li>با متن فارسی کثیف (ارقام ۱۲۳، «ي» و «ك» عربی، تاریخ شمسی) درست برخورد کنی و یک گزارش پاک‌سازی قابل‌تکرار بنویسی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+  این پنج ردیف از خروجی اپ سفر آمده است. قبل از این‌که پایین‌تر بروی، روی کاغذ بنویس: <b>(۱)</b> چند مشکل می‌بینی؟ <b>(۲)</b> برای هرکدام چه می‌کنی؟ <b>(۳)</b> اگر مدیر بپرسد «میانگین کرایه در تهران چقدر است؟»، جواب با این داده چقدر قابل‌اعتماد است؟ مراقب باش: «حذفش کن» جواب همه‌شان نیست.
+  <div class="tablewrap"><table class="data">
+  <tr><th>ride_id</th><th>city</th><th>fare</th><th>distance_km</th><th>rating</th><th>requested_at</th></tr>
+  <tr><td>R101</td><td>Tehran</td><td>85,000</td><td>6.2</td><td>5</td><td>1405/08/02 08:10</td></tr>
+  <tr><td>R102</td><td> tehran</td><td>۹۲۰۰۰</td><td>7.0</td><td></td><td>2026-10-24 08:40</td></tr>
+  <tr><td>R101</td><td>Tehran</td><td>85,000</td><td>6.2</td><td>5</td><td>1405/08/02 08:10</td></tr>
+  <tr><td>R105</td><td>مشهد</td><td>-5000</td><td>3.9</td><td>3</td><td>2026-10-24 09:02</td></tr>
+  <tr><td>R112</td><td>Tehran</td><td>240000</td><td>31.0</td><td>5</td><td>2026-10-25 04:15</td></tr>
+  </table></div>
+  آخر جلسه، فهرستت را با «کارت امتیاز کثیف» بخش ۳ و تصمیم‌های بخش ۶ تا ۸ مقایسه کن. (راهنمایی: دست‌کم هفت مشکل هست، و یکی از ردیف‌ها که از همه عجیب‌تر به نظر می‌رسد احتمالاً کاملاً درست است.)
+</div>
+
+<!-- ============================================================ 1 -->
+<section id="forms">
+<h2><span class="num">۱</span> جای این جلسه در کار با داده، و داده فقط جدول نیست <span class="tag core">اسلاید</span></h2>
+<p>پنج مرحله‌ی کار با داده را از جلسه‌ی ۱ یادت هست. امروز روی مرحله‌ی سوم کار می‌کنیم:</p>
+<div class="flow"><span>۱. تعریف پرسش (Define)</span><i>←</i><span>۲. گرفتن داده (Get)</span><i>←</i><span><b>۳. پاک‌سازی و آماده‌سازی (Clean &amp; prepare)</b></span><i>←</i><span>۴. کاوش و مصورسازی (Explore)</span><i>←</i><span>۵. انتقال پیام و اقدام (Communicate &amp; act)</span></div>
+<p>اسلاید این گذار را «مهم‌ترین گذار در کار داده» می‌نامد: <b>داده‌ی خام ← داده‌ی تمیز ← داده‌ی عددی و قابل‌استفاده ← فهم بصری</b>. این جلسه دو قدم اول است. کدگذاری و مصورسازی (دو قدم بعد) موضوع جلسه‌ی ۳ است.</p>
+
+<div class="box note"><div class="bt">چرا این‌قدر مهم است؟</div>
+  طبق نوت‌بوک درس، تحلیل‌گرها <b>حدود ۶۰ تا ۸۰ درصد</b> وقتشان را صرف پیدا کردن و رفع داده‌ی کثیف می‌کنند. اصل قدیمی «ورودی آشغال، خروجی آشغال» (garbage in, garbage out) این‌جا معنی پیدا می‌کند: بهترین مدل دنیا روی داده‌ی غلط، جواب غلط را با اطمینان بالا می‌دهد.
+</div>
+
+<h3>۱.۱ داده فقط صفحه‌گسترده نیست</h3>
+<p>پروژه‌های واقعی چند شکل داده را با هم ترکیب می‌کنند و هر شکل آماده‌سازی خودش را دارد. اسلاید هشت شکل را نام می‌برد:</p>
+<div class="cards">
+  <div><b>جدولی (Tabular)</b> تراکنش‌ها، نظرسنجی‌ها. سطر = یک واحد (سفر، مشتری)، ستون = یک ویژگی. آماده‌سازی: نوع ستون، گم‌شده، تکراری، واحد.</div>
+  <div><b>متن (Text)</b> نظرها، ایمیل‌ها، شکایت راننده‌ها. آماده‌سازی: یکسان‌سازی نویسه‌ها، توکن‌سازی، تبدیل به عدد (جلسه‌ی ۳).</div>
+  <div><b>تصویر (Image)</b> عکس رادیولوژی، نقشه. آماده‌سازی: اندازه، نرمال‌سازی شدت پیکسل، برچسب.</div>
+  <div><b>صوت (Audio)</b> گفتار، موسیقی، تماس‌های مرکز پشتیبانی. آماده‌سازی: نرخ نمونه‌برداری، حذف سکوت و نویز، تبدیل به طیف.</div>
+  <div><b>ویدئو (Video)</b> دوربین ترافیک، ورزش. دنباله‌ای از تصویرها به‌اضافه‌ی زمان.</div>
+  <div><b>سری زمانی (Time series)</b> سهام، حسگرها، تعداد سفر در هر ساعت. ترتیب مهم است: نمی‌شود ردیف‌ها را بُر زد.</div>
+  <div><b>گراف (Graph)</b> شبکه‌ها و پیوندها، مثلاً مسیرهای بین محله‌ها یا ارجاع کاربران.</div>
+  <div><b>لاگ (Logs)</b> کلیک‌ها، رویدادها (درخواست سفر، لغو، پرداخت). نیمه‌ساختاریافته و معمولاً پر از تکراری و ترتیب به‌هم‌ریخته.</div>
+</div>
+<p>اسلاید با این جمله تمام می‌شود: <b>«یک کلمه، پیش‌پردازش متفاوت.»</b> «تمیز کردن» برای صوت یعنی حذف نویز و برای جدول یعنی یکی کردن «Tehran» و «tehran».</p>
+
+<h3>۱.۲ یک مسئله، سیگنال‌های مختلف</h3>
+<p>همان پرسش همیشگی درس: <b>«چرا سفرهای تکمیل‌شده ماه پیش کم شد؟»</b> هر منبع داده تکه‌ای از جواب را دارد:</p>
+<div class="tablewrap"><table>
+<tr><th>شکل</th><th>منبع</th><th>چه چیزی درباره‌ی افت می‌گوید؟</th><th>کار آماده‌سازی اصلی</th></tr>
+<tr><td>جدول</td><td><code>rides.csv</code>: شهر، قیمت، تکمیل‌شده یا نه</td><td>افت در کدام شهر، ساعت و بازه‌ی قیمت است؟</td><td>تکراری، گم‌شده، یکسان‌سازی شهر، نوع ستون</td></tr>
+<tr><td>متن</td><td>شکایت راننده‌ها، بازخورد مسافر</td><td>آیا از قیمت، اپ یا زمان انتظار ناراضی‌اند؟</td><td>یکسان‌سازی فارسی، دسته‌بندی موضوع</td></tr>
+<tr><td>صوت</td><td>ضبط تماس‌های مرکز پشتیبانی</td><td>«صدای مشتری»: شکایت‌های تازه از کجا شروع شد؟</td><td>تبدیل گفتار به متن، برچسب موضوع</td></tr>
+<tr><td>تصویر</td><td>دوربین‌های ترافیک، اسکرین‌شات نقشه</td><td>آیا ترافیک یا بسته شدن خیابان سفرها را لغو کرده؟</td><td>هم‌تراز کردن زمان و مکان با جدول سفر</td></tr>
+<tr><td>ویدئو</td><td>فیلم خیابان</td><td>جریان ترافیک در ساعت‌های اوج</td><td>نمونه‌برداری فریم، شمارش خودرو</td></tr>
+</table></div>
+<div class="box thm"><div class="bt">ایده‌ی کلیدی اسلاید</div>
+  نماینده‌ی داده (representation) را بر اساس <b>پرسش</b> انتخاب کن، نه بر اساس این‌که کدام راحت‌تر بارگذاری می‌شود. CSV راحت‌ترین است، ولی اگر علت افت «بدرفتاری راننده‌ها» باشد، جوابش در متن شکایت‌ها و صدای تماس‌هاست.
+</div>
+
+<h3>۱.۳ نوع آماری در برابر نوع ذخیره‌سازی (dtype) <span class="tag book">تکمیلی</span></h3>
+<p>در داده‌ی جدولی، هر ستون دو «نوع» دارد: نوعی که <b>معنی</b> آن را می‌گوید و نوعی که pandas با آن ذخیره‌اش می‌کند. خیلی از باگ‌ها از ناهماهنگی این دو می‌آید.</p>
+<div class="tablewrap"><table>
+<tr><th>نوع آماری</th><th>مثال در داده‌ی سفر</th><th>dtype درست در pandas</th><th>عملیات معنادار</th></tr>
+<tr><td>عددی پیوسته</td><td>کرایه، مسافت</td><td><code>float64</code></td><td>میانگین، میانه، انحراف معیار</td></tr>
+<tr><td>عددی گسسته (شمارشی)</td><td>تعداد مسافر، تعداد سفر</td><td><code>int64</code> (یا <code>Int64</code> اگر گم‌شده دارد)</td><td>جمع، میانگین</td></tr>
+<tr><td>دسته‌ای اسمی (nominal)</td><td>شهر، روش پرداخت</td><td><code>category</code></td><td>شمارش، مُد. میانگین <b>بی‌معنی</b></td></tr>
+<tr><td>دسته‌ای ترتیبی (ordinal)</td><td>امتیاز ۱ تا ۵، سطح راننده</td><td><code>category</code> مرتب</td><td>میانه، مقایسه‌ی بزرگ‌تر و کوچک‌تر</td></tr>
+<tr><td>دودویی (binary)</td><td>لغو شد یا نه</td><td><code>bool</code></td><td>نسبت (نرخ لغو)</td></tr>
+<tr><td>زمان</td><td>زمان درخواست</td><td><code>datetime64</code></td><td>اختلاف زمان، ساعت روز، روز هفته</td></tr>
+<tr><td>شناسه (ID)</td><td><code>ride_id</code>، <code>customer_id</code></td><td>متن یا <code>Int64</code></td><td>فقط برابری و یکتایی. <b>جمع و میانگین بی‌معنی</b></td></tr>
+<tr><td>متن آزاد</td><td>نظر مسافر</td><td><code>string</code></td><td>پردازش متن</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: «عدد بودن» با «عددی بودن» فرق دارد</div>
+  در خروجی <code>info()</code> نوت‌بوک، <code>Customer_ID</code> از نوع <code>float64</code> است. چرا اعشاری؟ چون ۲۱ خانه‌اش خالی است و <code>NaN</code> در numpy فقط در ستون اعشاری جا می‌شود. پس <code>331</code> شده <code>331.0</code>. شناسه عدد نیست: میانگین <code>customer_id</code> هیچ معنایی ندارد. برعکسش هم رایج است: <code>Unit_Price</code> که باید عدد باشد، چون چند خانه‌اش علامت دلار دارد، از نوع <code>object</code> (متن) شده است.
+</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="inspect">
+<h2><span class="num">۲</span> داده از کجا می‌آید و نگاه اول (بازرسی) <span class="tag core">اسلاید + نوت‌بوک</span></h2>
+<h3>۲.۱ منبع‌های داده</h3>
+<div class="tablewrap"><table>
+<tr><th>منبع</th><th>نمونه</th><th>ابزار پایتون</th><th>کثیفی رایج</th></tr>
+<tr><td>فایل</td><td>CSV، اکسل، JSON</td><td><code>pd.read_csv</code>، <code>pd.read_excel</code>، <code>pd.read_json</code></td><td>جداکننده و encoding اشتباه، عدد ذخیره‌شده به‌شکل متن</td></tr>
+<tr><td>پایگاه داده</td><td>PostgreSQL، MySQL، SQLite</td><td><code>pd.read_sql</code></td><td>join اشتباه و ردیف تکراری</td></tr>
+<tr><td>API</td><td>آب‌وهوا، نرخ ارز</td><td><code>requests.get(url).json()</code></td><td>فیلد غایب، تغییر قالب بین نسخه‌ها</td></tr>
+<tr><td>صفحه‌ی وب</td><td>قیمت کالاها</td><td><code>pd.read_html</code>، BeautifulSoup</td><td>واحد پول و ارقام فارسی داخل متن</td></tr>
+<tr><td>فرم و نظرسنجی</td><td>Google Forms، پرسش‌نامه</td><td>خروجی CSV</td><td>پاسخ آزاد «تهران»، «طهران»، «THR»</td></tr>
+<tr><td>داده‌ی باز</td><td>Kaggle، data.gov</td><td>دانلود CSV</td><td>تعریف ستون‌ها نامعلوم یا قدیمی</td></tr>
+</table></div>
+<p>آرگومان‌های پرکاربرد <code>read_csv</code> که خیلی از کثیفی‌ها را <b>همان لحظه‌ی خواندن</b> حل می‌کنند: <code>sep</code> (جداکننده)، <code>encoding="utf-8"</code>، <code>usecols</code>، <code>nrows</code>، <code>parse_dates</code>، <code>dtype</code>، <code>thousands=","</code> و <code>na_values=["unknown", "-", "?"]</code> (این آخری خیلی مهم است؛ بخش ۳ را ببین).</p>
+<div class="box warn"><div class="bt">⚠ قانون شماره‌ی ۱ نوت‌بوک</div>
+  هرگز فایل خام را ویرایش نکن. <code>raw</code> را دست‌نخورده نگه دار و روی <code>df = raw.copy()</code> کار کن. اگر اشتباه کردی، از اول شروع می‌کنی. بدون <code>copy()</code> ممکن است تغییرات به جدول اصلی هم برسد یا هشدار <code>SettingWithCopyWarning</code> بگیری.
+</div>
+
+<h3>۲.۲ پنج پرسش پایه‌ی هر تحلیل‌گر</h3>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>پرسش</th><th>دستور pandas</th></tr>
+<tr><td>۱</td><td>چند ردیف و چند ستون؟</td><td><code>df.shape</code> (ویژگی است، نه متد؛ پرانتز ندارد)</td></tr>
+<tr><td>۲</td><td>نام و نوع ستون‌ها؟ چند خانه‌ی پر؟</td><td><code>df.info()</code>، <code>df.dtypes</code></td></tr>
+<tr><td>۳</td><td>یک ردیف معمولی چه شکلی است؟</td><td><code>df.head()</code>، <code>df.tail()</code>، <code>df.sample(8)</code></td></tr>
+<tr><td>۴</td><td>آمار پایه؟</td><td><code>df.describe(include="all")</code></td></tr>
+<tr><td>۵</td><td>در ستون‌های متنی چه مقدارهایی هست؟</td><td><code>value_counts(dropna=False)</code>، <code>nunique()</code></td></tr>
+</table></div>
+<p>کد اسلاید ۱۵ دقیقاً همین است. توصیه‌ی معلمی اسلاید: <b>قبل از اجرای هر دستور، خروجی‌اش را پیش‌بینی کن</b>، و بعد از اجرا سه سؤال بپرس: چه یاد گرفتیم؟ چه چیزی مشکوک است؟ بعد چه چیزی را بررسی کنیم؟ به قول اسلاید: <b>«بازرسی خودش تحلیل است، کار اداری نیست.»</b></p>
+<pre class="code">
+import pandas as pd
+
+raw = pd.read_csv("data/raw_orders.csv")   # فایل نوت‌بوک درس
+print(raw.shape)
+raw.info()
+</pre>
+<div class="out">(1030, 12)
+ #   Column          Non-Null Count  Dtype
+---  ------          --------------  -----
+ 0   Order_ID        1030 non-null   int64
+ 1    Order_Date     1030 non-null   object
+ 2   Customer_ID     1009 non-null   float64
+ 3   AGE             951 non-null    float64
+ 4   City            977 non-null    object
+ 5   Category        1030 non-null   object
+ 6   Quantity        1030 non-null   int64
+ 7   Unit_Price      1030 non-null   object
+ 8   Discount_Pct    1030 non-null   int64
+ 9   Payment_Method  1030 non-null   object
+ 10  Promo_Used      1030 non-null   object
+ 11  Rating          878 non-null    float64</div>
+<p>همین خروجی چهار پرچم قرمز دارد: (۱) <code>Unit_Price</code> متن است ولی باید عدد باشد. (۲) <code> Order_Date</code> متن است، نه تاریخ. (۳) چند ستون کمتر از ۱۰۳۰ مقدار پر دارند، یعنی گم‌شده هست. (۴) نام ستون‌ها فاصله‌ی اضافه دارند (<code>" Order_Date"</code>، <code>"City "</code>) و بزرگی و کوچکی حروفشان یکدست نیست.</p>
+<div class="box note"><div class="bt">نسخه‌ی pandas</div>از pandas 3 به بعد ستون متنی به‌جای <code>object</code> با نوع <code>str</code> نمایش داده می‌شود. معنی همان است: «این ستون عدد نیست».</div>
+
+<h3>۲.۳ پروفایل یک‌جا و خواندن <code>describe</code></h3>
+<pre class="code">
+profile = pd.DataFrame({
+    "dtype":   raw.dtypes.astype(str),
+    "non_null": raw.notna().sum(),
+    "missing_%": (raw.isna().mean() * 100).round(1),
+    "n_unique": raw.nunique(),
+    "example": raw.iloc[0],
+})
+profile
+</pre>
+<div class="out">                 dtype  non_null  missing_%  n_unique      example
+Order_ID         int64      1030        0.0      1000        10205
+ Order_Date     object      1030        0.0       487   2024-09-04
+Customer_ID    float64      1009        2.0       358        331.0
+AGE            float64       951        7.7        56         19.0
+City            object       977        5.1        26       Munich
+Category        object      1030        0.0        25  Electronics
+Unit_Price      object      1030        0.0       965      $329.73
+Rating         float64       878       14.8         5          1.0
+...</div>
+<p>دو عدد این جدول داد می‌زنند: <code>Order_ID</code> در ۱۰۳۰ ردیف فقط ۱۰۰۰ مقدار یکتا دارد (پس ۳۰ ردیف تکراری است) و <code>City</code> که فقط پنج شهر دارد، ۲۶ مقدار یکتا نشان می‌دهد. خروجی <code>describe</code> را هم این‌طور بخوان:</p>
+<div class="tablewrap"><table>
+<tr><th>سطر خروجی</th><th>معنی</th><th>اگر عجیب بود یعنی…</th><th>در داده‌ی نوت‌بوک</th></tr>
+<tr><td><code>count</code></td><td>تعداد مقدار <b>غیرخالی</b></td><td>کمتر از تعداد ردیف‌ها: گم‌شده</td><td><code>AGE</code>: ۹۵۱ از ۱۰۳۰</td></tr>
+<tr><td><code>mean</code> در برابر <code>50%</code></td><td>میانگین و میانه</td><td>فاصله‌ی زیاد: چولگی یا پرت</td><td>—</td></tr>
+<tr><td><code>std</code></td><td>پراکندگی</td><td>خیلی بزرگ: مقدار افراطی</td><td>انحراف معیار سن ۳۳٫۹ سال! (سن معمولاً حدود ۱۱)</td></tr>
+<tr><td><code>min</code> / <code>max</code></td><td>کمترین و بیشترین</td><td>منفی یا خیلی بزرگ: <b>ناممکن</b></td><td>سن از ۵− تا ۹۹۹؛ تعداد کالا تا ۲−</td></tr>
+<tr><td><code>25%</code> تا <code>75%</code></td><td>چارک‌ها</td><td>فاصله‌شان = IQR = «محدوده‌ی معمول»</td><td>سن ۲۸ تا ۴۳</td></tr>
+</table></div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="dirty">
+<h2><span class="num">۳</span> داده‌ی کثیف یعنی چه؟ هشت چهره و یک برنامه <span class="tag core">اسلاید + نوت‌بوک</span></h2>
+<div class="box def"><div class="bt">تعریف ۲.۱ · داده‌ی کثیف (dirty data)</div>
+  داده‌ای که <b>اگر مشکلاتش را تشخیص ندهیم و مدیریت نکنیم، تحلیل را گمراه می‌کند</b> (تعریف اسلاید). نوت‌بوک ساده‌تر می‌گوید: داده‌ای که نادرست، ناقص، ناسازگار یا در قالب اشتباه است.
+</div>
+<p>اسلاید شش چهره را نام می‌برد: گم‌شده، تکراری، ناسازگار، نوع اشتباه، ناممکن، نویزی یا پرت. نوت‌بوک «ناسازگار» را به سه تکه می‌شکند و به هشت نوع می‌رسد. هر دو را بلد باش:</p>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>نوع</th><th>نمونه در داده‌ی سفر</th><th>چرا خطرناک است؟</th></tr>
+<tr><td>۱</td><td><b>تکراری</b> (Duplicates)</td><td>یک سفر دو بار در لاگ ثبت شده</td><td>سفر و درآمد دو بار شمرده می‌شود</td></tr>
+<tr><td>۲</td><td><b>گم‌شده</b> (Missing)</td><td><code>rating</code> خالی، شهر «unknown»</td><td>میانگین و شمارش غلط می‌شود</td></tr>
+<tr><td>۳</td><td><b>نوع اشتباه</b> (Wrong type)</td><td>کرایه به‌شکل متن <code>"85,000"</code>، سن به‌شکل متن</td><td>نمی‌شود حساب کرد؛ یا بدتر، بی‌صدا NaN می‌شود</td></tr>
+<tr><td>۴</td><td><b>متن ناهمسان</b></td><td><code>Tehran</code>، <code>tehran</code>، <code>TEHRAN</code>، <code>" Tehran"</code></td><td>یک شهر چهار گروه می‌شود</td></tr>
+<tr><td>۵</td><td><b>چند نام برای یک چیز</b></td><td><code>تهران</code>، <code>طهران</code>، <code>THR</code>؛ <code>CC</code> و <code>Credit Card</code></td><td>گروه‌ها تکه‌تکه می‌شوند</td></tr>
+<tr><td>۶</td><td><b>قالب ناهمسان</b></td><td>تاریخ <code>2026-10-30</code> و <code>30/10/2026</code> و <code>1405/08/08</code>؛ تومان و ریال</td><td>تاریخ‌ها غلط خوانده یا مرتب می‌شوند</td></tr>
+<tr><td>۷</td><td><b>ناممکن</b> (Impossible)</td><td>سن ۲۵۰، کرایه‌ی منفی، تاریخ آینده در داده‌ی گذشته</td><td>میانگین را خراب می‌کند</td></tr>
+<tr><td>۸</td><td><b>پرت</b> (Outlier/noisy)</td><td>کرایه‌ی ۶٬۸۰۰٬۰۰۰ تومانی یا سفر ۳۱ کیلومتری فرودگاه</td><td>میانگین را می‌کشد؛ ولی شاید جالب‌ترین مشاهده باشد</td></tr>
+</table></div>
+<div class="box thm"><div class="bt">جمله‌ی کلیدی اسلاید</div>
+  <b>پاک‌سازی یعنی حذف کردن نیست. پاک‌سازی یعنی تصمیم‌گیری صریح بر اساس معنی و شواهد.</b> (Cleaning is not deleting.)
+</div>
+<p>برنامه‌ی نوت‌بوک برای هر مشکل چهار قدم دارد:</p>
+<div class="flow"><span>پیدا کن (DETECT)</span><i>←</i><span>تصمیم بگیر (DECIDE)</span><i>←</i><span>رفع کن (FIX)</span><i>←</i><span>بررسی کن (CHECK)</span></div>
+<p>اول <b>همه</b> را پیدا می‌کنی و بعد رفع می‌کنی. اگر وسط پیدا کردن شروع به پاک کردن کنی، مشکل‌هایی که روی هم افتاده‌اند (مثلاً ردیف تکراری که سنش هم ناممکن است) را دو بار حساب می‌کنی یا اصلاً نمی‌بینی.</p>
+
+<h3>۳.۱ فعالیت اسلاید: مشکل‌ها را پیدا کن</h3>
+<div class="tablewrap"><table class="data">
+<tr><th>Name</th><th>Age</th><th>City</th><th>Income</th><th>Gender</th></tr>
+<tr><td>Ali</td><td>23</td><td>Tehran</td><td>50,000</td><td>Male</td></tr>
+<tr><td class="bad">sara</td><td class="bad">NaN</td><td class="bad">tehran</td><td>62000</td><td class="bad">F</td></tr>
+<tr><td>Reza</td><td class="bad">250</td><td>Tehran</td><td class="bad">-1000</td><td class="bad">male</td></tr>
+<tr><td class="bad">Ali</td><td class="bad">23</td><td class="bad">Tehran</td><td class="bad">50,000</td><td class="bad">Male</td></tr>
+<tr><td>Mina</td><td>31</td><td class="bad">TEHRAN</td><td class="bad">unknown</td><td>Female</td></tr>
+</table></div>
+<p>اسلاید چهار سؤال می‌پرسد و می‌خواهد دانشجو <b>قبل از اجرای کد</b> جواب بدهد. اول خودت جواب بده.</p>
+<details><summary>جواب کامل</summary>
+<ul>
+  <li><b>گم‌شده:</b> سن sara (<code>NaN</code>) و درآمد Mina (<code>unknown</code>). دومی <b>گم‌شده‌ی پنهان</b> است: pandas آن را متن می‌بیند و <code>isna().sum()</code> برایش صفر می‌دهد.</li>
+  <li><b>تکراری:</b> ردیف ۴ عین ردیف ۱ است (Ali، ۲۳، Tehran، 50,000، Male).</li>
+  <li><b>ناسازگار:</b> شهر <code>Tehran</code>/<code>tehran</code>/<code>TEHRAN</code>؛ جنسیت <code>Male</code>/<code>male</code>/<code>F</code>/<code>Female</code> (فقط حروف کوچک کافی نیست، <code>f</code> باید به <code>female</code> نگاشت شود)؛ نام <code>sara</code> با حرف کوچک؛ درآمد گاهی با جداکننده‌ی هزارگان (<code>50,000</code>) و گاهی بدون آن.</li>
+  <li><b>ناممکن:</b> سن ۲۵۰ و درآمد ۱۰۰۰−.</li>
+  <li><b>نوع اشتباه:</b> ستون <code>Income</code> به خاطر «,» و «unknown» کلاً متن خوانده می‌شود.</li>
+</ul>
+</details>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «isna صفر داد، پس گم‌شده نداریم»</div>
+  <code>isna()</code> فقط <code>NaN</code>/<code>None</code>/<code>NaT</code> را می‌بیند. در داده‌ی واقعی گم‌شده خودش را با <code>"unknown"</code>، <code>"-"</code>، <code>"?"</code>، رشته‌ی خالی، <code>0</code>، <code>-1</code>، <code>999</code> یا تاریخ <code>1900-01-01</code> پنهان می‌کند. همیشه <code>value_counts()</code> ستون‌ها را نگاه کن و این‌ها را با <code>na_values</code> هنگام خواندن یا <code>replace</code> به <code>NaN</code> تبدیل کن.
+</div>
+
+<h3>۳.۲ کارت امتیاز کثیف نوت‌بوک</h3>
+<p>نوت‌بوک بعد از پیدا کردن همه‌ی مشکل‌ها، یک «کارت امتیاز کثیف» می‌سازد: برای هر نوع، چند ردیف آلوده است. عددهای داده‌ی فروشگاه (۱۰۳۰ ردیف):</p>
+<div class="tablewrap"><table>
+<tr><th>مشکل</th><th>تعداد</th><th>چطور پیدا شد</th></tr>
+<tr><td>ردیف کاملاً تکراری</td><td>۳۰ (۲٫۹٪)</td><td><code>raw.duplicated().sum()</code></td></tr>
+<tr><td>گم‌شده</td><td>Rating ۱۵۲، AGE ۷۹، City ۵۳، Customer_ID ۲۱</td><td><code>raw.isna().sum()</code></td></tr>
+<tr><td>قیمت متنی (با علامت دلار)</td><td>۱۵۷ مقدار «عدد ساده» نیستند</td><td><code>str.fullmatch(r"\d+(\.\d+)?")</code></td></tr>
+<tr><td>شهر ناهمسان</td><td>۲۶ مقدار برای ۵ شهر (مثلاً <code>München</code> به‌جای <code>Munich</code>)</td><td><code>value_counts(dropna=False)</code></td></tr>
+<tr><td>تاریخ با قالب دوم</td><td>۲۶۸ تاریخ با «/» در برابر ۷۶۲ با «-»</td><td><code>str.contains("/")</code></td></tr>
+<tr><td>سن یا تعداد ناممکن</td><td>۶ سن (۵−، ۰، ۳، ۱۵۰، ۲۵۰، ۹۹۹) و ۵ تعداد (۰، ۱−، ۲−)</td><td>قانون کسب‌وکار: سن بین ۱۶ و ۱۰۰، تعداد ≥ ۱</td></tr>
+<tr><td>قیمت پرت</td><td>۴ قیمت (۷۵٬۰۰۰ تا ۱۲۰٬۰۰۰)</td><td><code>nlargest</code> و boxplot</td></tr>
+</table></div>
+<p>یک ردیف ممکن است چند مشکل داشته باشد، پس این عددها را <b>جمع نزن</b>. کارت فقط اندازه‌ی نسبی هر مشکل را نشان می‌دهد.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="quality">
+<h2><span class="num">۴</span> چک‌لیست شش‌بعدی کیفیت داده <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>«کثیف» یک برچسب کلی است. برای این‌که بتوانی کیفیت را <b>اندازه بگیری و گزارش کنی</b>، اسلاید شش بعد معرفی می‌کند. هر بعد یک سؤال است و می‌شود برایش عدد ساخت:</p>
+<div class="tablewrap"><table class="dimtbl">
+<tr><th>بعد</th><th>سؤال اسلاید</th><th>سنجه‌ی پیشنهادی</th><th>کد pandas</th><th>مثال در داده‌ی سفر</th></tr>
+<tr><td><b>۱. کامل بودن</b><br>Completeness</td><td>چقدر گم‌شده داریم؟</td><td>درصد خانه‌های پر هر ستون</td><td><code>1 - df.isna().mean()</code></td><td>۱۵٪ سفرها امتیاز ندارند</td></tr>
+<tr><td><b>۲. اعتبار</b><br>Validity</td><td>مقدارها از قانون‌ها پیروی می‌کنند؟</td><td>درصد ردیف‌هایی که همه‌ی قانون‌ها را پاس می‌کنند</td><td><code>df["fare"].between(1, 2e6)</code></td><td>کرایه‌ی منفی، امتیاز ۷</td></tr>
+<tr><td><b>۳. سازگاری</b><br>Consistency</td><td>قالب‌ها یکی‌اند؟</td><td>تعداد مقدار یکتا در برابر تعداد مورد انتظار؛ تناقض بین ستون‌ها</td><td><code>nunique()</code>، <code>pd.crosstab</code></td><td>سه املای تهران؛ سفر «لغوشده» با کرایه‌ی پرداخت‌شده</td></tr>
+<tr><td><b>۴. یکتایی</b><br>Uniqueness</td><td>تکراری داریم؟</td><td>کلیدهای یکتا تقسیم بر تعداد ردیف</td><td><code>df["ride_id"].is_unique</code></td><td>سفر دو بار در لاگ</td></tr>
+<tr><td><b>۵. صحت</b><br>Accuracy</td><td>با واقعیت می‌خواند؟</td><td>تطابق با یک منبع مرجع</td><td>join با منبع مستقل</td><td>مسافت ثبت‌شده با مسیر GPS نمی‌خواند</td></tr>
+<tr><td><b>۶. به‌روز بودن</b><br>Timeliness</td><td>داده به اندازه‌ی کافی تازه است؟</td><td>فاصله‌ی آخرین رکورد تا الان</td><td><code>now - df["requested_at"].max()</code></td><td>داشبورد «دیروز» داده‌ی سه روز پیش را نشان می‌دهد</td></tr>
+</table></div>
+<p>دو سنجه را دقیق‌تر بنویسیم ($N$ تعداد ردیف‌ها):</p>
+$$\text{Completeness}(c)=1-\frac{\#\{i:\ x_{ic}\ \text{missing}\}}{N},\qquad \text{Uniqueness}=\frac{\#\{\text{distinct keys}\}}{N}$$
+<p>در داده‌ی نوت‌بوک، کامل بودن ستون Rating برابر $1-152/1030\approx0.852$ و یکتایی کلید برابر $1000/1030\approx0.971$ است.</p>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: صحت با اعتبار فرق دارد</div>
+  «کرایه = ۸۵٬۰۰۰ تومان» <b>معتبر</b> است (عدد مثبت در بازه‌ی منطقی). ولی اگر مسافر واقعاً ۹۵٬۰۰۰ پرداخته باشد، <b>صحیح</b> نیست. اعتبار را با قانون‌های درونی داده می‌سنجی؛ صحت را فقط با یک منبع بیرونی (صورت‌حساب بانک، GPS، بازرسی دستی نمونه). برای همین صحت سخت‌ترین بعد است و خیلی وقت‌ها فقط روی یک نمونه‌ی کوچک بررسی می‌شود.
+</div>
+
+<h3>۴.۱ سازگاری بین ستون‌ها: بررسی‌ای که پاس می‌شود هم ارزش دارد</h3>
+<p>نوت‌بوک برای سازگاری یک تمرین زیبا دارد: اگر مشتری کد تخفیف نزده (<code>Promo_Used = "No"</code>)، درصد تخفیف باید صفر باشد.</p>
+<pre class="code">
+pd.crosstab(raw["Promo_Used"], raw["Discount_Pct"], margins=True)
+</pre>
+<div class="out">Discount_Pct    0   10   15   20   All
+Promo_Used
+No            632    0    0    0   632
+Yes             0  122  142  134   398
+All           632  122  142  134  1030</div>
+<p>هیچ تناقضی نیست. این «خبر خوب» هم یافته است: حالا می‌دانی به این دو ستون می‌شود اعتماد کرد و باید در گزارش بیاید. در داده‌ی سفر، بررسی معادل این است: <code>pd.crosstab(df["status"], df["fare"] &gt; 0)</code>. سفر لغوشده نباید کرایه‌ی کامل داشته باشد.</p>
+
+<h3>۴.۲ چک‌لیست هشت‌سؤالی نوت‌بوک (ذخیره‌اش کن)</h3>
+<ol class="steps">
+  <li>تکراری داریم؟</li>
+  <li>مقدار گم‌شده داریم؟ <b>چرا</b> گم شده؟</li>
+  <li>نوع‌ها درست‌اند (عدد، تاریخ، متن)؟</li>
+  <li>متن یکدست است (حروف، فاصله، املا)؟</li>
+  <li>قالب همه‌جا یکی است (تاریخ، پول، واحد)؟</li>
+  <li>مقدار ناممکن داریم (قانون‌های کسب‌وکار)؟</li>
+  <li>پرت داریم؟</li>
+  <li>نام ستون‌ها مرتب است؟</li>
+</ol>
+<div class="box tip"><div class="bt">💡 جمله‌ی پایانی اسلاید ۸</div>
+  «مجموعه‌داده‌ی تمیز کامل نیست. <b>به اندازه‌ی کافی خوب، مستند و مناسب پرسش</b> است.» برای پرسش «افت سفر در کدام شهر بود؟» گم‌شدن ۱۵٪ امتیازها اصلاً مهم نیست؛ ولی یکی نبودن املای شهرها جواب را عوض می‌کند. کیفیت را <b>نسبت به پرسش</b> بسنج.
+</div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="workflow">
+<h2><span class="num">۵</span> گردش کار پاک‌سازی: از خام تا قابل‌استفاده <span class="tag core">اسلاید</span></h2>
+<ol class="steps">
+  <li><b>بازرسی (Inspect):</b> شکل، نوع‌ها، خلاصه‌ی آماری. (بخش ۲)</li>
+  <li><b>یکسان‌سازی (Standardize):</b> نام ستون‌ها، قالب‌ها، واحدها، حروف.</li>
+  <li><b>رسیدگی به گم‌شده (Handle missing):</b> حذف، جایگذاری، پرچم. (بخش ۶)</li>
+  <li><b>اصلاح مقدارها (Fix values):</b> تکراری، پرت، قانون‌ها. (بخش ۷ و ۸)</li>
+  <li><b>اعتبارسنجی (Validate):</b> دوباره بررسی کن و مستند کن. (بخش ۹)</li>
+</ol>
+<p>اسلاید زیر این پنج قدم سه خط کد گذاشته و گفته «همیشه قبل و بعد را مقایسه کن»: <code>print(df.shape)</code>، <code>print(df.isna().sum())</code> و <code>print(df.dtypes)</code>. نوت‌بوک چهار قانون رفتاری هم اضافه می‌کند:</p>
+<div class="cards">
+  <div><b>۱. روی کپی کار کن</b> <code>df = raw.copy()</code></div>
+  <div><b>۲. هر بار یک مشکل</b> و تعداد ردیف قبل و بعد را چاپ کن.</div>
+  <div><b>۳. هر تصمیم را بنویس</b> («گزارش پاک‌سازی»): دیگران باید بتوانند کارت را تکرار کنند.</div>
+  <div><b>۴. بی‌اعلام داده نساز</b> هر مقدار جایگذاری‌شده باید در گزارش بیاید.</div>
+</div>
+
+<h3>۵.۱ کد اسلاید ۱۶ روی جدول فعالیت، و یک تله</h3>
+<p>این کد اسلاید ۱۶ است، مو به مو. روی جدول Ali/sara/Reza/Mina اجرایش کردیم. قبل از دیدن خروجی، پیش‌بینی کن ستون <code>Income</code> چه می‌شود.</p>
+<pre class="code">
+df = df.drop_duplicates()                                    # remove exact duplicate records
+
+df["City"] = df["City"].str.strip().str.lower()              # standardize text columns
+df["Gender"] = df["Gender"].str.strip().str.lower()
+
+df["Age"] = pd.to_numeric(df["Age"], errors="coerce")        # convert numbers safely
+df["Income"] = pd.to_numeric(df["Income"], errors="coerce")
+
+# then apply rules
+df.loc[(df["Age"] &lt; 0) | (df["Age"] &gt; 100), "Age"] = pd.NA
+df.loc[df["Income"] &lt; 0, "Income"] = pd.NA
+df["Age"] = df["Age"].fillna(df["Age"].median())
+print(df); print("mean income:", df["Income"].mean())
+</pre>
+<div class="out">   Name   Age    City   Income  Gender
+0   Ali  23.0  tehran      NaN    male
+1  sara  27.0  tehran  62000.0       f
+2  Reza  27.0  tehran      NaN    male
+4  Mina  31.0  tehran      NaN  female
+mean income: 62000.0</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: <code>errors="coerce"</code> «امن» است ولی بی‌صداست</div>
+  درآمد Ali (<code>"50,000"</code>) به خاطر ویرگول تبدیل نشد و <b>بی‌صدا</b> <code>NaN</code> شد. حالا «میانگین درآمد» فقط از یک نفر (sara) حساب می‌شود. <code>coerce</code> جلوی خطا را می‌گیرد، ولی مسئولیت شمردن چیزهایی را که از دست رفتند گردن خودت می‌اندازد. قاعده: <b>قبل و بعد از هر coerce تعداد NaN را بشمار</b>، و قبلش ویرگول، علامت پول و ارقام فارسی را پاک کن. ضمناً <code>f</code> هنوز با <code>female</code> یکی نشده؛ حروف کوچک برای مترادف‌ها کافی نیست.
+</div>
+<pre class="code">
+raw = pd.read_csv("customers_messy.csv", na_values=["unknown"])       # گم‌شده‌ی پنهان را همان اول بگیر
+n_before = raw["Income"].isna().sum()
+income = pd.to_numeric(raw["Income"].str.replace(",", "", regex=False), errors="coerce")
+print("new NaN created by coerce:", income.isna().sum() - n_before)   # باید صفر باشد
+df["Gender"] = df["Gender"].str.strip().str.lower().replace({"f": "female", "m": "male"})
+</pre>
+<p>با این نسخه، درآمد Ali ۵۰٬۰۰۰ می‌ماند، درآمد Reza (۱۰۰۰−) طبق قانون <code>NaN</code> می‌شود و Mina هم گم‌شده‌ی <b>شناخته‌شده</b> است. میانگین درآمد از دو نفر (۵۰٬۰۰۰ و ۶۲٬۰۰۰) حساب می‌شود: ۵۶٬۰۰۰.</p>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="missing">
+<h2><span class="num">۶</span> مقدار گم‌شده: پنهانش نکن <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<h3>۶.۱ چهار گزینه‌ی اسلاید</h3>
+<div class="tablewrap"><table>
+<tr><th>گزینه</th><th>کد</th><th>کی استفاده کن</th><th>کی نه</th><th>ریسک</th></tr>
+<tr><td><b>حذف (Drop)</b></td><td><code>dropna(subset=[...])</code></td><td>تعداد کمی ردیف گم‌شده دارند و گم‌شدن تصادفی است</td><td>گم‌شدن به خود مقدار یا به یک گروه وابسته است</td><td>نمونه‌ی باقی‌مانده سوگیر می‌شود؛ اطلاعات ستون‌های دیگر آن ردیف هم دور ریخته می‌شود</td></tr>
+<tr><td><b>جایگذاری (Impute)</b></td><td><code>fillna(median)</code>، <code>fillna("unknown")</code></td><td>عددی: میانه؛ دسته‌ای: مُد یا «unknown»؛ یا مقدار دامنه (مثلاً ۰ برای «بدون تخفیف»)</td><td>درصد گم‌شده زیاد است یا گم‌شدن معنی دارد</td><td>واریانس کم می‌شود، قله‌ی مصنوعی، همبستگی‌ها ضعیف می‌شود</td></tr>
+<tr><td><b>پرچم (Flag)</b></td><td><code>df["x_missing"] = df["x"].isna()</code></td><td>وقتی خودِ گم‌شدن اطلاعات دارد</td><td>—</td><td>تقریباً بی‌ریسک؛ معمولاً همراه جایگذاری</td></tr>
+<tr><td><b>پرسیدن (Ask)</b></td><td>برگرد سراغ منبع داده</td><td>اثر زیاد روی تصمیم دارد</td><td>—</td><td>وقت می‌گیرد، ولی گاهی تنها جواب درست است</td></tr>
+</table></div>
+<pre class="code">
+df.isna().sum()
+df["age"] = df["age"].fillna(df["age"].median())   # numeric column
+df["city"] = df["city"].fillna("unknown")           # categorical column
+</pre>
+<div class="box thm"><div class="bt">جمله‌ی کلیدی اسلاید ۱۰</div>
+  مقدار گم‌شده ممکن است <b>اطلاعات</b> داشته باشد. «جواب نداد» خودش می‌تواند یک <b>سیگنال</b> باشد، نه فقط یک مشکل.
+</div>
+<p>نوت‌بوک برای هر ستون استراتژی جدا گذاشته و این دقیقاً روح درس است:</p>
+<div class="tablewrap"><table>
+<tr><th>ستون</th><th>تصمیم</th><th>چرا</th></tr>
+<tr><td><code>age</code></td><td>جایگذاری با <b>میانه</b> (۳۵)</td><td>فقط حدود ۸٪ خالی است و میانه به پرت حساس نیست</td></tr>
+<tr><td><code>city</code></td><td>جایگذاری با <b>«Unknown»</b></td><td>نباید شهر را حدس بزنیم</td></tr>
+<tr><td><code>customer_id</code></td><td>خالی بماند</td><td>برای پرسش‌های ما لازم نیست</td></tr>
+<tr><td><code>rating</code></td><td><b>عمداً خالی بماند</b></td><td>خالی یعنی «مشتری امتیاز نداده». پر کردن، نظری را <b>می‌سازد</b> که وجود ندارد</td></tr>
+</table></div>
+
+<h3>۶.۲ چرا گم شده؟ MCAR، MAR، MNAR <span class="tag book">تکمیلی</span></h3>
+<p>نوت‌بوک می‌گوید «همیشه بپرس چرا خالی است» و دو حالت «تصادفی» و «سیستماتیک» را جدا می‌کند. ادبیات آمار (Rubin) دقیق‌ترش را سه حالت می‌داند. فرض کن $M$ نشانگر گم‌شدن باشد، $X_{obs}$ بخش دیده‌شده‌ی داده و $X_{mis}$ مقدارهایی که گم شده‌اند:</p>
+<div class="tablewrap"><table>
+<tr><th>سازوکار</th><th>تعریف</th><th>مثال سفر</th><th>پیامد برای تصمیم</th></tr>
+<tr><td><b>MCAR</b><br>کاملاً تصادفی</td><td>$P(M\mid X_{obs},X_{mis})=P(M)$</td><td>سرور لاگ GPS یک ساعت قطع شد و مسافت چند سفر تصادفی ثبت نشد</td><td>حذف بی‌سوگیری است (فقط نمونه کوچک‌تر می‌شود). جایگذاری ساده هم قابل‌قبول است</td></tr>
+<tr><td><b>MAR</b><br>تصادفی به شرط داده‌ی دیده‌شده</td><td>$P(M\mid X_{obs},X_{mis})=P(M\mid X_{obs})$</td><td>نسخه‌ی جدید اپ (۷٫۲) فیلد وضعیت را نمی‌فرستد؛ گم‌شدن به <code>app_version</code> وابسته است که ستونش را داریم</td><td>حذف سوگیری دارد. جایگذاری <b>در هر گروه</b> (مثلاً میانه به تفکیک نسخه یا شهر) یا مدل‌محور کار می‌کند</td></tr>
+<tr><td><b>MNAR</b><br>غیرتصادفی</td><td>گم‌شدن به خود مقدار گم‌شده وابسته است</td><td>مسافرهای ناراضی امتیاز نمی‌دهند</td><td>نه حذف درست است نه جایگذاری ساده. پرچم بزن، با بازه گزارش کن، یا برگرد سراغ منبع (Ask)</td></tr>
+</table></div>
+
+<div class="box ex"><div class="bt">مثال عددی: MNAR میانگین امتیاز را بالا می‌برد</div>
+  ۱۰۰ سفر داریم. امتیاز واقعی: ۱۰ سفر یک‌ستاره، ۱۰ دوستاره، ۲۰ سه‌ستاره، ۳۰ چهارستاره و ۳۰ پنج‌ستاره. میانگین واقعی:
+  $$\bar r_{\text{true}}=\frac{1\cdot10+2\cdot10+3\cdot20+4\cdot30+5\cdot30}{100}=3.60$$
+  حالا فرض کن احتمال این‌که مسافر امتیاز بدهد به رضایتش وابسته است: ۲۰٪ برای یک‌ستاره، ۴۰٪ برای دو، ۷۰٪ برای سه، ۹۰٪ برای چهار و پنج. امتیازهای دیده‌شده: ۲، ۴، ۱۴، ۲۷ و ۲۷ (جمعاً ۷۴). میانگین دیده‌شده:
+  $$\bar r_{\text{obs}}=\frac{2+8+42+108+135}{74}=\frac{295}{74}\approx3.99$$
+  داشبورد می‌گوید «رضایت ۳٫۹۹ است»، در حالی که واقعاً ۳٫۶۰ است. اگر ۲۶ خانه‌ی خالی را با میانگین پر کنی، میانگین <b>همان ۳٫۹۹ می‌ماند</b>: جایگذاری سوگیری را درست نمی‌کند، فقط پنهانش می‌کند. برای همین نوت‌بوک <code>rating</code> را خالی گذاشت.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: از روی داده نمی‌شود MAR را از MNAR تشخیص داد</div>
+  تفاوتشان به مقدارهایی بستگی دارد که <b>ندیده‌ای</b>. با داده می‌توانی نشان بدهی گم‌شدن به یک ستون دیده‌شده وابسته است یا نه (مثلاً <code>df.groupby("app_version")["status"].apply(lambda s: s.isna().mean())</code>)، ولی MNAR را فقط با <b>دانش دامنه</b>، پرسیدن از منبع، یا جمع‌آوری یک نمونه‌ی پیگیری (مثلاً تماس با چند مسافر بی‌امتیاز) می‌شود سنجید.
+</div>
+
+<h3>۶.۳ چرا جایگذاری با میانگین واریانس را کوچک می‌کند؟ <span class="tag book">تکمیلی</span></h3>
+<p>شهود: هر مقدار جایگذاری‌شده دقیقاً روی میانگین می‌نشیند، پس هیچ «پراکندگی» اضافه نمی‌کند، ولی تعداد را زیاد می‌کند. انحراف معیار به‌طور مصنوعی کم می‌شود و داده مطمئن‌تر از آن‌چه هست به نظر می‌رسد.</p>
+<div class="box proof"><div class="bt">اثبات کوتاه</div>
+  فرض کن $n_o$ مقدار دیده‌شده با میانگین $\bar x$ و واریانس نمونه‌ای $s_o^2$ داریم و $m$ خانه را با $\bar x$ پر می‌کنیم ($n=n_o+m$). میانگین جدید همان $\bar x$ است. جمع مربع انحراف‌ها هم عوض نمی‌شود، چون هر مقدار جدید انحراف صفر دارد. فقط مخرج بزرگ می‌شود:
+  $$s_{\text{new}}^2=\frac{\sum_{i\in obs}(x_i-\bar x)^2+m\cdot 0}{n-1}=s_o^2\cdot\frac{n_o-1}{n-1}$$
+  هرچه سهم گم‌شده بیشتر باشد، $\frac{n_o-1}{n-1}$ کوچک‌تر است. با ۵۰٪ گم‌شده، واریانس تقریباً نصف می‌شود.
+</div>
+<div class="box ex"><div class="bt">مثال عددی (کرایه به هزار تومان)</div>
+  ده سفر: ۶۲، ۷۵، ۴۸، ۹۰، ۵۵، ؟، ۱۳۰، ؟، ۷۰، ؟. هفت مقدار دیده‌شده: میانگین ۷۵٫۷۱، میانه ۷۰، واریانس ۷۶۱٫۶ (انحراف معیار ۲۷٫۶).
+  بعد از جایگذاری با میانگین: میانگین همان ۷۵٫۷۱، ولی واریانس ۵۰۷٫۷ (انحراف معیار ۲۲٫۵). نسبت $507.7/761.6=0.667=\frac{7-1}{10-1}$، دقیقاً مطابق فرمول. با میانه هم جایگذاری کنی، انحراف معیار ۲۲٫۷ می‌شود و میانگین به ۷۴٫۰ جابه‌جا می‌شود.
+</div>
+<p>نوت‌بوک همین اثر را با هیستوگرام نشان می‌دهد: بعد از پر کردن ۸۴ سن خالی با میانه (۳۵)، یک <b>قله‌ی باریک مصنوعی</b> روی ۳۵ ظاهر می‌شود. در اجرای ما، سهم ردیف‌هایی که سنشان دقیقاً ۳۵ است از ۳٫۵٪ به ۱۲٪ رسید و انحراف معیار سن از ۱۰٫۳ به ۹٫۸ کم شد. چون فقط حدود ۸٪ خالی بود، قابل‌قبول است؛ با ۵۰٪ گم‌شده، توزیع کاملاً تحریف می‌شد. پس <b>همیشه اثر جایگذاری را بررسی و گزارش کن</b>.</p>
+
+<h3>۶.۴ پرچم گم‌شدگی: وقتی «خالی» خودش ویژگی است</h3>
+<pre class="code">
+rides["distance_missing"] = rides["distance_km"].isna().astype(int)
+rides.groupby("distance_missing")["fare"].mean()
+</pre>
+<div class="out">distance_missing
+0    136.714286
+1     57.666667
+Name: fare, dtype: float64</div>
+<p>سفرهایی که مسافتشان ثبت نشده، کرایه‌ی خیلی کمتری دارند. شاید این‌ها سفرهای کوتاه درون‌محله‌ای‌اند که GPS قبل از قفل شدن تمامشان کرده. اگر فقط جایگذاری کنی و پرچم نگذاری، این الگو از بین می‌رود.</p>
+
+<h3>۶.۵ آمار جایگذاری را فقط از داده‌ی آموزش بگیر (پیش‌نمایش نشت) <span class="tag book">تکمیلی</span></h3>
+<p>اگر بعداً قرار است مدل بسازی، میانه‌ای که با آن جایگذاری می‌کنی خودش یک «پارامتر آموخته‌شده» است. اگر آن را از کل داده (شامل داده‌ی تست) حساب کنی، اطلاعات تست به آموزش <b>نشت</b> کرده است (data leakage). قاعده: <b>fit روی train، transform روی هر دو</b>. این مرز fit/transform در جلسه‌ی ۷ مفصل می‌آید.</p>
+<pre class="code">
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+
+train, test = train_test_split(rides, test_size=0.3, random_state=0)
+imp = SimpleImputer(strategy="median", add_indicator=True)   # جایگذاری + ستون پرچم
+imp.fit(train[["distance_km"]])                              # فقط train
+print("median learned from train:", imp.statistics_)
+print(imp.transform(test[["distance_km"]]))                  # [مقدار, پرچم]
+print("median of ALL rows (leaky):", rides["distance_km"].median())
+</pre>
+<div class="out">median learned from train: [5.1]
+[[5.1 1. ]
+ [6.3 0. ]
+ [7.7 0. ]]
+median of ALL rows (leaky): 6.3</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+  در تحلیل توصیفی (گزارش ماه گذشته) جایگذاری روی کل داده اشکالی ندارد، چون «آینده»ای در کار نیست. نشت فقط وقتی معنی دارد که <b>پیش‌بینی</b> می‌کنی و داده‌ی تست نقش «آینده‌ی ندیده» را بازی می‌کند. در سؤال امتحان اول ببین هدف توصیف است یا پیش‌بینی.
+</div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="formats">
+<h2><span class="num">۷</span> تکراری، قالب‌ها و ناسازگاری‌ها (و دردسرهای داده‌ی فارسی) <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<p>اسلاید ۱۱ شش ابزار را کنار هم می‌گذارد:</p>
+<div class="tablewrap"><table>
+<tr><th>مشکل</th><th>ابزار</th><th>نکته</th></tr>
+<tr><td>تکراری</td><td><code>df.drop_duplicates()</code></td><td>پیش‌فرض: اولین نسخه می‌ماند (<code>keep="first"</code>)؛ با <code>subset=["ride_id"]</code> فقط روی کلید</td></tr>
+<tr><td>فاصله‌ی اضافه</td><td><code>str.strip()</code></td><td>فاصله‌ی ابتدا و انتها؛ فاصله‌ی وسط را <code>str.replace(r"\s+", " ", regex=True)</code> درست می‌کند</td></tr>
+<tr><td>بزرگی و کوچکی حروف</td><td><code>str.lower()</code></td><td>یا <code>str.title()</code> مثل نوت‌بوک؛ مهم این است که یکی باشد</td></tr>
+<tr><td>تبدیل عددی</td><td><code>pd.to_numeric(..., errors="coerce")</code></td><td>مقدار بد را NaN می‌کند؛ NaN‌های جدید را بشمار</td></tr>
+<tr><td>واحد</td><td>تبدیل کیلومتر به متر، تومان به ریال</td><td>یک ستون، یک واحد؛ واحد را در نام ستون بنویس: <code>fare_toman</code></td></tr>
+<tr><td>دسته‌ها</td><td>نگاشت مترادف‌ها به یک برچسب</td><td><code>replace({...})</code> یا <code>map({...})</code></td></tr>
+</table></div>
+
+<h3>۷.۱ تکراری: دقیق، کلیدی و فازی</h3>
+<ul>
+  <li><b>تکراری دقیق:</b> همه‌ی ستون‌ها یکسان‌اند، مثل ۳۰ ردیف نوت‌بوک که «سامانه دو بار خروجی داده». <code>duplicated()</code> پیدایشان می‌کند و <code>duplicated(keep=False)</code> <b>همه‌ی</b> نسخه‌ها را علامت می‌زند تا کنار هم ببینی‌شان.</li>
+  <li><b>تکراری کلیدی:</b> <code>ride_id</code> یکی است ولی یک ستون فرق دارد (مثلاً یکی از نسخه‌ها بعداً اصلاح شده). <code>drop_duplicates</code> پیش‌فرض این را نمی‌گیرد. باید تصمیم بگیری کدام نسخه معتبر است: معمولاً آخرین به‌روزرسانی، با <code>sort_values("updated_at").drop_duplicates("ride_id", keep="last")</code>.</li>
+  <li><b>تکراری فازی (near-duplicate):</b> کلیدها فرق دارند ولی واقعیت یکی است. مسافر با عجله دو بار دکمه را زده و دو درخواست با <code>ride_id</code> متفاوت ساخته. یا «Ali Rezaei» و «Ali Rezaee» یک نفرند.</li>
+</ul>
+<pre class="code">
+r = r.sort_values(["user_id", "origin", "requested_at"])
+gap = r.groupby(["user_id", "origin"])["requested_at"].diff()
+r["near_dup"] = gap.le(pd.Timedelta("60s"))          # درخواست دوم در کمتر از یک دقیقه
+r
+</pre>
+<div class="out">   ride_id  user_id        requested_at   origin  near_dup
+2      903       17 2026-10-20 18:40:00  Tajrish     False
+0      901       17 2026-10-20 08:00:05    Vanak     False
+1      902       17 2026-10-20 08:00:31    Vanak      True
+3      904       42 2026-10-20 09:10:00    Azadi     False
+4      905       42 2026-10-20 09:14:00    Azadi     False</div>
+<p>برای شباهت متنی، <code>difflib.SequenceMatcher(None, a, b).ratio()</code> عددی بین ۰ و ۱ می‌دهد: «ali rezaei» و «ali rezaee» ۰٫۹۰، «tehran» و «tehraan» ۰٫۹۲، ولی «ali rezaei» و «reza alavi» فقط ۰٫۵۰. آستانه‌ی فازی همیشه هم مثبت کاذب دارد و هم منفی کاذب؛ پس نتیجه‌اش را <b>پرچم</b> کن و نمونه‌ای را دستی بررسی کن، خودکار حذف نکن.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: تکراری واقعی در برابر تکرار طبیعی</div>
+  دو سفر با مبدأ، مقصد و کرایه‌ی یکسان لزوماً تکراری نیستند: کسی که هر روز با اسنپ سر کار می‌رود همین الگو را دارد. «تکراری» یعنی <b>یک رویداد دو بار ثبت شده</b>. برای همین باید بر اساس کلید رویداد (شناسه، یا زمان دقیق به‌اضافه‌ی کاربر) تصمیم بگیری، نه شباهت مقدارها.
+</div>
+
+<h3>۷.۲ متن و مترادف‌ها: <code>replace</code> یا <code>map</code>؟</h3>
+<p>نوت‌بوک شهر را این‌طور درست کرد: اول <code>str.strip().str.title()</code> و بعد <code>replace({"München": "Munich"})</code>. ۲۶ مقدار به ۵ شهر به‌اضافه‌ی خالی رسید (Berlin ۲۷۲، Munich ۲۶۱، Hamburg ۱۹۴، Leipzig ۱۳۵، Dresden ۸۸، خالی ۵۰). روش پرداخت هم با <code>{"Cc": "Credit Card"}</code> به سه مقدار رسید.</p>
+<div class="vs">
+  <div><h4><code>s.replace(dict)</code></h4><ul><li>فقط مقدارهایی که در dict هستند عوض می‌شوند.</li><li>بقیه دست‌نخورده می‌مانند.</li><li>مناسب «چند نام ← یک نام».</li></ul></div>
+  <div><h4><code>s.map(dict)</code></h4><ul><li>هر مقداری که در dict <b>نیست</b>، NaN می‌شود.</li><li>مناسب ترجمه‌ی کامل وقتی همه‌ی مقدارها را می‌شناسی.</li><li>خطر: یک املای پیش‌بینی‌نشده بی‌صدا گم‌شده می‌شود.</li></ul></div>
+</div>
+
+<h3>۷.۳ داده‌ی فارسی: ارقام، «ي» و «ك»، نیم‌فاصله <span class="tag book">تکمیلی</span></h3>
+<p>داده‌ی ایرانی یک لایه‌ی کثیفی اضافه دارد که در هیچ کتاب انگلیسی‌ای نیست:</p>
+<ul>
+  <li><b>ارقام فارسی و عربی:</b> <code>۸۵۰۰۰</code> (فارسی، U+06F0 تا U+06F9) و <code>٨٥٠٠٠</code> (عربی، U+0660 تا U+0669) از نظر pandas عدد نیستند. <code>pd.to_numeric</code> آن‌ها را NaN می‌کند. (جالب این‌که <code>float("۹۲۰۰۰")</code> خود پایتون کار می‌کند، ولی pandas نه.)</li>
+  <li><b>«ي» و «ك» عربی:</b> «علي كريمي» (با U+064A و U+0643) و «علی کریمی» (با U+06CC و U+06A9) روی صفحه یکسان‌اند ولی برای کامپیوتر دو رشته‌ی متفاوت. کیبورد عربی ویندوز و بعضی سامانه‌های قدیمی بانکی این حروف را تولید می‌کنند. <code>groupby</code> یک مشتری را دو مشتری می‌بیند.</li>
+  <li><b>نیم‌فاصله (ZWNJ، U+200C) و فاصله‌ی اضافه:</b> «مشهد» و «مشهد» با یک نیم‌فاصله‌ی نامرئی در انتها برابر نیستند.</li>
+  <li><b>نام‌های چندگانه:</b> «تهران»، «طهران»، «Tehran»، «THR».</li>
+</ul>
+<pre class="code">
+FA_TABLE = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩يكة", "01234567890123456789یکه")
+
+def normalize_fa(s: pd.Series) -> pd.Series:
+    return (s.astype("string")
+             .str.translate(FA_TABLE)                    # ارقام → لاتین، ي/ك → ی/ک
+             .str.replace("\u200c", " ", regex=False)    # نیم‌فاصله → فاصله (فقط برای مقایسه)
+             .str.replace(r"\s+", " ", regex=True)
+             .str.strip())
+
+city = pd.Series(["تهران", " تهران", "طهران", "Tehran", "THR", "مشهد", "مشهد\u200c", "شيراز", "شیراز"])
+CITY_MAP = {"تهران": "tehran", "طهران": "tehran", "thr": "tehran", "مشهد": "mashhad", "شیراز": "shiraz"}
+c = normalize_fa(city).str.lower().replace(CITY_MAP)
+print(city.nunique(), "→", c.nunique(), c.value_counts().to_dict())
+
+fare = pd.Series(["۸۵,۰۰۰", "85000", "٨٥٠٠٠ تومان", "۸۵ هزار", "unknown"])
+print(pd.to_numeric(fare, errors="coerce").tolist())                    # ساده‌لوحانه
+clean = normalize_fa(fare).str.replace(r"[,\s]|تومان", "", regex=True)
+print(pd.to_numeric(clean, errors="coerce").tolist())
+</pre>
+<div class="out">9 → 3 {'tehran': 5, 'mashhad': 2, 'shiraz': 2}
+[nan, 85000.0, nan, nan, nan]
+[85000, 85000, 85000, &lt;NA&gt;, &lt;NA&gt;]</div>
+<p>نسخه‌ی ساده‌لوحانه چهار مقدار از پنج را از دست داد. نسخه‌ی تمیز سه تا را نجات داد. «۸۵ هزار» هنوز NA است و یک قانون جدا لازم دارد (ضرب در ۱۰۰۰). این یعنی قاعده‌ی «NaN‌های جدید را بشمار و نگاهشان کن» واقعاً لازم است.</p>
+
+<h3>۷.۴ تاریخ: قالب‌های قاطی، روز و ماه جابه‌جا، و شمسی</h3>
+<p>نوت‌بوک دو قالب در یک ستون داشت (<code>2024-03-15</code> و <code>15/03/2024</code>) و آن‌ها را با دو بار تبدیل و <code>fillna</code> ادغام کرد. هیچ تاریخی خوانده‌نشده نماند (بازه‌ی ۲۰۲۴-۰۱-۰۱ تا ۲۰۲۴-۱۲-۳۱):</p>
+<pre class="code">
+d1 = pd.to_datetime(df["order_date"], format="%Y-%m-%d", errors="coerce")
+d2 = pd.to_datetime(df["order_date"], format="%d/%m/%Y", errors="coerce")
+df["order_date"] = d1.fillna(d2)
+</pre>
+<p>چرا قالب را صریح دادیم و از حدس خودکار استفاده نکردیم؟ چون <code>03/04/2026</code> هم «۳ آوریل» (روز/ماه، اروپایی) است و هم «۴ مارس» (ماه/روز، آمریکایی). ببین حدس خودکار چه می‌کند:</p>
+<pre class="code">
+s = pd.Series(["2026-10-30", "30/10/2026", "10/30/2026", "03/04/2026"])
+print(pd.to_datetime(s, format="mixed", dayfirst=True).dt.date.tolist())
+</pre>
+<div class="out">[datetime.date(2026, 10, 30), datetime.date(2026, 10, 30), datetime.date(2026, 10, 30), datetime.date(2026, 4, 3)]</div>
+<p>سومی (<code>10/30/2026</code>) با وجود <code>dayfirst=True</code> بی‌صدا به‌صورت ماه/روز خوانده شد، چون ماه ۳۰ وجود ندارد. یعنی ستون <b>دو قرارداد متفاوت</b> دارد و pandas هیچ هشداری نداد. اگر یک تاریخ هم <code>03/04</code> از همان منبع آمریکایی باشد، یک ماه جابه‌جا شده و هیچ‌کس نمی‌فهمد. قالب را از صاحب داده بپرس.</p>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: تاریخ شمسی را pandas نمی‌شناسد</div>
+  <code>pd.to_datetime("1405/08/08")</code> در pandas 2 خطای «خارج از بازه» می‌دهد (یا با <code>coerce</code> بی‌صدا <code>NaT</code> می‌شود، چون کمینه‌ی Timestamp سال ۱۶۷۷ است). در pandas 3 بدتر است: <b>بی‌صدا</b> آن را ۸ اوت سال ۱۴۰۵ میلادی می‌خواند! هر دو غلط‌اند. تاریخ شمسی باید صریحاً تبدیل شود، مثلاً با کتابخانه‌ی <code>jdatetime</code>:
+  <pre class="code">
+import jdatetime   # pip install jdatetime
+jdatetime.date(1405, 8, 8).togregorian()      # datetime.date(2026, 10, 30)
+jdatetime.date(1403, 1, 1).togregorian()      # datetime.date(2024, 3, 20)  نوروز
+</pre>
+  نشانه‌ی سریع: اگر سال‌ها حدود ۱۴۰۰ بود، شمسی است؛ اگر حدود ۲۰۲۰، میلادی. اگر ستونی هر دو را دارد، بر اساس همین الگو جدایشان کن، هرکدام را جدا تبدیل کن و بعد ادغام کن (همان الگوی <code>d1.fillna(d2)</code>).
+</div>
+<p>دام‌های دیگر تاریخ: منطقه‌ی زمانی (UTC در برابر ساعت تهران؛ سفر ساعت ۲۳:۳۰ تهران در UTC روز قبل است)، و سال کبیسه‌ی شمسی (۳۰ اسفند در بعضی سال‌ها هست و در بعضی نه).</p>
+
+<h3>۷.۵ ابزار ۱: جدول کثیف را خودت تمیز کن</h3>
+<p>این ابزار ۱۵ سفر کثیف دارد. هر قانون را روشن و خاموش کن و ببین <b>جواب‌ها</b> (میانگین، میانه، تعداد شهرها، میانگین کرایه‌ی تهران) چطور تغییر می‌کنند. هدف این است که ببینی هر قانون یک <b>تصمیم</b> است که عدد گزارش را عوض می‌کند.</p>
+<div id="w-dirty"></div>
+<div class="box tip"><div class="bt">💡 این آزمایش‌ها را حتماً انجام بده</div>
+  (۱) تبدیل کرایه را روی «ساده‌لوحانه» بگذار و تعداد کرایه‌ی معتبر را با «هوشمند» مقایسه کن. (۲) بدون «قانون دامنه»، میانگین را ببین؛ کرایه‌ی ۶٬۸۰۰٬۰۰۰ تومانی (دو صفر اضافه) چه بلایی سرش می‌آورد؟ میانه چقدر تکان می‌خورد؟ (۳) «حذف پرت با IQR» را روشن کن: سفر فرودگاه (R112، ۳۱ کیلومتر) هم حذف می‌شود، در حالی که کاملاً واقعی است. (۴) بدون یکسان‌سازی شهر، «میانگین کرایه‌ی Tehran» فقط از ردیف‌هایی حساب می‌شود که دقیقاً «Tehran» نوشته شده‌اند.
+</div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="outliers">
+<h2><span class="num">۸</span> پرت در برابر ناممکن <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<div class="vs">
+  <div><h4>مقدار ناممکن (Impossible)</h4><ul><li>سن = ۲۵۰</li><li>درآمد = ۱۰۰۰−</li><li>تاریخ آینده در داده‌ای که فقط گذشته را دارد</li></ul><p>معمولاً مثل <b>گم‌شده</b> با آن رفتار می‌شود یا با قانون اصلاح می‌شود.</p></div>
+  <div><h4>پرت (Outlier)</h4><ul><li>درآمد خیلی بالا</li><li>سفر غیرعادی طولانی</li><li>جهش ناگهانی ترافیک</li></ul><p>ممکن است خطا باشد، یا <b>جالب‌ترین مشاهده</b>.</p></div>
+</div>
+<div class="box thm"><div class="bt">قاعده‌ی سرانگشتی اسلاید</div>
+  <b>اول بررسی کن، بعد تبدیل کن، حذف آخرین کار است.</b> (Investigate first, transform second, delete last.)
+</div>
+<figure class="fig">
+<svg viewBox="0 0 560 340" width="560" role="img" aria-label="درخت تصمیم برای مقدار مشکوک">
+<defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="currentColor" opacity=".6"/></marker></defs>
+<g font-family="Vazirmatn,Tahoma" font-size="12.5" text-anchor="middle">
+<rect x="200" y="6" width="160" height="30" rx="8" fill="#2456a6" opacity=".18"/><text x="280" y="26" fill="currentColor" font-weight="700">مقدار مشکوک</text>
+<line x1="280" y1="36" x2="280" y2="56" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<rect x="130" y="58" width="300" height="44" rx="8" fill="none" stroke="currentColor" opacity=".5"/>
+<text x="280" y="76" fill="currentColor" font-weight="700">قانون دامنه را نقض می‌کند؟</text>
+<text x="280" y="94" fill="currentColor" font-size="11" opacity=".8">(سن ۲۵۰، کرایه‌ی منفی، تاریخ آینده)</text>
+<line x1="430" y1="80" x2="470" y2="80" stroke="currentColor" opacity=".6"/><line x1="470" y1="80" x2="470" y2="118" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<text x="452" y="73" fill="currentColor" font-size="11">بله</text>
+<rect x="400" y="120" width="155" height="52" rx="8" fill="#c0392b" opacity=".2"/>
+<text x="477" y="141" fill="currentColor" font-weight="700">ناممکن</text>
+<text x="477" y="160" fill="currentColor" font-size="11">اصلاح از منبع، وگرنه NaN</text>
+<line x1="280" y1="102" x2="280" y2="128" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<text x="292" y="119" fill="currentColor" font-size="11" text-anchor="start">نه</text>
+<rect x="110" y="130" width="280" height="44" rx="8" fill="none" stroke="currentColor" opacity=".5"/>
+<text x="250" y="148" fill="currentColor" font-weight="700">از نظر آماری پرت است؟</text>
+<text x="250" y="166" fill="currentColor" font-size="11" opacity=".8">(IQR، z مقاوم، نسبت به میانه‌ی گروه)</text>
+<line x1="110" y1="152" x2="70" y2="152" stroke="currentColor" opacity=".6"/><line x1="70" y1="152" x2="70" y2="186" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<text x="92" y="145" fill="currentColor" font-size="11">نه</text>
+<rect x="8" y="188" width="124" height="30" rx="8" fill="#0f6e6a" opacity=".2"/><text x="70" y="208" fill="currentColor">نگه دار</text>
+<line x1="250" y1="174" x2="250" y2="200" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<text x="262" y="191" fill="currentColor" font-size="11" text-anchor="start">بله</text>
+<rect x="150" y="202" width="240" height="36" rx="8" fill="#a5600b" opacity=".2"/>
+<text x="270" y="225" fill="currentColor" font-weight="700">بررسی کن: منبع، گروه، زمان، واحد</text>
+<line x1="330" y1="238" x2="420" y2="262" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<line x1="210" y1="238" x2="140" y2="262" stroke="currentColor" opacity=".6" marker-end="url(#ar2)"/>
+<rect x="300" y="264" width="255" height="40" rx="8" fill="#c0392b" opacity=".14"/>
+<text x="427" y="289" fill="currentColor">خطای ورود یا واحد ← اصلاح یا NaN</text>
+<rect x="5" y="264" width="285" height="40" rx="8" fill="#0f6e6a" opacity=".16"/>
+<text x="147" y="289" fill="currentColor">واقعی ← نگه دار، پرچم، log یا آمار مقاوم</text>
+<text x="280" y="330" fill="currentColor" font-size="11.5" opacity=".85">حذف ردیف: آخرین گزینه، و فقط با ثبت در گزارش پاک‌سازی</text>
+</g></svg>
+<figcaption>درخت تصمیم برای یک مقدار مشکوک. اول «ناممکن» را با دانش دامنه جدا کن، بعد سراغ آمار برو.</figcaption>
+</figure>
+<p>نوت‌بوک منطق تصمیم را با دو مثال نشان می‌دهد: <b>سن ناممکن</b> ← بقیه‌ی سفارش درست است، پس فقط سن را NaN می‌کنیم و ردیف می‌ماند (۶ مقدار). <b>تعداد ≤ ۰</b> ← خود فروش معتبر نیست، پس ردیف حذف می‌شود (۵ ردیف). هر دو «ناممکن»اند، ولی واحد خطا فرق دارد: یکی یک خانه است، دیگری کل رویداد.</p>
+
+<h3>۸.۱ سه قاعده‌ی آماری برای پرت</h3>
+<div class="box def"><div class="bt">تعریف ۲.۲ · قاعده‌ی IQR (Tukey)</div>
+  $Q_1$ و $Q_3$ چارک اول و سوم‌اند و $\text{IQR}=Q_3-Q_1$. مقدار $x$ پرت است اگر
+  $$x\lt Q_1-k\cdot\text{IQR}\quad\text{یا}\quad x\gt Q_3+k\cdot\text{IQR},\qquad k=1.5\ \text{(معمول)},\ k=3\ \text{(«خیلی پرت»)}$$
+  این همان «سبیل»‌های نمودار جعبه‌ای (boxplot) است. چون بر پایه‌ی چارک‌هاست، خود پرت‌ها مرز را جابه‌جا نمی‌کنند (مقاوم است).
+</div>
+<div class="box def"><div class="bt">تعریف ۲.۳ · z-score و z مقاوم</div>
+  $$z_i=\frac{x_i-\bar x}{s},\qquad z_i^{\text{robust}}=\frac{0.6745\,(x_i-\tilde x)}{\text{MAD}},\quad \text{MAD}=\operatorname{median}_i|x_i-\tilde x|$$
+  $\tilde x$ میانه است. قاعده‌ی معمول: $|z|\gt3$ یا $|z^{\text{robust}}|\gt3.5$. ضریب ۰٫۶۷۴۵ باعث می‌شود برای داده‌ی نرمال، z مقاوم هم‌مقیاس z معمولی باشد.
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: درآمد هفتگی ۱۲ راننده (میلیون تومان)</div>
+  داده: ۴٫۲، ۵٫۱، ۵٫۸، ۶٫۰، ۶٫۵، ۷٫۱، ۷٫۴، ۸٫۰، ۹٫۳، ۱۱٫۵، ۲۴٫۰، ۹۵٫۰. (۲۴ یک راننده‌ی تمام‌وقت واقعی است؛ ۹۵ احتمالاً «۹٫۵» بوده که ممیزش افتاده.)
+  <ul>
+    <li><b>IQR</b> (با درون‌یابی خطی pandas): $Q_1=5.95$، $Q_3=9.85$، $\text{IQR}=3.9$. مرزها: $5.95-1.5(3.9)=0.10$ و $9.85+1.5(3.9)=15.70$. پس <b>۲۴ و ۹۵ هر دو</b> پرت‌اند. با $k=3$ مرز بالا ۲۱٫۵۵ است و باز هر دو پرت‌اند.</li>
+    <li><b>z-score:</b> $\bar x=15.83$ و $s=25.48$. z برای ۹۵ برابر ۳٫۱۱ است (به‌سختی پرت) و برای ۲۴ فقط <b>۰٫۳۲</b>. یعنی ۲۴ کاملاً «عادی» دیده می‌شود.</li>
+    <li><b>z مقاوم:</b> میانه ۷٫۲۵ و MAD = ۱٫۷۵. برای ۲۴: $0.6745\times16.75/1.75=6.46$ و برای ۹۵: ۳۳٫۸. هر دو به‌وضوح پرت‌اند.</li>
+  </ul>
+  میانگین ۱۵٫۸۳ از ۱۰ راننده از ۱۲ تا بیشتر است و نماینده‌ی هیچ‌کس نیست. میانه‌ی ۷٫۲۵ تکان نمی‌خورد.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: پوشاندن (masking) در z-score</div>
+  z-score از میانگین و انحراف معیار استفاده می‌کند، و همین دو را پرت‌ها <b>باد می‌کنند</b>. مقدار ۹۵، $s$ را به ۲۵٫۵ رسانده و ۲۴ را «پنهان» کرده است. حتی بعد از حذف ۹۵، z مقدار ۲۴ فقط ۲٫۸۰ است. بدتر: برای $n$ نقطه، هیچ z‌ای نمی‌تواند از $(n-1)/\sqrt n$ بزرگ‌تر شود (نامساوی Samuelson). برای $n=10$ این سقف ۲٫۸۵ است؛ یعنی قاعده‌ی $|z|\gt3$ روی ۱۰ داده <b>هرگز</b> چیزی پیدا نمی‌کند. (تمرین ۹ اثباتش است.)
+</div>
+
+<h3>۸.۲ «سه روش، سه نتیجه» نوت‌بوک</h3>
+<p>نوت‌بوک روی قیمت ۹۹۵ سفارش فروشگاه سه روش را مقایسه کرد:</p>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>قاعده</th><th>مناسب برای</th><th>تعداد پرت</th></tr>
+<tr><td>Z-score سراسری</td><td>$|z|\gt3$</td><td>داده‌ی تقریباً نرمال</td><td>۴</td></tr>
+<tr><td>IQR سراسری</td><td>بیرون از $Q_1-1.5\,\text{IQR}$ تا $Q_3+1.5\,\text{IQR}$</td><td>داده‌ی یک‌دسته</td><td><b>۱۶۹</b></td></tr>
+<tr><td>نسبت به میانه‌ی گروه</td><td>بیش از ۳ برابر میانه‌ی <b>همان دسته</b></td><td>داده با چند گروه با سطح قیمت متفاوت</td><td>۴</td></tr>
+</table></div>
+<p>چرا IQR سراسری ۱۶۹ تا پیدا کرد؟ مرز بالایش حدود ۲۳۲ است و <b>هر ۱۶۵ کالای الکترونیکی</b> (قیمت پایه حدود ۴۰۰) بالای آن‌اند. الکترونیک گران است، نه خطا. داده چندقله‌ای است و یک مرز سراسری برایش بی‌معنی است. روش گروهی فقط چهار قیمت واقعاً عجیب (۷۵٬۰۰۰ تا ۱۲۰٬۰۰۰ برای پوشاک، خانه و ورزش) را گرفت.</p>
+<pre class="code">
+median_cat = df.groupby("category")["unit_price"].transform("median")   # میانه‌ی گروهِ هر ردیف
+out_ratio = df["unit_price"] / median_cat &gt; 3
+</pre>
+<p>همین منطق برای سفر: کرایه‌ی ۲۴۰ هزار تومانی برای سفر ۳ کیلومتری مشکوک است، برای سفر ۳۱ کیلومتری فرودگاه عادی. پس پرت را <b>نسبت به گروه درست</b> بسنج: کرایه به ازای کیلومتر، یا میانه‌ی هر شهر و ساعت.</p>
+
+<h3>۸.۳ با پرت واقعی چه کنیم؟</h3>
+<div class="tablewrap"><table>
+<tr><th>اقدام</th><th>کی</th><th>هزینه</th></tr>
+<tr><td>نگه داشتن + آمار مقاوم (میانه، IQR)</td><td>پرت واقعی است و پرسش درباره‌ی «معمول» است</td><td>تقریباً هیچ</td></tr>
+<tr><td>پرچم (<code>is_outlier</code>)</td><td>می‌خواهی بعداً جدا تحلیلش کنی</td><td>یک ستون</td></tr>
+<tr><td>تبدیل (log)</td><td>داده‌ی راست‌چوله مثل درآمد و کرایه (جلسه‌ی ۵)</td><td>تفسیر روی مقیاس لگاریتمی</td></tr>
+<tr><td>سقف‌گذاری (capping/winsorizing)</td><td>مدل به مقدارهای خیلی بزرگ حساس است</td><td>اطلاعات انتهای توزیع کم می‌شود</td></tr>
+<tr><td>حذف</td><td>با بررسی، خطا بودنش ثابت شده و قابل‌اصلاح نیست</td><td>اگر اشتباه کنی، مهم‌ترین مشتری‌هایت را حذف کرده‌ای</td></tr>
+</table></div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: حذف خودکار همه‌ی پرت‌ها قبل از تحلیل</div>
+  در مسئله‌ی افت سفر، «جهش ناگهانی ترافیک» یا «سفرهای خیلی طولانی» ممکن است دقیقاً <b>علت</b> افت باشند (مثلاً بسته شدن یک بزرگراه). کسی که پرت‌ها را خودکار حذف کند، جواب را با دست خودش دور ریخته. به قول اسلاید: پرت ممکن است «جالب‌ترین مشاهده» باشد.
+</div>
+
+<h3>۸.۴ ابزار ۲: کاوشگر قاعده‌ی پرت</h3>
+<p>۷۶ راننده: بیشترشان درآمد هفتگی معمولی دارند (توزیع راست‌چوله)، سه نفر تمام‌وقت با درآمد واقعاً بالا، دو خطای ورود (ممیز افتاده) و یک مقدار ناممکن (منفی). روش و آستانه را عوض کن و ببین چه کسی پرچم می‌خورد و میانگین و میانه چطور جابه‌جا می‌شوند. «نمایش حقیقت» را روشن کن تا ببینی کدام پرچم‌ها درست بودند.</p>
+<div id="w-outlier"></div>
+<div class="box tip"><div class="bt">💡 چه چیزی را ببینی</div>
+  (۱) با z و آستانه‌ی ۳، مرز بالا حدود ۴۹ میلیون است، یعنی هفت برابر میانه! دو خطای ورود (۷۲ و ۹۵) انحراف معیار را به ۱۳ رسانده‌اند و مرز را با خودشان بالا برده‌اند (masking). این‌جا z هر دو خطا را گرفت فقط چون خیلی بزرگ بودند؛ آستانه را پایین بیاور و ببین z دیرتر از IQR به رانندگان عادی می‌رسد ولی به‌جایش مرزش بی‌معنی است. (۲) با IQR یا z مقاوم، هر دو خطا پرچم می‌خورند ولی سه راننده‌ی تمام‌وقت واقعی هم. <b>هیچ قاعده‌ی آماری‌ای خطا را از پرت واقعی جدا نمی‌کند</b>؛ این کار بررسی است. اگر اقدام «حذف» باشد، داده‌ی واقعی را دور ریخته‌ای. (۳) «سقف‌گذاری» را امتحان کن: میانگین به میانه نزدیک می‌شود بدون این‌که ردیفی حذف شود. (۴) مقیاس لگاریتمی را روشن کن: چولگی کم می‌شود و تفاوت «خطا» و «پرت واقعی» بهتر دیده می‌شود. (۵) قانون دامنه را خاموش کن: مقدار منفی را هیچ قاعده‌ی آماری‌ای به‌خوبی یک قانون ساده پیدا نمی‌کند.
+</div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="validate">
+<h2><span class="num">۹</span> اعتبارسنجی، نوع‌ها، گزارش پاک‌سازی و کارت کیفیت <span class="tag core">نوت‌بوک</span> <span class="tag book">تکمیلی</span></h2>
+<h3>۹.۱ آزمون داده با <code>assert</code></h3>
+<p>شعار نوت‌بوک: «هرگز به پاک‌سازی خودت اعتماد نکن؛ بررسی خودکار بنویس.» اگر یک <code>assert</code> رد شود، پایتون با خطا متوقف می‌شود، و این خیلی بهتر از یک گزارش غلط است.</p>
+<pre class="code">
+assert df["order_id"].is_unique,                 "سفارش تکراری هنوز هست"
+assert df["quantity"].min() &gt;= 1,                "تعداد کمتر از ۱ هنوز هست"
+assert df["age"].between(16, 100).all(),         "سن ناممکن هنوز هست"
+assert df["unit_price"].max() &lt; 1000,            "قیمت افراطی هنوز هست"
+assert df["order_date"].notna().all(),           "تاریخ خوانده‌نشده هست"
+assert df["city"].nunique() == 6,                "تعداد شهرها غیرمنتظره است (۵ + Unknown)"
+assert df["payment_method"].nunique() == 3,      "تعداد روش‌های پرداخت غیرمنتظره است"
+assert df["discount_pct"].between(0, 100).all(), "درصد تخفیف باید بین ۰ و ۱۰۰ باشد"
+print("✅ همه‌ی بررسی‌ها موفق بود")
+</pre>
+<p>این‌ها همان شش بعد کیفیت‌اند که به کد تبدیل شده‌اند: یکتایی (<code>is_unique</code>)، اعتبار (<code>between</code>)، کامل بودن (<code>notna().all()</code>)، سازگاری (<code>nunique() == 3</code>). در کار واقعی همین فهرست را هر روز روی داده‌ی تازه اجرا می‌کنند (کتابخانه‌هایی مثل pandera و Great Expectations همین ایده‌اند).</p>
+
+<h3>۹.۲ نوع درست برای حافظه و وضوح</h3>
+<p>نوت‌بوک در پاک‌سازی ۹، ستون‌های تکرارشونده را <code>category</code> و سن و تعداد را <code>int</code> کرد. <code>category</code> هر مقدار متنی را فقط یک بار ذخیره می‌کند و بقیه را با شماره نگه می‌دارد. در اجرای ما حافظه‌ی جدول از حدود ۲۸۴KB به ۷۴KB رسید (حدود ۷۴٪ کمتر؛ عدد دقیق به نسخه‌ی pandas بستگی دارد). روی میلیون‌ها سفر، این فرق بین «جا می‌شود» و «جا نمی‌شود» است. ضمناً <code>pd.Categorical(..., ordered=True)</code> برای ستون ترتیبی (کم &lt; متوسط &lt; زیاد) ترتیب را هم ذخیره می‌کند؛ ادامه‌اش در جلسه‌ی ۳.</p>
+<pre class="code">
+mem_before = df.memory_usage(deep=True).sum() / 1024
+for col in ["city", "category", "payment_method", "promo_used"]:
+    df[col] = df[col].astype("category")
+df["age"] = df["age"].astype(int)          # فقط بعد از پر کردن NaN ممکن است
+mem_after = df.memory_usage(deep=True).sum() / 1024
+</pre>
+
+<h3>۹.۳ گزارش پاک‌سازی: داستان کاری که کردی</h3>
+<p>نوت‌بوک هر قدم را با یک تابع <code>log()</code> ثبت کرد. خروجی نهایی‌اش:</p>
+<div class="out"> 1. نام ستون‌ها: فاصله‌ها حذف و حروف کوچک شد
+ 2. تکراری‌ها: 30 ردیف حذف شد (1030 ← 1000)
+ 3. متن: حذف فاصله، Title Case، München←Munich، CC←Credit Card
+ 4. unit_price: علامت دلار حذف و متن ← عدد (float) شد
+ 5. order_date: دو قالب تاریخ در یک ستون datetime ادغام شد
+ 6. age: 6 مقدار ناممکن (کمتر از ۱۶ یا بیشتر از ۱۰۰) خالی شد
+ 7. quantity: 5 ردیف با تعداد کمتر از ۱ حذف شد
+ 8. unit_price: 4 پرت افراطی (بیش از ۳ برابر میانه‌ی دسته) حذف شد
+ 9. age: خالی‌ها با میانه (35.0) پر شد
+10. city: خالی‌ها با «Unknown» پر شد
+11. rating و customer_id: عمداً خالی ماندند
+ردیف‌ها: 1030 (خام) ← 991 (تمیز)</div>
+<p>و یک «قیف پاک‌سازی» کشید: ۱۰۳۰ ← ۱۰۰۰ (تکراری) ← ۹۹۵ (تعداد نامعتبر) ← ۹۹۱ (پرت). فقط ۳٫۸٪ ردیف‌ها حذف شدند. بیشتر کار پاک‌سازی <b>اصلاح</b> بود، نه حذف: «پاک‌سازی یعنی حذف کردن نیست».</p>
+
+<h3>۹.۴ کارت امتیاز کیفیت: قبل و بعد</h3>
+<div class="tablewrap"><table>
+<tr><th>مشکل</th><th>قبل (خام)</th><th>بعد (تمیز)</th></tr>
+<tr><td>ردیف تکراری</td><td>۳۰</td><td>۰</td></tr>
+<tr><td>مقدار ناممکن (سن + تعداد)</td><td>۱۱</td><td>۰</td></tr>
+<tr><td>قیمت متنی (با علامت دلار)</td><td>۱۵۷</td><td>۰</td></tr>
+<tr><td>نام اضافی شهر (منهای ۵ نام درست)</td><td>۲۱</td><td>۰</td></tr>
+<tr><td>نام اضافی روش پرداخت (منهای ۳)</td><td>۱۳</td><td>۰</td></tr>
+<tr><td>قیمت پرت (بیش از ۱۰٬۰۰۰)</td><td>۴</td><td>۰</td></tr>
+</table></div>
+
+<h3>۹.۵ گزارش کیفیت داده (data quality report) <span class="tag book">تکمیلی</span></h3>
+<p>در تیم واقعی، خروجی پاک‌سازی فقط فایل <code>clean_rides.csv</code> نیست. یک گزارش کوتاه هم لازم است که هر کس داده را استفاده می‌کند بخواند. اسکلت پیشنهادی:</p>
+<ol class="steps">
+  <li><b>منبع و نسخه:</b> از کجا، کِی استخراج شد، با چه پرس‌وجویی؛ تعداد ردیف خام.</li>
+  <li><b>شش بعد کیفیت:</b> برای هر ستون مهم یک عدد (کامل بودن، اعتبار، یکتایی…)، قبل و بعد.</li>
+  <li><b>تصمیم‌ها:</b> هر تغییر، دلیلش، و چند ردیف یا خانه را تحت تأثیر قرار داد (همان cleaning log).</li>
+  <li><b>فرض‌ها:</b> «فرض کردیم گم‌شدن امتیاز MNAR است، پس پر نکردیم»؛ «قالب اسلشی روز/ماه/سال است (با صاحب داده تأیید شد)».</li>
+  <li><b>محدودیت‌ها و ریسک‌ها:</b> چه چیزی را نتوانستیم درست کنیم و روی کدام پرسش‌ها اثر دارد.</li>
+  <li><b>آزمون‌ها:</b> فهرست <code>assert</code>ها که پاس شدند.</li>
+</ol>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="solved">
+<h2><span class="num">۱۰</span> مسئله‌ی حل‌شده: آیا افت ۱۲٪ واقعی است؟ <span class="tag exam">سبک تمرین شریف</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله</div>
+  مدیر عملیات یک اپ سفر اینترنتی می‌گوید: «سفرهای تکمیل‌شده در مهر نسبت به شهریور ۱۲٪ افت کرده.» عدد از این‌جا آمده: تعداد ردیف‌های <code>status == "completed"</code> در خروجی لاگ شهریور ۱۱۸٬۰۰۰ و در مهر ۱۰۴٬۰۰۰ بوده است. تو به‌عنوان تحلیل‌گر این‌ها را پیدا می‌کنی:
+  <ul>
+    <li>شهریور در کل ۱۴۰٬۰۰۰ درخواست ثبت کرده. یک باگ لاگ (که اول مهر رفع شد) ۷٬۰۰۰ ردیف را <b>دو بار</b> نوشته است؛ ۶٬۵۰۰ تا از این‌ها سفر تکمیل‌شده بوده‌اند. مهر تکراری ندارد.</li>
+    <li>مهر در کل ۱۳۵٬۰۰۰ درخواست دارد: ۱۰۴٬۰۰۰ تکمیل‌شده، ۲۵٬۸۰۰ لغوشده و <b>۵٬۲۰۰ با وضعیت خالی</b>. همه‌ی خالی‌ها از نسخه‌ی ۷٫۲ اپ‌اند که در مهر منتشر شد. در ردیف‌های نسخه‌ی ۷٫۲ که وضعیتشان معلوم است، نرخ تکمیل ۸۰٪ است.</li>
+    <li>جداگانه: نسخه‌ی ۷٫۲ نام شهر را فارسی می‌فرستد. در گزارش شهری، «Tehran» در شهریور ۶۰٬۰۰۰ سفر تکمیل‌شده داشته و در مهر ۴۱٬۰۰۰، به‌اضافه‌ی ۱۴٬۵۰۰ سفر با برچسب «تهران» (این بخش را بعد از حذف تکراری‌ها در نظر بگیر).</li>
+  </ul>
+  <b>(الف)</b> بعد از حذف تکراری‌ها، افت چند درصد است؟ <b>(ب)</b> سازوکار گم‌شدن وضعیت چیست و با ۵٬۲۰۰ ردیف خالی چه می‌کنی؟ بهترین برآورد و یک <b>بازه</b> برای افت بده. <b>(ج)</b> گزارش شهری چه خطایی دارد؟ افت تهران چقدر است؟ <b>(د)</b> به مدیر چه می‌گویی و چه چیزی در گزارش پاک‌سازی می‌نویسی؟
+</div>
+<details><summary>پاسخ کامل (اول خودت حل کن)</summary>
+<p><b>(الف) تکراری‌ها.</b> سفرهای تکمیل‌شده‌ی واقعی شهریور: $118{,}000-6{,}500=111{,}500$. افت خام: $\frac{118000-104000}{118000}=11.9\%$ (همان «۱۲٪»). افت بعد از حذف تکراری:</p>
+$$\frac{111{,}500-104{,}000}{111{,}500}\approx 6.7\%$$
+<p>یعنی نزدیک به نصف «افت» فقط از این آمده که ماه قبل بعضی سفرها دو بار شمرده شده بودند. این یک مشکل <b>یکتایی</b> است که ظاهر یک تغییر رفتاری را گرفته.</p>
+<p><b>(ب) گم‌شده‌ها.</b> گم‌شدن به <code>app_version</code> وابسته است، ستونی که داریم؛ پس دست‌کم <b>MAR</b> است (نه MCAR). اگر خالی‌ها را «تکمیل‌نشده» حساب کنیم (کاری که <code>status == "completed"</code> بی‌صدا می‌کند)، عملاً فرض کرده‌ایم همه‌شان لغو شده‌اند. سه سناریو:</p>
+<div class="tablewrap"><table>
+<tr><th>فرض درباره‌ی ۵٬۲۰۰ ردیف</th><th>تکمیل‌شده‌ی مهر</th><th>افت نسبت به ۱۱۱٬۵۰۰</th></tr>
+<tr><td>هیچ‌کدام تکمیل نشده (کران بدبینانه)</td><td>۱۰۴٬۰۰۰</td><td>۶٫۷٪</td></tr>
+<tr><td>نرخ تکمیل همان گروه (۸۰٪): جایگذاری در گروه</td><td>$104000+0.8\times5200=108{,}160$</td><td><b>۳٫۰٪</b></td></tr>
+<tr><td>همه تکمیل شده (کران خوش‌بینانه)</td><td>۱۰۹٬۲۰۰</td><td>۲٫۱٪</td></tr>
+</table></div>
+<p>بهترین برآورد حدود <b>۳٪</b> است و افت واقعی با اطمینان بین <b>۲٫۱٪ و ۶٫۷٪</b> است. چرا جایگذاری درون گروه نسخه‌ی ۷٫۲؟ چون در MAR، داخل هر گروه از متغیر مشاهده‌شده، گم‌شده‌ها شبیه دیده‌شده‌ها رفتار می‌کنند. ولی این یک <b>فرض</b> است: اگر باگ نسخه‌ی ۷٫۲ دقیقاً در سفرهای لغوشده وضعیت را نفرستد، گم‌شدن MNAR است و ۸۰٪ غلط. برای همین بازه را هم گزارش می‌کنیم و از تیم اپ می‌پرسیم (گزینه‌ی <b>Ask</b>). این‌جا یک خطای ریز دیگر هم هست: نرخ تکمیل مهر اگر خالی‌ها را از مخرج حذف کنیم $104000/129800=80.1\%$ است و اگر در مخرج بمانند $104000/135000=77.0\%$؛ نرخ شهریور $111500/133000=83.8\%$. انتخاب مخرج هم یک تصمیم پاک‌سازی است و باید نوشته شود.</p>
+<p><b>(ج) ناسازگاری متن.</b> گزارش خام برای تهران افت $\frac{60000-41000}{60000}=31.7\%$ نشان می‌دهد و احتمالاً همه را نگران تهران می‌کند. با یکی کردن «Tehran» و «تهران»: $41{,}000+14{,}500=55{,}500$ و افت $\frac{60000-55500}{60000}=7.5\%$. افت تهران واقعی است ولی چهار برابر کوچک‌تر از عدد خام. راه‌حل: تابع <code>normalize_fa</code> و نگاشت مترادف‌ها، و یک <code>assert</code> که تعداد شهرهای یکتا را با فهرست رسمی شهرها مقایسه کند تا نسخه‌ی بعدی اپ دوباره بی‌صدا خرابش نکند.</p>
+<p><b>(د) پیام به مدیر و گزارش.</b> «افت گزارش‌شده‌ی ۱۲٪ عمدتاً مصنوعی است. حدود ۵ واحد درصد آن از ردیف‌های تکراری شهریور و حدود ۴ واحد از وضعیت‌های ثبت‌نشده‌ی نسخه‌ی ۷٫۲ می‌آید. افت واقعی به احتمال زیاد حدود ۳٪ است (بین ۲٪ و ۷٪). افت تهران حدود ۷٫۵٪ است، نه ۳۲٪. پیشنهاد: (۱) تیم اپ باگ وضعیت در ۷٫۲ را رفع کند، (۲) تحلیل علت روی همان ۳٪ واقعی ادامه پیدا کند، (۳) بررسی‌های خودکار یکتایی و سازگاری شهر به خط لوله‌ی داده اضافه شود.» در گزارش پاک‌سازی: حذف ۷٬۰۰۰ ردیف تکراری شهریور با کلید <code>ride_id</code>؛ فرض MAR و جایگذاری درون‌گروهی با بازه‌ی حساسیت؛ نگاشت «تهران» به «Tehran»؛ تعریف مخرج نرخ تکمیل.</p>
+<p><b>درس مسئله:</b> قبل از توضیح دادن یک تغییر، ثابت کن خود تغییر واقعی است. سه مشکل کیفیت (یکتایی، کامل بودن، سازگاری) با هم عددی ساختند که تقریباً ۴ برابر واقعیت بود.</p>
+</details>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="exercises">
+<h2><span class="num">۱۱</span> تمرین</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+  هرکدام به کدام بعد کیفیت (کامل بودن، اعتبار، سازگاری، یکتایی، صحت، به‌روز بودن) مربوط است؟ (الف) ۳٪ سفرها <code>ride_id</code> تکراری دارند. (ب) امتیاز ۷ از ۵. (ج) جمع کرایه‌های ثبت‌شده با واریزی بانک ۴٪ فرق دارد. (د) داشبورد صبح شنبه هنوز داده‌ی چهارشنبه را نشان می‌دهد. (هـ) شهر در یک جدول «Tehran» و در جدول دیگر «تهران» است. (و) ۲۰٪ سفرها مسافت ندارند.
+  <details><summary>راه‌حل</summary>(الف) یکتایی. (ب) اعتبار (نقض قانون بازه). (ج) صحت: با منبع بیرونی نمی‌خواند، هرچند هر عدد به‌تنهایی معتبر است. (د) به‌روز بودن. (هـ) سازگاری. (و) کامل بودن.</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">· 🟢 پایه</span></div>
+  این ستون را در نظر بگیر: <code>["12,500", " 9800", "۷۵۰۰", "N/A", "-300", "15000"]</code>. (الف) <code>pd.to_numeric(s, errors="coerce")</code> چند NaN می‌سازد و کدام‌ها؟ (ب) کدام NaN‌ها «گم‌شده‌ی واقعی»اند و کدام‌ها را تبدیل ناقص ساخته؟ (ج) بعد از تبدیل درست، کدام مقدار با قانون «کرایه &gt; ۰» ناممکن است؟
+  <details><summary>راه‌حل</summary>(الف) سه NaN: <code>"12,500"</code> (ویرگول)، <code>"۷۵۰۰"</code> (رقم فارسی) و <code>"N/A"</code>. <code>" 9800"</code> با فاصله تبدیل می‌شود و <code>"-300"</code> عدد منفی می‌شود. (ب) فقط <code>"N/A"</code> گم‌شده‌ی واقعی است. دو تای دیگر را تبدیل ناقص ساخته و باید با حذف ویرگول و نرمال‌سازی ارقام نجاتشان داد. (ج) ۳۰۰−. باید NaN شود یا از منبع اصلاح شود (شاید علامت منفی برای بازپرداخت است: قبل از تصمیم بپرس).</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l1">· 🟢 پایه</span></div>
+  ستون <code>pay</code> مقدارهای <code>["Cash", "cash", "CC", "Credit Card", "Wallet", "کیف پول"]</code> را دارد. نتیجه‌ی <code>pay.str.lower().replace({"cc": "credit card"})</code> و <code>pay.str.lower().map({"cc": "credit card", "cash": "cash"})</code> را بنویس. کدام برای این‌جا بهتر است؟
+  <details><summary>راه‌حل</summary><code>replace</code>: <code>["cash", "cash", "credit card", "credit card", "wallet", "کیف پول"]</code>. <code>map</code>: <code>["cash", "cash", "credit card", NaN, NaN, NaN]</code>، چون «credit card»، «wallet» و «کیف پول» در dict نیستند. این‌جا <code>replace</code> بهتر است، به‌اضافه‌ی <code>{"کیف پول": "wallet"}</code>. <code>map</code> فقط وقتی امن است که dict <b>همه‌ی</b> مقدارها را پوشش بدهد، و بعدش هم باید تعداد NaN‌ها را بشماری.</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">· 🟡 مهارتی</span></div>
+  کرایه‌ی ۱۰ سفر (هزار تومان): ۴۵، ۵۲، ۵۵، ۵۸، ۶۰، ۶۳، ۶۷، ۷۰، ۷۵، ۲۴۰. با درون‌یابی خطی pandas داریم $Q_1=55.75$ و $Q_3=69.25$. (الف) مرزهای IQR با k=1.5 را حساب کن و پرت‌ها را مشخص کن. (ب) میانگین ۷۸٫۵ و انحراف معیار ۵۷٫۴۲ است. z مقدار ۲۴۰ چقدر است؟ با قاعده‌ی $|z|\gt3$ پرت است؟ (ج) چرا این نتیجه عجیب نیست؟
+  <details><summary>راه‌حل</summary>(الف) $\text{IQR}=13.5$، مرزها $55.75-20.25=35.5$ و $69.25+20.25=89.5$. فقط ۲۴۰ پرت است. (ب) $z=(240-78.5)/57.42\approx2.81$؛ با آستانه‌ی ۳ پرت نیست. (ج) با $n=10$ بیشترین z ممکن $(n-1)/\sqrt n=9/\sqrt{10}\approx2.85$ است (نامساوی Samuelson). ۲۴۰ تقریباً همین سقف را گرفته ولی قاعده‌ی ۳ روی ۱۰ داده هیچ‌وقت فعال نمی‌شود. به‌علاوه خود ۲۴۰ انحراف معیار را باد کرده (masking). برای نمونه‌ی کوچک، IQR یا z مقاوم را به کار ببر. قدم بعدی: بررسی کن ۲۴۰ سفر فرودگاه است (واقعی) یا خطا.</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">· 🟡 مهارتی</span></div>
+  امتیاز ۸ سفر دیده‌شده: ۴٫۰، ۴٫۵، ۳٫۵، ۵٫۰، ۴٫۰، ۲٫۰، ۴٫۵، ۵٫۰ و دو امتیاز گم‌شده. (الف) میانگین و واریانس نمونه‌ای دیده‌شده‌ها را حساب کن. (ب) اگر دو خانه را با میانگین پر کنی، میانگین و واریانس جدید چیست؟ با فرمول $s_o^2\frac{n_o-1}{n-1}$ چک کن. (ج) چرا این‌جا اصلاً نباید با میانگین پر کرد؟
+  <details><summary>راه‌حل</summary>(الف) جمع ۳۲٫۵، میانگین $32.5/8=4.0625$. واریانس نمونه‌ای $\approx0.9598$. (ب) میانگین همان ۴٫۰۶۲۵. واریانس $0.9598\times\frac{7}{9}\approx0.7465$ (اجرای pandas هم همین را می‌دهد). (ج) امتیاز مسافر احتمالاً MNAR است (ناراضی‌ها امتیاز نمی‌دهند). جایگذاری با میانگین سوگیری را پنهان می‌کند، واریانس را مصنوعی کم می‌کند و «نظری» می‌سازد که وجود ندارد. درست‌تر: خالی بگذار، پرچم <code>rated</code> بساز و نرخ امتیازدهی را کنار میانگین گزارش کن.</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">· 🟡 مهارتی</span></div>
+  تابعی بنویس که ستون <code>requested_at</code> با مقدارهای ترکیبی <code>["1405/08/02 08:10", "2026-10-24 08:40", "۱۴۰۵/۰۸/۰۳ ۲۲:۱۵"]</code> را به <code>datetime64</code> میلادی تبدیل کند. فرض کن <code>jdatetime</code> نصب است.
+  <details><summary>راه‌حل</summary>
+<pre class="code">
+import jdatetime
+
+def parse_mixed(s: pd.Series) -> pd.Series:
+    s = normalize_fa(s)                                   # ارقام فارسی → لاتین
+    is_jalali = s.str.match(r"^1[34]\d\d[/-]")           # سال‌های ۱۳xx یا ۱۴xx
+    greg = pd.to_datetime(s.where(~is_jalali), format="%Y-%m-%d %H:%M", errors="coerce")
+    def j2g(x):
+        d = jdatetime.datetime.strptime(x.replace("-", "/"), "%Y/%m/%d %H:%M")
+        return d.togregorian()
+    jal = pd.to_datetime(s[is_jalali].map(j2g))
+    out = greg.copy()
+    out[is_jalali] = jal
+    assert out.notna().all(), "تاریخ خوانده‌نشده"
+    return out
+</pre>
+  ۲ آبان ۱۴۰۵ برابر ۲۴ اکتبر ۲۰۲۶ و ۳ آبان برابر ۲۵ اکتبر است. نکته‌ی مهم: تشخیص شمسی با الگوی سال است، نه با حدس pandas، و در آخر یک <code>assert</code> می‌گذاریم تا هیچ تاریخی بی‌صدا <code>NaT</code> نشود. اگر داده ساعت UTC دارد، منطقه‌ی زمانی را هم صریح کن.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">· 🔴 تحلیلی</span></div>
+  برای هر سناریو سازوکار گم‌شدن (MCAR/MAR/MNAR) و اقدام مناسب را بگو. (الف) در یک روز، به خاطر قطعی سرور، مسافت ۳٪ سفرهای کل کشور ثبت نشد. (ب) درآمد ماهانه در پرسش‌نامه‌ی راننده‌ها: پردرآمدها کمتر جواب می‌دهند. (ج) در شیراز اپراتور مرکز تماس فیلد «علت لغو» را پر نمی‌کند؛ در بقیه‌ی شهرها پر می‌شود. (د) سن مسافر برای کاربرانی که قبل از ۱۴۰۲ ثبت‌نام کرده‌اند خالی است، چون آن موقع فرم ثبت‌نام سن نمی‌پرسید.
+  <details><summary>راه‌حل</summary>(الف) MCAR (وابسته به هیچ چیز در داده نیست). حذف یا جایگذاری ساده قابل‌قبول است؛ ۳٪ کم است. (ب) MNAR: گم‌شدن به خود درآمد وابسته است. میانگین پاسخ‌ها درآمد را کمتر از واقع نشان می‌دهد. پرچم بزن و محدودیت را گزارش کن؛ اگر ممکن است از منبع دیگری (پرداخت‌های اپ) درآمد را برآورد کن. (ج) MAR به شرط شهر. «Shiraz» را گروه جدا ببین. جایگذاری علت لغو از روی بقیه‌ی شهرها خطرناک است، چون علت‌ها شهربه‌شهر فرق دارند. بهتر است «unknown» بگذاری و از تیم شیراز بپرسی. (د) MAR به شرط تاریخ ثبت‌نام. پرچم <code>age_missing</code> مفید است، چون با قدمت کاربر همبسته است. اگر جایگذاری می‌کنی، درون گروه قدمت انجامش بده، نه با میانه‌ی کل.</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">· 🔴 تحلیلی</span></div>
+  یک هم‌کلاسی این کد را برای مدل «آیا سفر لغو می‌شود؟» نوشته است:
+<pre class="code">
+df["distance_km"] = df["distance_km"].fillna(df["distance_km"].median())
+df = df[(df["fare"] - df["fare"].mean()).abs() / df["fare"].std() &lt; 3]
+X_train, X_test, y_train, y_test = train_test_split(df[features], df["cancelled"])
+</pre>
+  سه ایراد پیدا کن و نسخه‌ی درست را توضیح بده.
+  <details><summary>راه‌حل</summary>(۱) <b>نشت در جایگذاری:</b> میانه از کل داده (شامل تست) حساب شده. باید بعد از تقسیم و با <code>SimpleImputer</code> فقط روی train fit شود (بهتر داخل <code>Pipeline</code>). (۲) <b>حذف ردیف بر اساس پرت در کل داده:</b> آمار پرت هم از تست آمده، و بدتر، ردیف‌های تست حذف شده‌اند. در زمان پیش‌بینی نمی‌توانی درخواست واقعی یک مسافر را «حذف» کنی؛ مدل باید با آن کنار بیاید. ضمناً z با masking ضعیف است. بهتر: خطاهای قطعی را با قانون دامنه درست کن و پرت واقعی را نگه دار یا با log یا سقف‌گذاری که روی train fit شده رام کن. (۳) <b>پرچم گم‌شدگی نیست:</b> گم‌شدن مسافت ممکن است با لغو مرتبط باشد (سفر لغوشده هیچ‌وقت مسافت ندارد!). اگر این‌طور باشد، <code>distance_km</code> و پرچمش اصلاً در لحظه‌ی پیش‌بینی (زمان درخواست) در دسترس نیستند و خودشان نشت‌اند. این همان بحث «لحظه‌ی پیش‌بینی» جلسه‌ی ۷ است.</details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+  ثابت کن برای هر نمونه‌ی $x_1,\dots,x_n$ با انحراف معیار نمونه‌ای $s$ (مخرج $n-1$)، داریم $|x_i-\bar x|\le s\,\frac{n-1}{\sqrt n}$. نتیجه بگیر قاعده‌ی $|z|\gt3$ برای $n\le10$ هیچ پرتی پیدا نمی‌کند.
+  <details><summary>راه‌حل</summary>
+  فرض کن $d_j=x_j-\bar x$؛ پس $\sum_j d_j=0$ و $d_1=-\sum_{j\ge2}d_j$. با نامساوی کوشی–شوارتز:
+  $$d_1^2=\Big(\sum_{j\ge2}d_j\Big)^2\le(n-1)\sum_{j\ge2}d_j^2=(n-1)\Big(S-d_1^2\Big),\quad S=\sum_j d_j^2=(n-1)s^2$$
+  پس $n\,d_1^2\le(n-1)S=(n-1)^2s^2$ و $|d_1|\le s\frac{n-1}{\sqrt n}$. برای $n=10$: $9/\sqrt{10}\approx2.85\lt3$. برای این‌که $|z|\gt3$ اصلاً ممکن باشد، باید $(n-1)/\sqrt n\gt3$ باشد، یعنی $n\ge11$. (در مثال ۱۲ راننده، سقف ۳٫۱۸ بود و z مقدار ۹۵ به ۳٫۱۱ رسید.) تساوی وقتی است که همه‌ی نقطه‌ها جز یکی برابر باشند. درس: z-score ابزار نمونه‌های کوچک نیست.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+  یک «پایش کیفیت داده‌ی هفتگی» برای <code>rides.csv</code> طراحی کن که هر دوشنبه اجرا شود و اگر مشکلی بود هشدار بدهد. برای هر یک از شش بعد کیفیت، دست‌کم یک سنجه، آستانه‌ی هشدار و دلیل انتخاب آستانه را بنویس. یک سنجه هم برای «تغییر ناگهانی» پیشنهاد کن (نه فقط مقدار مطلق).
+  <details><summary>راه‌حل نمونه</summary>
+  <ul>
+    <li><b>کامل بودن:</b> درصد خالی <code>status</code> به تفکیک <code>app_version</code>؛ هشدار اگر برای یک نسخه بیش از ۱٪ باشد. تفکیک نسخه مهم است، چون باگ معمولاً با انتشار نسخه‌ی جدید می‌آید (مسئله‌ی حل‌شده).</li>
+    <li><b>اعتبار:</b> درصد کرایه بیرون از بازه‌ی ۱۰ هزار تا ۲ میلیون تومان، یا کرایه به ازای کیلومتر بیرون از بازه‌ی منطقی هر شهر؛ هشدار بالای ۰٫۱٪.</li>
+    <li><b>سازگاری:</b> <code>nunique</code> شهرها برابر فهرست رسمی؛ هر برچسب جدید (مثل «تهران» فارسی) = هشدار فوری. <code>crosstab</code> وضعیت در برابر کرایه: سفر لغوشده با کرایه‌ی کامل باید صفر باشد.</li>
+    <li><b>یکتایی:</b> <code>ride_id.is_unique</code>؛ هر تکراری = هشدار. به‌اضافه‌ی شمارش near-duplicate (درخواست هم‌کاربر و هم‌مبدأ در کمتر از ۶۰ ثانیه).</li>
+    <li><b>صحت:</b> جمع کرایه‌ی سفرهای تکمیل‌شده در برابر تراکنش‌های درگاه پرداخت؛ هشدار اگر اختلاف از ۱٪ بیشتر شود. نمونه‌ی تصادفی ۵۰ سفر برای مقایسه با GPS.</li>
+    <li><b>به‌روز بودن:</b> اختلاف <code>max(requested_at)</code> با زمان اجرا؛ هشدار اگر بیش از ۶ ساعت باشد.</li>
+    <li><b>تغییر ناگهانی:</b> برای هر سنجه، مقدار این هفته را با میانه و MAD هشت هفته‌ی قبل مقایسه کن (z مقاوم بیش از ۳٫۵ = هشدار). این همان قاعده‌ی پرت بخش ۸ است که روی <b>سنجه‌های کیفیت</b> اعمال شده. اگر این سیستم در شهریور فعال بود، باگ تکراری‌ها روز اول دیده می‌شد.</li>
+  </ul>
+  </details>
+</div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۱۲</span> تست</h2>
+<div class="quiz"></div>
+</section>
+
+<section id="summary">
+<h2><span class="num">۱۳</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<h3>۵ چیزی که باید یادت بماند</h3>
+<ol class="steps">
+  <li><b>پاک‌سازی یعنی حذف کردن نیست.</b> هر قانون یک تصمیم است که عدد نهایی را عوض می‌کند؛ پس صریح، مستند و قابل‌تکرار باشد (cleaning log + <code>assert</code>).</li>
+  <li><b>شش بعد کیفیت</b> را بلد باش و هرکدام را با کد بسنج: کامل بودن، اعتبار، سازگاری، یکتایی، صحت، به‌روز بودن. کیفیت را <b>نسبت به پرسش</b> بسنج.</li>
+  <li><b>قبل از پر کردن بپرس «چرا خالی است؟»</b> MCAR، MAR یا MNAR انتخاب بین حذف، جایگذاری، پرچم و پرسیدن را تعیین می‌کند. جایگذاری با میانگین واریانس را با ضریب $\frac{n_o-1}{n-1}$ کوچک می‌کند و آمارش را فقط از train بگیر.</li>
+  <li><b>ناممکن را با قانون دامنه بگیر، پرت را با آمار، و بعد بررسی کن.</b> z-score از masking رنج می‌برد و برای $n\le10$ کور است؛ IQR سراسری روی داده‌ی چندگروهی گول می‌خورد؛ معیار نسبت به گروه یا z مقاوم امن‌تر است. «اول بررسی، بعد تبدیل، حذف آخر.»</li>
+  <li><b>بی‌صداها خطرناک‌ترند:</b> <code>errors="coerce"</code>، <code>map</code>، <code>format="mixed"</code>، «unknown» که <code>isna</code> نمی‌بیند، «ي» عربی، ارقام فارسی و تاریخ شمسی. قبل و بعد از هر قدم بشمار.</li>
+</ol>
+<div class="lf">
+  <div class="s"><h4>حتماً بلد باش</h4><ul>
+    <li>۸ نوع داده‌ی کثیف و ۶ بعد کیفیت</li>
+    <li>DETECT → DECIDE → FIX → CHECK</li>
+    <li>Inspect → Standardize → Missing → Fix → Validate</li>
+    <li>فرمول مرزهای IQR و z و z مقاوم</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul>
+    <li>ناممکن (قانون) در برابر پرت (آماری)</li>
+    <li>اعتبار (قانون درونی) در برابر صحت (منبع بیرونی)</li>
+    <li><code>replace</code> (بقیه می‌مانند) در برابر <code>map</code> (بقیه NaN)</li>
+    <li>تکراری دقیق، کلیدی و فازی</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul>
+    <li><code>"50,000"</code> با coerce بی‌صدا NaN می‌شود</li>
+    <li>IQR سراسری همه‌ی الکترونیک را پرت دید (۱۶۵ از ۱۶۵)</li>
+    <li>جایگذاری MNAR سوگیری را پنهان می‌کند</li>
+    <li>pandas سال ۱۴۰۵ را میلادی می‌خواند</li></ul></div>
+</div>
+<div class="box note"><div class="bt">برای جلسه‌ی بعد</div>
+  حالا داده تمیز است ولی هنوز «عددی و قابل‌استفاده» نیست: شهر، روش پرداخت و سطح راننده کلمه‌اند. جلسه‌ی ۳ (بقیه‌ی slide02) نشان می‌دهد چطور متغیر دسته‌ای (اسمی، ترتیبی، دودویی) را به عدد تبدیل کنیم بدون این‌که ترتیب جعلی بسازیم (label در برابر ordinal در برابر one-hot)، و چطور برای هر پرسش نمودار درست را بکشیم. قبلش تمرین ۳ و ۶ را حل کن؛ همان ستون‌ها در جلسه‌ی ۳ کدگذاری می‌شوند.
+</div>
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>dirty data</b>: داده‌ی کثیف؛ داده‌ای که بدون رسیدگی تحلیل را گمراه می‌کند</div>
+  <div><b>data cleaning</b>: پاک‌سازی داده؛ تصمیم‌گیری صریح درباره‌ی مشکلات داده</div>
+  <div><b>missing value</b>: مقدار گم‌شده (NaN، NaT، None)</div>
+  <div><b>imputation</b>: جایگذاری؛ پر کردن مقدار گم‌شده</div>
+  <div><b>missing indicator / flag</b>: پرچم گم‌شدگی؛ ستون دودویی «خالی بود»</div>
+  <div><b>MCAR / MAR / MNAR</b>: گم‌شدن کاملاً تصادفی / تصادفی به شرط داده‌ی دیده‌شده / غیرتصادفی</div>
+  <div><b>duplicate / near-duplicate</b>: ردیف تکراری / تکراری فازی</div>
+  <div><b>outlier</b>: داده‌ی پرت؛ مقدار دور از بقیه، شاید واقعی</div>
+  <div><b>impossible value</b>: مقدار ناممکن؛ ناقض قانون دامنه</div>
+  <div><b>IQR (interquartile range)</b>: دامنه‌ی میان‌چارکی، $Q_3-Q_1$</div>
+  <div><b>z-score</b>: نمره‌ی استاندارد، فاصله از میانگین بر حسب انحراف معیار</div>
+  <div><b>MAD</b>: میانه‌ی قدرمطلق انحراف از میانه؛ پراکندگی مقاوم</div>
+  <div><b>masking</b>: پوشاندن؛ پنهان شدن پرت‌ها پشت آماری که خودشان باد کرده‌اند</div>
+  <div><b>winsorizing / capping</b>: سقف‌گذاری مقدارهای افراطی</div>
+  <div><b>completeness / validity / consistency</b>: کامل بودن / اعتبار / سازگاری</div>
+  <div><b>uniqueness / accuracy / timeliness</b>: یکتایی / صحت / به‌روز بودن</div>
+  <div><b>dtype</b>: نوع ذخیره‌سازی ستون در pandas</div>
+  <div><b>coerce</b>: تبدیل اجباری؛ مقدار ناسازگار NaN می‌شود</div>
+  <div><b>normalization (text)</b>: یکسان‌سازی متن (حروف، فاصله، ارقام، ی/ک)</div>
+  <div><b>data leakage</b>: نشت داده؛ رسیدن اطلاعات تست یا آینده به آموزش</div>
+  <div><b>cleaning log</b>: گزارش پاک‌سازی؛ فهرست تصمیم‌ها و اثرشان</div>
+  <div><b>Jalali calendar</b>: تقویم شمسی (هجری خورشیدی)</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`ستون <code>income</code> مقدار <code>"50,000"</code> دارد. خروجی <code>pd.to_numeric(s, errors="coerce")</code> برای این خانه چیست؟`,
+  o:[`<code>NaN</code>، بدون هیچ هشداری`,`<code>50000.0</code>`,`<code>50.0</code>`,`خطای <code>ValueError</code>`], a:0,
+  e:`<code>coerce</code> هر چیزی را که نتواند تبدیل کند بی‌صدا NaN می‌کند. ویرگول هزارگان باید قبلاً حذف شود (یا هنگام خواندن <code>thousands=","</code>). همیشه NaN‌های قبل و بعد را بشمار.`},
+ {q:`مسافرهای ناراضی معمولاً به سفر امتیاز نمی‌دهند. گم‌شدن <code>rating</code> از چه نوعی است و بهترین برخورد کدام است؟`,
+  o:[`MCAR؛ با میانگین پر کن`,`MAR؛ ردیف‌های خالی را حذف کن`,`MNAR؛ خالی بگذار، پرچم بزن و محدودیت را گزارش کن`,`MCAR؛ با میانه پر کن`], a:2,
+  e:`گم‌شدن به خود مقدار گم‌شده (رضایت) وابسته است. هم حذف و هم جایگذاری میانگین را بالا نشان می‌دهند. در مثال درس، میانگین واقعی ۳٫۶۰ بود ولی دیده‌شده ۳٫۹۹.`},
+ {q:R`۴۰٪ مقدارهای یک ستون عددی را با میانگین مقدارهای دیده‌شده پر می‌کنیم. کدام درست است؟`,
+  o:[`میانگین و واریانس هر دو ثابت می‌مانند`,`میانگین ثابت می‌ماند و واریانس تقریباً با ضریب ۰٫۶ کوچک می‌شود`,`میانگین عوض می‌شود و واریانس ثابت می‌ماند`,`واریانس بزرگ‌تر می‌شود`], a:1,
+  e:R`جمع مربع انحراف‌ها ثابت می‌ماند ولی مخرج از $n_o-1$ به $n-1$ می‌رسد: $s^2_{new}=s_o^2\frac{n_o-1}{n-1}\approx0.6\,s_o^2$.`},
+ {q:`کدام مورد «ناممکن» است و نه فقط «پرت»؟`,
+  o:[`کرایه‌ی ۲۴۰ هزار تومان برای سفر ۳۱ کیلومتری فرودگاه`,`مسافت ۳− کیلومتر`,`راننده‌ای با ۲۴ میلیون درآمد هفتگی`,`۵۰۰ درخواست در یک دقیقه در شب کنسرت`], a:1,
+  e:`مسافت منفی قانون دامنه را نقض می‌کند و هرگز واقعی نیست. بقیه دور از معمول‌اند ولی می‌توانند کاملاً واقعی باشند (و شاید جالب‌ترین مشاهده‌ها).`},
+ {q:R`روی ۱۰ داده قاعده‌ی $|z|>3$ را اجرا می‌کنیم. چه اتفاقی می‌افتد؟`,
+  o:[`پرت‌های بزرگ را همیشه پیدا می‌کند`,R`هیچ‌وقت چیزی پیدا نمی‌کند، چون بیشترین $|z|$ ممکن $9/\sqrt{10}\approx2.85$ است`,`فقط پرت‌های پایین را پیدا می‌کند`,`به اندازه‌ی نمونه بستگی ندارد`], a:1,
+  e:R`طبق نامساوی Samuelson $|z|\le(n-1)/\sqrt n$. برای $n\le10$ این سقف زیر ۳ است. ضمناً پرت‌ها خود $s$ را باد می‌کنند (masking).`},
+ {q:`در نوت‌بوک درس، IQR سراسری روی قیمت ۱۶۹ پرت پیدا کرد ولی روش «نسبت به میانه‌ی دسته» فقط ۴ تا. علت اصلی؟`,
+  o:[`IQR همیشه بیش از حد پرت پیدا می‌کند`,`داده چندگروهی است؛ همه‌ی کالاهای الکترونیکی که ذاتاً گران‌اند بالای مرز سراسری افتادند`,`داده‌ی قیمت گم‌شده داشت`,`روش گروهی از میانگین استفاده می‌کند`], a:1,
+  e:`مرز بالای IQR حدود ۲۳۲ بود و هر ۱۶۵ کالای الکترونیکی (قیمت پایه حدود ۴۰۰) بالای آن بودند. پرت را باید نسبت به گروه درست سنجید.`},
+ {q:`برای مدل پیش‌بینی لغو، میانه‌ی <code>distance_km</code> را از کل داده حساب کرده‌ایم و بعد train/test را جدا کرده‌ایم. مشکل چیست؟`,
+  o:[`مشکلی نیست، میانه مقاوم است`,`نشت داده: آماری که از تست آمده وارد آموزش شده؛ باید روی train fit و روی هر دو transform شود`,`میانه باید جای میانگین می‌بود`,`باید ردیف‌های خالی را حذف می‌کردیم`], a:1,
+  e:`پارامتر جایگذاری هم «آموخته» می‌شود. در توصیف گذشته اشکالی ندارد، ولی در پیش‌بینی، تست باید «آینده‌ی ندیده» بماند. <code>SimpleImputer</code> داخل <code>Pipeline</code> این مرز را رعایت می‌کند.`},
+ {q:`<code>pd.to_datetime("1405/08/08")</code> در pandas چه می‌کند؟`,
+  o:[`آن را درست به ۳۰ اکتبر ۲۰۲۶ تبدیل می‌کند`,`آن را تاریخ شمسی تشخیص می‌دهد و هشدار می‌دهد`,`بسته به نسخه، یا خطا/NaT می‌دهد یا بی‌صدا سال ۱۴۰۵ میلادی می‌سازد؛ هیچ‌کدام درست نیست`,`آن را به ۸ آبان ۱۴۰۵ با نوع Jalali تبدیل می‌کند`], a:2,
+  e:`pandas تقویم شمسی را نمی‌شناسد. باید با الگوی سال تشخیصش بدهی و با کتابخانه‌ای مثل <code>jdatetime</code> صریحاً تبدیلش کنی.`},
+ {q:`ستون مشتری مقدارهای «علي كريمي» و «علی کریمی» دارد. <code>nunique()</code> چند می‌دهد و چرا؟`,
+  o:[`۱، چون روی صفحه یکسان‌اند`,`۲، چون «ي» و «ك» عربی کدهای یونیکد متفاوتی با «ی» و «ک» فارسی دارند`,`۲، چون فاصله‌ها فرق دارند`,`خطا می‌دهد`], a:1,
+  e:`U+064A و U+0643 (عربی) در برابر U+06CC و U+06A9 (فارسی). با <code>str.translate</code> نرمال‌سازی کن تا یک مشتری دو مشتری حساب نشود.`},
+ {q:`<code>df["income"].isna().sum()</code> صفر می‌دهد، ولی با <code>value_counts()</code> مقدار «unknown» را می‌بینی. بهترین کار؟`,
+  o:[`ستون کامل است، ادامه بده`,`«unknown» را با <code>na_values</code> هنگام خواندن یا با <code>replace</code> به NaN تبدیل کن و بعد درباره‌ی گم‌شده تصمیم بگیر`,`ردیف‌های «unknown» را با صفر پر کن`,`ستون را حذف کن`], a:1,
+  e:`گم‌شده‌ی پنهان را <code>isna</code> نمی‌بیند. صفر گذاشتن هم یک «داده‌ی ساختگی» است که میانگین را پایین می‌کشد.`},
+ {q:`جمع کرایه‌های ثبت‌شده در جدول سفرها با واریزی‌های درگاه بانک ۴٪ فرق دارد، در حالی که همه‌ی کرایه‌ها مثبت و در بازه‌ی مجازند. کدام بعد کیفیت زیر سؤال است؟`,
+  o:[`اعتبار (Validity)`,`صحت (Accuracy)`,`یکتایی (Uniqueness)`,`به‌روز بودن (Timeliness)`], a:1,
+  e:`اعتبار با قانون‌های درونی سنجیده می‌شود و این‌جا برقرار است. صحت یعنی تطابق با واقعیت، که فقط با منبع بیرونی بررسی می‌شود.`},
+ {q:`در نوت‌بوک، سن ناممکن NaN شد ولی سفارش با تعداد ≤ ۰ کامل حذف شد. منطق این تفاوت چیست؟`,
+  o:[`سن مهم نیست`,`خطای سن فقط یک خانه را خراب می‌کند و بقیه‌ی سفارش معتبر است؛ تعداد نامعتبر یعنی خود فروش معتبر نیست`,`حذف همیشه بهتر از NaN است`,`چون سن عدد اعشاری است`], a:1,
+  e:`واحد خطا را تشخیص بده: خانه یا کل رویداد. «پاک‌سازی یعنی حذف کردن نیست». فقط وقتی کل رویداد بی‌اعتبار است، ردیف را حذف کن.`}
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,css,alpha,fmt,fa,L}=ML;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const mean=v=>v.reduce((s,x)=>s+x,0)/v.length;
+  const quant=(v,p)=>{const a=[...v].sort((x,y)=>x-y);const pos=(a.length-1)*p,lo=Math.floor(pos),hi=Math.ceil(pos);return a[lo]+(a[hi]-a[lo])*(pos-lo);};
+  const median=v=>quant(v,.5);
+  const std=v=>{const m=mean(v);return Math.sqrt(v.reduce((s,x)=>s+(x-m)*(x-m),0)/(v.length-1));};
+  const nf=(x,d=0)=>isFinite(x)?fa((+x.toFixed(d)).toLocaleString("en")):"—";
+
+  /* ---------------- widget 1: dirty table ---------------- */
+  (function(el){
+    if(!el) return;
+    ML.shell(el,"🔧 ابزار ۱: جدول کثیف سفرها؛ هر قانون، یک جواب متفاوت","قانون‌ها به ترتیب اجرا می‌شوند: تکراری ← یکسان‌سازی شهر ← تبدیل کرایه ← قانون دامنه ← پرت IQR ← گم‌شده. ردیف حذف‌شده خط می‌خورد، خانه‌ی تغییرکرده سبز، خانه‌ی جایگذاری‌شده نارنجی و خانه‌ی نامعتبر یا خالی قرمز است.");
+    const RAW=[
+      ["R101","Tehran","85,000",6.2],["R102"," tehran","۹۲۰۰۰",7.0],["R103","تهران","78000",5.5],["R101","Tehran","85,000",6.2],
+      ["R104","Mashhad","64000",4.8],["R105","مشهد","-5000",3.9],["R106","Isfahan","71000",5.0],["R107","اصفهان","73000",5.6],
+      ["R108","SHIRAZ","",4.1],["R109","Shiraz ","69000",4.4],["R110","Tabriz","6800000",6.0],["R111","Isfahan","unknown",5.2],
+      ["R112","Tehran","240000",31.0],["R113","tabriz","58000",3.8],["R114","تهران","۸۸,۵۰۰",6.6]
+    ];
+    const st={dedup:false,city:false,parse:"none",domain:false,iqr:false,miss:"skip"};
+    const ctr=h("div",{class:"controls"});
+    const cb=(k,label)=>{const l=h("label");const c=h("input",{type:"checkbox"});c.onchange=()=>{st[k]=c.checked;draw();};l.append(c,label);return l;};
+    const sel=(k,label,opts)=>{const l=h("label");l.append(label);const s=h("select");opts.forEach(([v,t])=>s.append(h("option",{value:v},t)));s.value=st[k];s.onchange=()=>{st[k]=s.value;draw();};l.append(s);return l;};
+    ctr.append(cb("dedup","حذف تکراری دقیق"),cb("city","یکسان‌سازی شهر (strip، lower، مترادف‌ها)"),
+      sel("parse","تبدیل کرایه: ",[["none","هیچ (متن)"],["naive","ساده‌لوحانه: to_numeric"],["smart","هوشمند: ارقام فارسی + ویرگول"]]),
+      cb("domain","قانون دامنه: کرایه بین ۱ و ۲ میلیون"),cb("iqr","حذف پرت با "+L("IQR, k = 1.5")),
+      sel("miss","کرایه‌ی خالی: ",[["skip","نادیده (skipna)"],["drop","حذف ردیف"],["median","جایگذاری میانه"],["mean","جایگذاری میانگین"]]));
+    const tw=h("div",{class:"tablewrap"}); const out=h("div",{class:"readout"});
+    el.append(ctr,tw,out);
+    const CMAP={"tehran":"Tehran","تهران":"Tehran","mashhad":"Mashhad","مشهد":"Mashhad","isfahan":"Isfahan","اصفهان":"Isfahan","shiraz":"Shiraz","tabriz":"Tabriz"};
+    const fdig=s=>s.replace(/[۰-۹]/g,d=>"۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));
+    const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+    function draw(){
+      const rows=RAW.map(r=>({id:r[0],city:r[1],fare:r[2],dist:r[3],cityV:r[1],fareV:r[2],rm:"",cls:"",note:[]}));
+      const live=()=>rows.filter(r=>!r.rm);
+      if(st.dedup){const seen=new Set();rows.forEach(r=>{const k=[r.id,r.city,r.fare,r.dist].join("|");if(seen.has(k)) r.rm="تکراری"; else seen.add(k);});}
+      if(st.city) rows.forEach(r=>{const k=r.city.trim().toLowerCase();r.cityV=CMAP[k]||k;});
+      const numeric=st.parse!=="none";
+      rows.forEach(r=>{ if(!numeric){r.fareV=r.fare;return;}
+        let s=r.fare.trim(); if(st.parse==="smart") s=fdig(s).replace(/[,\s]/g,"").replace("تومان","");
+        r.fareV=/^-?\d+(\.\d+)?$/.test(s)?+s:NaN;
+        if(isFinite(r.fareV) && String(r.fareV)!==r.fare) r.cls="chg";
+        if(!isFinite(r.fareV)) r.cls="bad"; });
+      if(numeric&&st.domain) rows.forEach(r=>{ if(isFinite(r.fareV)&&(r.fareV<1||r.fareV>2e6)){r.fareV=NaN;r.cls="bad";r.note.push("نقض قانون دامنه ← NaN");} });
+      let fen=null;
+      if(numeric&&st.iqr){const v=live().map(r=>r.fareV).filter(isFinite); if(v.length>3){const q1=quant(v,.25),q3=quant(v,.75),k=q3-q1;fen=[q1-1.5*k,q3+1.5*k];
+        live().forEach(r=>{ if(isFinite(r.fareV)&&(r.fareV<fen[0]||r.fareV>fen[1])) r.rm="پرت IQR"; });}}
+      let fillV=NaN;
+      if(numeric){ const v=live().map(r=>r.fareV).filter(isFinite);
+        if(st.miss==="drop") live().forEach(r=>{ if(!isFinite(r.fareV)) r.rm="کرایه‌ی خالی"; });
+        else if(st.miss!=="skip"&&v.length){ fillV=st.miss==="median"?median(v):mean(v); live().forEach(r=>{ if(!isFinite(r.fareV)){r.fareV=fillV;r.cls="fill";r.note.push("جایگذاری‌شده");} }); } }
+      // table
+      let html=`<table class="data"><tr><th>ride_id</th><th>city</th><th>fare (raw)</th><th>fare (after)</th><th class="nt">note</th></tr>`;
+      rows.forEach(r=>{
+        const cityCls=st.city&&r.cityV!==r.city?"chg":"";
+        const fv=numeric?(isFinite(r.fareV)?Math.round(r.fareV).toLocaleString("en"):"NaN"):esc(r.fare===""?"''":r.fare);
+        const notes=[r.rm?("حذف: "+r.rm):"",...r.note].filter(Boolean).join("، ");
+        html+=`<tr class="${r.rm?"rm":""}"><td>${r.id}</td><td class="${cityCls}">${esc(st.city?r.cityV:("'\u2068"+r.city+"\u2069'"))}</td><td>${esc(r.fare===""?"''":r.fare)}</td><td class="${numeric?r.cls:""}">${fv}</td><td class="nt">${notes}</td></tr>`;
+      });
+      tw.innerHTML=html+"</table>";
+      // summary
+      const L_=live(); const cities={}; L_.forEach(r=>{const c=st.city?r.cityV:r.city;cities[c]=(cities[c]||0)+1;});
+      const cityTxt=Object.entries(cities).map(([c,n])=>L("'\u2068"+c+"\u2069'")+": "+fa(n)).join("   ");
+      let t=`ردیف‌های باقی‌مانده: ${fa(L_.length)} از ${fa(RAW.length)}\nمقدار یکتای شهر: ${fa(Object.keys(cities).length)} (شهر واقعی: ۵) ← ${cityTxt}\n`;
+      if(!numeric){ t+=`کرایه: ستون هنوز متن است (dtype=object). میانگین و میانه «قابل محاسبه نیست». اول باید نوع را درست کنی.`; }
+      else{
+        const v=L_.map(r=>r.fareV).filter(isFinite);
+        const teh=L_.filter(r=>(st.city?r.cityV:r.city)==="Tehran").map(r=>r.fareV).filter(isFinite);
+        t+=`کرایه‌ی معتبر: ${fa(v.length)} مقدار   |   میانگین: ${nf(mean(v))}   میانه: ${nf(median(v))}   انحراف معیار: ${v.length>1?nf(std(v)):"—"} تومان\n`;
+        t+=`میانگین کرایه‌ی ${L("'Tehran'")}: ${teh.length?nf(mean(teh)):"—"} تومان از ${fa(teh.length)} سفر`;
+        if(fen) t+=`\nمرزهای IQR: ${nf(fen[0])} تا ${nf(fen[1])}`;
+        if(isFinite(fillV)) t+=`\nمقدار جایگذاری: ${nf(fillV)} تومان`;
+        if(!st.domain && v.some(x=>x>2e6)) t+=`\n⚠ کرایه‌ی ۶٬۸۰۰٬۰۰۰ هنوز در داده است و میانگین را چند برابر کرده؛ میانه را ببین.`;
+        if(st.iqr && rows.some(r=>r.id==="R112"&&r.rm)) t+=`\n⚠ سفر فرودگاه (R112، ۳۱ کیلومتر) حذف شد، در حالی که کاملاً واقعی است!`;
+        if(!st.dedup) t+=`\n⚠ R101 دو بار شمرده می‌شود.`;
+      }
+      out.textContent=t;
+    }
+    draw();
+  })(document.getElementById("w-dirty"));
+
+  /* ---------------- widget 2: outlier explorer ---------------- */
+  (function(el){
+    if(!el) return;
+    ML.shell(el,"🔧 ابزار ۲: کاوشگر قاعده‌ی پرت با IQR، z-score و z مقاوم","درآمد هفتگی ۷۶ راننده (میلیون تومان). نقطه‌ی قرمز = پرچم‌خورده. خط‌چین = میانگین (بنفش) و میانه (سبزآبی) قبل از اقدام؛ خط پر = بعد از اقدام. ناحیه‌ی سایه‌دار بیرون از مرزهاست.");
+    const rnd=mulberry32(20261030);
+    const gauss=()=>{let u=0;while(!u)u=rnd();const v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+    const D=[];
+    for(let i=0;i<70;i++) D.push({v:+Math.exp(Math.log(7)+0.42*gauss()).toFixed(1),t:"n"});
+    [19.5,23,27.5].forEach(v=>D.push({v,t:"real"}));
+    [72,95].forEach(v=>D.push({v,t:"err"}));
+    D.push({v:-4,t:"imp"});
+    D.forEach(d=>d.y=0.12+0.76*rnd());
+    const st={method:"iqr",k:1.5,zt:3,act:"flag",domain:true,log:false,truth:false};
+    const cv=h("canvas",{class:"wide"}); el.append(cv);
+    const ctr=h("div",{class:"controls"});
+    const sel=(k,label,opts)=>{const l=h("label");l.append(label);const s=h("select");opts.forEach(([v,t])=>s.append(h("option",{value:v},t)));s.value=st[k];s.onchange=()=>{st[k]=s.value;draw();};l.append(s);return l;};
+    const cb=(k,label)=>{const l=h("label");const c=h("input",{type:"checkbox"});c.checked=st[k];c.onchange=()=>{st[k]=c.checked;draw();};l.append(c,label);return l;};
+    ctr.append(sel("method","روش: ",[["iqr","IQR"],["z","z-score"],["rz","z مقاوم (MAD)"]]),
+      ML.slider("ضریب k در IQR",0.5,5,0.1,st.k,v=>{st.k=v;draw();},v=>fa(v.toFixed(1))),
+      ML.slider("آستانه‌ی z",1,6,0.1,st.zt,v=>{st.zt=v;draw();},v=>fa(v.toFixed(1))),
+      sel("act","اقدام: ",[["flag","فقط پرچم"],["drop","حذف"],["cap","سقف‌گذاری (capping)"]]),
+      cb("domain","قانون دامنه (درآمد منفی ← NaN)"),cb("log","مقیاس لگاریتمی"),cb("truth","نمایش حقیقت"));
+    el.append(ctr);
+    const leg=h("div",{class:"legend"}); el.append(leg);
+    const out=h("div",{class:"readout"}); el.append(out);
+    function draw(){
+      const live=D.filter(d=>!(st.domain&&d.v<0));
+      const x=live.map(d=>d.v);
+      const m=mean(x),sd=std(x),med=median(x),q1=quant(x,.25),q3=quant(x,.75),iqr=q3-q1;
+      const mad=median(x.map(v=>Math.abs(v-med)));
+      let lo,hi;
+      if(st.method==="iqr"){lo=q1-st.k*iqr;hi=q3+st.k*iqr;}
+      else if(st.method==="z"){lo=m-st.zt*sd;hi=m+st.zt*sd;}
+      else{lo=med-st.zt*mad/0.6745;hi=med+st.zt*mad/0.6745;}
+      live.forEach(d=>d.f=(d.v<lo||d.v>hi));
+      D.forEach(d=>{ if(st.domain&&d.v<0) d.f=false; });
+      const after=st.act==="drop"?live.filter(d=>!d.f).map(d=>d.v):st.act==="cap"?live.map(d=>Math.min(hi,Math.max(lo,d.v))):x;
+      const m2=mean(after),med2=median(after),sd2=std(after);
+      // plot
+      const T=v=>st.log?Math.log10(Math.max(v,0.5)):v;
+      const shown=st.domain?live:D;
+      const xmin=st.log?Math.log10(0.5):Math.min(-6,Math.min(...shown.map(d=>d.v))-2), xmax=st.log?Math.log10(150):Math.max(...shown.map(d=>d.v))+5;
+      const P=new ML.Plot(cv,[xmin,xmax],[0,1],{l:16,b:34,t:14});
+      const c=P.ctx;
+      // shaded outside fences
+      c.fillStyle=alpha(css("--bad"),.08);
+      const xl=P.X(Math.max(xmin,T(Math.max(lo,0.5))));
+      if(!(st.log&&lo<=0.5)&&T(lo)>xmin) c.fillRect(P.X(xmin),P.p.t,P.X(T(lo))-P.X(xmin),P.H-P.p.t-P.p.b);
+      if(T(hi)<xmax) c.fillRect(P.X(T(hi)),P.p.t,P.X(xmax)-P.X(T(hi)),P.H-P.p.t-P.p.b);
+      P.axes(st.log?"درآمد هفتگی (میلیون تومان، مقیاس لگاریتمی)":"درآمد هفتگی (میلیون تومان)","",{ystep:2,yfmt:()=>"",xstep:st.log?0.5:20,xfmt:st.log?(v=>fmt(Math.pow(10,v),1)):(v=>fmt(v,0))});
+      const c1=css("--plot-c1"),c3=css("--plot-c3"),c4=css("--plot-c4"),bad=css("--bad"),good=css("--good"),diag=css("--plot-diag");
+      P.vline(T(m),c4,[5,4]); P.vline(T(med),c1,[5,4]);
+      if(st.act!=="flag"){ c.save(); P.vline(T(m2),c4,[]); P.vline(T(med2),c1,[]); c.restore(); }
+      shown.forEach(d=>{
+        const X=T(d.v);
+        if(st.log&&d.v<=0){ P.text(xmin+0.02,d.y,"✕ "+fmt(d.v,1),bad,"left",4); return; }
+        const isNaN_=st.domain&&d.v<0;
+        const col=d.f?bad:c3;
+        const r=d.f?5:3.5;
+        if(st.act==="drop"&&d.f){ c.strokeStyle=bad; c.lineWidth=1.5; c.beginPath(); c.arc(P.X(X),P.Y(d.y),r,0,7); c.stroke(); }
+        else if(!isNaN_) P.dot(X,d.y,alpha(col,d.f?.95:.7),r);
+        if(st.act==="cap"&&d.f){ const cx=T(Math.min(hi,Math.max(lo,d.v))); P.line([[X,d.y],[cx,d.y]],alpha(bad,.5),1,[2,2]); P.dot(cx,d.y,bad,2.5); }
+        if(st.truth&&d.t!=="n"){ c.strokeStyle=d.t==="real"?good:d.t==="err"?diag:c4; c.lineWidth=2; c.beginPath(); c.arc(P.X(X),P.Y(d.y),r+4,0,7); c.stroke(); }
+      });
+      leg.innerHTML=`<span><i style="background:${c3}"></i>عادی</span><span><i style="background:${bad}"></i>پرچم‌خورده</span><span><i style="background:${c4}"></i>میانگین</span><span><i style="background:${c1}"></i>میانه</span>`+
+        (st.truth?`<span><i style="background:${good}"></i>حلقه: درآمد بالای واقعی</span><span><i style="background:${diag}"></i>حلقه: خطای ورود</span><span><i style="background:${c4}"></i>حلقه: ناممکن</span>`:"");
+      // readout
+      const fl=live.filter(d=>d.f);
+      const cnt=t=>fl.filter(d=>d.t===t).length;
+      const nm={iqr:"روش "+L("IQR")+"، ضریب "+L("k = "+st.k.toFixed(1)),z:"روش "+L("z-score")+"، آستانه‌ی "+fa(st.zt.toFixed(1)),rz:"روش z مقاوم، آستانه‌ی "+fa(st.zt.toFixed(1))}[st.method];
+      let t=`${nm}: مرزها از ${L(nf(lo,1))} تا ${L(nf(hi,1))}   |   پرچم‌خورده: ${fa(fl.length)} نقطه\n`;
+      t+=`  از این‌ها: خطای ورود ${fa(cnt("err"))} از ۲، درآمد بالای واقعی ${fa(cnt("real"))} از ۳، ناممکن ${fa(cnt("imp"))}، عادی ${fa(cnt("n"))}\n`;
+      t+=`قبل:  میانگین ${nf(m,2)}   میانه ${nf(med,2)}   انحراف معیار ${nf(sd,2)}   (n=${fa(x.length)})\n`;
+      if(st.act!=="flag") t+=`بعد از ${st.act==="drop"?"حذف":"سقف‌گذاری"}:  میانگین ${nf(m2,2)}   میانه ${nf(med2,2)}   انحراف معیار ${nf(sd2,2)}   (n=${fa(after.length)})\n`;
+      if(cnt("err")<2) t+=`⚠ همه‌ی خطاهای ورود پیدا نشدند${st.method==="z"?" (masking: خود پرت‌ها انحراف معیار را باد کرده‌اند)":""}.\n`;
+      if(cnt("real")>0&&st.act==="drop") t+=`⚠ داری درآمد واقعی رانندگان تمام‌وقت را حذف می‌کنی. «اول بررسی، بعد تبدیل، حذف آخر».\n`;
+      if(!st.domain&&cnt("imp")===0) t+=`⚠ درآمد ۴− (ناممکن) با این قاعده پرچم نخورد. قانون دامنه را روشن کن.\n`;
+      if(cnt("n")>3) t+=`⚠ ${fa(cnt("n"))} راننده‌ی کاملاً عادی پرچم خوردند؛ آستانه خیلی تنگ است یا توزیع چوله است (مقیاس لگاریتمی را امتحان کن).`;
+      out.textContent=t.trim();
+    }
+    ML.onResize(cv,draw); draw();
+  })(document.getElementById("w-outlier"));
+};
+</script>
+</body></html>

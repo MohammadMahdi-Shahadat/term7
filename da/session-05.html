@@ -1,0 +1,956 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۵ · مهندسی ویژگی (۱): مقیاس، چولگی، رفتار و زمان</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.widget .readout{direction:rtl}
+</style>
+</head>
+<body data-session="5">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۵ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>مهندسی ویژگی (۱): مقیاس‌بندی، چولگی، ویژگی‌های رفتاری و زمانی</h1>
+  <p class="lead">داده‌ات تمیز است: گم‌شده ندارد، تکراری ندارد، فرمت‌ها یکدست‌اند. ولی هنوز «ورودی خوب مدل» نیست. در این جلسه می‌بینیم چرا یک ستون «کرایه به تومان» می‌تواند کل فاصله‌ها را قورت بدهد، چرا ساعت ۲۳ و ساعت ۰ همسایه‌اند، و چطور از یک جدول خام سفرها ویژگی‌هایی بسازیم که <b>رفتار</b> مسافر و راننده را نشان بدهند، بدون این‌که از آینده تقلب کنیم.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۰۰ تا ۱۳۰ دقیقه (با تمرین‌ها)</span><span>📚 منبع: اسلاید slides04 صفحه‌های ۱ تا ۲۳، نوت‌بوک درس (پاک‌سازی ۱۰ و بخش ۸.۳)، Géron فصل ۲، McKinney فصل ۱۱</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>توضیح بدهی چرا مدل‌های مبتنی بر فاصله به واحد اندازه‌گیری حساس‌اند و این را با یک مثال عددی kNN نشان بدهی.</li>
+    <li>z-score، min-max و robust scaling را با فرمول حساب کنی و بگویی هر کدام کِی مناسب است و کِی خطرناک.</li>
+    <li>فرق «مقیاس‌بندی» و «تغییر شکل توزیع» را بدانی و بین log1p، Box-Cox و Yeo-Johnson انتخاب کنی.</li>
+    <li>بگویی کدام مدل‌ها به مقیاس‌بندی نیاز دارند و چرا درخت‌ها نیاز ندارند.</li>
+    <li>مقیاس‌بند را فقط روی train فیت کنی و با <span class="ltr">ColumnTransformer</span> یک پیش‌پردازش تکرارپذیر بسازی.</li>
+    <li>ویژگی‌های رفتاری (نرخ، نسبت، پنجره‌ی غلتان، RFM، زمان از آخرین سفر) را «در لحظه‌ی پیش‌بینی» و بدون نشت بسازی.</li>
+    <li>زمان چرخه‌ای را با sin/cos کدگذاری کنی و ویژگی‌های تقویم ایرانی (جمعه، نوروز، ماه شمسی، ساعت اوج) بسازی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+  سه سفر داری: <b>Q</b> با ۱۰ کیلومتر و ۳۰۰٬۰۰۰ تومان، <b>A</b> با ۳ کیلومتر و ۳۰۵٬۰۰۰ تومان (یک سفر کوتاه در ساعت اوج با ضریب بالا)، و <b>B</b> با ۱۱ کیلومتر و ۳۳۰٬۰۰۰ تومان. از نظر تو کدام سفر به Q «شبیه‌تر» است؟ حالا فاصله‌ی اقلیدسی خام را حساب کن: $\sqrt{(\Delta\text{km})^2+(\Delta\text{toman})^2}$. جواب ریاضی با شهود تو یکی است؟ اگر نه، مقصر کیست: الگوریتم یا واحدها؟ جوابت را نگه دار؛ در بخش ۳ برمی‌گردیم.
+</div>
+
+<section id="review">
+<h2><span class="num">۱</span> مرور سریع: داده‌ی تمیز، خودبه‌خود ورودی خوب مدل نیست <span class="tag core">اسلاید</span></h2>
+<p>اسلایدهای ۲ تا ۴ نقشه‌ی راه درس را نشان می‌دهند. سه جلسه‌ی قبل یک جریان پیوسته بودند:</p>
+<div class="cards">
+  <div><b>۱. اول مسئله (Problem First)</b>سؤال واقعی را تعریف کن، هدف قابل‌اندازه‌گیری بگذار، فرض‌ها را صریح بنویس.</div>
+  <div><b>۲. آماده‌سازی داده</b>خطا و گم‌شدگی را پیدا کن، دسته‌ها را کدگذاری کن، داده‌ی تمیز و قابل‌استفاده بساز.</div>
+  <div><b>۳. EDA و ویژگی</b>توزیع‌ها را بکاو، رابطه‌ها و بخش‌ها را مقایسه کن، دانسته‌ها را به ویژگی تبدیل کن.</div>
+</div>
+<p>در نقشه‌ی درس (اسلاید ۲) این جلسه همان «Scaling &amp; Advanced Features» است: استانداردسازی، نرمال‌سازی، تبدیل‌ها و ویژگی‌های غنی‌تر. بعدش «آماده‌سازی داده برای مدل‌سازی» می‌آید: تقسیم داده، نشت، عدم‌توازن و pipeline.</p>
+<p>اسلایدهای ۵ تا ۸ یک تصویر را قدم‌به‌قدم کامل می‌کنند. پیامش یک جمله است: <b>«A clean dataset is not automatically a good model input.»</b></p>
+<figure class="fig">
+<svg viewBox="0 0 540 250" width="540" role="img" aria-label="از منبع داده تا مدل">
+ <g font-family="Vazirmatn,Tahoma" font-size="12" text-anchor="middle">
+  <rect x="8" y="20" width="96" height="150" rx="10" fill="#2456a6" opacity=".12"/>
+  <text x="56" y="40" fill="currentColor" font-weight="700">منابع داده</text>
+  <text x="56" y="62" fill="currentColor" font-size="10.5">وب و خزش</text>
+  <text x="56" y="80" fill="currentColor" font-size="10.5">API</text>
+  <text x="56" y="98" fill="currentColor" font-size="10.5">پایگاه داده</text>
+  <text x="56" y="116" fill="currentColor" font-size="10.5">CSV و فایل</text>
+  <text x="56" y="134" fill="currentColor" font-size="10.5">لاگ‌ها</text>
+  <text x="56" y="152" fill="currentColor" font-size="10.5">داده‌ی شخص ثالث</text>
+  <rect x="122" y="20" width="100" height="150" rx="10" fill="#c0392b" opacity=".15"/>
+  <text x="172" y="40" fill="currentColor" font-weight="700">داده‌ی کثیف ⚠</text>
+  <text x="172" y="66" fill="currentColor" font-size="10.5">گم‌شده (null، N/A)</text>
+  <text x="172" y="86" fill="currentColor" font-size="10.5">ردیف تکراری</text>
+  <text x="172" y="106" fill="currentColor" font-size="10.5">فرمت ناهمسان</text>
+  <text x="172" y="122" fill="currentColor" font-size="10" direction="ltr">($67k vs 67000)</text>
+  <text x="172" y="144" fill="currentColor" font-size="10.5">ستون پرنویز</text>
+  <rect x="240" y="20" width="100" height="150" rx="10" fill="#0f6e6a" opacity=".16"/>
+  <text x="290" y="40" fill="currentColor" font-weight="700">داده‌ی تمیز ✔</text>
+  <text x="290" y="70" fill="currentColor" font-size="10.5">بدون گم‌شده</text>
+  <text x="290" y="92" fill="currentColor" font-size="10.5">فرمت یکدست</text>
+  <text x="290" y="114" fill="currentColor" font-size="10.5">ساختار مرتب</text>
+  <text x="290" y="150" fill="currentColor" font-size="10.5" opacity=".7">جلسه‌های ۲ تا ۴</text>
+  <text x="372" y="92" fill="#c28a2a" font-size="26" font-weight="700">⚠</text>
+  <text x="372" y="118" fill="currentColor" font-size="9.5">هنوز شاید</text>
+  <text x="372" y="131" fill="currentColor" font-size="9.5">مناسب این</text>
+  <text x="372" y="144" fill="currentColor" font-size="9.5">مدل نباشد</text>
+  <rect x="404" y="20" width="128" height="150" rx="10" fill="#8e44ad" opacity=".14"/>
+  <text x="468" y="40" fill="currentColor" font-weight="700">مدل ML</text>
+  <text x="468" y="58" fill="currentColor" font-size="10.5">ورودی مشخص می‌خواهد:</text>
+  <text x="468" y="78" fill="currentColor" font-size="10" direction="ltr">age · income</text>
+  <text x="468" y="94" fill="currentColor" font-size="10" direction="ltr">credit_score</text>
+  <text x="468" y="110" fill="currentColor" font-size="10" direction="ltr">debt_ratio</text>
+  <text x="468" y="126" fill="currentColor" font-size="10" direction="ltr">employment_length</text>
+  <g stroke="currentColor" stroke-width="1.6" opacity=".55" fill="none">
+   <path d="M106 95 h12 m-5 -5 l5 5 l-5 5"/><path d="M224 95 h12 m-5 -5 l5 5 l-5 5"/><path d="M386 95 h14 m-5 -5 l5 5 l-5 5"/>
+  </g>
+  <rect x="8" y="182" width="524" height="62" rx="10" fill="#c0392b" opacity=".08"/>
+  <text x="270" y="200" fill="currentColor" font-weight="700" font-size="11.5">ناهمخوانی‌های ممکن (اسلاید ۸)</text>
+  <text x="270" y="219" fill="currentColor" font-size="10.5">ویژگی لازم وجود ندارد · نوع ویژگی فرق دارد · مقیاس یا توزیع غلط</text>
+  <text x="270" y="236" fill="currentColor" font-size="10.5">اطلاعات بی‌ربط · با داده‌ای که مدل با آن آموزش دیده جور نیست</text>
+ </g>
+</svg>
+<figcaption>بازسازی اسلایدهای ۵ تا ۸. داده‌ی تمیز (ستون سبز) با چیزی که مدل انتظار دارد (ستون بنفش) فرق دارد. ستون <span class="ltr">debt_ratio</span> اصلاً در داده نیست و باید <b>ساخته</b> شود. این کار همان مهندسی ویژگی است.</figcaption>
+</figure>
+<p>اسلاید ۸ در بخش «اعتبارسنجی ورودی مدل» چهار خطا را علامت می‌زند: <span class="ltr">credit_score missing</span>، <span class="ltr">debt_ratio missing</span>، «مجموعه‌ی ویژگی‌ها جور نیست» و «ورودی برای این مدل آماده نیست». یعنی تمیزی شرط لازم است، ولی کافی نیست. سه شکاف معمولاً می‌ماند:</p>
+<ol class="steps">
+  <li><b>شکاف مقیاس:</b> ستون‌ها در واحدهای خیلی متفاوت‌اند (کیلومتر، تومان، ستاره) و مدل‌های حساس به فاصله گول می‌خورند.</li>
+  <li><b>شکاف شکل:</b> توزیع خیلی چوله است (کرایه، درآمد، زمان انتظار) و چند مقدار بزرگ همه‌چیز را تعیین می‌کنند.</li>
+  <li><b>شکاف معنا:</b> ستون خام رفتاری را که دنبالش هستیم نشان نمی‌دهد. <span class="ltr">request_time</span> به‌تنهایی نمی‌گوید «ساعت اوج» یا «۱۷ روز است سفر نکرده».</li>
+</ol>
+<div class="box note"><div class="bt">🔁 مرور از جلسه‌ی ۴ (اسلایدهای ۲۴ تا ۳۸ همین فایل)</div>
+  فهرست «اهداف این جلسه» در اسلاید ۳ (شناخت توزیع‌ها، مقایسه‌ی گروه‌ها، بررسی رابطه‌ها، ساخت ویژگی، و روایت EDA) و نیمه‌ی دوم slides04 همان مطالب EDA در slides03 را تکرار می‌کنند: میانگین در برابر میانه، چولگی، IQR و پرت‌ها، مقایسه‌ی گروه‌ها، همبستگی در برابر علیت، و اولین ویژگی‌ها از EDA. همه را در <a href="session-04.html">جلسه‌ی ۴</a> کامل دیدی. این‌جا فقط از دو نتیجه‌اش استفاده می‌کنیم: <b>چولگی</b> را از فاصله‌ی میانگین و میانه می‌فهمی، و <b>IQR</b> را برای پرت‌ها به کار می‌بری. هر دو در robust scaling و تبدیل لگاریتمی برمی‌گردند.
+</div>
+</section>
+
+<section id="steps">
+<h2><span class="num">۲</span> قدم‌های کلیدی قبل از هر تحلیل ML <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۹ چهار دلیل می‌آورد که چرا قبل از مدل باید کار کنیم:</p>
+<ul>
+  <li>الگوریتم‌های مبتنی بر فاصله به <b>مقیاس ویژگی‌ها</b> اهمیت می‌دهند.</li>
+  <li>ستون‌های خام شاید <b>رفتاری</b> را که می‌خواهیم کشف کنیم بیان نکنند.</li>
+  <li>تبدیل ویژگی می‌تواند <b>پایداری عددی</b> و <b>تفسیرپذیری</b> را بهتر کند.</li>
+  <li>پیش‌پردازش باید <b>بدون نشت اطلاعات</b> فیت شود.</li>
+</ul>
+<p>اسلاید ۱۰ این‌ها را به پنج قدم تبدیل می‌کند. کل این جلسه همین زنجیره است:</p>
+<div class="flow"><span>۱. تشخیص (Diagnose)<br><small>مقیاس، چولگی، پرت، واحد</small></span><i>←</i><span>۲. تبدیل (Transform)<br><small>StandardScaler، MinMaxScaler، RobustScaler</small></span><i>←</i><span>۳. مهندسی (Engineer)<br><small>تاریخ، نسبت، تجمیع، تعامل</small></span><i>←</i><span>۴. اعتبارسنجی (Validate)<br><small>فیت فقط روی train، بدون نشت هدف</small></span><i>←</i><span>۵. اجرا (Apply)<br><small>pipeline تکرارپذیر</small></span></div>
+<div class="box tip"><div class="bt">💡 چک‌لیست «تشخیص» برای هر ستون عددی</div>
+  قبل از انتخاب هر تبدیلی، این پنج سؤال را جواب بده: (۱) واحدش چیست و بازه‌اش چقدر است؟ (۲) میانگین و میانه چقدر فاصله دارند؟ (اگر زیاد، چوله است.) (۳) پرت دارد؟ پرتِ <b>خطا</b> است یا <b>واقعی</b>؟ (مثل ضریب پیک، که واقعی است.) (۴) صفر یا منفی دارد؟ (برای log و Box-Cox مهم است.) (۵) مدلی که می‌خواهی استفاده کنی اصلاً به مقیاس حساس است؟ با <span class="ltr">df.describe()</span>، <span class="ltr">df.skew()</span> و هیستوگرام شروع کن. روال جلسه‌ی ۴ همین بود: <b>اول بررسی، بعد تبدیل، حذف آخر از همه.</b>
+</div>
+</section>
+
+<section id="scale-problem">
+<h2><span class="num">۳</span> مسئله‌ی مقیاس: فاصله‌ای که واحد پول تعیین می‌کند <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۱۱ یک سفر را با سه عدد توصیف می‌کند: مسافت = ۱۲ کیلومتر، قیمت = ۸۵۰٬۰۰۰ ریال، امتیاز = ۴٫۵ ستاره. این سه عدد در مقیاس‌های کاملاً متفاوت زندگی می‌کنند. حالا فاصله‌ی اقلیدسی دو سفر را بگیر:</p>
+$$d(\mathbf{x},\mathbf{x}')=\sqrt{\sum_{j}(x_j-x'_j)^2}$$
+<p>اختلاف ۵ کیلومتر در مسافت، ۲۵ واحد به مجموع اضافه می‌کند. اختلاف ۵۰٬۰۰۰ ریال در قیمت، ۲٫۵ <b>میلیارد</b> واحد اضافه می‌کند. پس فاصله عملاً فقط قیمت را می‌بیند. اگر قیمت را از ریال به تومان ببری، فاصله‌ها و حتی همسایه‌ها عوض می‌شوند، در حالی که هیچ چیز واقعی در سفرها عوض نشده. <b>مدلی که جوابش به انتخاب واحد بستگی دارد، دارد چیز اشتباهی یاد می‌گیرد.</b></p>
+<div class="box def"><div class="bt">تعریف ۵.۱ · مقیاس‌بندی ویژگی (feature scaling)</div>
+  یک تبدیل <b>خطی و جداگانه</b> روی هر ستون: $x'=(x-c)/s$. مقدار مرکز $c$ و مقیاس $s$ از <b>داده‌ی آموزش</b> یاد گرفته می‌شوند. هدف این است که ستون‌ها در واحدهای قابل‌مقایسه باشند تا هیچ ستونی فقط به‌خاطر واحدش غالب نشود.
+</div>
+<p>اسلاید ۱۱ مدل‌های حساس را هم نام می‌برد: K-means، kNN، SVM با هسته‌ی RBF، PCA و رگرسیون منظم‌شده (regularized). مدل‌های درختی معمولاً به مقیاس‌بندی کمتری نیاز دارند. چرایش را در بخش ۶ می‌بینیم.</p>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۵.۱ · نزدیک‌ترین همسایه قبل و بعد از مقیاس‌بندی <span class="tag book">تکمیلی</span></div>
+<p>تیم داده‌ی یک اپ اسنپ‌مانند می‌خواهد برای هر سفر جدید، سفرهای «مشابه» در گذشته را پیدا کند (مثلاً برای تشخیص کرایه‌ی غیرعادی). داده‌ی آموزش هشت سفر در تهران است:</p>
+<div class="tablewrap"><table class="data">
+<tr><th>ride</th><th>r1</th><th>r2</th><th>r3</th><th>r4</th><th>r5</th><th>r6</th><th>r7</th><th>r8</th></tr>
+<tr><th>distance_km</th><td>2</td><td>4</td><td>6</td><td>8</td><td>11</td><td class="bad">3</td><td>15</td><td>20</td></tr>
+<tr><th>fare_toman</th><td>95,000</td><td>140,000</td><td>175,000</td><td>230,000</td><td>330,000</td><td class="bad">305,000</td><td>390,000</td><td>520,000</td></tr>
+</table></div>
+<p>سفر جدید $Q$ = (۱۰ کیلومتر، ۳۰۰٬۰۰۰ تومان) است. سفر r6 کوتاه است، ولی در ساعت اوج با ضریب بالا گران شده.</p>
+<p><b>بدون مقیاس‌بندی:</b></p>
+$$d(Q,r_6)=\sqrt{7^2+5000^2}\approx 5000.005,\qquad d(Q,r_5)=\sqrt{1^2+30000^2}\approx 30000.0$$
+<p>پس نزدیک‌ترین همسایه r6 است: سفری با مسافت <b>یک‌سوم</b>. سهم مسافت از مجذور فاصله تقریباً صفر است ($49$ در برابر $2.5\times10^7$).</p>
+<p><b>با z-score</b> (آماره‌ها از همین هشت سفر، با انحراف معیار جمعیت مثل sklearn): $\mu_{km}=8.625,\ \sigma_{km}=5.915$ و $\mu_{fare}=273{,}125,\ \sigma_{fare}=132{,}192$.</p>
+$$Q\to(0.232,\ 0.203),\quad r_5\to(0.402,\ 0.430),\quad r_6\to(-0.951,\ 0.241)$$
+$$d(Q,r_5)=\sqrt{0.170^2+0.227^2}\approx 0.283,\qquad d(Q,r_6)=\sqrt{1.183^2+0.038^2}\approx 1.184$$
+<p>حالا نزدیک‌ترین همسایه r5 است: سفری با مسافت و کرایه‌ی هر دو نزدیک. min-max و robust هم r5 را انتخاب می‌کنند. این نتیجه را پایین‌تر با کد هم می‌بینی.</p>
+</div>
+
+<div id="w-scale"></div>
+
+<pre class="code">import numpy as np, pandas as pd
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+
+train = pd.DataFrame({
+    "distance_km": [2, 4, 6, 8, 11, 3, 15, 20],
+    "fare_toman":  [95_000, 140_000, 175_000, 230_000, 330_000, 305_000, 390_000, 520_000]},
+    index=["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"])
+query = pd.DataFrame({"distance_km": [10], "fare_toman": [300_000]})
+
+def nearest(Xtr, xq):
+    d = np.sqrt(((Xtr - xq) ** 2).sum(axis=1))
+    return pd.Series(d, index=train.index).nsmallest(2).round(3).to_dict()
+
+print("raw     ", nearest(train.to_numpy(float), query.to_numpy(float)))
+for sc in [StandardScaler(), MinMaxScaler(), RobustScaler()]:
+    sc.fit(train)                                   # fit on TRAIN only
+    print(f"{type(sc).__name__:15s}", nearest(sc.transform(train), sc.transform(query)))</pre>
+<div class="out">raw      {'r6': 5000.005, 'r5': 30000.0}
+StandardScaler  {'r5': 0.283, 'r4': 0.628}
+MinMaxScaler    {'r5': 0.09, 'r4': 0.199}
+RobustScaler    {'r5': 0.207, 'r4': 0.461}</div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «مدل خودش وزن مناسب هر ستون را یاد می‌گیرد»</div>
+  kNN و K-means <b>پارامتر وزنی ندارند</b> که یاد بگیرند. فاصله را همان‌طور که هست حساب می‌کنند. رگرسیون خطی بدون جریمه وزن را جبران می‌کند (ضریب ستون تومانی خیلی کوچک می‌شود)، ولی به محض این‌که جریمه‌ی Ridge/Lasso اضافه شود، آن ضریب کوچک «ارزان» و ضریب بزرگ «گران» می‌شود. نتیجه این است که جریمه به‌خاطر واحد، ناعادلانه بین ستون‌ها تقسیم می‌شود.
+</div>
+</section>
+
+<section id="scalers">
+<h2><span class="num">۴</span> سه مقیاس‌بند: z-score، min-max و robust <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<h3>۴.۱ استانداردسازی (Standardization / z-score)</h3>
+<p>اسلاید ۱۲: هر ستون را <b>مرکزی</b> کن و بر حسب «چند انحراف معیار» بیان کن.</p>
+<div class="box thm"><div class="bt">فرمول ۵.۱ · z-score</div>
+$$z=\frac{x-\mu_{\text{train}}}{\sigma_{\text{train}}},\qquad \mu=\frac1n\sum_i x_i,\quad \sigma=\sqrt{\frac1n\sum_i (x_i-\mu)^2}$$
+خروجی روی داده‌ی آموزش میانگین ۰ و واریانس ۱ دارد. <b>بازه‌اش محدود نیست</b>: مقدار ۴- یا ۷ کاملاً ممکن است.
+</div>
+<div class="box ex"><div class="bt">مثال اسلاید</div>
+  مسافت سفر: $\mu=10$ کیلومتر، $\sigma=4$ کیلومتر. سفر ۱۸ کیلومتری: $z=(18-10)/4=2$، یعنی <b>دو انحراف معیار بالاتر از میانگین</b>. سفر ۴ کیلومتری: $z=(4-10)/4=-1.5$. حالا z «بدون واحد» است. مسافت z=2 و کرایه‌ی z=2 به یک اندازه «غیرعادی»‌اند و در فاصله هم‌وزن می‌شوند.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: ddof در pandas و sklearn فرق دارد</div>
+  <span class="ltr">StandardScaler</span> انحراف معیار <b>جمعیت</b> را استفاده می‌کند (تقسیم بر $n$، یعنی <span class="ltr">ddof=0</span>). ولی <span class="ltr">pandas.Series.std()</span> به‌طور پیش‌فرض انحراف معیار <b>نمونه</b> را می‌دهد (تقسیم بر $n-1$، یعنی <span class="ltr">ddof=1</span>). در مثال ۵.۱، $\sigma_{km}$ با ddof=0 برابر $5.915$ و با ddof=1 برابر $6.323$ است. روی داده‌ی بزرگ فرقش ناچیز است، ولی اگر در تمرین «با دست» z را حساب کنی و با خروجی sklearn مقایسه کنی، همین اختلاف را می‌بینی.
+</div>
+
+<h3>۴.۲ استانداردسازی در برابر نرمال‌سازی (Min–Max)</h3>
+<p>اسلاید ۱۳ می‌گوید این دو «به‌طور مکرر با هم اشتباه گرفته می‌شوند». حتی اسم‌ها هم گیج‌کننده‌اند: «normalization» در بعضی کتاب‌ها به z-score هم گفته می‌شود و <span class="ltr">sklearn.preprocessing.Normalizer</span> کار سومی می‌کند (هر <b>سطر</b> را به طول ۱ می‌رساند). در این درس، نرمال‌سازی یعنی min-max:</p>
+<div class="box thm"><div class="bt">فرمول ۵.۲ · Min–Max</div>
+$$x'=\frac{x-\min_{\text{train}}}{\max_{\text{train}}-\min_{\text{train}}}\in[0,1]\ \text{(روی داده‌ی آموزش)}$$
+</div>
+<div class="vs">
+  <div><h4>StandardScaler</h4><ul><li>$(x-\mu)/\sigma$</li><li>مرکز صفر، مقیاس بر اساس پراکندگی</li><li>به [۰، ۱] محدود نیست</li><li>به پرت‌ها حساس است (μ و σ هر دو جابه‌جا می‌شوند)</li></ul></div>
+  <div><h4>MinMaxScaler</h4><ul><li>$(x-\min)/(\max-\min)$</li><li>بازه‌ی آموزش را به [۰، ۱] می‌برد</li><li>به کمینه و بیشینه‌ی حدی <b>خیلی</b> حساس است</li><li>داده‌ی جدید خارج از بازه، بیرون [۰، ۱] می‌افتد</li></ul></div>
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: خروجی min-max روی تست می‌تواند از ۱ بیشتر شود</div>
+  اگر در train کمینه ۲ و بیشینه ۲۰ کیلومتر باشد، سفر تست ۲۶ کیلومتری می‌شود $(26-2)/18=1.333$. این <b>باگ نیست</b>. معنی‌اش این است که scaler فقط گذشته را دیده. اگر مدل تو واقعاً به بازه‌ی [۰، ۱] نیاز دارد (مثلاً یک لایه‌ی sigmoid یا تصویر)، از <span class="ltr">MinMaxScaler(clip=True)</span> استفاده کن. اگر نه، بگذار همین‌طور بماند و مقدارهای خارج از بازه را پایش کن، چون نشانه‌ی <b>تغییر توزیع</b> است.
+</div>
+
+<h3>۴.۳ مقیاس‌بندی مقاوم (Robust Scaling)</h3>
+<p>اسلایدهای ۱۴ و ۱۵: میانه و دامنه‌ی میان‌چارکی (IQR) زیر مقدارهای حدی <b>پایدارترند</b>.</p>
+<div class="box thm"><div class="bt">فرمول ۵.۳ · RobustScaler</div>
+$$x'=\frac{x-\operatorname{median}_{\text{train}}}{\mathrm{IQR}_{\text{train}}},\qquad \mathrm{IQR}=Q_3-Q_1$$
+<b>پیام اصلی اسلاید:</b> robust scaling داده را حول میانه مرکزی می‌کند و با ۵۰٪ وسطی مقیاس می‌دهد. پس مشاهده‌های حدی <b>نمی‌توانند</b> ضریب مقیاس را تعیین کنند.
+</div>
+<p><b>مثال اسلاید ۱۴:</b> کرایه‌ی سفر دم راست بلندی دارد یا ضریب پیک خیلی بالا (surge). StandardScaler ممکن است تحت تأثیر مقدارهای حدی باشد، پس RobustScaler را هم امتحان کن. <b>کی استفاده کنیم؟</b> وقتی ستون عددی پرت‌های قابل‌توجه دارد: حقوق، قیمت ملک، مبلغ تراکنش، اندازه‌گیری‌های پزشکی. مخصوصاً وقتی می‌خواهی پرت‌ها را <b>نگه داری</b>، نه حذف. (یادت هست؟ «پاک‌سازی یعنی حذف کردن نیست».)</p>
+<div class="box ex"><div class="bt">مثال اسلاید ۱۵ · حقوق کارمندان (دلار)</div>
+<p>حقوق‌ها: ۲k، ۲٫۵k، ۳k، ۳٫۵k، ۴k، ۴٫۵k و <b>۵۰k</b>. حقوق ۵۰ هزاری پرت است. اسلاید می‌گوید: میانه = ۳٬۵۰۰، $Q_1=2{,}500$، $Q_3=4{,}500$، پس IQR = ۲٬۰۰۰.</p>
+$$x'_{4000}=\frac{4000-3500}{2000}=0.25,\qquad x'_{50000}=\frac{50000-3500}{2000}=23.25$$
+<p>در نمودار اسلاید، شش حقوق عادی بین ۰٫۷۵- و ۰٫۵ می‌نشینند و پرت در ۲۳٫۲۵. <b>پرت حذف نشد</b>، فقط دیگر مقیاس بقیه را خراب نمی‌کند.</p>
+<p><b>مقایسه با z-score</b> (حساب‌شده با Python): $\mu=9{,}928.6$ و $\sigma=16{,}378.2$. شش حقوق عادی همه بین ۰٫۴۸- و ۰٫۳۳- له می‌شوند و خود پرت فقط $z=2.45$ می‌گیرد. یعنی پرت با بزرگ کردن σ، <b>غیرعادی بودن خودش را پنهان کرده</b>. این اثر را «پوشاندن» (masking) می‌گویند.</p>
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: چارک‌ها روش‌های محاسبه‌ی مختلف دارند</div>
+  اسلاید چارک‌ها را با روش «میانه‌ی نیمه‌ها» (Tukey hinges) حساب کرده: نیمه‌ی پایین {۲، ۲٫۵، ۳} با میانه‌ی ۲٫۵k. ولی <span class="ltr">RobustScaler</span> از <span class="ltr">np.percentile</span> با درون‌یابی خطی استفاده می‌کند: $Q_1=2{,}750$، $Q_3=4{,}250$ و $\mathrm{IQR}=1{,}500$. با این روش، حقوق ۴٬۰۰۰ می‌شود $0.333$ و حقوق ۵۰٬۰۰۰ می‌شود $31.0$. هر دو درست‌اند. <b>در امتحان، روشی را به کار ببر که صورت سؤال می‌گوید</b>. اگر چیزی نگفته، روشت را بنویس.
+</div>
+
+<h3>۴.۴ جدول تصمیم</h3>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>مرکز / مقیاس</th><th>بازه‌ی خروجی</th><th>کِی استفاده کنیم</th><th>کِی نه / ریسک</th></tr>
+<tr><td><b>StandardScaler</b></td><td>میانگین / انحراف معیار</td><td>نامحدود (اغلب ‎−۳ تا ۳)</td><td>پیش‌فرض خوب برای kNN، SVM، PCA، رگرسیون منظم‌شده، شبکه‌ی عصبی، وقتی توزیع تقریباً متقارن است</td><td>پرت‌های شدید μ و σ را می‌کشند و بقیه‌ی داده را له می‌کنند</td></tr>
+<tr><td><b>MinMaxScaler</b></td><td>کمینه / دامنه</td><td>[۰، ۱] روی train</td><td>ویژگی‌های ذاتاً محدود (درصد، پیکسل، امتیاز ۱ تا ۵)، وقتی الگوریتم بازه‌ی ثابت می‌خواهد</td><td>یک پرت کل بازه را تعیین می‌کند؛ تست ممکن است بیرون بازه بیفتد</td></tr>
+<tr><td><b>RobustScaler</b></td><td>میانه / IQR</td><td>نامحدود؛ پرت‌ها بزرگ می‌مانند</td><td>کرایه با surge، حقوق، مبلغ تراکنش؛ وقتی می‌خواهی پرت‌ها را نگه داری</td><td>پرت‌ها را <b>کوچک نمی‌کند</b>؛ در kNN هنوز ممکن است دور بیفتند. چولگی را درمان نمی‌کند</td></tr>
+<tr><td><b>بدون مقیاس‌بندی</b></td><td>—</td><td>واحد خام</td><td>درخت تصمیم، جنگل تصادفی، Gradient Boosting</td><td>برای مدل‌های فاصله‌ای و گرادیانی، فاجعه‌ی بی‌صدا</td></tr>
+</table></div>
+</section>
+
+<section id="shape">
+<h2><span class="num">۵</span> شکل رابطه ثابت می‌ماند، ولی مقیاس‌بندی درمان چولگی نیست <span class="tag core">اسلاید</span></h2>
+<h3>۵.۱ تصویرسازی استانداردسازی (اسلاید ۱۶)</h3>
+<p>اسلاید ۱۶ دو نمودار پراکندگی کنار هم می‌گذارد: مسافت (کیلومتر) در برابر قیمت (ریال) و همان داده بعد از استانداردسازی. <b>دو ابر نقطه دقیقاً یک شکل دارند</b>. فقط عددهای روی محورها عوض شده‌اند. اسلاید می‌گوید: «تغییر مقیاس خطی همبستگی را حفظ می‌کند، ولی فاصله‌ی اقلیدسی و سهم هر ویژگی در آن را تغییر می‌دهد.»</p>
+<div class="box proof"><div class="bt">اثبات · چرا همبستگی پیرسون عوض نمی‌شود <span class="tag book">تکمیلی</span></div>
+  فرض کن $X'=aX+b$ و $Y'=cY+d$ با $a,c&gt;0$. کوواریانس در $ac$ ضرب می‌شود و انحراف معیارها در $a$ و $c$:
+  $$\rho(X',Y')=\frac{\operatorname{Cov}(aX+b,\ cY+d)}{\sigma_{aX+b}\,\sigma_{cY+d}}=\frac{ac\,\operatorname{Cov}(X,Y)}{a\sigma_X\cdot c\sigma_Y}=\rho(X,Y)$$
+  جمع با ثابت روی کوواریانس اثری ندارد. هر سه مقیاس‌بند این بخش از این نوع‌اند. در یک مثال کوچک با Python هم بررسی کردیم: همبستگی قبل و بعد هر دو $0.974$ بود. ولی فاصله‌ی اقلیدسی <b>در محورهای مختلف با ضریب‌های مختلف</b> ضرب می‌شود، پس ترتیب همسایه‌ها می‌تواند عوض شود. این همان چیزی است که در مثال ۵.۱ دیدیم.
+</div>
+
+<h3>۵.۲ مقیاس‌بندی درمان چولگی نیست (اسلاید ۱۷)</h3>
+<p>اسلاید ۱۷ می‌گوید مقیاس‌بندی و شکل‌دهی توزیع <b>دو مسئله‌ی متفاوت</b> را حل می‌کنند:</p>
+<ul>
+  <li>مقیاس‌بندی <b>واحد و بزرگی نسبی</b> را عوض می‌کند.</li>
+  <li><span class="ltr">log1p</span> می‌تواند ستون‌های نامنفی و چوله به راست را فشرده کند.</li>
+  <li>تبدیل‌های توانی (power) یا چندکی (quantile) <b>شکل توزیع</b> را عوض می‌کنند.</li>
+  <li>تبدیل معکوس و تفسیر را فراموش نکن.</li>
+  <li>نمودار قبل و بعد را ببین. هیچ‌وقت کورکورانه تبدیل نکن.</li>
+</ul>
+<p>دلیلش ساده است. z-score فقط یک جابه‌جایی و یک ضرب است. هیستوگرام را جابه‌جا و کشیده می‌کند، ولی شکلش را عوض نمی‌کند. دم راست بلند، بعد از z-score هم دم راست بلند است. چولگی (skewness) یک کمیت بدون واحد است و زیر هر تبدیل خطی با ضریب مثبت ثابت می‌ماند.</p>
+
+<pre class="code">import numpy as np, pandas as pd
+from sklearn.preprocessing import PowerTransformer
+rng = np.random.default_rng(42)
+fare = pd.Series(np.round(rng.lognormal(np.log(180_000), 0.6, 5000), -3), name="fare_toman")
+print("skew raw     :", round(fare.skew(), 2))
+print("skew z-score :", round(((fare - fare.mean()) / fare.std()).skew(), 2))
+print("skew log1p   :", round(np.log1p(fare).skew(), 2))
+pt = PowerTransformer(method="box-cox").fit(fare.to_frame())
+print("Box-Cox lambda:", pt.lambdas_.round(3))</pre>
+<div class="out">skew raw     : 2.18
+skew z-score : 2.18
+skew log1p   : 0.0
+Box-Cox lambda: [-0.001]</div>
+<p>داده‌ی بالا شبیه‌سازی‌شده و log-normal است، برای همین log دقیقاً متقارنش می‌کند و Box-Cox هم $\lambda\approx0$ پیدا می‌کند. $\lambda=0$ در Box-Cox <b>همان لگاریتم است</b>. در داده‌ی واقعی معمولاً چولگی کم می‌شود، ولی دقیقاً صفر نمی‌شود.</p>
+
+<h3>۵.۳ فرمول تبدیل‌های شکل‌دهنده <span class="tag book">تکمیلی</span></h3>
+<div class="box thm"><div class="bt">فرمول ۵.۴ · log1p</div>
+$$x'=\log(1+x),\qquad x\ge 0\quad(\text{معکوس: } x=e^{x'}-1,\ \texttt{np.expm1})$$
+چرا «۱+»؟ چون $\log 0$ تعریف نشده و ستون‌هایی مثل «تعداد سفر» یا «انعام» صفر زیاد دارند. مثال: $0\to0,\ 9\to2.303,\ 99\to4.605,\ 999\to6.908$. هر ده برابر شدن فقط حدود $2.3$ واحد اضافه می‌کند. این یعنی <b>تفاوت‌های نسبی</b> مهم می‌شوند، نه مطلق.
+</div>
+<div class="box thm"><div class="bt">فرمول ۵.۵ · Box-Cox، فقط برای مقدارهای مثبت</div>
+$$x^{(\lambda)}=\begin{cases}\dfrac{x^{\lambda}-1}{\lambda}, & \lambda\neq0\\[6pt] \ln x, & \lambda=0\end{cases}$$
+مقدار $\lambda$ با <b>بیشینه‌ی درست‌نمایی</b> (maximum likelihood) انتخاب می‌شود، طوری که خروجی تا جای ممکن نرمال شود. $\lambda=1$ یعنی تقریباً هیچ (فقط جابه‌جایی)، $\lambda=0.5$ شبیه جذر، $\lambda=0$ لگاریتم و $\lambda&lt;0$ فشرده‌سازی قوی‌تر از log. مثال: با $\lambda=0.5$، مقدار ۱۰۰ می‌شود $(\sqrt{100}-1)/0.5=18$.
+</div>
+<div class="box thm"><div class="bt">فرمول ۵.۶ · Yeo-Johnson (برای هر عدد حقیقی، با صفر و منفی)</div>
+$$\psi(x;\lambda)=\begin{cases}\dfrac{(x+1)^{\lambda}-1}{\lambda}, & x\ge0,\ \lambda\neq0\\[6pt] \ln(x+1), & x\ge0,\ \lambda=0\\[6pt] -\dfrac{(1-x)^{2-\lambda}-1}{2-\lambda}, & x&lt;0,\ \lambda\neq2\\[6pt] -\ln(1-x), & x&lt;0,\ \lambda=2\end{cases}$$
+برای $x\ge0$ همان Box-Cox روی $x+1$ است. پس با $\lambda=0$ همان log1p می‌شود. برای ستونی مثل «اختلاف کرایه‌ی پیشنهادی و نهایی» که منفی هم دارد، این تنها گزینه‌ی خانواده‌ی توانی است.
+</div>
+<div class="tablewrap"><table>
+<tr><th>تبدیل</th><th>دامنه‌ی مجاز</th><th>پارامتر</th><th>کِی</th><th>ریسک</th></tr>
+<tr><td><span class="ltr">log1p</span></td><td>$x\ge0$ (یا $x&gt;-1$)</td><td>ندارد</td><td>شمارش‌ها، مبلغ‌ها، زمان انتظار با صفر</td><td>برای چولگی چپ کار نمی‌کند؛ تفسیر ضریب «نسبی» می‌شود</td></tr>
+<tr><td><span class="ltr">Box-Cox</span></td><td>فقط $x&gt;0$</td><td>λ از train</td><td>کرایه، درآمد (مثبت اکید)</td><td>با یک صفر خطا می‌دهد؛ λ باید فقط روی train فیت شود</td></tr>
+<tr><td><span class="ltr">Yeo-Johnson</span></td><td>همه‌ی اعداد</td><td>λ از train</td><td>ستون‌های با صفر یا منفی</td><td>تفسیرش سخت‌تر است</td></tr>
+<tr><td><span class="ltr">QuantileTransformer</span></td><td>همه</td><td>چندک‌های train</td><td>توزیع‌های خیلی عجیب یا چندقله‌ای؛ خروجی یکنواخت یا نرمال</td><td>رابطه‌ی خطی و فاصله‌های واقعی را از بین می‌برد؛ با داده‌ی کم بیش‌برازش می‌کند</td></tr>
+</table></div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: log روی ستونی که صفر یا منفی دارد</div>
+  <span class="ltr">np.log(df["tip_toman"])</span> برای انعام صفر <span class="ltr">-inf</span> می‌دهد و مدل یا خطا می‌دهد یا بی‌صدا خراب می‌شود. <span class="ltr">PowerTransformer(method="box-cox")</span> هم با یک مقدار صفر خطا می‌دهد. برای صفرها از log1p یا Yeo-Johnson استفاده کن. یک اشتباه رایج دیگر: پیش‌بینی مدلی را که روی <span class="ltr">log1p(fare)</span> آموزش دیده، مستقیم «تومان» گزارش کنی. اول <span class="ltr">np.expm1</span> بزن.
+</div>
+<div class="box note"><div class="bt">مدل‌ها و تبدیل شکل</div>
+  تبدیل شکل برای مدل‌های <b>خطی</b> (رابطه‌ی خطی‌تر و باقیمانده‌ی متقارن‌تر) و مدل‌های <b>فاصله‌ای</b> (چند نقطه‌ی دور همه را تعیین نکنند) مفید است. برای درخت‌ها هر تبدیل <b>یکنوا</b> (log، Box-Cox، رتبه) بی‌اثر است، چون ترتیب نقطه‌ها عوض نمی‌شود و درخت فقط با آستانه روی ترتیب کار می‌کند. ولی اگر <b>هدف</b> (مثلاً کرایه) چوله باشد، log گرفتن از هدف حتی برای درخت هم تابع زیان را عوض می‌کند.
+</div>
+</section>
+
+<section id="which-models">
+<h2><span class="num">۶</span> کدام مدل‌ها به مقیاس‌بندی نیاز دارند؟ <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>اسلاید ۱۸ (و تکرارش در اسلاید ۲۲ که فقط عنوان دارد) می‌گوید جواب به <b>الگوریتم، ویژگی‌ها و معیار فاصله</b> بستگی دارد:</p>
+<div class="vs">
+  <div><h4>معمولاً مهم</h4><ul><li>K-means و خوشه‌بندی سلسله‌مراتبی</li><li>kNN و SVM با هسته‌ی RBF</li><li>PCA (وقتی واحدها متفاوت‌اند)</li><li>رگرسیون خطی/لجستیک منظم‌شده</li><li>بهینه‌سازی شبکه‌ی عصبی</li></ul></div>
+  <div><h4>اغلب کمتر حیاتی</h4><ul><li>درخت تصمیم</li><li>جنگل تصادفی</li><li>درخت‌های Gradient-Boosted</li></ul><p style="margin:.4em 0 0;font-size:.92em">ولی توزیع ویژگی‌ها، گم‌شدگی و کیفیت داده را باز هم باید بررسی کنی.</p></div>
+</div>
+<p>حفظ کردن این فهرست کافی نیست. باید <b>دلیل</b> هر سطر را بدانی، چون سؤال امتحان معمولاً مدلی را می‌پرسد که در فهرست نیست:</p>
+<div class="tablewrap"><table>
+<tr><th>مدل</th><th>سازوکار حساسیت</th><th>اگر مقیاس نکنی</th></tr>
+<tr><td>kNN، K-means، سلسله‌مراتبی</td><td>فاصله‌ی اقلیدسی مستقیم</td><td>ستون با بزرگ‌ترین واحد همسایه‌ها و خوشه‌ها را تعیین می‌کند</td></tr>
+<tr><td>SVM با RBF</td><td>$K(\mathbf x,\mathbf x')=\exp(-\gamma\lVert\mathbf x-\mathbf x'\rVert^2)$</td><td>γ مناسب برای یک ستون، برای ستون دیگر بی‌معنی است</td></tr>
+<tr><td>PCA</td><td>جهت بیشترین <b>واریانس</b></td><td>مؤلفه‌ی اول عملاً همان ستون تومانی می‌شود (جلسه‌ی ۶)</td></tr>
+<tr><td>Ridge / Lasso / لجستیک با L2</td><td>جریمه‌ی $\lambda\sum_j\beta_j^2$ یا $\lambda\sum_j|\beta_j|$</td><td>جریمه بر اساس واحد تقسیم می‌شود، نه اهمیت. Lasso ممکن است ستون مهم را به‌خاطر واحدش صفر کند</td></tr>
+<tr><td>شبکه‌ی عصبی، هر مدل با گرادیان کاهشی</td><td>شکل سطح زیان</td><td>سطح زیان کشیده و باریک می‌شود، همگرایی کند و ناپایدار</td></tr>
+<tr><td>رگرسیون خطی <b>بدون</b> جریمه (OLS)</td><td>ضریب‌ها واحد را جبران می‌کنند</td><td>پیش‌بینی همان است، ولی مقایسه‌ی بزرگی ضریب‌ها بی‌معنی است</td></tr>
+<tr><td>درخت، جنگل، XGBoost/LightGBM</td><td>آستانه روی ترتیب مقدارها</td><td>تقریباً بی‌اثر؛ هر تبدیل یکنوا هم بی‌اثر است</td></tr>
+<tr><td>Gaussian Naive Bayes</td><td>برای هر ستون جدا میانگین و واریانس تخمین می‌زند</td><td>بی‌اثر</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: LogisticRegression در sklearn به‌طور پیش‌فرض منظم‌شده است</div>
+  <span class="ltr">LogisticRegression()</span> به‌طور پیش‌فرض جریمه‌ی L2 با <span class="ltr">C=1.0</span> دارد. پس با اینکه «رگرسیون لجستیک» در ذهن خیلی‌ها مدل بی‌نیاز از مقیاس است، نسخه‌ی پیش‌فرض sklearn <b>به مقیاس حساس است</b>. سؤال مشابه برای Ridge و Lasso هم صدق می‌کند.
+</div>
+</section>
+
+<section id="fit-train">
+<h2><span class="num">۷</span> فیت روی train، transform روی همه: پیش‌نمایش نشت <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<p>اسلاید‌های ۱۲ تا ۱۴ هر بار تکرار می‌کنند: «میانگین <b>آموزش</b>»، «بازه‌ی <b>آموزش</b>»، «آماره‌های مجموعه‌ی <b>آموزش</b>». دلیلش <b>مرز fit/transform</b> است. scaler هم یک «مدل» کوچک است که پارامترهایش ($\mu,\sigma$، min/max، median/IQR، λ) را از داده یاد می‌گیرد. اگر این پارامترها را روی کل داده یاد بگیرد، اطلاعاتی از تست (آینده) وارد آموزش شده است.</p>
+<pre class="code">import numpy as np
+from sklearn.preprocessing import StandardScaler
+rng = np.random.default_rng(42)
+dist = np.r_[rng.normal(10, 4, 800), rng.normal(14, 4, 200)].reshape(-1, 1)  # last month: longer trips
+train, test = dist[:800], dist[800:]                                        # time-based split
+
+ok   = StandardScaler().fit(train)          # ✔ statistics from the past only
+leak = StandardScaler().fit(dist)           # ✘ has seen the test period
+print("train-only  mean/std:", ok.mean_.round(2), ok.scale_.round(2))
+print("fit-on-all  mean/std:", leak.mean_.round(2), leak.scale_.round(2))
+print("test mean z  (ok)  :", ok.transform(test).mean().round(3))
+print("test mean z  (leak):", leak.transform(test).mean().round(3))</pre>
+<div class="out">train-only  mean/std: [9.88] [3.93]
+fit-on-all  mean/std: [10.68] [4.27]
+test mean z  (ok)  : 1.016
+test mean z  (leak): 0.75</div>
+<p>در این شبیه‌سازی، سفرهای ماه آخر واقعاً طولانی‌تر شده‌اند (تغییر توزیع). scaler درست می‌گوید تست به‌طور متوسط <b>۱٫۰۲ انحراف معیار</b> جابه‌جا شده. scaler نشتی فقط <b>۰٫۷۵</b> نشان می‌دهد، چون آینده را هم در میانگینش دیده و جابه‌جایی را کمرنگ کرده. در تولید، scaler فقط گذشته را دارد. پس ارزیابی با scaler نشتی خوش‌بینانه است و با آنچه در عمل اتفاق می‌افتد نمی‌خواند.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: کدام عملیات «فیت» دارند؟</div>
+  هر چیزی که <b>آماره‌ای از داده</b> می‌گیرد: StandardScaler، MinMaxScaler، RobustScaler، λ در PowerTransformer، مرزهای <span class="ltr">pd.qcut</span>، میانه‌ی جایگزینی گم‌شده، میانگین هدف در target encoding. این‌ها باید روی train فیت شوند. ولی تبدیل‌های <b>بی‌پارامتر</b> مثل <span class="ltr">log1p</span>، sin/cos ساعت، <span class="ltr">fare / distance</span> نشت مقیاسی ندارند، چون هر سطر را فقط با خودش حساب می‌کنند.
+</div>
+<h3>۷.۱ همه‌چیز در یک Pipeline</h3>
+<p>بهترین راه برای اینکه هرگز اشتباهی scaler را روی کل داده فیت نکنی: همه‌ی پیش‌پردازش را داخل <span class="ltr">Pipeline</span> بگذار تا <span class="ltr">fit</span> فقط روی train صدا زده شود. <span class="ltr">ColumnTransformer</span> اجازه می‌دهد برای هر ستون تبدیل خودش را تعریف کنی:</p>
+<pre class="code">import numpy as np, pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import StandardScaler, RobustScaler, FunctionTransformer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import train_test_split
+
+rng = np.random.default_rng(7)                       # synthetic rides, just for the demo
+n = 2000
+df = pd.DataFrame({
+    "distance_km": rng.gamma(2.0, 4.0, n).round(1),
+    "fare_toman": (40_000 + 17_000 * rng.gamma(2.0, 4.0, n) * rng.choice([1, 1, 1, 1.6], n)).round(-3),
+    "eta_min": rng.gamma(3, 2.5, n).round(1),
+    "hour": rng.integers(0, 24, n)})
+df["cancelled"] = (rng.random(n) &lt; 0.15 + 0.02 * (df.eta_min &gt; 10)).astype(int)
+
+def hour_to_cyc(X):
+    h = np.asarray(X, dtype=float)
+    return np.c_[np.sin(2 * np.pi * h / 24), np.cos(2 * np.pi * h / 24)]
+
+pre = ColumnTransformer([
+    ("dist", StandardScaler(), ["distance_km"]),
+    ("fare", make_pipeline(FunctionTransformer(np.log1p, feature_names_out="one-to-one"),
+                           StandardScaler()), ["fare_toman"]),
+    ("eta",  RobustScaler(), ["eta_min"]),
+    ("hour", FunctionTransformer(hour_to_cyc,
+             feature_names_out=lambda self, names: ["hour_sin", "hour_cos"]), ["hour"]),
+])
+model = Pipeline([("pre", pre), ("knn", KNeighborsClassifier(n_neighbors=25))])
+
+X, y = df.drop(columns="cancelled"), df["cancelled"]
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=0)
+model.fit(X_tr, y_tr)                       # every scaler inside is fitted on X_tr only
+print(model.named_steps["pre"].get_feature_names_out())
+print("mean of distance learned from train:", model["pre"].named_transformers_["dist"].mean_.round(2))
+print("transformed test shape:", model["pre"].transform(X_te).shape)</pre>
+<div class="out">['dist__distance_km' 'fare__fare_toman' 'eta__eta_min' 'hour__hour_sin'
+ 'hour__hour_cos']
+mean of distance learned from train: [7.59]
+transformed test shape: (500, 5)</div>
+<div class="cards">
+  <div><b>StandardScaler</b><span class="ltr">with_mean</span> و <span class="ltr">with_std</span>؛ ویژگی‌های <span class="ltr">mean_</span> و <span class="ltr">scale_</span></div>
+  <div><b>MinMaxScaler</b><span class="ltr">feature_range=(0, 1)</span> و <span class="ltr">clip</span></div>
+  <div><b>RobustScaler</b><span class="ltr">quantile_range=(25, 75)</span>؛ <span class="ltr">center_</span> و <span class="ltr">scale_</span></div>
+  <div><b>PowerTransformer</b><span class="ltr">method="yeo-johnson"</span> (پیش‌فرض) یا <span class="ltr">"box-cox"</span>؛ با <span class="ltr">standardize=True</span> خروجی را z-score هم می‌کند</div>
+  <div><b>FunctionTransformer</b>هر تابع بی‌پارامتر (log1p، sin/cos) را به یک قدم pipeline تبدیل می‌کند؛ <span class="ltr">inverse_func</span> برای معکوس</div>
+  <div><b>ColumnTransformer</b>برای هر گروه ستون یک تبدیل؛ <span class="ltr">remainder="passthrough"</span> برای بقیه</div>
+</div>
+<p>جزئیات کامل تقسیم زمانی، اعتبارسنجی متقاطع و «لحظه‌ی پیش‌بینی» در <a href="session-07.html">جلسه‌ی ۷</a> می‌آید.</p>
+</section>
+
+<section id="behavior">
+<h2><span class="num">۸</span> مهندسی ویژگی: رفتاری فکر کن <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۱۹ می‌گوید: <b>«ویژگی خوب معنا اضافه می‌کند، نه فقط ستون.»</b> سه خانواده:</p>
+<div class="tablewrap"><table>
+<tr><th>زمانی (Temporal)</th><th>رابطه‌ای (Relational)</th><th>تجمیعی (Aggregated)</th></tr>
+<tr><td>ساعت روز</td><td>قیمت به ازای هر کیلومتر</td><td>تعداد سفر هر کاربر</td></tr>
+<tr><td>آخر هفته / تعطیل</td><td>سفر به ازای هر هفته‌ی فعال</td><td>میانگین تاریخی ETA</td></tr>
+<tr><td>روز از آخرین سفر</td><td>سهم لغو</td><td>تعداد سفر در پنجره‌ی غلتان</td></tr>
+<tr><td>عمر حساب</td><td>ETA بر مسافت</td><td>عرضه‌ی راننده در سطح شهر</td></tr>
+<tr><td>روند و تازگی</td><td>کلیک به ازای هر نشست</td><td>نرخ تکمیل گذشته</td></tr>
+</table></div>
+<p>ببین این‌ها چطور به مسئله‌ی اصلی درس وصل می‌شوند: <b>«سفرهای تکمیل‌شده ماه گذشته ۱۲٪ کم شده.»</b> ستون خام <span class="ltr">request_time</span> هیچ فرضیه‌ای را آزمون نمی‌کند. ولی <span class="ltr">eta_per_km</span> (آیا راننده‌ها دیر می‌رسند؟)، <span class="ltr">cancel_share</span> در هر منطقه (لغو از طرف مسافر است یا راننده؟) و <span class="ltr">city_supply</span> (آیا عرضه‌ی راننده افت کرده؟) هر کدام یک فرضیه را <b>قابل‌اندازه‌گیری</b> می‌کنند. ویژگی خوب همان فرضیه است که به ستون تبدیل شده.</p>
+<p>نوت‌بوک درس هم در «پاک‌سازی ۱۰: ساخت ستون‌های جدید مفید» همین کار را برای فروشگاه کرده: <span class="ltr">gross = quantity × unit_price</span>، <span class="ltr">revenue</span> بعد از تخفیف، <span class="ltr">month</span>، <span class="ltr">weekday</span>، <span class="ltr">quarter</span>، <span class="ltr">is_weekend</span>، گروه سنی با <span class="ltr">pd.cut</span> و چارک قیمت با <span class="ltr">pd.qcut</span>. بخش ۸.۳ نوت‌بوک ابزارها را خلاصه می‌کند: <span class="ltr">np.where</span> برای دوحالتی، <span class="ltr">np.select</span> برای چندحالتی (اندازه‌ی سفارش کوچک/متوسط/بزرگ)، <span class="ltr">map</span> برای ترجمه، <span class="ltr">pd.cut/qcut</span> برای بازه‌بندی، و قانون طلایی: <b>تا جای ممکن برداری کار کن، نه <span class="ltr">apply</span> سطر به سطر</b>. نوت‌بوک این را روی ۲۰ هزار سطر اندازه می‌گیرد و نسخه‌ی برداری با فاصله‌ی زیاد برنده است.</p>
+
+<h3>۸.۱ نسبت‌ها و تعامل‌ها <span class="tag book">تکمیلی</span></h3>
+<pre class="code">import numpy as np, pandas as pd
+r = pd.DataFrame({"distance_km": [4.2, 0.0, 12.5, 7.8],
+                  "fare_toman":  [160_000, 45_000, 410_000, 520_000],
+                  "eta_min":     [3, 6, 12, 4],
+                  "hour":        [8, 14, 23, 18],
+                  "is_raining":  [0, 0, 1, 1]})
+km = r["distance_km"].where(r["distance_km"] &gt; 0)            # 0 km -&gt; NaN, not division by zero
+r["price_per_km"] = (r["fare_toman"] / km).round(-2)
+r["eta_per_km"]   = (r["eta_min"] / km).round(2)
+r["is_night"]     = ((r["hour"] &gt;= 22) | (r["hour"] &lt; 6)).astype(int)
+r["night_x_rain"] = r["is_night"] * r["is_raining"]          # interaction
+print(r.to_string(index=False))</pre>
+<div class="out"> distance_km  fare_toman  eta_min  hour  is_raining  price_per_km  eta_per_km  is_night  night_x_rain
+         4.2      160000        3     8           0       38100.0        0.71         0             0
+         0.0       45000        6    14           0           NaN         NaN         0             0
+        12.5      410000       12    23           1       32800.0        0.96         1             1
+         7.8      520000        4    18           1       66700.0        0.51         0             0</div>
+<ul>
+  <li><b>نسبت (ratio):</b> اثر اندازه را حذف می‌کند. کرایه‌ی ۵۲۰ هزار تومانی برای ۷٫۸ کیلومتر (۶۶٬۷۰۰ تومان به ازای هر کیلومتر) خیلی عجیب‌تر از کرایه‌ی ۴۱۰ هزار تومانی برای ۱۲٫۵ کیلومتر است. ستون خام کرایه این را نشان نمی‌دهد.</li>
+  <li><b>تقسیم بر صفر:</b> سفر ۰ کیلومتری (لغو قبل از حرکت) را با <span class="ltr">where</span> به NaN تبدیل کن. اگر نکنی، <span class="ltr">inf</span> می‌گیری که StandardScaler را نابود می‌کند.</li>
+  <li><b>تعامل (interaction):</b> «شب» و «باران» هر کدام اثری دارند، ولی «شب <b>و</b> باران» ممکن است اثری بزرگ‌تر از جمع آن دو داشته باشد. مدل خطی ضرب را خودش نمی‌سازد، پس باید ستونش را بدهی. درخت می‌تواند تعامل را با چند شکاف پشت سر هم تقریب بزند، ولی ستون صریح کارش را راحت‌تر می‌کند. نمونه‌های دیگر: <span class="ltr">is_airport × hour</span>، <span class="ltr">distance × surge</span>.</li>
+</ul>
+
+<h3>۸.۲ ویژگی‌های رفتاری مسافر و راننده <span class="tag book">تکمیلی</span></h3>
+<div class="tablewrap"><table>
+<tr><th>نوع</th><th>مسافر</th><th>راننده</th><th>نکته</th></tr>
+<tr><td>نرخ (rate)</td><td>نرخ لغو گذشته</td><td>نرخ پذیرش درخواست</td><td>با مخرج کوچک پرنوسان است؛ هموارسازی کن (بخش ۸.۴)</td></tr>
+<tr><td>پنجره‌ی غلتان</td><td>تعداد درخواست ۳۰ روز اخیر</td><td>ساعت آنلاین ۷ روز اخیر</td><td>پنجره باید <b>قبل از</b> لحظه‌ی پیش‌بینی بسته شود</td></tr>
+<tr><td>تازگی (Recency)</td><td>روز از آخرین سفر</td><td>دقیقه از آخرین سفر</td><td>برای اولین سفر NaN است؛ یک پرچم <span class="ltr">is_first_ride</span> بساز</td></tr>
+<tr><td>بسامد (Frequency)</td><td>سفر در ۹۰ روز اخیر</td><td>سفر تکمیل‌شده در هفته</td><td>چوله است؛ log1p کمک می‌کند</td></tr>
+<tr><td>پولی (Monetary)</td><td>جمع کرایه‌ی ۹۰ روز</td><td>درآمد به ازای ساعت آنلاین</td><td>خیلی چوله؛ robust یا log</td></tr>
+<tr><td>تجمیع سطح بالاتر</td><td>نرخ تکمیل در منطقه‌ی مبدأ</td><td>نسبت عرضه به تقاضا در شهر، ۱۵ دقیقه‌ی اخیر</td><td>فقط از داده‌ای که در آن لحظه در دسترس بوده</td></tr>
+</table></div>
+<div class="box def"><div class="bt">تعریف ۵.۲ · RFM</div>
+  سه ویژگی کلاسیک بازاریابی برای خلاصه کردن رفتار مشتری: <b>Recency</b> (چقدر از آخرین تراکنش گذشته)، <b>Frequency</b> (چند بار در یک دوره) و <b>Monetary</b> (چقدر خرج کرده). برای اپ تاکسی اینترنتی: روز از آخرین سفر، تعداد سفر در ۹۰ روز و جمع کرایه در ۹۰ روز. RFM ورودی رایج خوشه‌بندی مشتری‌ها با K-means است، و دقیقاً همان‌جا مقیاس‌بندی حیاتی می‌شود.
+</div>
+
+<h3>۸.۳ «نقطه در زمان» (point-in-time): ویژگی را در لحظه‌ی پیش‌بینی بساز</h3>
+<p>سؤال پیش‌بینی جلسه‌ی ۷ این است: <b>«آیا این سفر لغو می‌شود؟»</b> و لحظه‌ی پیش‌بینی، لحظه‌ی <b>درخواست</b> است. پس هر ویژگی رفتاری باید فقط از رویدادهای <b>قبل از</b> همان درخواست ساخته شود. کد زیر برای هر سفر، ویژگی‌ها را «تا همان لحظه» می‌سازد:</p>
+<pre class="code">import pandas as pd
+rides = pd.DataFrame({
+    "rider_id": [1, 1, 1, 1, 2, 2, 2],
+    "request_time": pd.to_datetime([
+        "2026-09-01 08:10", "2026-09-03 18:40", "2026-09-20 23:30", "2026-09-21 00:15",
+        "2026-09-05 13:00", "2026-09-06 13:20", "2026-10-02 07:55"]),
+    "cancelled": [0, 1, 0, 1, 0, 0, 1]})
+rides = rides.sort_values(["rider_id", "request_time"]).reset_index(drop=True)
+g = rides.groupby("rider_id")
+
+rides["prev_rides"] = g.cumcount()                                   # only rides BEFORE this one
+rides["days_since_last"] = (g["request_time"].diff().dt.total_seconds() / 86400).round(2)
+rides["past_cancel_rate"] = g["cancelled"].transform(lambda s: s.shift().expanding().mean()).round(2)
+
+roll = (rides.set_index("request_time").groupby("rider_id")["cancelled"]
+        .rolling("30D", closed="left").count()                        # window ends just before now
+        .rename("req_30d").reset_index())
+rides = rides.merge(roll, on=["rider_id", "request_time"])
+rides["req_30d"] = rides["req_30d"].fillna(0).astype(int)
+print(rides.to_string(index=False))</pre>
+<div class="out"> rider_id        request_time  cancelled  prev_rides  days_since_last  past_cancel_rate  req_30d
+        1 2026-09-01 08:10:00          0           0              NaN               NaN        0
+        1 2026-09-03 18:40:00          1           1             2.44              0.00        1
+        1 2026-09-20 23:30:00          0           2            17.20              0.50        2
+        1 2026-09-21 00:15:00          1           3             0.03              0.33        3
+        2 2026-09-05 13:00:00          0           0              NaN               NaN        0
+        2 2026-09-06 13:20:00          0           1             1.01              0.00        1
+        2 2026-10-02 07:55:00          1           2            25.77              0.00        2</div>
+<ul>
+  <li><span class="ltr">cumcount()</span> تعداد سفرهای <b>قبلی</b> را می‌شمارد (از ۰ شروع می‌شود)، نه کل سفرها.</li>
+  <li><span class="ltr">shift()</span> قبل از <span class="ltr">expanding().mean()</span> سفر فعلی را از نرخ لغو بیرون می‌گذارد. بدون آن، برچسب خود سفر داخل ویژگی‌اش است: <b>نشت هدف (target leakage)</b>.</li>
+  <li><span class="ltr">closed="left"</span> در پنجره‌ی زمانی یعنی سفر فعلی جزو پنجره نیست.</li>
+  <li>سطر چهارم مسافر ۱ فقط ۴۵ دقیقه بعد از سفر قبلی است (۰٫۰۳ روز). آیا وقتی درخواست ۰۰:۱۵ ثبت شد، نتیجه‌ی سفر ۲۳:۳۰ معلوم بود؟ اگر سفر هنوز در جریان بود، نه. در داده‌ی واقعی باید زمان <b>بسته شدن</b> سفر قبلی را چک کنی، نه زمان درخواستش.</li>
+</ul>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: تجمیع روی کل جدول با groupby ساده</div>
+  <span class="ltr">df.groupby("rider_id")["cancelled"].transform("mean")</span> برای همه‌ی سفرهای مسافر ۱ عدد ۰٫۵ می‌دهد: از سفر اول (که گذشته‌ای نداشت) تا سفر آخر. این ستون در آموزش عالی کار می‌کند چون آینده و برچسب خود سطر را دیده، و در تولید فرو می‌ریزد. نسخه‌ی درست برای همان مسافر NaN، ۰، ۰٫۵ و ۰٫۳۳ است.
+</div>
+
+<h3>۸.۴ هموارسازی نرخ‌ها با مخرج کوچک <span class="tag book">تکمیلی</span></h3>
+<p>مسافری که ۱ سفر داشته و آن را لغو کرده، نرخ لغو ۱۰۰٪ دارد. مسافری با ۲۰۰ سفر و ۳۰ لغو، ۱۵٪. اولی واقعاً بدتر است؟ نه، فقط داده‌ی کمی دارد. یک راه ساده این است که نرخ را به سمت میانگین کل بکشی (Bayesian / additive smoothing):</p>
+$$\widehat{\text{rate}}=\frac{\text{cancels}+m\cdot p_0}{\text{rides}+m}$$
+<p>$p_0$ نرخ کل روی train است (مثلاً ۰٫۱۵) و $m$ قدرت پیش‌فرض است (مثلاً ۱۰). مسافر اول: $(1+1.5)/(1+10)=0.227$. مسافر دوم: $(30+1.5)/(200+10)=0.150$. مقدار $p_0$ هم یک آماره است و باید فقط از train بیاید.</p>
+
+<h3>۸.۵ بازه‌بندی (Binning / Discretization) <span class="tag book">تکمیلی</span></h3>
+<pre class="code">import pandas as pd
+d = pd.Series([0.8, 2.5, 3.9, 6.0, 9.5, 14.0, 22.0, 41.0], name="distance_km")
+print(pd.cut(d, bins=[0, 3, 10, 25, 100], labels=["short", "mid", "long", "intercity"]).tolist())
+print(pd.qcut(d, q=4, labels=["Q1", "Q2", "Q3", "Q4"]).tolist())</pre>
+<div class="out">['short', 'short', 'mid', 'mid', 'mid', 'long', 'long', 'intercity']
+['Q1', 'Q1', 'Q2', 'Q2', 'Q3', 'Q3', 'Q4', 'Q4']</div>
+<div class="vs">
+  <div><h4>مزایا</h4><ul><li>به پرت‌ها مقاوم است (سفر ۴۱ کیلومتری فقط «intercity» است)</li><li>به مدل خطی اجازه می‌دهد رابطه‌ی غیرخطی و پله‌ای بگیرد</li><li>با دسته‌بندی کسب‌وکار جور است (تعرفه‌ی شهری و بین‌شهری)</li><li>تفسیر و گزارش ساده‌تر</li></ul></div>
+  <div><h4>معایب</h4><ul><li>اطلاعات از دست می‌رود: ۳٫۱ و ۹٫۹ کیلومتر یکی می‌شوند</li><li>پرش مصنوعی در مرزها: ۹٫۹ و ۱۰٫۱ در دو دسته‌ی متفاوت</li><li>مرزها دلبخواهی‌اند. <span class="ltr">qcut</span> مرزها را از داده یاد می‌گیرد، پس باید روی train فیت شود</li><li>برای درخت‌ها معمولاً لازم نیست، چون خودشان بهترین مرز را پیدا می‌کنند</li></ul></div>
+</div>
+</section>
+
+<section id="temporal">
+<h2><span class="num">۹</span> ویژگی‌های زمانی: چرخه‌ها و تازگی <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۲۰: <b>«زمان اغلب از یک timestamp خام آموزنده‌تر است.»</b> مُهر زمانی <span class="ltr">2026-10-27 07:45:00</span> برای مدل فقط یک عدد بزرگ است. «ساعت ۷:۴۵ صبح سه‌شنبه، ساعت اوج، روز کاری» چیزی است که رفتار را توضیح می‌دهد. کد اسلاید:</p>
+<pre class="code">df["request_time"] = pd.to_datetime(df["request_time"])
+df["hour"] = df["request_time"].dt.hour
+df["weekday"] = df["request_time"].dt.dayofweek
+df["is_weekend"] = (df["weekday"] &gt;= 5).astype(int)
+
+# Cyclic representation for 0...23 hours
+df["hour_sin"] = np.sin(2*np.pi*df["hour"]/24)
+df["hour_cos"] = np.cos(2*np.pi*df["hour"]/24)</pre>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: <span class="ltr">weekday &gt;= 5</span> در ایران آخر هفته نیست</div>
+  در pandas، <span class="ltr">dayofweek</span> برای دوشنبه ۰ و برای یکشنبه ۶ است. پس <span class="ltr">weekday &gt;= 5</span> یعنی <b>شنبه و یکشنبه</b>، که آخر هفته‌ی اروپایی است. برای داده‌ی ایران، جمعه می‌شود <span class="ltr">dayofweek == 4</span> و پنجشنبه <span class="ltr">== 3</span>. پنجشنبه برای بخشی از ادارات و دانشگاه‌ها تعطیل یا نیمه‌تعطیل است، پس بهتر است یک پرچم جدا برایش بسازی و بگذاری داده تصمیم بگیرد. کد اسلاید (و نوت‌بوک درس که داده‌ی آلمانی دارد) برای داده‌ی خودشان درست است. «کپی کورکورانه» آن روی داده‌ی تهران خطای بی‌صدا است.
+</div>
+
+<h3>۹.۱ چرا زمان چرخه‌ای را کدگذاری می‌کنیم؟ (اسلاید ۲۱)</h3>
+<div class="vs">
+  <div><h4>مسئله</h4>مقدار خام ساعت: ۲۳ و ۰ از نظر عددی ۲۳ واحد فاصله دارند. ولی روی ساعت فقط <b>یک ساعت</b> از هم فاصله دارند. ساعت ۲۳:۰۰ و ۰۰:۰۰ همسایه‌اند، نه دو دسته‌ی دور از هم.</div>
+  <div><h4>راه‌حل</h4>از سینوس و کسینوس استفاده کن: $\sin(2\pi h/24)$ و $\cos(2\pi h/24)$. این نمایش دوبعدی دایره‌ای <b>همسایگی را حفظ می‌کند</b>.</div>
+</div>
+<div class="box thm"><div class="bt">فرمول ۵.۷ · کدگذاری چرخه‌ای با دوره‌ی $P$</div>
+$$\phi(h)=\Big(\sin\frac{2\pi h}{P},\ \cos\frac{2\pi h}{P}\Big),\qquad \lVert\phi(h_1)-\phi(h_2)\rVert=2\sin\Big(\frac{\pi\,\Delta}{P}\Big),\quad \Delta=\min(|h_1-h_2|,\ P-|h_1-h_2|)$$
+پس فاصله فقط به <b>فاصله‌ی واقعی روی دایره</b> بستگی دارد. برای ۲۳ و ۰: $\Delta=1$ و فاصله $=2\sin(\pi/24)\approx0.261$. همین عدد برای ۸ و ۹ هم درمی‌آید. برای ۰ و ۱۲ (دو سر دایره) بیشینه‌ی ممکن، یعنی $2$. ساعت: $P=24$. روز هفته: $P=7$. ماه: $P=12$. دقیقه‌ی روز: $P=1440$.
+</div>
+<div class="box proof"><div class="bt">اثبات کوتاه فرمول فاصله</div>
+  با $\theta_i=2\pi h_i/P$:
+  $\lVert\phi_1-\phi_2\rVert^2=(\sin\theta_1-\sin\theta_2)^2+(\cos\theta_1-\cos\theta_2)^2=2-2\cos(\theta_1-\theta_2)=4\sin^2\!\frac{\theta_1-\theta_2}{2}$.
+  جذرش $2|\sin(\pi(h_1-h_2)/P)|$ است و چون سینوس دوره‌ی $\pi$ دارد، این همان $2\sin(\pi\Delta/P)$ است.
+</div>
+<div id="w-cyc"></div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: فقط sin را نگه داشتن</div>
+  $\sin(2\pi\cdot1/24)=\sin(2\pi\cdot11/24)=0.259$. یعنی ساعت ۱ بامداد و ۱۱ صبح با sin تنها <b>یک مقدار</b> می‌گیرند. هر مقدار sin (جز دو سر) به دو ساعت می‌خورد. کسینوس این ابهام را حل می‌کند ($0.966$ در برابر $-0.966$). این دو ستون یک جفت‌اند و با هم معنا دارند. اگر یکی را با Lasso یا انتخاب ویژگی حذف کنی، کدگذاری خراب می‌شود.
+</div>
+<div class="box note"><div class="bt">sin/cos همیشه بهترین انتخاب نیست</div>
+  <b>درخت‌ها</b> با ساعت خام هم خوب کار می‌کنند: شکاف «ساعت ≥ ۲۲ یا ساعت &lt; ۶» را با دو آستانه می‌سازند. sin/cos برای درخت حتی کمی سخت‌تر است، چون یک بازه‌ی زمانی را باید با ترکیب دو ستون جدا کند. <b>One-hot</b> برای ۲۴ ساعت همه‌ی جفت‌ها را با فاصله‌ی $\sqrt2$ از هم قرار می‌دهد. پس همسایگی گم می‌شود، ولی الگوی کاملاً دلخواه هر ساعت قابل‌یادگیری است. یک گزینه‌ی دیگر <b>پرچم‌های دامنه‌ای</b> است، مثل ساعت اوج و شب. انتخاب بین این‌ها، مثل هر کدگذاری دیگری، <b>یک تصمیم مدل‌سازی است</b>.
+</div>
+
+<h3>۹.۲ تقویم ایرانی: جمعه، نوروز، ماه شمسی و ساعت اوج <span class="tag book">تکمیلی</span></h3>
+<p>رفتار سفر در تهران با تقویم میلادی تعیین نمی‌شود. نوروز، سیزده‌به‌در، جمعه و ماه‌های شمسی الگوی تقاضا را شکل می‌دهند. pandas تقویم شمسی ندارد. کتابخانه‌ی <span class="ltr">jdatetime</span> هست، ولی تبدیل آن‌قدر کوتاه است که می‌شود خودت بنویسی:</p>
+<pre class="code">import numpy as np, pandas as pd
+
+def g2j(gy, gm, gd):
+    """Gregorian -&gt; Jalali (arithmetic algorithm; jdatetime gives the same result)"""
+    g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+    gy2 = gy + 1 if gm &gt; 2 else gy
+    days = (355666 + 365 * gy + (gy2 + 3) // 4 - (gy2 + 99) // 100
+            + (gy2 + 399) // 400 + gd + g_d_m[gm - 1])
+    jy = -1595 + 33 * (days // 12053); days %= 12053
+    jy += 4 * (days // 1461); days %= 1461
+    if days &gt; 365:
+        jy += (days - 1) // 365; days = (days - 1) % 365
+    if days &lt; 186:
+        return jy, 1 + days // 31, 1 + days % 31
+    return jy, 7 + (days - 186) // 30, 1 + (days - 186) % 30
+
+df = pd.DataFrame({"request_time": pd.to_datetime([
+    "2026-03-20 23:50", "2026-03-22 08:15", "2026-04-02 17:40",
+    "2026-10-27 07:45", "2026-10-30 18:30"])})
+t = df["request_time"]
+j = t.apply(lambda x: g2j(x.year, x.month, x.day))
+df["j_month"], df["j_day"] = j.str[1], j.str[2]
+df["is_friday"] = (t.dt.dayofweek == 4).astype(int)             # Monday=0 ... Friday=4
+df["is_nowruz"] = ((df.j_month == 1) &amp; (df.j_day &lt;= 4)).astype(int)
+df["is_sizdah"] = ((df.j_month == 1) &amp; (df.j_day == 13)).astype(int)
+df["is_holiday"] = df[["is_friday", "is_nowruz", "is_sizdah"]].max(axis=1)
+h = t.dt.hour + t.dt.minute / 60
+in_window = ((h &gt;= 7) &amp; (h &lt; 9.5)) | ((h &gt;= 17) &amp; (h &lt; 20))
+df["rush_hour"] = (in_window &amp; (df.is_holiday == 0)).astype(int)
+print(df.to_string(index=False))</pre>
+<div class="out">       request_time  j_month  j_day  is_friday  is_nowruz  is_sizdah  is_holiday  rush_hour
+2026-03-20 23:50:00       12     29          1          0          0           1          0
+2026-03-22 08:15:00        1      2          0          1          0           1          0
+2026-04-02 17:40:00        1     13          0          0          1           1          0
+2026-10-27 07:45:00        8      5          0          0          0           0          1
+2026-10-30 18:30:00        8      8          1          0          0           1          0</div>
+<ul>
+  <li>سطر اول ۲۹ اسفند ۱۴۰۴ و جمعه است. سطر دوم ۲ فروردین ۱۴۰۵ است و با اینکه ساعت ۸:۱۵ صبح است، <b>ساعت اوج نیست</b>، چون تعطیل است. ساعت اوج یک تعامل است: «بازه‌ی ساعتی» × «روز کاری».</li>
+  <li>بازه‌های ساعت اوج (۷ تا ۹:۳۰ و ۱۷ تا ۲۰) فقط <b>فرض اولیه</b>‌اند. با EDA روی داده‌ی خودت (نمودار تعداد درخواست بر حسب ساعت، جدا برای روز کاری و تعطیل) تنظیمشان کن.</li>
+  <li>تعطیلات مذهبی بر اساس تقویم قمری‌اند و هر سال حدود ۱۱ روز در تقویم شمسی جابه‌جا می‌شوند. با قاعده‌ی ثابت نمی‌شود حسابشان کرد. یک جدول تعطیلات رسمی (CSV) بساز و <span class="ltr">merge</span> کن. ستون‌های «روز قبل از تعطیلی» و «روز بعد از تعطیلی» هم معمولاً مفیدند.</li>
+  <li>اگر فرضیه‌ات این است که رفتار خرج کردن با واریز حقوق در آخر ماه شمسی عوض می‌شود، <span class="ltr">j_day</span> احتمالاً از روز ماه میلادی بهتر است. ولی این یک <b>فرضیه</b> است. با داده آزمونش کن.</li>
+</ul>
+
+<h3>۹.۳ تازگی و روند</h3>
+<p>نیمه‌ی دوم عنوان اسلاید ۲۰ «تازگی» (recency) است: «روز از آخرین سفر» و «عمر حساب» (<span class="ltr">request_time − signup_time</span>). هر دو <b>فاصله تا لحظه‌ی پیش‌بینی</b> هستند، نه یک تاریخ مطلق. به همین دلیل وقتی مدل سال بعد اجرا شود هم معنایشان عوض نمی‌شود. خود timestamp خام را به‌عنوان ویژگی نده. مدل یاد می‌گیرد «تاریخ‌های بزرگ‌تر» را به برچسب‌ها ربط بدهد و روی آینده (که همیشه بیرون از بازه‌ی آموزش است) برون‌یابی بی‌معنی می‌کند.</p>
+
+<div class="box tip"><div class="bt">💡 جمع‌بندی اسلاید ۲۳: از ویژگی خام به نمایش معنادار</div>
+  <b>استانداردسازی</b> (هم‌واحد کردن با μ و σ) · <b>نرمال‌سازی</b> (بردن به [۰، ۱]) · <b>مقیاس‌بندی مقاوم</b> (میانه و IQR در برابر پرت‌ها) · <b>ویژگی‌های دامنه‌ای</b> (رفتار، نسبت، زمان چرخه‌ای، تقویم). سه مورد اول «چطور یک عدد را نشان بدهیم» است و چهارمی «چه عددی را نشان بدهیم». ارزش اصلی معمولاً در چهارمی است.
+</div>
+</section>
+
+<section id="solved">
+<h2><span class="num">۱۰</span> مسئله‌ی حل‌شده (سبک تمرین شریف) <span class="tag exam">امتحانی</span></h2>
+<div class="box ex"><div class="bt">مسئله · «سفرهای مشابه» برای تشخیص کرایه‌ی غیرعادی</div>
+<p>تیم قیمت‌گذاری یک اپ اسنپ‌مانند می‌خواهد برای هر سفر، با kNN نزدیک‌ترین سفرهای گذشته را پیدا کند. سه ویژگی دارد: <span class="ltr">distance_km</span>، <span class="ltr">fare_toman</span> و <span class="ltr">hour</span> (۰ تا ۲۳). آماره‌های <b>train</b>:</p>
+<div class="tablewrap"><table>
+<tr><th>ستون</th><th>میانگین</th><th>انحراف معیار</th><th>میانه</th><th>IQR</th><th>توضیح</th></tr>
+<tr><td>distance_km</td><td>8</td><td>4</td><td>7</td><td>6</td><td>کمی چوله</td></tr>
+<tr><td>fare_toman</td><td>250,000</td><td>150,000</td><td>200,000</td><td>120,000</td><td>دم راست بلند به‌خاطر surge</td></tr>
+</table></div>
+<p>سفر کوئری $Q$ = (۱۲ کیلومتر، ۲۶۰٬۰۰۰ تومان، ساعت ۲۳). دو نامزد: $A$ = (۴ کیلومتر، ۲۵۰٬۰۰۰ تومان، ساعت ۲۲) و $B$ = (۱۳ کیلومتر، ۳۸۰٬۰۰۰ تومان، ساعت ۰).</p>
+<p><b>(الف)</b> برای هر ستون یک تبدیل پیشنهاد بده و دلیلش را بگو. <b>(ب)</b> با داده‌ی خام، نزدیک‌ترین نامزد کدام است؟ <b>(ج)</b> با تبدیل‌های پیشنهادی (الف) فاصله‌ها را حساب کن. <b>(د)</b> یکی از اعضای تیم مسافت و کرایه را robust کرده، ولی ساعت را خام گذاشته. چه می‌شود؟ <b>(هـ)</b> تیم میانه و IQR را روی کل داده‌ی سه ماه، شامل ماه تست، حساب کرده. مشکل چیست؟</p>
+</div>
+<details><summary>راه‌حل کامل</summary>
+<p><b>(الف)</b> مسافت و کرایه: <b>RobustScaler</b>، چون کرایه پرت‌های واقعی surge دارد و نمی‌خواهیم حذفشان کنیم. نمی‌خواهیم σ بزرگ‌شده‌ی کرایه (۱۵۰ هزار) بقیه‌ی سفرها را له کند. (گزینه‌ی قابل‌دفاع دیگر: اول log1p روی کرایه و بعد StandardScaler.) ساعت: <b>sin/cos</b>، چون چرخه‌ای است. خروجی‌اش در $[-1,1]$ است و مقیاسش با بقیه قابل‌مقایسه است.</p>
+<p><b>(ب)</b> خام: $d(Q,A)=\sqrt{8^2+10000^2+1^2}\approx10000.0$ و $d(Q,B)=\sqrt{1^2+120000^2+23^2}\approx120000.0$. نزدیک‌ترین: $A$. فقط کرایه دیده شده و سفری با <b>یک‌سوم مسافت</b> «مشابه» حساب شده.</p>
+<p><b>(ج)</b> تبدیل‌ها:</p>
+<ul><li>مسافت: $(x-7)/6$</li><li>کرایه: $(x-200000)/120000$</li><li>ساعت: $\big(\sin(2\pi h/24),\ \cos(2\pi h/24)\big)$</li></ul>
+$$\begin{aligned}Q&\to(0.833,\ 0.500,\ -0.259,\ 0.966)\\ A&\to(-0.500,\ 0.417,\ -0.500,\ 0.866)\\ B&\to(1.000,\ 1.500,\ 0,\ 1)\end{aligned}$$
+$$d(Q,A)^2=1.778+0.007+0.058+0.010=1.853\Rightarrow d\approx1.361$$
+$$d(Q,B)^2=0.028+1.000+0.067+0.001=1.096\Rightarrow d\approx1.047$$
+<p>نزدیک‌ترین: $B$. سفری با مسافت تقریباً برابر و ساعت مجاور (۰ و ۲۳ یک ساعت فاصله دارند). اختلاف کرایه‌ی $B$ (۱۲۰ هزار تومان، برابر یک IQR) حالا <b>واقعاً</b> وزن دارد، ولی دیگر همه‌چیز نیست. نکته‌ی جالب: فاصله‌ی ساعت $A$ (۲۲) و $B$ (۰) از کوئری (۲۳) دقیقاً برابر است: $2\sin(\pi/24)=0.261$.</p>
+<p><b>(د)</b> با ساعت خام: $d(Q,A)=\sqrt{1.778+0.007+1}=1.669$ و $d(Q,B)=\sqrt{0.028+1+23^2}=\sqrt{530.03}\approx23.02$. حالا $B$ به‌خاطر «۲۳ ساعت» اختلاف ساختگی از همه دورتر است و $A$ دوباره برنده می‌شود. <b>یک ستون مقیاس‌نشده کافی است تا کل مقیاس‌بندی بی‌اثر شود.</b> این بار ساعت غالب شده، نه کرایه.</p>
+<p><b>(هـ)</b> نشت از آینده. پارامترهای scaler بخشی از مدل‌اند و باید فقط از train بیایند. اگر ماه تست کرایه‌های بالاتری داشته باشد (مثلاً به‌خاطر افزایش نرخ)، میانه‌ی نشتی بالاتر است، جابه‌جایی تست کمرنگ‌تر دیده می‌شود و ارزیابی خوش‌بینانه می‌شود. راه درست: <span class="ltr">Pipeline</span> با <span class="ltr">ColumnTransformer</span> که فقط روی سفرهای قبل از تاریخ برش <span class="ltr">fit</span> می‌شود. بعد همان آماره‌ها روی تست و تولید <span class="ltr">transform</span> می‌شوند.</p>
+</details>
+</section>
+
+<section id="exercises">
+<h2><span class="num">۱۱</span> تمرین‌ها</h2>
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+در train، مسافت سفرها $\mu=10$، $\sigma=4$، کمینه‌ی ۱ و بیشینه‌ی ۴۱ کیلومتر دارد. برای سفر ۱۸ کیلومتری z-score و مقدار min-max را حساب کن. سفر ۴ کیلومتری چطور؟
+<details><summary>راه‌حل</summary>
+۱۸ کیلومتر: $z=(18-10)/4=2$ و $x'=(18-1)/(41-1)=17/40=0.425$. ۴ کیلومتر: $z=(4-10)/4=-1.5$ و $x'=3/40=0.075$. دقت کن که z منفی دارد ولی min-max روی train منفی نمی‌شود. همچنین min-max عدد ۰٫۴۲۵ را برای سفری می‌دهد که «دو انحراف معیار بالای میانگین» است، فقط چون بیشینه‌ی ۴۱ (احتمالاً یک سفر بین‌شهری) بازه را کش داده.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">· 🟢 پایه</span></div>
+این مدل‌ها را به دو گروه «مقیاس‌بندی معمولاً لازم» و «معمولاً لازم نیست» تقسیم کن و برای هر کدام یک جمله دلیل بنویس: kNN، جنگل تصادفی، Lasso، K-means، XGBoost، PCA، درخت تصمیم، SVM با RBF، شبکه‌ی عصبی MLP، <span class="ltr">LogisticRegression()</span> پیش‌فرض sklearn.
+<details><summary>راه‌حل</summary>
+<b>لازم:</b> kNN و K-means (فاصله‌ی اقلیدسی)، Lasso (جریمه‌ی $|\beta|$ به واحد وابسته است)، PCA (بیشینه‌ی واریانس را دنبال می‌کند)، SVM-RBF (هسته تابع فاصله است)، MLP (همگرایی گرادیان)، LogisticRegression پیش‌فرض (جریمه‌ی L2 با C=1). <b>لازم نیست:</b> جنگل تصادفی، XGBoost و درخت تصمیم (شکاف‌ها روی ترتیب مقدارهاست و هر تبدیل یکنوا بی‌اثر است).
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">· 🟡 مهارتی</span></div>
+برای حقوق‌های اسلاید ۱۵ (۲k، ۲٫۵k، ۳k، ۳٫۵k، ۴k، ۴٫۵k، ۵۰k): (الف) مقدار robust حقوق ۴٬۰۰۰ و ۵۰٬۰۰۰ را با چارک‌های Tukey و با چارک‌های درون‌یابی خطی (<span class="ltr">np.percentile</span>) حساب کن. (ب) z-score حقوق ۵۰٬۰۰۰ را حساب کن ($\sigma$ جمعیت). (ج) چرا z پرت از robust آن خیلی کوچک‌تر است؟
+<details><summary>راه‌حل</summary>
+(الف) Tukey: میانه ۳۵۰۰، $Q_1=2500$، $Q_3=4500$ و IQR=۲۰۰۰، پس ۴۰۰۰ ← ۰٫۲۵ و ۵۰۰۰۰ ← ۲۳٫۲۵. خطی: موقعیت $Q_1$ برابر $0.25\times6=1.5$، یعنی بین ۲۵۰۰ و ۳۰۰۰، پس ۲۷۵۰. $Q_3$ در موقعیت ۴٫۵ است، پس ۴۲۵۰. IQR=۱۵۰۰، پس ۴۰۰۰ ← ۰٫۳۳۳ و ۵۰۰۰۰ ← ۳۱٫۰ (همان خروجی <span class="ltr">RobustScaler</span>).
+(ب) $\mu=69500/7=9928.6$ و $\sigma=16378.2$، پس $z=(50000-9928.6)/16378.2=2.447$.
+(ج) خود پرت در محاسبه‌ی μ و σ شرکت کرده و σ را حدود ۱۰ برابر بزرگ کرده. مقیاسی که پرت در ساختنش نقش دارد، پرت را «کمتر غیرعادی» نشان می‌دهد (masking). میانه و IQR به یک مقدار حدی تقریباً بی‌اعتنا هستند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">· 🟡 مهارتی</span></div>
+(الف) فاصله‌ی sin/cos بین ساعت ۲۲ و ساعت ۲ چقدر است؟ فاصله‌ی خام چقدر است؟ (ب) روز هفته را با دوره‌ی ۷ کدگذاری کن. فاصله‌ی جمعه (<span class="ltr">dayofweek=4</span>) و شنبه (۵) چقدر است؟ دوشنبه (۰) و یکشنبه (۶) چطور؟ (ج) چرا برای ماه شمسی، کدگذاری چرخه‌ای ممکن است <b>از one-hot بدتر</b> باشد؟
+<details><summary>راه‌حل</summary>
+(الف) $\Delta=\min(20,4)=4$، فاصله $=2\sin(4\pi/24)=2\sin(30^\circ)=1.0$. فاصله‌ی خام ۲۰ است.
+(ب) هر دو جفت روی دایره یک روز فاصله دارند: $2\sin(\pi/7)\approx0.868$. با عدد خام، دوشنبه و یکشنبه ۶ واحد فاصله داشتند.
+(ج) کدگذاری چرخه‌ای فرض می‌کند اثر ماه <b>نرم</b> است و ماه‌های مجاور شبیه‌اند. ولی فروردین (نوروز) یک جهش ناگهانی دارد که نه شبیه اسفند است و نه اردیبهشت. یک موج سینوسی نمی‌تواند چنین قله‌ی تیزی بسازد. one-hot (یا پرچم <span class="ltr">is_nowruz</span>) این را آزادانه یاد می‌گیرد.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">· 🟡 مهارتی</span></div>
+برای جدول <span class="ltr">rides</span> با ستون‌های <span class="ltr">distance_km</span>، <span class="ltr">fare_toman</span>، <span class="ltr">eta_min</span>، <span class="ltr">request_time</span>، کد pandas بنویس که این ستون‌ها را <b>برداری</b> بسازد: قیمت به ازای هر کیلومتر (بدون تقسیم بر صفر)، پرچم جمعه، پرچم شب (۲۲ تا ۶)، و اندازه‌ی سفر با سه حالت «کوتاه (کمتر از ۳)»، «متوسط (۳ تا ۱۰)» و «بلند».
+<details><summary>راه‌حل</summary>
+<pre class="code">km = rides["distance_km"].where(rides["distance_km"] &gt; 0)
+rides["price_per_km"] = rides["fare_toman"] / km
+t = rides["request_time"]
+rides["is_friday"] = (t.dt.dayofweek == 4).astype(int)
+rides["is_night"] = ((t.dt.hour &gt;= 22) | (t.dt.hour &lt; 6)).astype(int)
+rides["trip_size"] = np.select(
+    [rides["distance_km"] &lt; 3, rides["distance_km"] &lt; 10],
+    ["short", "mid"], default="long")</pre>
+<span class="ltr">np.select</span> شرط‌ها را به ترتیب امتحان می‌کند، پس شرط دوم فقط برای سفرهایی اجرا می‌شود که ۳ کیلومتر یا بیشترند. از <span class="ltr">apply</span> سطر به سطر استفاده نکن (درس نوت‌بوک: برداری خیلی سریع‌تر است).
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l3">· 🔴 تحلیلی</span></div>
+یک هم‌تیمی برای مدل «لغو می‌شود؟» ستون <span class="ltr">rider_cancel_rate = df.groupby("rider_id")["cancelled"].transform("mean")</span> را ساخته و AUC روی validation از ۰٫۷۱ به ۰٫۹۳ رسیده. (الف) چرا این جهش باید تو را مشکوک کند؟ (ب) برای مسافری با ۴ سفر و برچسب‌های ۰، ۱، ۰، ۱، مقدار ستون نشتی و ستون درست را بنویس. (ج) حتی نسخه‌ی <span class="ltr">shift().expanding()</span> در یک حالت هنوز نشت دارد. کدام حالت؟
+<details><summary>راه‌حل</summary>
+(الف) جهش بزرگ از یک ویژگی ساده نشانه‌ی کلاسیک نشت است. ستون، برچسب <b>خود سطر</b> و برچسب سفرهای <b>آینده</b> را میانگین گرفته. برای مسافری با یک سفر، ستون دقیقاً برابر برچسب است.
+(ب) نشتی: ۰٫۵، ۰٫۵، ۰٫۵، ۰٫۵. درست (فقط گذشته): NaN، ۰، ۰٫۵، ۰٫۳۳.
+(ج) وقتی سفر قبلی هنوز در لحظه‌ی درخواست جدید <b>تمام نشده</b> (مثل دو درخواست با ۴۵ دقیقه فاصله). برچسب آن سفر در لحظه‌ی پیش‌بینی معلوم نبوده. راه درست این است که فقط سفرهایی را بشماری که <span class="ltr">end_time &lt; request_time</span>. همچنین اگر تقسیم train/validation تصادفی باشد و نه زمانی، سفرهای آینده‌ی یک مسافر در train می‌افتند و باز هم نشت داری.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">· 🔴 تحلیلی</span></div>
+MinMaxScaler روی سفرهای شهریور فیت شده (کرایه از ۴۰ هزار تا ۹۰۰ هزار تومان). در مهر، نرخ‌ها ۲۰٪ گران شده و یک سفر فرودگاهی ۱٫۶ میلیونی هم آمده. (الف) مقدار min-max این سفر چقدر است؟ (ب) چه اتفاقی برای kNN می‌افتد؟ (ج) سه کار پیشنهاد بده.
+<details><summary>راه‌حل</summary>
+(الف) $(1{,}600{,}000-40{,}000)/(900{,}000-40{,}000)=1{,}560/860\approx1.814$.
+(ب) این سفر از همه‌ی سفرهای train دور است و همسایه‌هایش بی‌معنی‌اند. مهم‌تر: افزایش ۲۰٪ نرخ <b>همه‌ی</b> کرایه‌ها را در فضای مقیاس‌شده بالا می‌برد. پس سفرهای مهر به سفرهای گران‌تر (و احتمالاً طولانی‌تر) شهریور نزدیک می‌شوند.
+(ج) (۱) ویژگی را تورم‌زدایی کن، مثلاً <span class="ltr">price_per_km</span> نسبت به نرخ پایه‌ی همان ماه. (۲) مقدارهای خارج از [۰، ۱] را پایش کن و هشدار تغییر توزیع بده. scaler را با پنجره‌ی اخیر دوباره فیت کن (همراه با مدل). (۳) برای ستون‌هایی با پرت واقعی، RobustScaler یا log1p را به min-max ترجیح بده. clip کردن مقدار به ۱ فقط علامت را پنهان می‌کند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">· 🔴 تحلیلی</span></div>
+برای هر ستون یک تبدیل شکل‌دهنده (یا هیچ) انتخاب کن و دلیلش را بگو: (الف) زمان انتظار مسافر به دقیقه، با صفرهای زیاد و دم راست. (ب) کرایه، که همیشه مثبت است. (ج) امتیاز راننده (۱ تا ۵، بیشتر بین ۴٫۷ و ۵، چوله به چپ). (د) «اختلاف کرایه‌ی نهایی و پیشنهادی» که مثبت و منفی دارد. (هـ) هر کدام از این‌ها برای یک مدل LightGBM.
+<details><summary>راه‌حل</summary>
+(الف) log1p یا Yeo-Johnson. Box-Cox به‌خاطر صفرها خطا می‌دهد. (ب) Box-Cox یا log. λ را روی train فیت کن. (ج) چولگی چپ است و log مستقیم بدترش می‌کند. یا آن را بازتاب بده ($\log(5.01-x)$، با تفسیر برعکس)، یا بهتر، با پرچم‌های دامنه‌ای بازه‌بندی کن (زیر ۴٫۵ = «مشکوک»)، چون تمایز مهم در دم پایین است. (د) Yeo-Johnson یا یک تبدیل متقارن مثل $\operatorname{sign}(x)\log(1+|x|)$. (هـ) برای LightGBM هیچ‌کدام لازم نیست، چون تبدیل‌های یکنوا ترتیب را عوض نمی‌کنند. فقط ممکن است تفسیر را راحت‌تر کنند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+(الف) نشان بده پیش‌بینی‌های رگرسیون خطی <b>بدون جریمه</b> با استانداردسازی ستون‌ها عوض نمی‌شوند. (ب) نشان بده برای Ridge عوض می‌شوند. (راهنما: اگر $x'_j=(x_j-\mu_j)/\sigma_j$، رابطه‌ی $\beta'_j$ و $\beta_j$ چیست و جریمه‌ی $\lambda\sum\beta_j'^2$ بر حسب $\beta_j$ چه می‌شود؟)
+<details><summary>راه‌حل</summary>
+(الف) $\beta_0+\sum_j\beta_jx_j=\beta'_0+\sum_j\beta'_jx'_j$ اگر $\beta'_j=\sigma_j\beta_j$ و $\beta'_0=\beta_0+\sum_j\beta_j\mu_j$. این نگاشت یک‌به‌یک است، پس مجموعه‌ی همه‌ی مدل‌های ممکن (و کمینه‌ی مجموع مربعات خطا) در دو فضا یکی است و پیش‌بینی‌ها هم یکی‌اند.
+(ب) Ridge روی ستون‌های استاندارد، $\lambda\sum_j\beta_j'^2=\lambda\sum_j\sigma_j^2\beta_j^2$ را جریمه می‌کند. این در فضای اصلی یک جریمه‌ی <b>وزن‌دار</b> است که به $\sigma_j$ بستگی دارد. پس مسئله‌ی بهینه‌سازی فرق می‌کند و جواب هم فرق می‌کند. Ridge روی ستون خام کرایه (σ بزرگ، ضریب کوچک) تقریباً هیچ جریمه‌ای به آن ستون نمی‌دهد. روی ستون مسافت (σ کوچک، ضریب بزرگ) جریمه‌ی زیادی می‌دهد. استانداردسازی این را منصفانه می‌کند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+مدیر محصول می‌گوید: «سفرهای تکمیل‌شده ۱۲٪ کم شده. مسافرها را با K-means بخش‌بندی کن تا ببینیم افت در کدام بخش است.» (الف) چه ویژگی‌هایی در سطح مسافر می‌سازی؟ (ب) Monetary در داده‌ی واقعی چوله‌ی شدید است. ترتیب تبدیل‌ها را بنویس. (ج) ویژگی‌ها را در چه «لحظه‌ای» حساب می‌کنی تا مقایسه‌ی قبل و بعد از افت منصفانه باشد؟ (د) چه خطری دارد اگر ستون <span class="ltr">hour_sin/hour_cos</span> «ساعت معمول سفر» را هم با z-score کنار RFM بگذاری؟
+<details><summary>راه‌حل</summary>
+(الف) RFM (روز از آخرین سفر، سفر در ۹۰ روز، جمع کرایه در ۹۰ روز)، نرخ لغو هموارشده، سهم سفرهای شب و آخر هفته، میانگین ETA تجربه‌شده، سهم سفرهای فرودگاهی، عمر حساب.
+(ب) ابتدا <span class="ltr">log1p</span> روی Frequency و Monetary، بعد StandardScaler روی همه (یا RobustScaler اگر بعد از log هنوز پرت دارند). همه داخل یک Pipeline.
+(ج) دو عکس فوری با تعریف یکسان: ویژگی‌ها «تا پایان ماه قبل از افت» و «تا پایان ماه افت»، هر دو با پنجره‌ی ۹۰ روزه‌ی منتهی به همان تاریخ. scaler را روی عکس اول فیت کن و روی دومی فقط transform کن، تا جابه‌جایی بخش‌ها واقعی باشد و نه اثر مقیاس‌بندی دوباره.
+(د) میانگین sin و cos «ساعت معمول» روی دایره نیست (میانگین برداری طولش کمتر از ۱ است). z-score کردن این دو ستون آن‌ها را جدا کش می‌دهد و هندسه‌ی دایره را خراب می‌کند. علاوه بر این، دو ستون هم‌خانواده در K-means عملاً وزن دوبرابر می‌گیرند. یا به‌عنوان یک گروه با وزن مشخص نگهشان دار، یا ویژگی ساده‌تری مثل «سهم سفرهای ساعت اوج» به کار ببر.
+</details></div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۱۲</span> تست</h2>
+<div class="quiz"></div>
+</section>
+
+<section id="summary">
+<h2><span class="num">۱۳</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<h3>۵ چیزی که باید یادت بماند</h3>
+<ol class="steps">
+  <li><b>واحد نباید تصمیم بگیرد.</b> در مدل‌های فاصله‌ای، گرادیانی و منظم‌شده، ستون با بزرگ‌ترین واحد بی‌صدا غالب می‌شود. درخت‌ها استثنا هستند.</li>
+  <li><b>z-score برای حالت عادی، min-max برای ستون‌های ذاتاً محدود، robust برای پرت‌های واقعی.</b> هر سه خطی‌اند و همبستگی را حفظ می‌کنند، ولی فاصله را عوض می‌کنند.</li>
+  <li><b>مقیاس‌بندی چولگی را درمان نمی‌کند.</b> برای شکل توزیع از log1p (صفر مجاز)، Box-Cox (فقط مثبت) یا Yeo-Johnson (همه) استفاده کن. نمودار قبل و بعد را ببین و معکوس را فراموش نکن.</li>
+  <li><b>هر چیزی که از داده آماره می‌گیرد، فقط روی train فیت می‌شود.</b> Pipeline و ColumnTransformer این را تضمین می‌کنند.</li>
+  <li><b>ویژگی خوب یک فرضیه‌ی رفتاری است</b> که در لحظه‌ی پیش‌بینی ساخته شده: نسبت، نرخ، پنجره‌ی غلتان، تازگی، و زمان چرخه‌ای با sin/cos. با تقویم درست (جمعه، نوروز، ماه شمسی).</li>
+</ol>
+<div class="lf">
+  <div class="s"><h4>فرمول‌ها</h4><ul>
+    <li>$z=(x-\mu)/\sigma$ · $(x-\min)/(\max-\min)$ · $(x-\text{med})/\text{IQR}$</li>
+    <li>Box-Cox: $(x^\lambda-1)/\lambda$، و $\lambda=0\Rightarrow\ln x$</li>
+    <li>فاصله‌ی چرخه‌ای: $2\sin(\pi\Delta/P)$</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul>
+    <li>مقیاس‌بندی: واحد. تبدیل توانی: شکل.</li>
+    <li>z-score: نامحدود. min-max: [۰، ۱] فقط روی train.</li>
+    <li>بی‌پارامتر (log1p، sin/cos): نشت ندارد. پارامتردار (scaler، qcut): فیت روی train.</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul>
+    <li><span class="ltr">weekday &gt;= 5</span> برای ایران غلط است.</li>
+    <li>sin بدون cos، و log روی صفر.</li>
+    <li><span class="ltr">groupby().transform("mean")</span> روی برچسب، یعنی نشت هدف.</li></ul></div>
+</div>
+<div class="box note"><div class="bt">➡ برای جلسه‌ی بعد</div>
+  حالا که ستون‌های زیادی ساختیم، سؤال بعدی این است: <b>زیادی</b> ساختیم؟ در <a href="session-06.html">جلسه‌ی ۶</a> (slides05) نفرین ابعاد، انتخاب ویژگی، و کاهش بعد با PCA، SVD، t-SNE و UMAP را می‌بینیم. PCA اولین جایی است که «بدون مقیاس‌بندی، مؤلفه‌ی اول همان ستون تومانی است» را با چشم می‌بینی. قبل از آن جلسه، تمرین ۹ را حل کن.
+</div>
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>feature scaling</b>: مقیاس‌بندی ویژگی؛ هم‌واحد کردن ستون‌ها</div>
+  <div><b>standardization (z-score)</b>: استانداردسازی؛ کم کردن میانگین و تقسیم بر انحراف معیار</div>
+  <div><b>normalization (min-max)</b>: نرمال‌سازی؛ بردن بازه‌ی train به [۰، ۱]</div>
+  <div><b>robust scaling</b>: مقیاس‌بندی مقاوم با میانه و IQR</div>
+  <div><b>IQR (interquartile range)</b>: دامنه‌ی میان‌چارکی، $Q_3-Q_1$</div>
+  <div><b>skewness</b>: چولگی؛ عدم‌تقارن توزیع</div>
+  <div><b>power transform</b>: تبدیل توانی (Box-Cox، Yeo-Johnson)</div>
+  <div><b>log1p / expm1</b>: لگاریتم $1+x$ و معکوس آن</div>
+  <div><b>cyclic encoding</b>: کدگذاری چرخه‌ای با sin و cos</div>
+  <div><b>recency</b>: تازگی؛ زمان از آخرین رویداد</div>
+  <div><b>RFM</b>: تازگی، بسامد، مبلغ (Recency, Frequency, Monetary)</div>
+  <div><b>rolling window</b>: پنجره‌ی غلتان؛ تجمیع روی بازه‌ی زمانی متحرک</div>
+  <div><b>interaction feature</b>: ویژگی تعاملی؛ ترکیب (معمولاً ضرب) دو ویژگی</div>
+  <div><b>binning / discretization</b>: بازه‌بندی؛ تبدیل عدد پیوسته به دسته</div>
+  <div><b>point-in-time feature</b>: ویژگی‌ای که فقط از اطلاعات موجود در لحظه‌ی پیش‌بینی ساخته شده</div>
+  <div><b>target leakage</b>: نشت هدف؛ ورود اطلاعات برچسب یا آینده به ویژگی</div>
+  <div><b>fit / transform</b>: یادگرفتن پارامترها از train / اعمال همان پارامترها روی هر داده</div>
+  <div><b>ColumnTransformer</b>: اعمال تبدیل‌های جدا روی گروه‌های ستون در sklearn</div>
+  <div><b>masking</b>: پوشاندن؛ پنهان شدن پرت به‌خاطر اثرش روی میانگین و σ</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`در kNN با دو ستون خام «مسافت (کیلومتر)» و «کرایه (تومان)»، بدون مقیاس‌بندی چه اتفاقی می‌افتد؟`,
+  o:[`همسایه‌ها تقریباً فقط بر اساس کرایه انتخاب می‌شوند`,`همسایه‌ها تقریباً فقط بر اساس مسافت انتخاب می‌شوند`,`هر دو ستون وزن برابر دارند چون فاصله‌ی اقلیدسی متقارن است`,`kNN خطا می‌دهد چون واحدها فرق دارند`], a:0,
+  e:`اختلاف‌های تومانی ده‌ها هزار برابر اختلاف‌های کیلومتری‌اند و بعد از مجذور شدن کاملاً غالب می‌شوند. kNN هیچ وزنی یاد نمی‌گیرد که این را جبران کند.`},
+ {q:R`مسافت سفرها در train میانگین ۱۰ و انحراف معیار ۴ کیلومتر دارد. z-score سفر ۱۸ کیلومتری چقدر است؟`,
+  o:[`۲`,`۰٫۴۵`,`۸`,`۱٫۸`], a:0, e:R`$z=(18-10)/4=2$؛ یعنی دو انحراف معیار بالاتر از میانگین (مثال اسلاید ۱۲).`},
+ {q:`ستون کرایه پرت‌های واقعی surge دارد و نمی‌خواهی حذفشان کنی. کدام مقیاس‌بند پارامترهایش کمتر از همه تحت تأثیر این پرت‌هاست؟`,
+  o:[`RobustScaler`,`MinMaxScaler`,`StandardScaler`,`همه یکسان‌اند چون همه خطی‌اند`], a:0,
+  e:`میانه و IQR به چند مقدار حدی تقریباً بی‌اعتنا هستند. min و max مستقیماً همان پرت‌ها هستند و μ و σ هم به سمت آن‌ها کشیده می‌شوند.`},
+ {q:`MinMaxScaler روی train با کمینه‌ی ۲ و بیشینه‌ی ۲۰ کیلومتر فیت شده. یک سفر تست ۲۶ کیلومتری چه مقداری می‌گیرد؟`,
+  o:[`۱٫۳۳۳ و این رفتار طبیعی است`,`۱ چون min-max همیشه در [۰، ۱] است`,`خطا می‌دهد`,`۰٫۸۷ چون scaler دوباره فیت می‌شود`], a:0,
+  e:R`$(26-2)/18=1.333$. scaler فقط بازه‌ی train را می‌شناسد. اگر بازه‌ی ثابت لازم داری از <span class="ltr">clip=True</span> استفاده کن، ولی مقدارهای بیرون بازه نشانه‌ی تغییر توزیع‌اند و باید پایش شوند.`},
+ {q:`چولگی ستون کرایه ۲٫۱۸ است. بعد از StandardScaler چولگی چقدر می‌شود؟`,
+  o:[`همان ۲٫۱۸`,`صفر`,`حدود ۱`,`منفی می‌شود`], a:0,
+  e:`چولگی زیر هر تبدیل خطی با ضریب مثبت ثابت است. مقیاس‌بندی واحد را عوض می‌کند، نه شکل را (اسلاید ۱۷). برای شکل، log1p یا تبدیل توانی لازم است.`},
+ {q:`برای کدام مدل مقیاس‌بندی ویژگی‌ها <b>کمترین</b> اثر را دارد؟`,
+  o:[`جنگل تصادفی`,`K-means`,`PCA`,R`<span class="ltr">LogisticRegression()</span> پیش‌فرض sklearn`], a:0,
+  e:`درخت‌ها روی ترتیب مقدارها آستانه می‌گذارند و هر تبدیل یکنوا بی‌اثر است. LogisticRegression پیش‌فرض جریمه‌ی L2 دارد و به مقیاس حساس است.`},
+ {q:R`با کدگذاری $(\sin(2\pi h/24),\ \cos(2\pi h/24))$، فاصله‌ی اقلیدسی ساعت ۲۳ و ساعت ۰ تقریباً چقدر است؟`,
+  o:[`۰٫۲۶`,`۲۳`,`۱`,`۲`], a:0,
+  e:R`$2\sin(\pi\cdot1/24)\approx0.261$، همان فاصله‌ی ساعت ۸ و ۹. فاصله‌ی ۲ مال دو ساعت روبه‌رو است (مثلاً ۰ و ۱۲).`},
+ {q:`چرا در کدگذاری چرخه‌ای ساعت، هم sin و هم cos لازم است؟`,
+  o:[`چون sin تنها به دو ساعت متفاوت (مثلاً ۱ و ۱۱) یک مقدار می‌دهد`,`چون sin همیشه منفی است`,`چون sklearn ستون تکی را قبول نمی‌کند`,`چون cos مقیاس‌بندی را انجام می‌دهد`], a:0,
+  e:R`$\sin(2\pi/24)=\sin(22\pi/24)=0.259$. cos این دو را از هم جدا می‌کند ($0.966$ و $-0.966$). دو ستون با هم یک نقطه روی دایره را مشخص می‌کنند.`},
+ {q:`StandardScaler را کجا باید fit کرد؟`,
+  o:[`فقط روی داده‌ی train؛ بعد همان پارامترها روی validation، تست و تولید transform شوند`,`روی کل داده تا آماره‌ها دقیق‌تر باشند`,`روی تست جداگانه تا میانگین تست صفر شود`,`فرقی ندارد چون مقیاس‌بندی خطی است`], a:0,
+  e:`پارامترهای scaler بخشی از مدل‌اند. فیت روی کل داده آینده را وارد آموزش می‌کند و، مثل مثال بخش ۷، جابه‌جایی توزیع را کمرنگ نشان می‌دهد.`},
+ {q:R`ستون <span class="ltr">df.groupby("rider_id")["cancelled"].transform("mean")</span> برای مدل «آیا این سفر لغو می‌شود؟» چه مشکلی دارد؟`,
+  o:[`نشت هدف: برچسب همان سفر و سفرهای آینده‌ی مسافر را در خود دارد`,`مشکلی ندارد چون تجمیع است`,`فقط کند است و باید برداری شود`,`باید با MinMaxScaler مقیاس شود`], a:0,
+  e:R`نسخه‌ی درست فقط از سفرهای قبلی استفاده می‌کند: <span class="ltr">shift().expanding().mean()</span> داخل هر گروه، و در حالت دقیق‌تر فقط سفرهایی که قبل از لحظه‌ی درخواست تمام شده‌اند.`},
+ {q:R`داده‌ی سفرهای تهران را داری. کد اسلاید <span class="ltr">is_weekend = (df["request_time"].dt.dayofweek &gt;= 5)</span> کدام روزها را آخر هفته علامت می‌زند؟`,
+  o:[`شنبه و یکشنبه، که برای ایران غلط است (جمعه یعنی dayofweek == 4)`,`پنجشنبه و جمعه`,`فقط جمعه`,`جمعه و شنبه`], a:0,
+  e:`در pandas دوشنبه ۰ و یکشنبه ۶ است. پس ۵ و ۶ یعنی شنبه و یکشنبه. کد برای داده‌ی اروپایی درست است، ولی کپی کورکورانه‌اش روی داده‌ی ایران خطای بی‌صداست.`},
+ {q:`ستون «زمان انتظار (دقیقه)» صفرهای زیاد و دم راست بلند دارد. کدام تبدیل شکل‌دهنده <b>مستقیماً</b> قابل استفاده نیست؟`,
+  o:[`Box-Cox`,`log1p`,`Yeo-Johnson`,`QuantileTransformer`], a:0,
+  e:R`Box-Cox فقط برای $x&gt;0$ تعریف شده و با یک صفر خطا می‌دهد. log1p و Yeo-Johnson صفر را قبول می‌کنند (Yeo-Johnson با $\lambda=0$ روی مقدارهای نامنفی همان log1p است).`},
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,css,alpha,fmt,L}=ML;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(u===0)u=r();const v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const sep=n=>Math.round(n).toLocaleString("en");
+
+  /* ---------------- Widget 1: scaling explorer ---------------- */
+  const el1=document.getElementById("w-scale");
+  if(el1){
+    ML.shell(el1,"🔧 ابزار: مقیاس‌بندی و نزدیک‌ترین همسایه",
+      "هر نقطه یک سفر از داده‌ی آموزش است. ستاره سفر جدید (کوئری) است و خط‌ها سه همسایه‌ی نزدیکش را نشان می‌دهند. ناحیه‌ی سایه‌دار «دایره»‌ای است که فاصله‌اش تا کوئری از همسایه‌ی سوم کمتر است، در همان فضایی که kNN می‌بیند. (چون دو محور مقیاس یکسانی ندارند، دایره بیضی دیده می‌شود.) مقیاس‌بند را عوض کن، پرت‌ها را روشن کن، واحد کرایه را تغییر بده، یا روی نمودار بزن تا کوئری جابه‌جا شود.");
+    const rnd=mulberry32(5), base=[];
+    for(let i=0;i<36;i++){
+      const km=+(1+19*Math.pow(rnd(),1.4)).toFixed(1);
+      const surge=rnd()<0.2?1.3+0.5*rnd():1;
+      let fare=(45000+16000*km)*surge+12000*gauss(rnd);
+      fare=Math.max(50000,Math.round(fare/1000)*1000);
+      base.push({km,fare,out:false});
+    }
+    base.push({km:3,fare:302000,out:false});   // short ride under heavy surge (like r6 in example 5.1)
+    const outl=[{km:44,fare:1150000,out:true},{km:6,fare:1400000,out:true}];
+    let mode="none", unit=1, showOut=false, q={km:10,fare:300000}, lastP=null, lastPar=null;
+    const cv=h("canvas",{class:"wide"}); el1.append(cv);
+    const ctr=h("div",{class:"controls"});
+    const seg=h("span",{class:"seg"});
+    const modes=[["none","بدون مقیاس"],["z","z-score"],["mm","min-max"],["rb","robust"]];
+    const btns={};
+    modes.forEach(([k,lab])=>{const b=h("button",{type:"button"},lab); b.onclick=()=>{mode=k;draw();}; btns[k]=b; seg.append(b);});
+    const ol=h("label"); const ocb=h("input",{type:"checkbox"}); ol.append(ocb," دو سفر پرت (فرودگاه، surge شدید)"); ocb.onchange=()=>{showOut=ocb.checked;draw();};
+    const ul=h("label"); ul.append("واحد کرایه: "); const us=h("select"); us.innerHTML=`<option value="1">تومان</option><option value="1000">هزار تومان</option>`; us.onchange=()=>{unit=+us.value;draw();}; ul.append(us);
+    const rb=h("button",{type:"button"},"کوئری پیش‌فرض"); rb.onclick=()=>{q={km:10,fare:300000};draw();};
+    ctr.append(seg,ol,ul,rb); el1.append(ctr);
+    const out=h("div",{class:"readout"}); el1.append(out);
+    const quant=(s,p)=>{const i=(s.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i); return s[lo]+(s[hi]-s[lo])*(i-lo);};
+    function params(v){
+      const s=[...v].sort((a,b)=>a-b), n=v.length, mean=v.reduce((a,b)=>a+b,0)/n;
+      const sd=Math.sqrt(v.reduce((a,b)=>a+(b-mean)*(b-mean),0)/n);
+      if(mode==="z") return {c:mean,s:sd,lc:"μ",ls:"σ"};
+      if(mode==="mm") return {c:s[0],s:s[n-1]-s[0],lc:"min",ls:"max−min"};
+      if(mode==="rb") return {c:quant(s,.5),s:quant(s,.75)-quant(s,.25),lc:"median",ls:"IQR"};
+      return {c:0,s:1,lc:"",ls:""};
+    }
+    function draw(){
+      Object.entries(btns).forEach(([k,b])=>b.classList.toggle("on",k===mode));
+      const data=base.concat(showOut?outl:[]);
+      const px=params(data.map(d=>d.km)), py=params(data.map(d=>d.fare/unit));
+      lastPar={px,py};
+      const T=d=>[(d.km-px.c)/px.s,(d.fare/unit-py.c)/py.s];
+      const pts=data.map(T), qt=T(q);
+      const dist=pts.map(p=>Math.hypot(p[0]-qt[0],p[1]-qt[1]));
+      const ord=dist.map((d,i)=>i).sort((a,b)=>dist[a]-dist[b]).slice(0,3);
+      const all=pts.concat([qt]);
+      let x0=Math.min(...all.map(p=>p[0])),x1=Math.max(...all.map(p=>p[0])),y0=Math.min(...all.map(p=>p[1])),y1=Math.max(...all.map(p=>p[1]));
+      const dx=(x1-x0)*0.08||1, dy=(y1-y0)*0.08||1; x0-=dx;x1+=dx;y0-=dy;y1+=dy;
+      const raw=mode==="none";
+      const yf=raw?(unit===1?(v=>Math.round(v/1000)+"k"):(v=>fmt(v,0))):(v=>fmt(v,2));
+      const P=new ML.Plot(cv,[x0,x1],[y0,y1],{l:raw?50:40,b:32}); lastP=P;
+      P.axes(raw?"distance (km)":"scaled distance", raw?(unit===1?"fare (toman)":"fare (k toman)"):"scaled fare",{yfmt:yf});
+      const c=P.ctx, r=dist[ord[2]];
+      c.save(); c.beginPath(); c.rect(P.p.l,P.p.t,P.W-P.p.l-P.p.r,P.H-P.p.t-P.p.b); c.clip();
+      c.beginPath();
+      for(let i=0;i<=180;i++){const th=i/180*2*Math.PI; let X=P.X(qt[0]+r*Math.cos(th)), Y=P.Y(qt[1]+r*Math.sin(th)); X=Math.max(-5e4,Math.min(5e4,X)); Y=Math.max(-5e4,Math.min(5e4,Y)); if(i===0)c.moveTo(X,Y); else c.lineTo(X,Y);}
+      c.closePath(); c.fillStyle=alpha(css("--plot-c1"),.13); c.fill(); c.setLineDash([5,4]); c.strokeStyle=alpha(css("--plot-c1"),.8); c.lineWidth=1.2; c.stroke(); c.setLineDash([]);
+      c.restore();
+      ord.forEach(i=>P.line([qt,pts[i]],css("--plot-c1"),1.6));
+      data.forEach((d,i)=>P.dot(pts[i][0],pts[i][1],d.out?css("--plot-c2"):alpha(css("--plot-c3"),.85),d.out?5.5:3.6));
+      ord.forEach(i=>{c.beginPath();c.arc(P.X(pts[i][0]),P.Y(pts[i][1]),7.5,0,7);c.strokeStyle=css("--plot-c1");c.lineWidth=2;c.stroke();});
+      const sx=P.X(qt[0]), sy=P.Y(qt[1]); c.fillStyle=css("--plot-fn"); c.beginPath();
+      for(let k=0;k<10;k++){const rr=k%2?3.5:8.5, a=-Math.PI/2+k*Math.PI/5; c.lineTo(sx+rr*Math.cos(a),sy+rr*Math.sin(a));} c.closePath(); c.fill();
+      // readout
+      const u=unit===1?"تومان":"هزار تومان";
+      let s="";
+      if(raw) s+="فضای خام: فاصله = "+L("√(Δkm² + Δfare²)")+". واحد کرایه را عوض کن و ببین همسایه‌ها هم عوض می‌شوند، در حالی که هیچ سفری عوض نشده.\n";
+      else s+=`پارامترهای فیت‌شده روی ${ML.fa(data.length)} سفر آموزش:  مسافت ${L(px.lc+"="+fmt(px.c,2)+", "+px.ls+"="+fmt(px.s,2))}   کرایه ${L(py.lc+"="+sep(py.c)+", "+py.ls+"="+sep(py.s))} ${u}\n`;
+      s+=`کوئری: ${L(fmt(q.km,1)+" km , "+sep(q.fare)+" toman")}\nسه همسایه‌ی نزدیک:\n`;
+      ord.forEach((i,k)=>{const d=data[i], ddx=pts[i][0]-qt[0], ddy=pts[i][1]-qt[1], sh=ddy*ddy/(ddx*ddx+ddy*ddy||1);
+        s+=`  ${ML.fa(k+1)}) ${L(fmt(d.km,1)+" km , "+sep(d.fare)+" toman")}  ·  فاصله ${L(fmt(dist[i],raw?1:3))}  ·  سهم کرایه از مجذور فاصله: ${ML.fa(Math.round(sh*1000)/10)}٪${d.out?"  ← پرت":""}\n`;});
+      if(raw) s+="⇦ دایره‌ی سایه‌دار به یک نوار افقی تبدیل شده: در این فضا چند هزار «کیلومتر» به اندازه‌ی چند هزار «تومان» ارزش دارد.";
+      else if(showOut&&mode==="mm") s+="⇦ min-max: دو پرت بازه را تعیین کرده‌اند و بقیه‌ی سفرها در گوشه‌ی پایین له شده‌اند.";
+      else if(showOut&&mode==="z") s+="⇦ z-score: پرت‌ها σ کرایه را بزرگ کرده‌اند و تفاوت‌های معمولی کرایه کم‌وزن شده‌اند.";
+      else if(showOut&&mode==="rb") s+="⇦ robust: میانه و IQR تقریباً تکان نخورده‌اند؛ پرت‌ها دور مانده‌اند ولی بقیه را له نکرده‌اند.";
+      else s+="⇦ ابر نقطه‌ها همان شکل خام را دارند (تبدیل خطی). چیزی که عوض شده هندسه‌ی فاصله است.";
+      out.textContent=s;
+    }
+    cv.addEventListener("click",ev=>{
+      if(!lastP) return; const b=cv.getBoundingClientRect(), P=lastP;
+      const mx=ev.clientX-b.left, my=ev.clientY-b.top;
+      const tx=P.xr[0]+(mx-P.p.l)/(P.W-P.p.l-P.p.r)*(P.xr[1]-P.xr[0]);
+      const ty=P.yr[0]+(P.H-P.p.b-my)/(P.H-P.p.t-P.p.b)*(P.yr[1]-P.yr[0]);
+      const km=tx*lastPar.px.s+lastPar.px.c, fare=(ty*lastPar.py.s+lastPar.py.c)*unit;
+      q={km:Math.max(0.5,Math.min(50,km)),fare:Math.max(20000,Math.min(1500000,Math.round(fare/1000)*1000))}; draw();
+    });
+    ML.onResize(cv,draw); draw();
+  }
+
+  /* ---------------- Widget 2: cyclic time ---------------- */
+  const el2=document.getElementById("w-cyc");
+  if(el2){
+    ML.shell(el2,"🔧 ابزار: ساعت دایره‌ای در برابر خط اعداد",
+      "دو مقدار زمانی a و b را انتخاب کن. بالا: کدگذاری sin/cos نقطه‌ها را روی یک دایره می‌گذارد (۰ بالا، ساعتگرد) و فاصله‌ی اقلیدسی همان طول وتر قرمز است. پایین: همان دو مقدار روی خط اعداد خام. دوره را هم می‌توانی عوض کنی.");
+    const DOW=["دوشنبه","سه‌شنبه","چهارشنبه","پنجشنبه","جمعه","شنبه","یکشنبه"];
+    const MON=["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+    let P=24, a=23, b=0;
+    const cv=h("canvas",{class:"wide"}); el2.append(cv);
+    const ctr=h("div",{class:"controls"}); el2.append(ctr);
+    const out=h("div",{class:"readout"}); el2.append(out);
+    const lab=v=>P===24?(Math.floor(v)+":"+(v%1?"30":"00")):P===7?DOW[v]+" ("+v+")":MON[v];
+    function build(){
+      ctr.innerHTML="";
+      const pl=h("label"); pl.append("دوره: "); const ps=h("select");
+      ps.innerHTML=`<option value="24">ساعت روز (P=24)</option><option value="7">روز هفته، شماره‌گذاری pandas (P=7)</option><option value="12">ماه شمسی (P=12)</option>`;
+      ps.value=String(P); ps.onchange=()=>{P=+ps.value; if(P===24){a=23;b=0;} else if(P===7){a=4;b=5;} else {a=11;b=0;} build(); draw();};
+      pl.append(ps);
+      const st=P===24?0.5:1;
+      ctr.append(pl, ML.slider("a",0,P-st,st,a,v=>{a=v;draw();},v=>lab(v)), ML.slider("b",0,P-st,st,b,v=>{b=v;draw();},v=>lab(v)));
+    }
+    function draw(){
+      const pl=new ML.Plot(cv,[0,1],[0,1],{l:0,r:0,t:0,b:0}), c=pl.ctx, W=pl.W, H=pl.H;
+      const ink=css("--ink-2"), ax=css("--plot-axis"), c1=css("--plot-c1"), c2=css("--plot-c2"), c3=css("--plot-c3");
+      const R=Math.min(H*0.25,W*0.22), cx=W/2, cy=H*0.35;
+      const pos=v=>{const t=2*Math.PI*v/P; return [cx+R*Math.sin(t), cy-R*Math.cos(t)];};
+      c.font="11px Vazirmatn,Tahoma,sans-serif"; c.textAlign="center"; c.textBaseline="middle";
+      c.setLineDash([3,4]); c.strokeStyle=alpha(ax,.6); c.lineWidth=1;
+      c.beginPath(); c.moveTo(cx-R-14,cy); c.lineTo(cx+R+14,cy); c.moveTo(cx,cy-R-14); c.lineTo(cx,cy+R+14); c.stroke(); c.setLineDash([]);
+      c.fillStyle=css("--ink-3"); c.fillText("sin →",cx+R+30,cy); c.fillText("cos ↑",cx+26,Math.max(8,cy-R-16));
+      c.strokeStyle=ax; c.lineWidth=1.4; c.beginPath(); c.arc(cx,cy,R,0,7); c.stroke();
+      const every=P===24?3:1;
+      for(let v=0;v<P;v++){const t=2*Math.PI*v/P, s=Math.sin(t), co=Math.cos(t);
+        c.beginPath(); c.moveTo(cx+(R-4)*s,cy-(R-4)*co); c.lineTo(cx+(R+4)*s,cy-(R+4)*co); c.stroke();
+        if(v%every===0 && P!==12){c.fillStyle=ink; c.fillText(String(v),cx+(R+15)*s,cy-(R+15)*co);} }
+      const A=pos(a), B=pos(b);
+      c.strokeStyle=c2; c.lineWidth=3; c.beginPath(); c.moveTo(A[0],A[1]); c.lineTo(B[0],B[1]); c.stroke();
+      [[A,c1,"a"],[B,c3,"b"]].forEach(([p,col,t])=>{c.fillStyle=col; c.beginPath(); c.arc(p[0],p[1],6.5,0,7); c.fill();
+        const dx=p[0]-cx, dy=p[1]-cy, n=Math.hypot(dx,dy)||1; c.font="bold 12px Vazirmatn,Tahoma,sans-serif"; c.fillText(t,p[0]-dx/n*18,p[1]-dy/n*18); c.font="11px Vazirmatn,Tahoma,sans-serif";});
+      // number line
+      const y0=H*0.84, xl=28, xr=W-28, X=v=>xl+(xr-xl)*v/P;
+      c.strokeStyle=ax; c.lineWidth=1.4; c.beginPath(); c.moveTo(xl,y0); c.lineTo(xr,y0); c.stroke();
+      for(let v=0;v<=P;v++){ c.beginPath(); c.moveTo(X(v),y0-4); c.lineTo(X(v),y0+4); c.stroke(); if(v%every===0||v===P){c.fillStyle=ink; c.fillText(String(v),X(v),y0+15);} }
+      c.strokeStyle=c2; c.lineWidth=2.5; c.setLineDash([6,4]); c.beginPath(); c.moveTo(X(a),y0-12); c.lineTo(X(b),y0-12); c.stroke(); c.setLineDash([]);
+      c.fillStyle=c2; c.fillText("|a−b| = "+fmt(Math.abs(a-b),1)+"  (خام)",(X(a)+X(b))/2,y0-24);
+      c.fillStyle=c1; c.beginPath(); c.arc(X(a),y0,6,0,7); c.fill(); c.fillStyle=c3; c.beginPath(); c.arc(X(b),y0,6,0,7); c.fill();
+      const raw=Math.abs(a-b), circ=Math.min(raw,P-raw), chord=2*Math.sin(Math.PI*circ/P);
+      const ea=[Math.sin(2*Math.PI*a/P),Math.cos(2*Math.PI*a/P)], eb=[Math.sin(2*Math.PI*b/P),Math.cos(2*Math.PI*b/P)];
+      out.textContent=
+        `${L("a = "+lab(a)+"  →  (sin, cos) = ("+fmt(ea[0],3)+", "+fmt(ea[1],3)+")")}\n`+
+        `${L("b = "+lab(b)+"  →  (sin, cos) = ("+fmt(eb[0],3)+", "+fmt(eb[1],3)+")")}\n`+
+        `فاصله‌ی خام ${L("|a−b| = "+fmt(raw,1))}  ·  فاصله‌ی واقعی روی دایره ${L("Δ = "+fmt(circ,1))}\n`+
+        `فاصله‌ی ${L("sin/cos")}: ${L("2·sin(π·"+fmt(circ,1)+"/"+P+") = "+fmt(chord,3))}  (بیشینه ۲، برای دو نقطه‌ی روبه‌رو)\n`+
+        `کدگذاری ${L("one-hot")} با ${ML.fa(P)} ستون: هر دو مقدار متفاوت فاصله‌ی ${L("√2 ≈ 1.414")} دارند؛ همسایگی گم می‌شود.`+
+        (raw>P/2?"\n⇦ این‌جا عدد خام می‌گوید «خیلی دور»، ولی روی دایره نزدیک‌اند. مدل فاصله‌ای با ستون خام همین اشتباه را می‌کند.":"");
+    }
+    build(); ML.onResize(cv,draw); draw();
+  }
+};
+</script>
+</body></html>

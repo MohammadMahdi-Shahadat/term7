@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۳ · کدگذاری و مصورسازی</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg .btn{font-size:.85em}
+.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+@media (max-width:700px){.wgrid{grid-template-columns:1fr}}
+.wgrid h5{margin:0 0 4px;font-size:.88em;color:var(--ink-2)}
+.hm{border-collapse:collapse;width:100%;font-size:.82em;margin:0;direction:ltr}
+.hm td,.hm th{border:1px solid var(--line);padding:3px 5px;text-align:center;white-space:nowrap}
+.hm th{background:var(--bg);font-weight:600}
+.hm td.k{text-align:right;font-weight:600;direction:rtl}
+.docs{display:grid;gap:6px;margin-top:8px}
+.docs label{display:flex;gap:8px;align-items:center;font-size:.9em}
+.docs input{flex:1;min-width:0;font:inherit;font-size:.95em;padding:3px 8px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg);color:var(--ink);direction:rtl}
+.docs b{min-width:1.6em;color:var(--accent)}
+.tscroll{overflow-x:auto;max-height:340px;overflow-y:auto}
+.mini{font-size:.82em;color:var(--ink-3)}
+.bookcard{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.bookcard .cov{width:86px;height:118px;border-radius:6px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.72em;font-weight:700;line-height:1.4;padding:6px;flex:none}
+.bookcard .c1{background:#fff;color:#1d3c5a;border:1px solid var(--line-2);direction:ltr;font-size:.66em}
+.bookcard .c2{background:#f6b739;color:#1f2f6b}
+</style>
+</head>
+<body data-session="3">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۳ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>کدگذاری و مصورسازی: متغیرهای دسته‌ای، نمودار درست، و متن به عدد</h1>
+  <p class="lead">کامپیوتر فقط عدد می‌فهمد. ولی «تهران»، «زیاد» و «راننده دیر آمد» عدد نیستند. این جلسه درباره‌ی این است که چطور معنا را به عدد تبدیل کنیم بی‌آن‌که معنای غلط بسازیم، و بعد چطور عددها را طوری نشان بدهیم که به یک سؤال جواب بدهند. حرف اصلی استاد: <b>«کدگذاری یک تصمیم مدل‌سازی است»</b> و <b>«نمودار جواب تصویری به یک سؤال است»</b>.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۰۰ تا ۱۳۰ دقیقه (با تمرین‌ها)</span><span>📚 منبع: اسلاید ۰۲ (صفحه‌های ۱۳ تا ۲۹) + نوت‌بوک درس (قاعده‌های نمودار و داشبورد یک‌صفحه‌ای)</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>هر ستون دسته‌ای را اسمی، ترتیبی یا دودویی تشخیص بدهی و کدگذاری درستش را انتخاب کنی.</li>
+    <li>توضیح بدهی چرا label encoding برای متغیر اسمی «ترتیب جعلی» می‌سازد و این ترتیب جعلی مدل خطی را چطور خراب می‌کند.</li>
+    <li>با <code>get_dummies</code>، <code>map</code> و <code>OneHotEncoder</code> کدگذاری کنی و دام متغیر ساختگی، دسته‌ی دیده‌نشده و target encoding را بشناسی.</li>
+    <li>برای هر سؤال نمودار درست را انتخاب کنی، عنوانی بنویسی که بینش را بگوید، و نمودار گمراه‌کننده را تشخیص بدهی.</li>
+    <li>مسیر «متن ← توکن ← شناسه ← بردار» را توضیح بدهی، TF-IDF و شباهت کسینوسی را با دست حساب کنی، و بدانی کی سراغ embedding و مدل‌های BERT‌گونه بروی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+  در داده‌ی سفرهای اپ اسنپ‌مانند ستونی داریم به اسم <code>city</code> با پنج مقدار: تهران، مشهد، اصفهان، شیراز، تبریز. همکارت برای این‌که مدل رگرسیون خطی «لغو سفر» را اجرا کند، شهرها را به ترتیب الفبای انگلیسی شماره‌گذاری کرده: Isfahan=0، Mashhad=1، Shiraz=2، Tabriz=3، Tehran=4.
+  <ol>
+    <li>از نگاه مدل، تبریز به تهران نزدیک‌تر است یا اصفهان به تهران؟ این حرف معنی دارد؟</li>
+    <li>اگر مدل یک ضریب مثبت برای <code>city_code</code> یاد بگیرد، یعنی چه؟</li>
+    <li>اگر فردا شهر «قم» اضافه شود، چه عددی می‌گیرد و چه اتفاقی برای بقیه می‌افتد؟</li>
+  </ol>
+  جواب‌هایت را نگه دار. بخش ۲ و ابزار تعاملی‌اش دقیقاً همین را نشان می‌دهد.
+</div>
+
+<!-- ============================================================ 1 -->
+<section id="cat-types">
+<h2><span class="num">۱</span> داده‌ی دسته‌ای: کلمه‌هایی که معنا دارند <span class="tag core">اسلاید ۱۳</span></h2>
+<p>داده‌ی دسته‌ای (categorical) مقدارش از یک مجموعه‌ی محدود از برچسب‌ها می‌آید. اسلاید سه نوع را جدا می‌کند و جمله‌ی کلیدی‌اش این است: <b>«کامپیوتر معمولاً عدد لازم دارد. کدگذاری باید معنای دسته را حفظ کند.»</b></p>
+<div class="cards">
+  <div><b>اسمی (Nominal)</b>بدون ترتیب طبیعی. مثال اسلاید: شهر، رنگ، جنسیت. در مورد ما: <code>city</code>، <code>car_type</code> (اکو، پلاس، ون)، <code>payment</code> (نقد، کیف پول، کارت).</div>
+  <div><b>ترتیبی (Ordinal)</b>دسته‌ها ترتیب دارند: low &lt; medium &lt; high. در مورد ما: سطح افزایش قیمت (<code>surge_level</code>)، رضایت «خیلی بد تا عالی».</div>
+  <div><b>دودویی (Binary)</b>فقط دو دسته: بله/خیر، تقلب/غیرتقلب. در مورد ما: <code>is_cancelled</code>، <code>is_peak_hour</code>.</div>
+</div>
+<p>تشخیص نوع، کار مکانیکی نیست. سؤالی که باید بپرسی این است: <b>آیا «بزرگ‌تر بودن» و «فاصله» بین دو مقدار معنا دارد؟</b></p>
+<div class="tablewrap"><table>
+<tr><th>ستون</th><th>ظاهر</th><th>نوع واقعی</th><th>چرا</th></tr>
+<tr><td><code>postal_code</code></td><td>عدد (۱۴۳۵۶…)</td><td>اسمی</td><td>کد پستی بزرگ‌تر یعنی هیچ چیز. میانگین کد پستی بی‌معناست.</td></tr>
+<tr><td><code>driver_rating</code> (۱ تا ۵ ستاره)</td><td>عدد</td><td>ترتیبی (معمولاً عددی در نظر گرفته می‌شود)</td><td>ترتیب روشن است، ولی معلوم نیست فاصله‌ی ۴ تا ۵ با ۱ تا ۲ برابر باشد.</td></tr>
+<tr><td><code>hour</code> (۰ تا ۲۳)</td><td>عدد</td><td>چرخه‌ای (cyclical)</td><td>ساعت ۲۳ به ساعت ۰ نزدیک است، نه دور. جلسه‌ی ۵ با sin/cos حلش می‌کنیم.</td></tr>
+<tr><td><code>car_type</code></td><td>متن</td><td>اسمی</td><td>«ون» از «اکو» بیشتر نیست، فقط متفاوت است. حتی اگر قیمتش بیشتر باشد، این قیمت ویژگی جداگانه است.</td></tr>
+<tr><td><code>surge_level</code></td><td>متن</td><td>ترتیبی</td><td>high واقعاً از medium بیشتر است.</td></tr>
+</table></div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «عدد است، پس عددی است»</div>
+  وقتی <code>df.info()</code> می‌گوید ستونی <code>int64</code> است، فقط درباره‌ی <b>نوع ذخیره‌سازی</b> حرف می‌زند، نه <b>معنای</b> ستون. کد پستی، شناسه‌ی راننده و کد شهر هم <code>int64</code> هستند. اگر مستقیم وارد مدل خطی شوند، مدل از آن‌ها «شیب» یاد می‌گیرد، که بی‌معناست. همیشه یک بار به‌صراحت بپرس: این عدد اندازه است یا برچسب؟
+</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="encoding">
+<h2><span class="num">۲</span> سه راه کدگذاری و مشکل «ترتیب جعلی» <span class="tag core">اسلاید ۱۴</span> <span class="tag exam">امتحانی</span></h2>
+<p>اسلاید سه گزینه را کنار هم می‌گذارد:</p>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>نمونه‌ی اسلاید</th><th>حکم اسلاید</th></tr>
+<tr><td><b>Label encoding</b></td><td>Tehran→0، Shiraz→1، Tabriz→2</td><td>مشکل: <b>ترتیب جعلی</b> می‌سازد.</td></tr>
+<tr><td><b>Ordinal mapping</b></td><td>low→0، medium→1، high→2</td><td>خوب است <b>وقتی ترتیب واقعی است</b>.</td></tr>
+<tr><td><b>One-hot encoding</b></td><td>city_tehran، city_shiraz، city_tabriz</td><td><b>بهترین پیش‌فرض</b> برای دسته‌های اسمی.</td></tr>
+</table></div>
+
+<h3>۲.۱ ترتیب جعلی یعنی دقیقاً چه؟</h3>
+<p>بیشتر مدل‌ها (رگرسیون خطی و لجستیک، KNN، SVM، K-Means) با <b>فاصله</b> یا <b>ترکیب خطی</b> کار می‌کنند. اگر تهران=۴ و اصفهان=۰ باشد، از دید مدل سه چیز «درست» است که در دنیای واقعی غلط‌اند:</p>
+<ul>
+  <li><b>ترتیب:</b> تهران «بیشتر» از شیراز است.</li>
+  <li><b>فاصله:</b> فاصله‌ی تهران تا تبریز (۱) یک‌چهارم فاصله‌ی تهران تا اصفهان (۴) است.</li>
+  <li><b>خطی بودن:</b> اثر شهر روی لغو باید یکنواخت بالا یا پایین برود: اصفهان، بعد مشهد، بعد شیراز، … . یعنی یک ضریب واحد برای کل ستون.</li>
+</ul>
+<p>با one-hot هر شهر یک محور جدا دارد. بردار هر شهر یک «۱» در جای خودش دارد و بقیه صفر است. پس فاصله‌ی اقلیدسی <b>هر دو شهر متفاوت</b> دقیقاً یکی است:</p>
+$$\|\mathbf e_i-\mathbf e_j\|=\sqrt{1^2+(-1)^2}=\sqrt2\approx1.414\qquad(i\ne j)$$
+<p>یعنی one-hot هیچ ادعایی درباره‌ی ترتیب یا نزدیکی نمی‌کند. همین «بی‌ادعایی» برای متغیر اسمی درست است.</p>
+
+<div class="box ex"><div class="bt">مثال عددی: مدل خطی با کد الفبایی شهر</div>
+  فرض کن نرخ واقعی لغو سفر این باشد: اصفهان ۱۱٪، مشهد ۹٪، شیراز ۸٪، تبریز ۱۴٪، تهران ۱۸٪. یک رگرسیون خطی روی <code>city_code</code> (کد الفبایی ۰ تا ۴) فقط می‌تواند خط $\hat y=0.082+0.019\cdot\text{code}$ را یاد بگیرد. پیش‌بینی‌ها: اصفهان ۸٫۲٪، مشهد ۱۰٫۱٪، شیراز ۱۲٪، تبریز ۱۳٫۹٪، تهران ۱۵٫۸٪. یعنی شیراز (کمترین نرخ واقعی) سومین شهر پرلغو حساب می‌شود و $R^2\approx0.55$ است. همین مدل با one-hot پنج نرخ را دقیقاً یاد می‌گیرد ($R^2=1$).
+  <br>بدتر این‌که نتیجه به <b>ترتیب دلبخواه</b> وابسته است: از ۱۲۰ ترتیب ممکن برای پنج شهر، $R^2$ بین ۰ و ۰٫۹۵ جابه‌جا می‌شود و میانه‌اش حدود ۰٫۱۵ است. کیفیت مدل نباید به الفبای انگلیسی بستگی داشته باشد.
+</div>
+
+<div id="w-enc"></div>
+
+<h3>۲.۲ پس label encoding همیشه ممنوع است؟</h3>
+<p>نه. سه جا قابل‌قبول یا حتی خوب است:</p>
+<ul>
+  <li><b>متغیر هدف (target) در طبقه‌بندی:</b> <code>LabelEncoder</code> در sklearn دقیقاً برای برچسب کلاس‌ها ساخته شده. مدل طبقه‌بندی برچسب کلاس را به‌عنوان «اسم» می‌بیند، نه عدد.</li>
+  <li><b>مدل‌های درختی</b> (درخت تصمیم، جنگل تصادفی، gradient boosting): درخت با چند برش متوالی می‌تواند هر گروهی از کدها را جدا کند، پس ترتیب جعلی کمتر آسیب می‌زند، هرچند ممکن است برش‌های بیشتری لازم شود. برای ستون‌های پرمقدار (high-cardinality) گاهی از one-hot هم بهتر است.</li>
+  <li><b>وقتی ترتیب واقعی است</b>، که دیگر label encoding نیست، ordinal mapping است، و باید <b>خودت</b> ترتیب را مشخص کنی، نه الفبا.</li>
+</ul>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>کی استفاده کن</th><th>کی نه</th><th>ریسک</th></tr>
+<tr><td>Ordinal mapping</td><td>ترتیب واقعی (low/medium/high، سطح تحصیلات)</td><td>متغیر اسمی</td><td>فاصله‌های مساوی را فرض می‌کند (۰، ۱، ۲)؛ ممکن است فاصله‌ی واقعی برابر نباشد.</td></tr>
+<tr><td>One-hot</td><td>اسمی با تعداد دسته‌ی کم تا متوسط؛ مدل خطی و فاصله‌محور</td><td>هزاران دسته (شناسه‌ی راننده)</td><td>ابعاد زیاد، ماتریس تُنُک، دام متغیر ساختگی، دسته‌ی دیده‌نشده.</td></tr>
+<tr><td>Label (کد دلبخواه)</td><td>متغیر هدف؛ مدل‌های درختی</td><td>اسمی در مدل خطی/KNN/K-Means</td><td>ترتیب و فاصله‌ی جعلی؛ نتیجه به ترتیب کدها وابسته است.</td></tr>
+<tr><td>Frequency / Target <span class="tag book">تکمیلی</span></td><td>دسته‌های خیلی زیاد</td><td>داده‌ی کم بدون هموارسازی</td><td>target encoding بدون احتیاط = <b>نشت داده</b> (بخش ۴).</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+  سؤال کلیدی اسلاید ۱۷ را حفظ باش: <b>«آیا این عدد ترتیب واقعی را نشان می‌دهد یا فقط یک کد کامپیوتری است؟»</b> اگر کد است، label encoding برای مدل خطی و فاصله‌محور غلط است. اگر ترتیب واقعی است، ordinal mapping با ترتیبی که <b>خودت</b> تعریف کرده‌ای درست است.
+</div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="pandas-encode">
+<h2><span class="num">۳</span> دست به کد: بازرسی، تمیزکاری و کدگذاری با pandas <span class="tag core">اسلاید ۱۵ تا ۱۷</span></h2>
+<p>اسلایدهای ۱۵ و ۱۶ ادامه‌ی جلسه‌ی ۲ هستند و یادآوری می‌کنند که <b>کدگذاری بعد از تمیزکاری می‌آید</b>. اگر «Tehran »، «tehran» و «TEHRAN» تمیز نشوند، one-hot سه ستون جدا برای یک شهر می‌سازد.</p>
+<div class="two">
+<div>
+<pre class="code"># slide 15: load and inspect
+import pandas as pd
+df = pd.read_csv("customers_messy.csv")
+df.head()
+df.info()
+df.describe(include="all")
+df.isna().sum()</pre>
+</div>
+<div class="box tip"><div class="bt">💡 بعد از هر دستور بپرس</div>
+  <ul><li>چه یاد گرفتیم؟</li><li>چه چیزی مشکوک است؟</li><li>قدم بعدی چه چیزی را باید بررسی کنیم؟</li></ul>
+  <b>بازرسی خودش تحلیل است، کار اداری نیست.</b> توصیه‌ی آموزشی اسلاید: قبل از اجرا، خروجی را حدس بزن.
+</div>
+</div>
+<pre class="code"># slide 16: clean and standardize
+df = df.drop_duplicates()                                     # exact duplicate records
+df["city"]   = df["city"].str.strip().str.lower()            # standardize text
+df["gender"] = df["gender"].str.strip().str.lower()
+df["age"]    = pd.to_numeric(df["age"], errors="coerce")     # convert numbers safely
+df["income"] = pd.to_numeric(df["income"], errors="coerce")
+
+# then apply rules (impossible values -> missing, then impute)
+df.loc[(df["age"] &lt; 0) | (df["age"] &gt; 100), "age"] = pd.NA
+df.loc[df["income"] &lt; 0, "income"] = pd.NA
+df["age"] = df["age"].fillna(df["age"].median())</pre>
+
+<h3>۳.۱ One-hot با <code>get_dummies</code> و ترتیبی با <code>map</code> (اسلاید ۱۷)</h3>
+<pre class="code">import pandas as pd
+df = pd.DataFrame({"city": ["Tehran", "Shiraz", "Tabriz", "Mashhad", "Isfahan"]})
+df["city_code"] = df["city"].astype("category").cat.codes   # label encoding (alphabetical!)
+print(df)
+
+df_model = pd.get_dummies(df[["city"]], columns=["city"], dtype=int)
+print(df_model)</pre>
+<div class="out">      city  city_code
+0   Tehran          4
+1   Shiraz          2
+2   Tabriz          3
+3  Mashhad          1
+4  Isfahan          0
+   city_Isfahan  city_Mashhad  city_Shiraz  city_Tabriz  city_Tehran
+0             0             0            0            0            1
+1             0             0            1            0            0
+2             0             0            0            1            0
+3             0             1            0            0            0
+4             1             0            0            0            0</div>
+<p>دو نکته‌ی کوچک: <code>cat.codes</code> ترتیب را از <b>الفبا</b> می‌گیرد، نه از هیچ معنای واقعی. و در pandas جدید خروجی <code>get_dummies</code> به‌طور پیش‌فرض <code>bool</code> است (True/False)؛ با <code>dtype=int</code> صفر و یک می‌گیری. اسلاید <code>drop_first=False</code> را صریح نوشته؛ معنایش را در بخش ۴ می‌بینیم.</p>
+
+<pre class="code">rides = pd.DataFrame({"surge_level": ["low", "High ", "medium", "low", "very high"]})
+risk_map = {"low": 0, "medium": 1, "high": 2}
+rides["surge_num"] = rides["surge_level"].map(risk_map)
+print(rides)
+print("unmapped:", rides.loc[rides["surge_num"].isna(), "surge_level"].tolist())</pre>
+<div class="out">  surge_level  surge_num
+0         low        0.0
+1       High         NaN
+2      medium        1.0
+3         low        0.0
+4   very high        NaN
+unmapped: ['High ', 'very high']</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: <code>map</code> بی‌صدا NaN می‌سازد</div>
+  <code>map</code> با دیکشنری هر مقداری را که در دیکشنری نیست <b>بدون هیچ خطایی</b> به NaN تبدیل می‌کند. «High » (با فاصله و حرف بزرگ) و «very high» (دسته‌ی جدید) گم شدند. پس همیشه: (۱) اول <code>str.strip().str.lower()</code>؛ (۲) بعد از map تعداد NaNهای <b>جدید</b> را بشمار؛ (۳) برای دسته‌ی ناشناخته تصمیم آگاهانه بگیر (مثلاً very high را با تیم محصول تعریف کن). یادت باشد: <b>تمیزکاری یعنی حذف نکردن</b>. NaNی که خودت ساختی را بی‌فکر با میانه پر نکن.
+</div>
+<pre class="code">rides["surge_level"] = rides["surge_level"].str.strip().str.lower()
+rides["surge_num"] = rides["surge_level"].map(risk_map)
+print(rides["surge_num"].isna().sum(), "still unmapped:",
+      rides.loc[rides["surge_num"].isna(), "surge_level"].unique().tolist())</pre>
+<div class="out">1 still unmapped: ['very high']</div>
+
+<p>راه تمیزتر برای ترتیبی: نوع <code>Categorical</code> مرتب. ترتیب را خودت می‌دهی و مقایسه‌ها هم معنا پیدا می‌کنند:</p>
+<pre class="code">lvl = pd.Categorical(["medium", "low", "high", "low"],
+                     categories=["low", "medium", "high"], ordered=True)
+s = pd.Series(lvl)
+print(s.cat.codes.tolist())   # codes follow YOUR order
+print((s &gt; "low").tolist())
+print(s.max())</pre>
+<div class="out">[1, 0, 2, 0]
+[True, False, True, False]
+high</div>
+<div class="box note"><div class="bt">جمله‌ی پایانی اسلاید ۱۷</div>
+  <b>«کدگذاری یک تصمیم مدل‌سازی است. کدگذاری غلط می‌تواند رابطه‌ی غلط بسازد.»</b> وقتی <code>city_code</code> را به مدل می‌دهی، در واقع ادعا کرده‌ای «اثر شهر خطی و به ترتیب الفباست». این یک فرض مدل‌سازی است، درست مثل انتخاب خود مدل.
+</div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="beyond-encoding">
+<h2><span class="num">۴</span> فراتر از اسلاید: دام‌های کدگذاری در دنیای واقعی <span class="tag book">تکمیلی</span> <span class="tag exam">امتحانی</span></h2>
+
+<h3>۴.۱ دام متغیر ساختگی (dummy-variable trap) و <code>drop_first</code></h3>
+<p>اگر هر پنج ستون one-hot را <b>همراه با عرض از مبدأ</b> (intercept) به رگرسیون خطی بدهی، جمع پنج ستون در هر سطر دقیقاً ۱ است، یعنی برابر ستون intercept:</p>
+$$d_{\text{Isf}}+d_{\text{Msh}}+d_{\text{Shz}}+d_{\text{Tbz}}+d_{\text{Thr}}=1=\text{intercept}$$
+<p>این یعنی هم‌خطی کامل (perfect multicollinearity): ماتریس $X$ رتبه‌ی کامل ستونی ندارد، $X^\top X$ وارون‌ناپذیر است و ضرایب <b>یکتا نیستند</b>. می‌توانی به intercept عدد $c$ اضافه کنی و از هر پنج ضریب شهر $c$ کم کنی؛ پیش‌بینی‌ها هیچ تغییری نمی‌کنند.</p>
+<pre class="code">import numpy as np
+X_full = pd.get_dummies(df["city"], dtype=int)
+X_full.insert(0, "intercept", 1)
+print(np.linalg.matrix_rank(X_full), "of", X_full.shape[1], "columns")
+X_drop = pd.get_dummies(df["city"], drop_first=True, dtype=int)
+print(list(X_drop.columns))     # Isfahan becomes the reference (all zeros)</pre>
+<div class="out">5 of 6 columns
+['Mashhad', 'Shiraz', 'Tabriz', 'Tehran']</div>
+<p>با <code>drop_first=True</code> یک دسته (اصفهان) <b>دسته‌ی مرجع</b> می‌شود. حالا ضریب «Tehran» یعنی «تفاوت تهران با اصفهان»، با فرض ثابت بودن بقیه‌ی متغیرها.</p>
+<div class="tablewrap"><table>
+<tr><th>مدل</th><th>drop_first لازم است؟</th><th>چرا</th></tr>
+<tr><td>OLS بدون regularization (مثلاً statsmodels) وقتی ضرایب را تفسیر می‌کنی</td><td><b>بله</b></td><td>بدون آن ضرایب یکتا نیستند و p-value و تفسیرشان بی‌معناست.</td></tr>
+<tr><td>رگرسیون لجستیک/خطی با regularization (پیش‌فرض sklearn: L2)</td><td>معمولاً نه</td><td>جریمه یک جواب یکتا انتخاب می‌کند و همه‌ی دسته‌ها متقارن می‌مانند.</td></tr>
+<tr><td>درخت‌ها و ensembleهای درختی</td><td>نه (حتی بهتر است نکنی)</td><td>درخت ماتریس وارون نمی‌کند. با drop_first، دسته‌ی مرجع فقط با «همه صفر» شناخته می‌شود و یک برش ساده را از دست می‌دهد.</td></tr>
+<tr><td>KNN و K-Means</td><td>نه</td><td>با drop_first فاصله‌ها نامتقارن می‌شوند: دسته‌ی مرجع تا بقیه فاصله‌ی ۱ دارد ولی بقیه با هم $\sqrt2$.</td></tr>
+</table></div>
+
+<h3>۴.۲ دسته‌ی دیده‌نشده (unseen category): «قم» اضافه شد!</h3>
+<p>مدل روی سه شهر آموزش دیده و ماه بعد سرویس در قم راه افتاده. با <code>get_dummies</code> جداگانه روی train و test، ستون‌ها با هم جور نیستند:</p>
+<pre class="code">from sklearn.preprocessing import OneHotEncoder
+train = pd.DataFrame({"city": ["Tehran", "Mashhad", "Isfahan", "Tehran"]})
+test  = pd.DataFrame({"city": ["Tehran", "Qom"]})          # Qom: new city!
+print(pd.get_dummies(train).columns.tolist())
+print(pd.get_dummies(test).columns.tolist())               # columns do not match!
+
+enc = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+enc.fit(train)                                              # learn categories on TRAIN only
+print(enc.get_feature_names_out())
+print(enc.transform(test))</pre>
+<div class="out">['city_Isfahan', 'city_Mashhad', 'city_Tehran']
+['city_Qom', 'city_Tehran']
+['city_Isfahan' 'city_Mashhad' 'city_Tehran']
+[[0. 0. 1.]
+ [0. 0. 0.]]</div>
+<p><code>OneHotEncoder</code> فهرست دسته‌ها را در <code>fit</code> روی train <b>یاد می‌گیرد</b> و در <code>transform</code> همان ستون‌ها را می‌سازد. این همان مرز fit/transform است که در جلسه‌ی ۷ مفصل می‌بینیم: هر چیزی که از داده «یاد گرفته می‌شود» (حتی فهرست دسته‌ها) فقط از train. با <code>handle_unknown="ignore"</code> دسته‌ی ناشناخته بردار تمام‌صفر می‌گیرد، یعنی مدل فقط intercept را برایش به کار می‌برد.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: <code>drop="first"</code> + <code>handle_unknown="ignore"</code></div>
+  اگر هم دسته‌ی اول را حذف کنی و هم ناشناخته‌ها را نادیده بگیری، <b>دو چیز متفاوت یک بردار می‌گیرند</b>: دسته‌ی مرجع (Isfahan) و هر شهر جدید (Qom) هر دو $[0,0]$ می‌شوند. sklearn در این حالت هشدار می‌دهد. پس مدل قم را «اصفهان» فرض می‌کند! برای مدل‌هایی که قرار است دسته‌ی جدید ببینند، drop نکن و از regularization استفاده کن.
+</div>
+
+<h3>۴.۳ هزینه‌ی ابعاد one-hot</h3>
+<p>اگر ستون‌های اسمی $K_1,\dots,K_p$ دسته داشته باشند، one-hot $\sum_j K_j$ ستون می‌سازد (با drop_first: $\sum_j (K_j-1)$). شهر با ۵ دسته ارزان است. ولی <code>driver_id</code> با ۳٬۰۰۰ راننده ۳٬۰۰۰ ستون می‌سازد. با یک میلیون سفر، ماتریس چگال float64 حجمی برابر $10^6\times3000\times8$ بایت $=24$ گیگابایت دارد. ماتریس تُنُک (sparse) فقط درایه‌های غیرصفر را نگه می‌دارد: یک غیرصفر در هر سطر، یعنی حدود ۲۰ مگابایت. برای همین <code>OneHotEncoder</code> به‌طور پیش‌فرض خروجی sparse می‌دهد.</p>
+<p>مشکل فقط حافظه نیست. وقتی یک راننده فقط ۳ سفر دارد، ضریب ستونش از ۳ نمونه تخمین زده می‌شود، یعنی بیش‌برازش (overfitting) آماده است.</p>
+
+<h3>۴.۴ دسته‌های پرتعداد (high-cardinality): frequency و target encoding (پیش‌نمایش)</h3>
+<ul>
+  <li><b>Frequency encoding:</b> هر دسته را با سهمش در داده جایگزین کن. ساده و بی‌خطر از نظر نشت، ولی دو دسته‌ی هم‌اندازه یک عدد می‌گیرند.</li>
+  <li><b>Target encoding (mean encoding):</b> هر دسته را با <b>میانگین متغیر هدف</b> در آن دسته جایگزین کن، مثلاً نرخ لغو هر راننده. قدرتمند است، ولی چون از $y$ استفاده می‌کند خطرناک است.</li>
+</ul>
+<div class="box thm"><div class="bt">Target encoding هموارشده (smoothed)</div>
+$$\text{TE}(c)=\frac{n_c\,\bar y_c+m\,\bar y}{n_c+m}$$
+  $n_c$ تعداد نمونه‌های دسته‌ی $c$، $\bar y_c$ میانگین هدف در آن دسته، $\bar y$ میانگین کل (prior) و $m$ قدرت هموارسازی است. دسته‌ی کم‌نمونه به سمت میانگین کل کشیده می‌شود و دسته‌ی پرنمونه تقریباً میانگین خودش را نگه می‌دارد.
+</div>
+<pre class="code">r = pd.DataFrame({"driver": ["d1"]*400 + ["d2"]*3 + ["d3"],
+                  "cancelled": [1]*80 + [0]*320 + [1, 1, 0] + [1]})
+g = r.groupby("driver")["cancelled"].agg(["count", "mean"])
+prior, m = 0.12, 20           # global rate (from TRAIN) and smoothing strength
+g["te_smooth"] = (g["count"] * g["mean"] + m * prior) / (g["count"] + m)
+print(g.round(3))</pre>
+<div class="out">        count   mean  te_smooth
+driver
+d1        400  0.200      0.196
+d2          3  0.667      0.191
+d3          1  1.000      0.162</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: target encoding = نشت داده‌ی آماده</div>
+  به راننده‌ی <code>d3</code> نگاه کن: یک سفر داشته و لغو شده. target encoding خام برایش ۱٫۰ است، یعنی <b>دقیقاً برچسب همان سطر</b>. اگر این عدد را روی کل داده حساب کنی و بعد train/test کنی، مدل جواب را از ورودی می‌خواند: دقت train عالی و در production فاجعه. سه قانون:
+  <ol>
+    <li>فقط روی <b>train</b> حساب کن (fit روی train، transform روی test).</li>
+    <li>روی خود train هم <b>out-of-fold</b> حساب کن: مقدار هر سطر از foldهایی بیاید که آن سطر در آن‌ها نیست. <code>sklearn.preprocessing.TargetEncoder</code> همین cross-fitting را خودکار انجام می‌دهد.</li>
+    <li>در داده‌ی زمانی، فقط از گذشته‌ی <b>قبل از لحظه‌ی پیش‌بینی</b> استفاده کن (نرخ لغو راننده تا قبل از این درخواست).</li>
+  </ol>
+  این بحث در جلسه‌ی ۷ (نشت و لحظه‌ی پیش‌بینی) کامل می‌شود.
+</div>
+
+<h3>۴.۵ همه با هم: <code>ColumnTransformer</code></h3>
+<p>در عمل کدگذاری را داخل Pipeline می‌گذاریم تا fit فقط روی train انجام شود و همان تبدیل دقیقاً روی test و production تکرار شود:</p>
+<pre class="code">from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
+from sklearn.pipeline import Pipeline
+from sklearn.linear_model import LogisticRegression
+
+pre = ColumnTransformer([
+    ("nominal", OneHotEncoder(handle_unknown="ignore"), ["city", "car_type"]),
+    ("ordinal", OrdinalEncoder(categories=[["low", "medium", "high"]]), ["surge_level"]),
+], remainder="passthrough")
+model = Pipeline([("pre", pre), ("clf", LogisticRegression(max_iter=1000))])
+
+X = pd.DataFrame({"city": ["Tehran", "Mashhad", "Tehran", "Shiraz", "Isfahan", "Tehran"],
+                  "car_type": ["eco", "plus", "eco", "van", "eco", "plus"],
+                  "surge_level": ["high", "low", "medium", "low", "low", "high"],
+                  "distance_km": [12.0, 4.5, 8.0, 3.2, 6.1, 15.3]})
+y = [1, 0, 0, 0, 0, 1]
+model.fit(X, y)
+print(model.named_steps["pre"].get_feature_names_out())</pre>
+<div class="out">['nominal__city_Isfahan' 'nominal__city_Mashhad' 'nominal__city_Shiraz'
+ 'nominal__city_Tehran' 'nominal__car_type_eco' 'nominal__car_type_plus'
+ 'nominal__car_type_van' 'ordinal__surge_level' 'remainder__distance_km']</div>
+<p>به <code>OrdinalEncoder</code> فهرست <code>categories</code> را صریح دادیم. اگر ندهی، باز هم ترتیب را از الفبا می‌گیرد (high=0، low=1، medium=2) و ترتیب جعلی برمی‌گردد.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="choose-plot">
+<h2><span class="num">۵</span> مصورسازی: نمودار درست برای سؤال درست <span class="tag core">اسلاید ۱۸ و ۱۹</span></h2>
+<p>جمله‌ی اصلی اسلاید ۱۸: <b>«نمودار جواب تصویری به یک سؤال است.»</b> پس اول سؤال را بنویس، بعد نمودار را انتخاب کن، نه برعکس.</p>
+<div class="tablewrap"><table>
+<tr><th>هدف</th><th>نمودار</th><th>سؤالی که جواب می‌دهد</th><th>در مورد کاهش ۱۲٪ سفرها</th></tr>
+<tr><td>توزیع (Distribution)</td><td>هیستوگرام</td><td>مقدارها چطور پخش شده‌اند؟</td><td>زمان انتظار مسافر در ماه گذشته چه شکلی دارد؟ دُم بلند دارد؟</td></tr>
+<tr><td>مقایسه (Comparison)</td><td>میله‌ای (bar)</td><td>کدام گروه بزرگ‌تر است؟</td><td>افت سفر در کدام شهر بیشتر بوده؟</td></tr>
+<tr><td>رابطه (Relationship)</td><td>پراکندگی (scatter)</td><td>آیا دو متغیر با هم حرکت می‌کنند؟</td><td>با بالا رفتن ضریب surge، نرخ لغو بالا می‌رود؟</td></tr>
+<tr><td>داده‌ی پرت (Outliers)</td><td>جعبه‌ای (box)</td><td>کدام مقدارها غیرعادی‌اند؟</td><td>کرایه‌های غیرعادی در هر نوع خودرو؟</td></tr>
+<tr><td>همبستگی (Correlation)</td><td>نقشه‌ی حرارتی (heatmap)</td><td>کدام ویژگی‌ها با هم مرتبط‌اند؟</td><td>کدام ویژگی‌های عددی با هم همبسته‌اند (و شاید تکراری‌اند)؟</td></tr>
+</table></div>
+<figure class="fig">
+<svg viewBox="0 0 560 150" width="560" role="img" aria-label="پنج نوع نمودار پایه">
+ <g font-family="Vazirmatn,Tahoma" font-size="11" text-anchor="middle">
+  <!-- histogram -->
+  <g transform="translate(8,10)"><rect x="0" y="0" width="100" height="100" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+   <g fill="#2456a6" opacity=".75"><rect x="12" y="70" width="12" height="22"/><rect x="25" y="45" width="12" height="47"/><rect x="38" y="25" width="12" height="67"/><rect x="51" y="38" width="12" height="54"/><rect x="64" y="60" width="12" height="32"/><rect x="77" y="80" width="12" height="12"/></g>
+   <text x="50" y="125" fill="currentColor">هیستوگرام · توزیع</text></g>
+  <!-- bar -->
+  <g transform="translate(120,10)"><rect x="0" y="0" width="100" height="100" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+   <g fill="#0f6e6a" opacity=".75"><rect x="14" y="20" width="14" height="72"/><rect x="34" y="40" width="14" height="52"/><rect x="54" y="55" width="14" height="37"/><rect x="74" y="68" width="14" height="24"/></g>
+   <text x="50" y="125" fill="currentColor">میله‌ای · مقایسه</text></g>
+  <!-- scatter -->
+  <g transform="translate(232,10)"><rect x="0" y="0" width="100" height="100" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+   <g fill="#c0392b" opacity=".8"><circle cx="15" cy="82" r="3"/><circle cx="24" cy="74" r="3"/><circle cx="30" cy="78" r="3"/><circle cx="40" cy="62" r="3"/><circle cx="47" cy="66" r="3"/><circle cx="55" cy="50" r="3"/><circle cx="62" cy="54" r="3"/><circle cx="70" cy="38" r="3"/><circle cx="78" cy="42" r="3"/><circle cx="86" cy="24" r="3"/></g>
+   <text x="50" y="125" fill="currentColor">پراکندگی · رابطه</text></g>
+  <!-- box -->
+  <g transform="translate(344,10)"><rect x="0" y="0" width="100" height="100" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+   <g stroke="currentColor" fill="none"><line x1="50" y1="30" x2="50" y2="85"/><rect x="35" y="45" width="30" height="25" fill="#8e44ad" fill-opacity=".3"/><line x1="35" y1="56" x2="65" y2="56" stroke-width="2"/><line x1="42" y1="30" x2="58" y2="30"/><line x1="42" y1="85" x2="58" y2="85"/></g>
+   <circle cx="50" cy="14" r="3" fill="#c0392b"/>
+   <text x="50" y="125" fill="currentColor">جعبه‌ای · پرت</text></g>
+  <!-- heatmap -->
+  <g transform="translate(456,10)"><rect x="0" y="0" width="100" height="100" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+   <g><rect x="14" y="14" width="24" height="24" fill="#2456a6" opacity=".9"/><rect x="38" y="14" width="24" height="24" fill="#2456a6" opacity=".45"/><rect x="62" y="14" width="24" height="24" fill="#c0392b" opacity=".35"/>
+   <rect x="14" y="38" width="24" height="24" fill="#2456a6" opacity=".45"/><rect x="38" y="38" width="24" height="24" fill="#2456a6" opacity=".9"/><rect x="62" y="38" width="24" height="24" fill="#2456a6" opacity=".15"/>
+   <rect x="14" y="62" width="24" height="24" fill="#c0392b" opacity=".35"/><rect x="38" y="62" width="24" height="24" fill="#2456a6" opacity=".15"/><rect x="62" y="62" width="24" height="24" fill="#2456a6" opacity=".9"/></g>
+   <text x="50" y="125" fill="currentColor">حرارتی · همبستگی</text></g>
+ </g>
+</svg>
+<figcaption>پنج نمودار پایه‌ی اسلاید ۱۸. اول بپرس «سؤالم کدام نوع است؟»، بعد نمودار را بکش.</figcaption>
+</figure>
+
+<p>نوت‌بوک درس این جدول را برای کار واقعی کامل‌تر کرده است:</p>
+<div class="tablewrap"><table>
+<tr><th>می‌خواهم نشان بدهم…</th><th>نمودار</th><th>یادآوری</th></tr>
+<tr><td>مقایسه‌ی دسته‌ها</td><td><b>میله‌ای</b></td><td>مرتب کن؛ محور از <b>صفر</b> شروع شود.</td></tr>
+<tr><td>تغییر در زمان</td><td><b>خطی</b> (line)</td><td>برای روز و ماه؛ نقطه‌ها را وصل کن.</td></tr>
+<tr><td>سهم از کل</td><td><b>میله‌ی ۱۰۰٪ انباشته</b> یا دونات (حداکثر ۳ تکه)</td><td>پای با تکه‌های زیاد ممنوع.</td></tr>
+<tr><td>توزیع یک ستون</td><td><b>هیستوگرام</b>، جعبه‌ای، ویولن</td><td>جعبه‌ای برای مقایسه‌ی چند گروه.</td></tr>
+<tr><td>رابطه‌ی دو عدد</td><td><b>پراکندگی</b></td><td>برای عدد سوم: اندازه‌ی نقطه (حبابی).</td></tr>
+<tr><td>دو ستون دسته‌ای</td><td><b>نقشه‌ی حرارتی</b></td><td>عدد را داخل خانه‌ها بنویس.</td></tr>
+<tr><td>سهم تجمعی و «کمِ مهم»</td><td><b>پارتو</b></td><td>قانون ۸۰/۲۰.</td></tr>
+<tr><td>تغییر گام‌به‌گام یک عدد</td><td><b>آبشاری</b> (waterfall)</td><td>توضیح «چرا»: افت ۱۲٪ از کجا آمد؟</td></tr>
+<tr><td>نابرابری</td><td><b>لورنز</b> + ضریب جینی</td><td>برای توزیع درآمد یا مشتری.</td></tr>
+</table></div>
+
+<div class="box note"><div class="bt">📖 اسلاید ۱۹: کتابی که استاد معرفی کرد</div>
+  <div class="bookcard">
+    <div class="cov c1"><div>storytelling<br>with data<br><span style="font-weight:400">Cole Nussbaumer Knaflic</span></div></div>
+    <div class="cov c2"><div>داستان‌پردازی<br>با داده‌ها</div></div>
+    <div style="flex:1;min-width:220px">اسلاید ۱۹ فقط تصویر جلد دو کتاب است: <b>Storytelling with Data</b> نوشته‌ی Cole Nussbaumer Knaflic (ویراست دهمین سالگرد) و ترجمه‌ی فارسی‌اش با عنوان <b>«داستان‌پردازی با داده‌ها: راهنمای مصورسازی داده‌ها برای حرفه‌ای‌های کسب‌وکار»</b>. شش درس اصلی کتاب: (۱) <b>زمینه</b> را بفهم (مخاطب کیست، از او چه می‌خواهی)؛ (۲) نمودار <b>مناسب</b> را انتخاب کن؛ (۳) <b>شلوغی</b> را حذف کن؛ (۴) توجه را به جای درست <b>هدایت</b> کن؛ (۵) مثل <b>طراح</b> فکر کن؛ (۶) <b>داستان</b> بگو. بخش بعدی همین درس‌ها را عملی می‌کند.</div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="clean-visuals">
+<h2><span class="num">۶</span> نمودار تمیز و خوانا، داشبورد یک‌صفحه‌ای و چالش کوچک <span class="tag core">اسلاید ۲۰ و ۲۱ + نوت‌بوک</span></h2>
+<p>اسلاید ۲۰ چهار قاعده دارد:</p>
+<ol class="steps">
+  <li><b>یک پیام:</b> هر تزئینی که کمک نمی‌کند را حذف کن.</li>
+  <li><b>برچسب خوانا:</b> عنوان محورها، <b>واحد</b>، متن واضح.</li>
+  <li><b>نمودار درست:</b> برای همه چیز نمودار دایره‌ای (pie) نکش.</li>
+  <li><b>داستان بگو:</b> عنوان باید <b>بینش</b> را توضیح بدهد.</li>
+</ol>
+<pre class="code"># slide 20 (minimal version)
+import matplotlib.pyplot as plt
+df["age"].hist()
+plt.title("Age distribution")
+plt.xlabel("Age")
+plt.ylabel("Count")
+plt.show()
+
+plt.scatter(df["age"], df["income"])
+plt.xlabel("Age")
+plt.ylabel("Income")
+plt.show()</pre>
+<pre class="code"># better: an ACTION title + units + one highlight
+drops = pd.Series({"Tehran": -0.19, "Mashhad": -0.06, "Isfahan": -0.04,
+                   "Shiraz": -0.02, "Tabriz": 0.01})   # illustrative % change
+order = drops.sort_values()
+colors = ["#c0392b" if c == "Tehran" else "#b0b7c3"
+          for c in order.index]
+fig, ax = plt.subplots(figsize=(7, 3.5))
+ax.barh(order.index, order.values * 100, color=colors)
+ax.axvline(0, color="black", lw=0.8)
+ax.set_xlabel("Change in completed rides vs previous month (%)")
+ax.set_title("Tehran explains most of the 12% drop")
+for side in ["top", "right"]:
+    ax.spines[side].set_visible(False)
+plt.tight_layout(); plt.show()</pre>
+<p class="mini">عددهای <code>drops</code> در کد دوم ساختگی و فقط برای نمایش‌اند (در کار واقعی از groupby روی دو ماه حساب می‌شوند). مهم انتخاب‌هاست: میله‌ی افقی مرتب، یک رنگ برجسته، واحد در محور، عنوانی که نتیجه را می‌گوید.</p>
+
+<h3>۶.۱ عنوان عملیاتی (action title)</h3>
+<p>نوت‌بوک درس می‌گوید: <b>عنوان، پیام را بگوید</b> («الکترونیک نیمی از درآمد را می‌سازد»)، نه فقط موضوع را («درآمد دسته‌ها»). در مورد ما:</p>
+<div class="vs">
+  <div><h4>❌ عنوان موضوعی</h4><ul><li>سفرهای کامل‌شده بر حسب شهر</li><li>نرخ لغو در طول روز</li><li>زمان انتظار</li></ul></div>
+  <div><h4>✅ عنوان عملیاتی</h4><ul><li>تهران بیشتر افت ۱۲٪ را توضیح می‌دهد</li><li>لغوها ساعت ۱۷ تا ۲۰ دو برابر می‌شوند</li><li>از وقتی انتظار از ۸ دقیقه گذشت، لغو جهش کرد</li></ul></div>
+</div>
+<p>عنوان عملیاتی یک <b>ادعا</b> است، پس باید داده پشتش باشد. اگر داده آن را پشتیبانی نمی‌کند، عنوانت را عوض کن، نه داده را.</p>
+
+<h3>۶.۲ ضدالگوها (anti-patterns) <span class="tag book">تکمیلی</span></h3>
+<figure class="fig">
+<svg viewBox="0 0 540 200" width="540" role="img" aria-label="اثر محور بریده‌شده">
+ <g font-family="Vazirmatn,Tahoma" font-size="11" text-anchor="middle">
+  <g transform="translate(270,0)">
+  <text x="135" y="16" fill="currentColor" font-weight="700">❌ محور از ۵٫۹ شروع شده</text>
+  <line x1="40" y1="30" x2="40" y2="160" stroke="currentColor" opacity=".5"/><line x1="40" y1="160" x2="240" y2="160" stroke="currentColor" opacity=".5"/>
+  <text x="34" y="164" fill="currentColor" text-anchor="end">5.9</text><text x="34" y="34" fill="currentColor" text-anchor="end">6.3</text>
+  <rect x="80" y="30" width="50" height="130" fill="#c0392b" opacity=".75"/><rect x="160" y="128" width="50" height="32" fill="#b0b7c3"/>
+  <text x="105" y="178" fill="currentColor">تهران ۶٫۳</text><text x="185" y="178" fill="currentColor">مشهد ۶٫۰</text>
+  <text x="135" y="196" fill="currentColor" opacity=".8">«چهار برابر!» (نه واقعاً)</text>
+  </g><g transform="translate(-270,0)">
+  <text x="405" y="16" fill="currentColor" font-weight="700">✅ محور از صفر</text>
+  <line x1="310" y1="30" x2="310" y2="160" stroke="currentColor" opacity=".5"/><line x1="310" y1="160" x2="510" y2="160" stroke="currentColor" opacity=".5"/>
+  <text x="304" y="164" fill="currentColor" text-anchor="end">0</text><text x="304" y="34" fill="currentColor" text-anchor="end">6.3</text>
+  <rect x="350" y="30" width="50" height="130" fill="#c0392b" opacity=".75"/><rect x="430" y="36" width="50" height="124" fill="#b0b7c3"/>
+  <text x="375" y="178" fill="currentColor">تهران ۶٫۳</text><text x="455" y="178" fill="currentColor">مشهد ۶٫۰</text>
+  <text x="405" y="196" fill="currentColor" opacity=".8">تفاوت واقعی: حدود ۵٪</text>
+  </g>
+ </g>
+</svg>
+<figcaption>میانگین زمان انتظار (دقیقه). در نمودار میله‌ای، طول میله خودِ مقدار است؛ بریدن محور طول را دروغ می‌کند. در نمودار خطی که تغییرات را نشان می‌دهد، شروع نکردن از صفر مجاز است، به شرط این‌که محور واضح برچسب بخورد.</figcaption>
+</figure>
+<div class="tablewrap"><table>
+<tr><th>ضدالگو</th><th>چرا بد است؟</th><th>راه درست</th></tr>
+<tr><td>محور بریده‌شده در نمودار میله‌ای</td><td>تفاوت کوچک را بزرگ نشان می‌دهد.</td><td>میله همیشه از صفر؛ اگر تفاوت کوچک مهم است، خود تفاوت را رسم کن.</td></tr>
+<tr><td>دو محور y (dual axes)</td><td>با تغییر مقیاس هر محور می‌شود هر «همبستگی»ای ساخت؛ چشم تقاطع خط‌ها را معنادار می‌بیند.</td><td>دو نمودار کوچک هم‌محور (small multiples) یا نرمال‌سازی هر دو سری به شاخص (مثلاً ماه اول=۱۰۰).</td></tr>
+<tr><td>پای با تکه‌های زیاد</td><td>چشم انسان زاویه و مساحت را بد مقایسه می‌کند.</td><td>میله‌ی مرتب؛ پای فقط برای ۲ یا ۳ تکه.</td></tr>
+<tr><td>سه‌بعدی (3D)</td><td>پرسپکتیو اندازه‌ها را تحریف می‌کند؛ تکه‌ی جلو بزرگ‌تر دیده می‌شود.</td><td>همیشه دوبعدی.</td></tr>
+<tr><td>رنگ رنگین‌کمانی</td><td>رنگ بدون معنا حواس را پرت می‌کند.</td><td>یک رنگ خنثی و یک رنگ برای برجسته کردن.</td></tr>
+<tr><td>بدون واحد و برچسب</td><td>«۶٫۳» دقیقه است یا هزار تومان؟</td><td>محور و واحد را بنویس.</td></tr>
+<tr><td>نمودار شلوغ</td><td>پیام گم می‌شود.</td><td>یک پیام؛ خطوط شبکه و قاب اضافی را حذف کن.</td></tr>
+</table></div>
+
+<h3>۶.۳ ویژگی‌های پیش‌توجهی و رنگ امن برای کوررنگی <span class="tag book">تکمیلی</span></h3>
+<p><b>ویژگی‌های پیش‌توجهی (pre-attentive attributes)</b> چیزهایی‌اند که مغز در کمتر از حدود یک‌چهارم ثانیه و بدون تلاش آگاهانه می‌بیند: رنگ (hue و شدت)، اندازه، جهت، شکل، موقعیت، حاشیه‌ی پررنگ. ترفند Knaflic این است که <b>همه چیز را خاکستری کن و فقط چیزی را که پیام توست رنگی کن</b>. اگر پنج رنگ داری، هیچ چیز برجسته نیست.</p>
+<p>دقت مقایسه هم یکسان نیست: موقعیت روی محور مشترک (میله، نقطه) دقیق‌ترین است؛ طول بعد از آن؛ زاویه و مساحت (پای، حباب) ضعیف‌ترند. برای همین میله بر پای برتری دارد.</p>
+<div class="box tip"><div class="bt">💡 رنگ امن برای کوررنگی (colorblind-safe)</div>
+  حدود ۸٪ مردان نوعی کوررنگی قرمز-سبز دارند. پس: (۱) قرمز و سبز را تنها رمز معنا نکن (داشبورد «خوب/بد» با قرمز و سبز برای این افراد یک‌رنگ است)؛ (۲) از پالت‌های امن استفاده کن: <code>viridis</code> و <code>cividis</code> برای مقدار پیوسته، پالت Okabe–Ito یا <code>sns.color_palette("colorblind")</code> برای دسته‌ها؛ (۳) معنا را با چیز دیگری هم برسان: برچسب مستقیم روی خط، شکل نشانگر، الگو. (۴) نقشه‌ی حرارتی همبستگی که از ۱− تا ۱+ است، پالت <b>واگرا</b> (diverging) با مرکز صفر می‌خواهد، مثلاً <code>RdBu</code> با <code>center=0</code>.
+</div>
+
+<h3>۶.۴ داشبورد یک‌صفحه‌ای و قالب داستان (از نوت‌بوک درس)</h3>
+<p>نوت‌بوک درس می‌گوید: <b>«مدیر نوت‌بوک شما را نمی‌خواند؛ یک صفحه با پاسخ می‌خواهد.»</b> ارتباط خوب یعنی <b>نمودار ساده + عنوان روشن + یک پیام</b>. نوت‌بوک برای فروشگاه آنلاین یک داشبورد ۲×۳ ساخته که <b>عنوان هر نمودار یک پیام است</b> (مثلاً «… حدود ۵۰٪ درآمد را می‌سازد»، «اوج درآمد: …»، «… بزرگ‌ترین بازار است»، «کد تخفیف: −۲٪ ارزش سفارش (p = …) — بی‌اثر»). همان ایده برای مورد ما:</p>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>نمودار</th><th>عنوان-پیام (نمونه)</th></tr>
+<tr><td>۱</td><td>خطی: سفر کامل‌شده‌ی روزانه</td><td>افت از هفته‌ی دوم ماه شروع شد، نه یکباره</td></tr>
+<tr><td>۲</td><td>میله‌ای افقی: درصد تغییر هر شهر</td><td>تهران بیشتر افت را توضیح می‌دهد</td></tr>
+<tr><td>۳</td><td>میله‌ای: نرخ لغو بر حسب ساعت</td><td>لغوها در ساعت اوج دو برابر شدند</td></tr>
+<tr><td>۴</td><td>پراکندگی: زمان انتظار در برابر نرخ لغو</td><td>بعد از ۸ دقیقه انتظار، لغو جهش می‌کند</td></tr>
+<tr><td>۵</td><td>جعبه‌ای: کرایه بر حسب نوع خودرو</td><td>کرایه‌ی اکو در ساعت اوج پراکندگی زیادی دارد</td></tr>
+<tr><td>۶</td><td>میله‌ای: تعداد راننده‌ی فعال</td><td>راننده‌ی فعال ۹٪ کم شده؛ مشکل از سمت عرضه است</td></tr>
+</table></div>
+<p class="mini">این عنوان‌ها فرضیه‌های نمونه‌اند، نه نتیجه‌ی داده‌ی واقعی. در کار واقعی هر عنوان را بعد از دیدن داده می‌نویسی.</p>
+<div class="box def"><div class="bt">قالب داستان نهایی (۵ بخش، از نوت‌بوک)</div>
+  <ol>
+    <li><b>پرسش</b>: چه می‌خواستیم بدانیم؟</li>
+    <li><b>داده</b>: منبع، بازه، اندازه، تصمیم‌های پاک‌سازی.</li>
+    <li><b>یافته‌ها</b>: ۳ تا ۴ واقعیت کلیدی همراه با عدد.</li>
+    <li><b>پیشنهاد</b>: کسب‌وکار باید چه <b>بکند</b>؟</li>
+    <li><b>محدودیت‌ها و گام بعدی</b>: چه چیزهایی را هنوز نمی‌دانیم؟ (مثلاً سوگیری انتخاب، فرض‌ها، داده‌ی کم)</li>
+  </ol>
+</div>
+
+<h3>۶.۵ چالش کوچک اسلاید ۲۱: تمیز کن، کدگذاری کن، مصور کن</h3>
+<div class="flow"><span>داده‌ی خام</span><i>←</i><span>داده‌ی تمیز</span><i>←</i><span>عددهای قابل‌استفاده</span><i>←</i><span>بینش تصویری</span></div>
+<div class="vs">
+  <div><h4>مأموریت</h4><p>یک dataset کثیف مشتری را به چیزی قابل‌تحلیل تبدیل کن:</p><ul><li>بارگذاری و بازرسی</li><li>پیدا کردن و تمیز کردن مشکل‌ها</li><li>کدگذاری متغیرهای دسته‌ای</li><li>سه نمودار مفید</li><li>سه مشاهده‌ی مکتوب</li></ul></div>
+  <div><h4>تحویلی: یک بخش کوتاه نوت‌بوک</h4><ol><li>چه چیزی کثیف بود؟</li><li>چه چیزی را تغییر دادی؟</li><li>نمودارها چه نشان می‌دهند؟</li><li>بعد چه چیزی را تحلیل می‌کنی؟</li></ol></div>
+</div>
+<div class="box tip"><div class="bt">💡 «مشاهده‌ی خوب» چه شکلی است؟</div>
+  مشاهده‌ی ضعیف: «درآمد توزیع دارد.» مشاهده‌ی خوب: «توزیع درآمد چوله به راست است: میانه ۱۸ میلیون تومان و میانگین ۲۶ میلیون؛ پس برای گزارش “مشتری معمولی” میانه را می‌آوریم.» یک مشاهده‌ی خوب <b>عدد</b> دارد، <b>مقایسه</b> دارد و به یک <b>تصمیم یا سؤال بعدی</b> وصل می‌شود.
+</div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="text-numbers">
+<h2><span class="num">۷</span> از کلمه تا عدد: توکن، شناسه، بردار <span class="tag core">اسلاید ۲۲</span></h2>
+<p>متن را باید قبل از تحلیل، مصورسازی، جست‌وجو یا مدل‌سازی <b>به عدد تبدیل کنیم</b>. مسیر اسلاید:</p>
+<div class="flow"><span>متن خام<br><span class="ltr">“The ride was late”</span></span><i>←</i><span>توکن‌ها<br><span class="ltr">the · ride · was · late</span></span><i>←</i><span>شناسه‌ها (IDs)<br><span class="ltr">101 1996 4536 …</span></span><i>←</i><span>بردار (embedding)<br><span class="ltr">[0.12, −0.04, …]</span></span><i>←</i><span>تحلیل<br>خوشه · جست‌وجو · مدل</span></div>
+<ul>
+  <li><b>توکن‌سازی (tokenization):</b> شکستن متن به واحدها: کلمه، زیرکلمه (subword) یا کاراکتر. مدل‌های BERT‌گونه زیرکلمه‌ای‌اند؛ کلمه‌ی نادر به چند تکه‌ی آشنا شکسته می‌شود.</li>
+  <li><b>شناسه (ID):</b> هر توکن یک شماره در واژه‌نامه (vocabulary) دارد. این شماره <b>برچسب</b> است، نه اندازه، دقیقاً مثل کد شهر در بخش ۲. پس شناسه را هیچ‌وقت مستقیم به مدل خطی نمی‌دهیم.</li>
+  <li><b>بردار (embedding):</b> نمایش عددی‌ای که روی آن می‌شود فاصله و شباهت حساب کرد.</li>
+</ul>
+<div class="box thm"><div class="bt">ایده‌ی کلیدی اسلاید ۲۲</div>
+  <b>کدگذاری یک قدم آرایشی نیست. تعیین می‌کند «شباهت»، «معنا» و «تفاوت» برای کامپیوتر چه معنایی دارند.</b> همان درس بخش ۲، این بار برای متن: one-hot شهرها می‌گفت «همه به یک اندازه متفاوت‌اند»؛ TF-IDF می‌گوید «متن‌هایی که کلمه‌ی مشترک دارند شبیه‌اند»؛ embedding می‌گوید «متن‌هایی که معنای نزدیک دارند شبیه‌اند».
+</div>
+
+<h3>۷.۱ پیش‌پردازش متن فارسی <span class="tag book">تکمیلی</span></h3>
+<p>متن فارسی چند دام خاص دارد که اگر حل نشوند، دو کلمه‌ی یکسان برای کامپیوتر دو کلمه‌ی متفاوت می‌شوند:</p>
+<div class="tablewrap"><table>
+<tr><th>مشکل</th><th>مثال</th><th>چرا مهم است</th><th>راه حل</th></tr>
+<tr><td>ی عربی و فارسی</td><td><span class="ltr">ي</span> (U+064A) در برابر <span class="ltr">ی</span> (U+06CC)</td><td>«كرايه» و «کرایه» روی صفحه شبیه‌اند ولی رشته‌های متفاوتی‌اند.</td><td>یکسان‌سازی به ی فارسی</td></tr>
+<tr><td>ک عربی و فارسی</td><td><span class="ltr">ك</span> (U+0643) در برابر <span class="ltr">ک</span> (U+06A9)</td><td>کیبوردهای عربی و بعضی سیستم‌های قدیمی ک عربی تولید می‌کنند.</td><td>یکسان‌سازی به ک فارسی</td></tr>
+<tr><td>نیم‌فاصله (ZWNJ, U+200C)</td><td>«نمی‌شود» / «نمی شود» / «نمیشود»</td><td>سه شکل نوشتاری از یک کلمه؛ و الگوی پیش‌فرض توکن‌ساز sklearn نیم‌فاصله را جداکننده می‌بیند.</td><td>یک سیاست ثابت: همه را به شکل نیم‌فاصله‌دار تبدیل کن، یا عمداً همه را جدا کن.</td></tr>
+<tr><td>اعراب و کشیده</td><td>«کِرایه»، «کـــرایه»</td><td>نویسه‌های اضافی کلمه را متفاوت می‌کنند.</td><td>حذف اعراب و کشیده (ـ)</td></tr>
+<tr><td>ارقام</td><td>۱۲ / ١٢ / 12</td><td>سه نوع رقم (فارسی، عربی، لاتین).</td><td>تبدیل به یک نوع</td></tr>
+<tr><td>فینگلیش</td><td>«ranande dir oomad»</td><td>هیچ اشتراک واژگانی با متن فارسی ندارد.</td><td>گزارش جدا؛ یا مدل چندزبانه که شاید کمی کمک کند.</td></tr>
+</table></div>
+<pre class="code">import re
+def normalize_fa(t: str) -&gt; str:
+    t = t.replace("ي", "ی").replace("ك", "ک")          # Arabic yeh/kaf -&gt; Persian
+    t = t.replace("ى", "ی").replace("ة", "ه")
+    t = re.sub(r"[\u064B-\u0652]", "", t)              # remove diacritics (harakat)
+    t = re.sub(r"\u200c+", "\u200c", t)               # collapse repeated ZWNJ
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+a, b = "كرايه زياد بود", "کرایه زیاد بود"
+print(a == b, normalize_fa(a) == normalize_fa(b))
+print(re.findall(r"(?u)\b\w\w+\b", "نمی\u200cآید"))    # sklearn's default token_pattern</pre>
+<div class="out">False True
+['نمی', 'آید']</div>
+<p>در عمل از کتابخانه‌ی <b>hazm</b> استفاده کن که برای فارسی ساخته شده: <code>Normalizer</code> (یکسان‌سازی حروف، نیم‌فاصله‌ی پیشوند «می» و پسوندهایی مثل «ها»)، <code>word_tokenize</code>، <code>Lemmatizer</code> و فهرست ایست‌واژه‌ها. مدل‌های BERT‌گونه توکن‌ساز خودشان را دارند، ولی یکسان‌سازی ی/ک باز هم کیفیت را بهتر می‌کند.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+  اگر دو شکایت «كرايه زياد بود» و «کرایه زیاد بود» در TF-IDF شباهت کسینوسی کمتر از ۱ بگیرند (در مثال ما فقط ۰٫۲۰، آن هم به خاطر «بود»)، مشکل از مدل نیست، از <b>کدگذاری</b> است. همان پیام اسلاید ۲۲: نمایش متن تعیین می‌کند «شبیه» یعنی چه.
+</div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="tfidf">
+<h2><span class="num">۸</span> شمارش تُنُک: TF-IDF و شباهت کسینوسی <span class="tag core">اسلاید ۲۳</span> <span class="tag book">تکمیلی: فرمول و مثال</span></h2>
+<p>اسلاید ۲۳ می‌گوید رمزگذاری‌های مختلف متن به سؤال‌های مختلف جواب می‌دهند:</p>
+<div class="vs">
+  <div><h4>TF-IDF: شمارش کلمه‌های مهم</h4><ul><li>ساده، سریع و <b>تفسیرپذیر</b></li><li>خط پایه‌ی خوب برای طبقه‌بندی</li><li><b>ضعیف</b> برای مترادف و بافت</li></ul><p>«cheap» و «inexpensive» ممکن است بی‌ربط دیده شوند.</p></div>
+  <div><h4>Embedding: بردارهایی که معنا را می‌گیرند</h4><ul><li>نمایش عددی <b>چگال</b> (dense)</li><li>معناهای شبیه نزدیک هم می‌افتند</li><li>بهتر برای جست‌وجو، خوشه‌بندی و تطبیق معنایی</li></ul><p>«cheap» و «inexpensive» می‌توانند نزدیک باشند.</p></div>
+</div>
+
+<h3>۸.۱ تعریف دقیق</h3>
+<p><b>شهود:</b> کلمه‌ای که در یک سند زیاد آمده احتمالاً درباره‌ی موضوع آن سند است (TF). ولی کلمه‌ای که در <b>همه</b> سندها هست (مثل «بود»، «و») چیزی را از هم جدا نمی‌کند، پس وزنش را کم می‌کنیم (IDF).</p>
+<div class="box def"><div class="bt">تعریف · TF-IDF</div>
+  برای $N$ سند، $\text{tf}(t,d)$ تعداد دفعاتی است که واژه‌ی $t$ در سند $d$ آمده و $\text{df}(t)$ تعداد سندهایی است که $t$ را دارند. فرم کتابی:
+  $$\text{idf}(t)=\log\frac{N}{\text{df}(t)},\qquad w_{t,d}=\text{tf}(t,d)\cdot\text{idf}(t)$$
+  فرم پیش‌فرض sklearn (هموارشده تا تقسیم بر صفر و idf صفر پیش نیاید):
+  $$\text{idf}(t)=\ln\frac{1+N}{1+\text{df}(t)}+1$$
+  و در آخر هر سطر با نُرم L2 نرمال می‌شود: $\mathbf v_d\leftarrow \mathbf v_d/\|\mathbf v_d\|_2$.
+</div>
+<div class="box def"><div class="bt">تعریف · شباهت کسینوسی</div>
+  $$\cos(\mathbf a,\mathbf b)=\frac{\mathbf a\cdot\mathbf b}{\|\mathbf a\|\,\|\mathbf b\|}$$
+  کسینوس زاویه‌ی بین دو بردار. برای بردارهای نامنفی (مثل TF-IDF) بین ۰ (هیچ واژه‌ی مشترکی ندارند) و ۱ (هم‌جهت‌اند). طول سند (کوتاه یا بلند) اثری ندارد، فقط <b>جهت</b> مهم است. اگر بردارها نرمال باشند، $\|\mathbf a-\mathbf b\|^2=2-2\cos(\mathbf a,\mathbf b)$؛ یعنی فاصله‌ی اقلیدسی و کسینوسی یک ترتیب می‌دهند. برای همین در اسلاید ۲۶ <code>normalize_embeddings=True</code> می‌بینی.
+</div>
+
+<h3>۸.۲ مثال کار‌شده با چهار شکایت سفر</h3>
+<div class="box ex"><div class="bt">مثال: ۴ شکایت، $N=4$</div>
+  <ol>
+    <li>d1: «راننده دیر آمد»</li>
+    <li>d2: «راننده دیر آمد و بی ادب بود»</li>
+    <li>d3: «قیمت سفر گران بود»</li>
+    <li>d4: «سفر گران و طولانی بود»</li>
+  </ol>
+  <b>گام ۱، df و idf (فرم sklearn):</b>
+  <ul>
+    <li>«راننده»، «دیر»، «آمد»، «سفر»، «گران»، «و»: در ۲ سند ← $\ln(5/3)+1=1.511$</li>
+    <li>«بود»: در ۳ سند ← $\ln(5/4)+1=1.223$ (کمترین وزن؛ تقریباً همه جا هست)</li>
+    <li>«ادب»، «بی»، «قیمت»، «طولانی»: در ۱ سند ← $\ln(5/2)+1=1.916$ (بیشترین وزن؛ متمایزکننده)</li>
+  </ul>
+  <b>گام ۲، بردار d1:</b> سه واژه، هرکدام یک بار، هرکدام با وزن ۱٫۵۱۱. نُرم: $1.511\sqrt3=2.617$، پس هر درایه $1.511/2.617=1/\sqrt3\approx0.577$.
+  <br><b>گام ۳، بردار d2:</b> وزن‌های خام: چهار واژه با ۱٫۵۱۱ (راننده، دیر، آمد، و)، دو واژه با ۱٫۹۱۶ (بی، ادب) و «بود» با ۱٫۲۲۳. نُرم: $\sqrt{4(1.511)^2+2(1.916)^2+1.223^2}=\sqrt{17.97}=4.239$. پس «راننده» در d2 وزن $1.511/4.239=0.356$ می‌گیرد.
+  <br><b>گام ۴، کسینوس d1 و d2:</b> فقط سه واژه‌ی مشترک دارند: $3\times0.577\times0.356\approx0.617$.
+  <br><b>نتیجه‌ی کامل</b> (در Python تأیید شده):
+  <div class="tablewrap"><table class="data">
+   <tr><th></th><th>d1</th><th>d2</th><th>d3</th><th>d4</th></tr>
+   <tr><th>d1</th><td>1</td><td>0.62</td><td>0</td><td>0</td></tr>
+   <tr><th>d2</th><td>0.62</td><td>1</td><td>0.11</td><td>0.26</td></tr>
+   <tr><th>d3</th><td>0</td><td>0.11</td><td>1</td><td>0.56</td></tr>
+   <tr><th>d4</th><td>0</td><td>0.26</td><td>0.56</td><td>1</td></tr>
+  </table></div>
+  دو خوشه‌ی طبیعی پیدا شد: «رفتار راننده» (d1، d2) و «قیمت/سفر» (d3، d4). ولی شباهت d2 و d4 (۰٫۲۶) بیشتر از d2 و d3 است فقط به خاطر «و» و «بود». ایست‌واژه‌ها نویز می‌سازند.
+</div>
+<pre class="code">from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+docs = ["راننده دیر آمد",
+        "راننده دیر آمد و بی ادب بود",
+        "قیمت سفر گران بود",
+        "سفر گران و طولانی بود"]
+vec = TfidfVectorizer(token_pattern=r"(?u)\b\w+\b")   # keep 1-letter words like «و»
+X = vec.fit_transform(docs)                            # sparse matrix, shape (4, 11)
+print({w: round(float(v), 3) for w, v in zip(vec.get_feature_names_out(), vec.idf_)})
+print(cosine_similarity(X).round(2))</pre>
+<div class="out">{'آمد': 1.511, 'ادب': 1.916, 'بود': 1.223, 'بی': 1.916, 'دیر': 1.511, 'راننده': 1.511, 'سفر': 1.511, 'طولانی': 1.916, 'قیمت': 1.916, 'و': 1.511, 'گران': 1.511}
+[[1.   0.62 0.   0.  ]
+ [0.62 1.   0.11 0.26]
+ [0.   0.11 1.   0.56]
+ [0.   0.26 0.56 1.  ]]</div>
+<p class="mini">الگوی پیش‌فرض sklearn (<code>\b\w\w+\b</code>) کلمه‌های یک‌حرفی مثل «و» را دور می‌ریزد؛ ما عمداً نگهشان داشتیم تا اثر ایست‌واژه دیده شود.</p>
+<p><b>چرا «تُنُک» (sparse)؟</b> واژه‌نامه‌ی واقعی ده‌ها هزار واژه دارد و هر شکایت فقط چند تا از آن‌ها را. پس بیشتر درایه‌ها صفرند، دقیقاً مثل one-hot شناسه‌ی راننده. TF-IDF در واقع «one-hot وزن‌دار کلمه‌ها»ست و همان ضعف را دارد: هر کلمه یک محور مستقل است و «گران» و «پرهزینه» هیچ ربطی به هم ندارند.</p>
+
+<div id="w-tfidf"></div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: TF-IDF را روی کل داده fit کردن</div>
+  idf از <b>داده</b> یاد گرفته می‌شود (شمارش df). اگر <code>TfidfVectorizer</code> را روی train و test با هم fit کنی، اطلاعات test به وزن‌ها نشت کرده است. درست: <code>vec.fit_transform(train_texts)</code> و بعد <code>vec.transform(test_texts)</code>. واژه‌ای که فقط در test آمده نادیده گرفته می‌شود، همان رفتار <code>handle_unknown="ignore"</code>.
+</div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="encoders">
+<h2><span class="num">۹</span> بردار معنایی: BERT، انتخاب رمزگذار و کار عملی <span class="tag core">اسلاید ۲۴ تا ۲۹</span></h2>
+<h3>۹.۱ BERT چه چیزی اضافه می‌کند؟ (اسلاید ۲۴)</h3>
+<p><b>«بردار یک کلمه به جمله‌ی اطرافش بستگی دارد.»</b> مسیر اسلاید:</p>
+<div class="flow"><span>جمله<br>«bank» کنار رودخانه / پول</span><i>←</i><span>توکن‌ساز<br>کلمه ← زیرکلمه + توکن‌های ویژه</span><i>←</i><span>رمزگذار<br>لایه‌های Transformer</span><i>←</i><span>خروجی برداری<br>بردار هر توکن یا یک بردار برای جمله</span></div>
+<p>توکن‌های ویژه مثل <code>[CLS]</code> (اول جمله) و <code>[SEP]</code> (مرز جمله) را توکن‌ساز اضافه می‌کند. لایه‌های Transformer با سازوکار <b>توجه (attention)</b> به هر توکن اجازه می‌دهند به بقیه‌ی توکن‌های جمله «نگاه» کند. پس بردار نهایی «bank» در «I sat on the river bank» با بردارش در «I deposited money in the bank» فرق دارد.</p>
+<figure class="fig">
+<svg viewBox="0 0 520 210" width="520" role="img" aria-label="بردار ایستا در برابر بردار بافتاری">
+ <g font-family="Vazirmatn,Tahoma" font-size="11" text-anchor="middle">
+  <g transform="translate(260,0)">
+  <text x="130" y="16" fill="currentColor" font-weight="700">بردار ایستا (یک بردار برای هر کلمه)</text>
+  <rect x="10" y="26" width="240" height="160" rx="10" fill="none" stroke="currentColor" opacity=".3"/>
+  <circle cx="60" cy="70" r="4" fill="#0f6e6a"/><text x="60" y="60" fill="currentColor">رودخانه</text>
+  <circle cx="200" cy="150" r="4" fill="#2456a6"/><text x="200" y="140" fill="currentColor">پول</text>
+  <circle cx="130" cy="110" r="6" fill="#c0392b"/><text x="130" y="98" fill="currentColor" font-weight="700">شیر / bank</text>
+  <text x="130" y="178" fill="currentColor" opacity=".8">یک نقطه وسط دو معنا؛ مال هیچ‌کدام نیست</text>
+  </g><g transform="translate(-260,0)">
+  <text x="390" y="16" fill="currentColor" font-weight="700">بردار بافتاری (BERT)</text>
+  <rect x="270" y="26" width="240" height="160" rx="10" fill="none" stroke="currentColor" opacity=".3"/>
+  <circle cx="320" cy="70" r="4" fill="#0f6e6a"/><text x="320" y="60" fill="currentColor">رودخانه</text>
+  <circle cx="340" cy="88" r="6" fill="#c0392b"/><text x="372" y="104" fill="currentColor">bank (ساحل)</text>
+  <circle cx="460" cy="150" r="4" fill="#2456a6"/><text x="460" y="140" fill="currentColor">پول</text>
+  <circle cx="440" cy="132" r="6" fill="#c0392b"/><text x="420" y="120" fill="currentColor">bank (بانک)</text>
+  <text x="390" y="178" fill="currentColor" opacity=".8">همان کلمه، دو بردار، هرکدام کنار معنای خودش</text>
+  </g>
+ </g>
+</svg>
+<figcaption>نمونه‌ی فارسی همین ابهام: «شیر» در «شیر آب چکه می‌کند»، «یک لیوان شیر» و «شیر جنگل». مدل بافتاری سه بردار متفاوت می‌سازد. (تصویر مفهومی است، نه خروجی واقعی مدل.)</figcaption>
+</figure>
+<div class="box thm"><div class="bt">جمله‌ی اسلاید ۲۴</div>BERT قدرتمند است چون <b>بافتاری (contextual)</b> است: همان کلمه در جمله‌های مختلف بردارهای مختلف می‌گیرد.</div>
+
+<h3>۹.۲ BERT کافی است؟ اغلب، گزینه‌ی مناسب‌تری هست (اسلاید ۲۵)</h3>
+<p>رمزگذار را بر اساس <b>وظیفه، زبان، حوزه و قیدهای استقرار</b> انتخاب کن:</p>
+<div class="tablewrap"><table>
+<tr><th>خانواده</th><th>خوب برای</th><th>محدودیت</th><th>در مورد ما</th></tr>
+<tr><td><b>BERT خام (vanilla)</b></td><td>fine-tune کردن و وظایف سطح توکن (مثل NER)</td><td>به‌عنوان رمزگذار مستقیم <b>شباهت جمله</b> ایده‌آل نیست؛ برای این کار آموزش ندیده.</td><td>استخراج نام خیابان از متن شکایت (با fine-tune)</td></tr>
+<tr><td><b>رمزگذار جمله</b> (SBERT، E5، BGE)</td><td><b>بهترین پیش‌فرض</b> برای جست‌وجوی معنایی، خوشه‌بندی و پیدا کردن تکراری‌ها</td><td>کیفیتش به زبان و حوزه‌ی آموزشش بستگی دارد.</td><td>خوشه‌بندی شکایت‌ها، پیدا کردن تیکت‌های تکراری</td></tr>
+<tr><td><b>چندزبانه / تخصصی</b></td><td>فارسی + انگلیسی، حقوقی، پزشکی، متن پشتیبانی</td><td>وقتی واژگان و سبک خاص است لازم می‌شود.</td><td>شکایت‌های فارسی با واژه‌های محاوره‌ای</td></tr>
+<tr><td><b>Embedding از LLM/API</b></td><td>بردارهای عمومی قوی با یکپارچه‌سازی ساده</td><td>مناسب وقتی <b>تأخیر، هزینه و حریم خصوصی</b> قابل‌قبول است.</td><td>متن شکایت ممکن است شماره تلفن و آدرس داشته باشد ← حریم خصوصی</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: قاعده‌ی سرانگشتی اسلاید ۲۵</div>
+  <b>ساده شروع کن ← به‌صورت کمّی مقایسه کن ← نمایشی را نگه دار که وظیفه‌ی واقعی را بهتر می‌کند.</b> یعنی اول TF-IDF به‌عنوان خط پایه، بعد یک رمزگذار جمله، و هر دو را روی <b>همان معیار وظیفه</b> بسنج (مثلاً دقت مسیریابی تیکت، recall@5 جست‌وجو، کیفیت خوشه‌ها با برچسب دستی چند صد نمونه). «مدل بزرگ‌تر» یا «معروف‌تر» دلیل نیست.
+</div>
+
+<h3>۹.۳ دست به کد: embed و مصورسازی متن (اسلاید ۲۶)</h3>
+<pre class="code">from sentence_transformers import SentenceTransformer
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+texts = df["feedback"].fillna("").tolist()
+model = SentenceTransformer("intfloat/multilingual-e5-small")   # slide: "multilingual-e5-small"
+X = model.encode(["query: " + t for t in texts],                 # E5 models expect a prefix
+                 normalize_embeddings=True)                      # unit length -&gt; cosine = dot
+
+# then visualize / cluster: PCA or UMAP -&gt; 2D scatter plot
+xy = PCA(n_components=2, random_state=0).fit_transform(X)
+labels = KMeans(n_clusters=4, n_init=10, random_state=0).fit_predict(X)  # cluster in FULL space
+plt.scatter(xy[:, 0], xy[:, 1], c=labels, cmap="viridis")
+plt.title("Feedback clusters (PCA view of 384-d embeddings)")
+plt.show()
+
+for k in range(4):                       # READ each cluster before naming it
+    print(k, df.loc[labels == k, "feedback"].head(5).tolist())</pre>
+<p class="mini">این کد مدل را از Hugging Face دانلود می‌کند، پس اینترنت لازم دارد. مدل‌های خانواده‌ی E5 طبق مستندات خودشان با پیشوند <code>"query: "</code> یا <code>"passage: "</code> بهتر کار می‌کنند. خروجی <code>multilingual-e5-small</code> بردار ۳۸۴ بعدی است.</p>
+<div class="vs">
+  <div><h4>چالش کوچک اسلاید ۲۶</h4><ul><li>۲۰ تا ۵۰ نظر مشتری را embed کن.</li><li>در دوبعدی رسمشان کن.</li><li>گروه‌های شکایت شبیه را پیدا کن.</li><li>از خوشه‌ها <b>دو اقدام کسب‌وکاری</b> بنویس.</li></ul></div>
+  <div><h4>نکته‌های فنی</h4><ul><li><b>خوشه‌بندی را در فضای کامل</b> انجام بده، نه روی دو بعد PCA؛ PCA فقط برای نگاه کردن است. UMAP و t-SNE ساختار محلی را بهتر نشان می‌دهند (جلسه‌ی ۶).</li><li>فاصله‌ی بین خوشه‌ها در نمای t-SNE/UMAP قابل‌تفسیر نیست.</li><li>اسم خوشه را بعد از <b>خواندن</b> نمونه‌ها بگذار.</li></ul></div>
+</div>
+<div class="box ex"><div class="bt">از خوشه تا اقدام (نمونه)</div>
+  فرض کن چهار خوشه پیدا شد: «تأخیر راننده و انتظار طولانی»، «کرایه‌ی بالا در ساعت اوج»، «رفتار راننده»، «مشکل پرداخت و کیف پول». دو اقدام: (۱) اگر خوشه‌ی تأخیر در تهران و ساعت ۱۷ تا ۲۰ متمرکز است، مشوق حضور راننده در آن بازه را آزمایش کن (با A/B)؛ (۲) اگر خوشه‌ی پرداخت بعد از یک تاریخ خاص بزرگ شده، با تیم فنی چک کن آن روز نسخه‌ی جدید اپ منتشر شده یا نه. هر دو باید به سؤال اصلی برگردند: آیا این‌ها بخشی از افت ۱۲٪ را توضیح می‌دهند؟
+</div>
+<div class="box note"><div class="bt">جمله‌ی پایانی اسلاید ۲۶</div><b>کیفیت embedding را با سؤال پایین‌دستی (downstream) بسنج.</b> «نقشه‌ی قشنگ» معیار نیست؛ «اقدام بهتر» معیار است.</div>
+
+<h3>۹.۴ یادداشت‌های پایانی: ابزارها و جمع‌آوری داده (اسلاید ۲۷ تا ۲۹)</h3>
+<div class="cards">
+  <div><b>Hugging Face</b><span class="ltr">huggingface.co</span>: مخزن مدل‌ها و datasetها. مدل‌های embedding چندزبانه و فارسی را آن‌جا پیدا و با <code>sentence_transformers</code> یا <code>transformers</code> بارگذاری می‌کنی.</div>
+  <div><b>TensorFlow Projector</b><span class="ltr">projector.tensorflow.org</span>: ابزار تحت وب برای دیدن embeddingها در دو یا سه بعد با PCA، t-SNE و UMAP و جست‌وجوی نزدیک‌ترین همسایه‌های یک کلمه. (در اسلاید آدرس با <span class="ltr">.com</span> نوشته شده؛ آدرس رسمی <span class="ltr">.org</span> است.) فایل بردارها و فایل برچسب‌ها را به‌صورت TSV بارگذاری می‌کنی.</div>
+  <div><b>Crawling: سه راه</b>(۱) <b>RSS</b>: فید XML ساخت‌یافته که خبرگزاری‌ها منتشر می‌کنند. اسلاید ۲۸ فید <span class="ltr">irna.ir/rss</span> را نشان می‌دهد با عنوان، لینک، توضیح، تاریخ انتشار و دسته‌ی هر خبر. (۲) <b>API</b>: اسلاید ۲۹ نمودار قیمت سالانه‌ی طلای ۲۴ عیار را از یک سایت قیمت نشان می‌دهد و کنارش JSONی که پشت همان نمودار است (فیلدهایی مثل قیمت، بیشینه، کمینه، تغییر و زمان). پس به‌جای خراشیدن HTML، از خود API داده بگیر. (۳) <b>Selenium</b>: وقتی صفحه با JavaScript ساخته می‌شود و API در دسترس نیست، مرورگر را خودکار کن.</div>
+</div>
+<pre class="code">import feedparser                      # pip install feedparser
+feed = feedparser.parse("https://www.irna.ir/rss")
+news = pd.DataFrame([{"title": e.title, "link": e.link,
+                      "published": e.get("published")} for e in feed.entries])
+news["title"] = news["title"].map(normalize_fa)   # Persian normalization BEFORE TF-IDF/embedding</pre>
+<div class="box tip"><div class="bt">💡 ترتیب ترجیح در جمع‌آوری داده</div>
+  API رسمی ← RSS ← HTML ایستا (requests + BeautifulSoup) ← Selenium. هرچه به راست می‌روی شکننده‌تر و کندتر می‌شود. همیشه شرایط استفاده و <code>robots.txt</code> سایت را رعایت کن، فاصله‌ی بین درخواست‌ها بگذار و داده‌ی شخصی جمع نکن.
+</div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="solved">
+<h2><span class="num">۱۰</span> مسئله‌ی حل‌شده به سبک تمرین شریف <span class="tag exam">سبک امتحان</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله: «آیا این سفر لغو می‌شود؟»</div>
+  تیم داده‌ی یک اپ درخواست خودرو می‌خواهد <b>در لحظه‌ی درخواست</b> احتمال لغو را پیش‌بینی کند. داده‌ی آموزش ۲٬۰۰۰٬۰۰۰ سفر است با این ستون‌ها:
+  <ul>
+    <li><code>city</code> (۵ شهر)، <code>car_type</code> (۴ نوع: eco، plus، van، bike)، <code>payment</code> (۳ روش)</li>
+    <li><code>surge_level</code> (low / medium / high)</li>
+    <li><code>driver_id</code> (۳٬۰۰۰ راننده؛ بعضی فقط چند سفر دارند)</li>
+    <li><code>rider_comment</code> (متن نظر مسافر)</li>
+  </ul>
+  (الف) برای رگرسیون لجستیک، کدگذاری هر ستون را انتخاب کن و دلیل بیاور.
+  (ب) اگر همه‌ی ستون‌های اسمی (از جمله <code>driver_id</code>) را one-hot کنیم، چند ستون داریم (با و بدون drop_first)؟ حجم ماتریس چگال float64 و حجم تقریبی ماتریس تُنُک CSR چقدر است؟
+  (ج) برای <code>driver_id</code> یک جایگزین پیشنهاد کن. راننده‌ای ۳ سفر داشته که ۲ تا لغو شده و راننده‌ای ۱ سفر داشته که لغو شده. با نرخ کل ۱۲٪ و $m=20$، مقدار target encoding هموارشده‌ی هرکدام را حساب کن و خطر نشت را توضیح بده.
+  (د) ماه بعد سرویس در «قم» راه می‌افتد. با <code>OneHotEncoder(drop="first", handle_unknown="ignore")</code> چه اتفاقی می‌افتد؟
+  (هـ) اگر مدل را با gradient boosting عوض کنیم، کدام تصمیم‌ها عوض می‌شوند؟
+</div>
+<details><summary>پاسخ کامل (اول خودت حل کن)</summary>
+<p><b>(الف) کدگذاری هر ستون:</b></p>
+<ul>
+  <li><code>city</code>، <code>car_type</code>، <code>payment</code>: اسمی با دسته‌ی کم ← <b>one-hot</b> با <code>handle_unknown="ignore"</code>.</li>
+  <li><code>surge_level</code>: ترتیبی واقعی ← <b>ordinal mapping</b> با ترتیب صریح low=0، medium=1، high=2 (یا اگر ضریب surge عددی در دسترس است، خود عدد بهتر است).</li>
+  <li><code>driver_id</code>: اسمی ولی <b>پرتعداد</b> ← one-hot نه (بخش ب و ج).</li>
+  <li><code>rider_comment</code>: <b>اصلاً استفاده نکن!</b> مسافر نظرش را <b>بعد از</b> سفر (یا بعد از لغو) می‌نویسد. در لحظه‌ی درخواست وجود ندارد. استفاده از آن یعنی نشت داده (leakage): مدل در آزمون عالی است و در production بی‌فایده. این تله‌ی اصلی مسئله است: قبل از «چطور کدگذاری کنم» بپرس «آیا این ستون در لحظه‌ی پیش‌بینی وجود دارد؟». متن نظر برای تحلیل شکایت‌ها (بخش ۹) عالی است، نه برای این مدل.</li>
+</ul>
+<p><b>(ب) ابعاد و حافظه:</b> $5+4+3+3000=3012$ ستون one-hot (با drop_first: $3012-4=3008$)، به‌علاوه‌ی ۱ ستون surge. ماتریس چگال: $2\times10^6\times3012\times8\approx4.8\times10^{10}$ بایت، یعنی حدود <b>۴۸ گیگابایت</b>. ماتریس تُنُک: در هر سطر دقیقاً ۴ یک داریم (یکی برای هر ستون اسمی)، پس $8\times10^6$ درایه‌ی غیرصفر. در CSR هر درایه ۸ بایت مقدار و ۴ بایت اندیس ستون دارد: $8\times10^6\times12\approx96$ مگابایت، به‌علاوه‌ی آرایه‌ی اشاره‌گر سطرها (حدود ۸ مگابایت). جمعاً حدود <b>۱۰۰ مگابایت</b>، یعنی تقریباً ۴۵۰ برابر کمتر. ولی حتی با sparse، ۳٬۰۰۰ ضریب که بسیاری از آن‌ها از چند نمونه تخمین زده می‌شوند، بیش‌برازش می‌آورد.</p>
+<p><b>(ج) جایگزین driver_id:</b> (۱) frequency encoding (تعداد سفرهای قبلی راننده)؛ (۲) target encoding هموارشده با فرمول $\text{TE}=\frac{n\bar y_c+m\bar y}{n+m}$:</p>
+$$\text{TE}_{3\text{ rides}}=\frac{3\times\tfrac23+20\times0.12}{3+20}=\frac{2+2.4}{23}\approx0.191,\qquad \text{TE}_{1\text{ ride}}=\frac{1\times1+2.4}{21}\approx0.162$$
+<p>بدون هموارسازی این دو راننده ۰٫۶۷ و ۱٫۰ می‌گرفتند، که از روی ۳ و ۱ نمونه خیلی افراطی است. <b>خطر نشت:</b> برای راننده‌ی تک‌سفره، TE خام دقیقاً برچسب همان سطر است. اگر TE را روی کل داده (با test) یا حتی روی train بدون out-of-fold حساب کنی، مدل جواب را از ورودی می‌خواند. راه درست: fit فقط روی train، cross-fitting (مثل <code>TargetEncoder</code>)، و چون داده زمانی است، بهترین نسخه «نرخ لغو راننده <b>تا قبل از</b> این درخواست» است که در لحظه‌ی پیش‌بینی واقعاً در دسترس است.</p>
+<p><b>(د) قم:</b> <code>handle_unknown="ignore"</code> برای قم بردار تمام‌صفر شهر می‌سازد. ولی با <code>drop="first"</code>، بردار تمام‌صفر همان <b>دسته‌ی مرجع</b> (اولین شهر به ترتیب الفبا، Isfahan) است. پس مدل قم را بی‌صدا «اصفهان» فرض می‌کند (sklearn فقط هشدار می‌دهد). راه درست: drop نکن (رگرسیون لجستیک sklearn به‌طور پیش‌فرض regularization دارد، پس دام متغیر ساختگی مشکلی نمی‌سازد). در این حالت قم بردار صفر می‌گیرد و پیش‌بینی‌اش فقط از intercept و بقیه‌ی ویژگی‌ها می‌آید، یعنی یک «شهر متوسط». بعد از جمع شدن داده‌ی کافی از قم، مدل را دوباره آموزش بده و عملکرد قم را جدا پایش کن.</p>
+<p><b>(هـ) با gradient boosting:</b> <code>drop_first</code> بی‌معنا می‌شود (و بهتر است نکنی)؛ ordinal mapping برای surge همان می‌ماند؛ برای شهر حتی کد ساده هم قابل‌قبول است چون درخت با چند برش هر گروهی از شهرها را جدا می‌کند؛ کتابخانه‌هایی مثل LightGBM و CatBoost خودشان پشتیبانی بومی از ستون دسته‌ای دارند (CatBoost نوعی target encoding ترتیبی امن را درونی انجام می‌دهد). ولی دو چیز <b>عوض نمی‌شود</b>: <code>rider_comment</code> هنوز نشت است، و target encoding هنوز باید بدون نشت حساب شود. <b>درس:</b> انتخاب کدگذاری به مدل بستگی دارد، ولی منطق «لحظه‌ی پیش‌بینی» به هیچ مدلی بستگی ندارد.</p>
+</details>
+</section>
+
+<!-- ============================================================ exercises -->
+<section id="exercises">
+<h2><span class="num">۱۱</span> تمرین</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+  نوع هر ستون را (اسمی، ترتیبی، دودویی، یا هیچ‌کدام) بگو و کدگذاری مناسبش را برای رگرسیون لجستیک بنویس: (الف) <code>vehicle_color</code>؛ (ب) <code>satisfaction</code> با مقدارهای «خیلی بد، بد، متوسط، خوب، عالی»؛ (ج) <code>is_first_ride</code>؛ (د) <code>postal_code</code>؛ (هـ) <code>education</code> (دیپلم، کارشناسی، ارشد، دکتری)؛ (و) <code>trip_distance_km</code>.
+  <details><summary>راه‌حل</summary>
+  (الف) اسمی ← one-hot. (ب) ترتیبی ← map صریح ۰ تا ۴ یا <code>Categorical(ordered=True)</code>. (ج) دودویی ← ۰/۱ (یک ستون کافی است؛ one-hot دو ستونه فقط تکرار است). (د) اسمی با تعداد خیلی زیاد ← نه عدد خام و نه one-hot کامل؛ بهتر است به منطقه/شهر تجمیع شود یا frequency/target encoding. (هـ) ترتیبی ← ordinal mapping با ترتیب صریح. (و) هیچ‌کدام؛ عددی پیوسته است و کدگذاری دسته‌ای نمی‌خواهد.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">· 🟢 پایه</span></div>
+  با کد الفبایی (Isfahan=0، Mashhad=1، Shiraz=2، Tabriz=3، Tehran=4)، فاصله‌ی اقلیدسی تهران تا تبریز و تهران تا اصفهان چقدر است؟ با one-hot چطور؟ با one-hot و <code>drop_first=True</code> (اصفهان مرجع) چطور؟
+  <details><summary>راه‌حل</summary>
+  کد الفبایی: تهران–تبریز $=|4-3|=1$، تهران–اصفهان $=|4-0|=4$. one-hot کامل: هر دو $\sqrt2\approx1.414$. با drop_first: تهران $=(0,0,0,1)$ و تبریز $=(0,0,1,0)$ ← فاصله $\sqrt2$؛ ولی اصفهان $=(0,0,0,0)$ ← فاصله‌ی تهران تا اصفهان $=1$. پس drop_first دسته‌ی مرجع را به همه «نزدیک‌تر» می‌کند. برای مدل‌های فاصله‌محور مثل KNN و K-Means drop نکن.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">· 🟡 مهارتی</span></div>
+  ستون <code>payment</code> مقدارهای <code>"Cash"</code>، <code>" cash"</code>، <code>"WALLET"</code>، <code>"wallet "</code>، <code>"card"</code> و <code>None</code> دارد. کدی بنویس که (۱) متن را یکدست کند، (۲) one-hot بسازد، و (۳) برای مقدار گم‌شده یک ستون جدا بسازد. چرا ستون گم‌شده را نباید حذف کرد؟
+  <details><summary>راه‌حل</summary>
+<pre class="code">df["payment"] = df["payment"].str.strip().str.lower()
+print(df["payment"].value_counts(dropna=False))      # always look first
+X = pd.get_dummies(df["payment"], prefix="pay", dummy_na=True, dtype=int)
+# columns: pay_card, pay_cash, pay_wallet, pay_nan</pre>
+  <code>dummy_na=True</code> یک ستون برای NaN می‌سازد. «روش پرداخت ثبت نشده» ممکن است خودش سیگنال باشد، مثلاً نسخه‌ی قدیمی اپ یا سفرهایی که قبل از پرداخت لغو شده‌اند. این همان درس جلسه‌ی ۲ است: <b>تمیزکاری یعنی حذف نکردن</b>؛ گم‌شدگی را اول بررسی کن، بعد تصمیم بگیر.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">· 🟡 مهارتی</span></div>
+  برای هر سؤال درباره‌ی افت ۱۲٪ سفرها، نمودار مناسب و یک عنوان عملیاتی فرضی بنویس: (الف) سهم هر شهر از افت؛ (ب) روند روزانه‌ی سفرهای کامل‌شده در دو ماه اخیر؛ (ج) آیا رانندگان با امتیاز پایین‌تر لغو بیشتری دارند؟ (د) کرایه‌های غیرعادی در هر نوع خودرو؛ (هـ) همبستگی بین زمان انتظار، فاصله، ضریب surge و نرخ لغو.
+  <details><summary>راه‌حل</summary>
+  (الف) میله‌ای افقی مرتب (یا آبشاری که افت کل را به سهم شهرها می‌شکند)؛ «تهران ۷ واحد از ۱۲ واحد افت را توضیح می‌دهد». (ب) خطی با خط عمودی برای تاریخ‌های مهم؛ «افت از هفته‌ی دوم، هم‌زمان با تغییر کمیسیون، شروع شد». (ج) پراکندگی امتیاز در برابر نرخ لغو هر راننده (یا میله‌ای بر حسب بازه‌ی امتیاز اگر نقطه‌ها خیلی زیادند)؛ «رانندگان زیر ۴٫۲ ستاره دو برابر لغو دارند». (د) جعبه‌ای بر حسب نوع خودرو؛ «کرایه‌های بالای ۵۰۰ هزار تومان در اکو احتمالاً خطای ثبت‌اند». (هـ) نقشه‌ی حرارتی با پالت واگرا و عدد در خانه‌ها؛ «زمان انتظار قوی‌ترین همبستگی را با لغو دارد». یادت باشد همه‌ی این عنوان‌ها فرضی‌اند و باید با داده تأیید شوند؛ و همبستگی علیت نیست.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">· 🟡 مهارتی</span></div>
+  سه شکایت داریم: d1 «راننده دیر آمد»، d2 «راننده خوب بود»، d3 «ماشین کثیف بود». با فرمول idf پیش‌فرض sklearn، idf هر واژه، بردار نرمال‌شده‌ی d1 و همه‌ی شباهت‌های کسینوسی را حساب کن. چه چیز عجیبی می‌بینی؟
+  <details><summary>راه‌حل</summary>
+  $N=3$. «راننده» و «بود» در ۲ سند: $\ln(4/3)+1=1.288$. بقیه (دیر، آمد، خوب، ماشین، کثیف) در ۱ سند: $\ln(4/2)+1=1.693$.
+  <br>d1 خام: (آمد ۱٫۶۹۳، دیر ۱٫۶۹۳، راننده ۱٫۲۸۸). نُرم $\sqrt{2(1.693)^2+1.288^2}=\sqrt{7.391}=2.719$ ← (۰٫۶۲۳، ۰٫۶۲۳، ۰٫۴۷۴).
+  <br>d2 خام: (بود ۱٫۲۸۸، خوب ۱٫۶۹۳، راننده ۱٫۲۸۸)، نُرم ۲٫۴۸۷ ← (۰٫۵۱۸، ۰٫۶۸۱، ۰٫۵۱۸). d3 هم به همین شکل ← (بود ۰٫۴۷۴، ماشین ۰٫۶۲۳، کثیف ۰٫۶۲۳).
+  <br>$\cos(d1,d2)=0.474\times0.518\approx0.245$ (فقط «راننده»)؛ $\cos(d2,d3)=0.518\times0.474\approx0.245$ (فقط «بود»)؛ $\cos(d1,d3)=0$.
+  <br><b>عجیب:</b> «راننده خوب بود» دقیقاً به همان اندازه به «ماشین کثیف بود» شبیه است که به «راننده دیر آمد»، فقط به خاطر فعل «بود». TF-IDF نمی‌داند «بود» بی‌محتواست و «خوب» با «دیر» از نظر احساس متضاد است. راه‌حل‌های ممکن: حذف ایست‌واژه‌ها، یا embedding معنایی.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l3">· 🔴 تحلیلی</span></div>
+  همکارت گزارشی آورده با یک نمودار دایره‌ای سه‌بعدی از «سهم ۱۴ شهر از سفرها»، یک نمودار میله‌ای «میانگین زمان انتظار قبل و بعد از تغییر الگوریتم» که محورش از ۶٫۵ دقیقه شروع شده (۶٫۸ در برابر ۷٫۱)، و یک نمودار با دو محور y که «تعداد راننده» و «نرخ لغو» را روی هم نشان می‌دهد و عنوانش «کمبود راننده باعث لغو شد» است. هر سه را نقد کن و جایگزین پیشنهاد بده.
+  <details><summary>راه‌حل</summary>
+  (۱) <b>پای سه‌بعدی ۱۴ تکه:</b> مقایسه‌ی زاویه سخت است و پرسپکتیو تکه‌های جلو را بزرگ‌تر نشان می‌دهد. جایگزین: میله‌ی افقی مرتب، ۵ شهر اول + «سایر»، عنوان عملیاتی مثل «سه شهر ۷۰٪ سفرها را دارند».
+  <br>(۲) <b>محور بریده‌شده:</b> ۶٫۸ در برابر ۷٫۱ یعنی ۴٫۴٪ افزایش، ولی با شروع از ۶٫۵ میله‌ی دوم دو برابر میله‌ی اول (۰٫۶ در برابر ۰٫۳) دیده می‌شود. جایگزین: میله از صفر، یا اگر تفاوت کوچک مهم است، نمودار خطی روزانه با بازه‌ی اطمینان، یا مستقیم «۰٫۳ دقیقه (۴٪) افزایش» با برچسب.
+  <br>(۳) <b>دو محور y + ادعای علّی:</b> با تغییر مقیاس محورها می‌شود دو خط را دلخواه روی هم انداخت. عنوان هم ادعای علیت می‌کند، در حالی که هم‌زمانی علیت نیست (شاید هر دو از عامل سومی مثل باران یا تعطیلات آمده باشند). جایگزین: دو نمودار کوچک با محور زمانی مشترک، یا پراکندگی «راننده‌ی فعال در هر ساعت» در برابر «نرخ لغو» با عنوان محتاط‌تر («در ساعت‌هایی که راننده کمتر است، لغو بیشتر است»)، و یک آزمایش یا تحلیل بیشتر برای ادعای علّی.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">· 🔴 تحلیلی</span></div>
+  یک دانشجو برای پیش‌بینی لغو، <code>driver_id</code> را با «میانگین لغو هر راننده» روی <b>کل داده</b> کدگذاری کرده و بعد داده را تصادفی به train و test تقسیم کرده. AUC روی test برابر ۰٫۹۷ شده، ولی بعد از استقرار به ۰٫۷۱ رسیده. دقیقاً توضیح بده چه شده و چطور درستش کنی.
+  <details><summary>راه‌حل</summary>
+  کدگذاری از <b>برچسب‌ها</b>ی خود سطرها (از جمله سطرهای test) استفاده کرده: هر سطر test در محاسبه‌ی میانگین راننده‌اش حضور داشته. برای رانندگان کم‌سفر، این میانگین تقریباً همان برچسب است (راننده‌ی تک‌سفره: دقیقاً برچسب). پس مدل جواب را از ورودی خوانده (target leakage). در production، سفر جدید هنوز برچسب ندارد و این «کمک» وجود ندارد، پس AUC سقوط می‌کند.
+  <br>درست کردن: (۱) اول تقسیم کن، و چون داده زمانی است، تقسیم <b>زمانی</b> (گذشته برای train، آینده برای test). (۲) کدگذار را فقط روی train fit کن. (۳) روی train، out-of-fold یا ترجیحاً «نرخ لغو تا قبل از این درخواست» حساب کن. (۴) هموارسازی برای رانندگان کم‌سفر. (۵) کل این‌ها را داخل Pipeline بگذار تا در cross-validation هم رعایت شود. انتظار: AUC آزمون پایین‌تر ولی <b>صادقانه</b> و نزدیک به عملکرد production.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">· 🔴 تحلیلی</span></div>
+  با ابزار تعاملی بخش ۲ نشان بده چرا R² مدل خطی روی کد شهر «به الفبا بستگی دارد». بعد توضیح بده چرا frequency encoding در این مثال R² حدود ۰٫۵۵ می‌دهد. آیا این یعنی frequency encoding «ترتیب جعلی» ندارد؟
+  <details><summary>راه‌حل</summary>
+  با دکمه‌ی «بُر بزن» ترتیب کدها عوض می‌شود و R² بین ۰ و ۰٫۹۵ تغییر می‌کند (میانه‌ی ۱۲۰ ترتیب حدود ۰٫۱۵). مدل فقط یک شیب دارد، پس اگر ترتیب کدها اتفاقاً با ترتیب نرخ لغو جور باشد خوب است و اگر نه بد. frequency encoding هم یک ترتیب می‌سازد (بر اساس اندازه‌ی شهر)، ولی این ترتیب <b>معنادار</b> است: «شهر بزرگ‌تر» یک ادعای قابل‌دفاع است. R² حدود ۰٫۵۵ یعنی اندازه‌ی شهر بخشی از تفاوت نرخ لغو را توضیح می‌دهد (تهران بزرگ و پرلغو است). ولی تبریز کوچک و پرلغو است و این را نمی‌گیرد. پس frequency encoding ترتیب جعلی ندارد، ولی <b>اطلاعات از دست می‌دهد</b>: شهرهایی با فراوانی برابر یکی می‌شوند و اثر شهر به «اثر اندازه» خلاصه می‌شود. one-hot همه‌ی اطلاعات را نگه می‌دارد.
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+  تیم پشتیبانی روزانه ۵٬۰۰۰ تیکت فارسی می‌گیرد و می‌خواهد هر تیکت را خودکار به یکی از ۸ صف (پرداخت، راننده، اپ، اشیای گم‌شده، …) بفرستد. با قاعده‌ی «ساده شروع کن ← به‌صورت کمّی مقایسه کن» یک طرح آزمایش بنویس که بین TF-IDF + رگرسیون لجستیک، <code>multilingual-e5-small</code> + رگرسیون لجستیک، و embedding از یک API تصمیم بگیرد. چه معیارهایی، چه داده‌ای و چه قیدهایی؟
+  <details><summary>راه‌حل (نمونه)</summary>
+  <b>داده:</b> چند هزار تیکت برچسب‌خورده؛ تقسیم <b>زمانی</b> (مثلاً دو ماه اول train، ماه سوم test)، چون واژگان و مشکل‌ها در زمان تغییر می‌کنند. پیش‌پردازش یکسان (normalize_fa) برای همه.
+  <br><b>معیار وظیفه:</b> macro-F1 (صف‌های کوچک مثل «اشیای گم‌شده» هم مهم‌اند)، recall صف‌های حساس (مثلاً ایمنی)، و ماتریس درهم‌ریختگی برای دیدن این‌که کدام صف‌ها قاطی می‌شوند. معیار کسب‌وکار: درصد تیکت‌هایی که دستی جابه‌جا می‌شوند.
+  <br><b>قیدها:</b> تأخیر (۵٬۰۰۰ در روز کم است، پس تأخیر احتمالاً مشکل نیست)، هزینه‌ی API، و <b>حریم خصوصی</b> (تیکت شماره تلفن و آدرس دارد؛ ارسال به API خارجی ممکن است مجاز نباشد، پس پاک‌سازی اطلاعات شخصی یا مدل محلی).
+  <br><b>تصمیم:</b> اگر e5 نسبت به TF-IDF مثلاً ۲ واحد macro-F1 بهتر است، بپرس این ۲ واحد چند تیکت جابه‌جاشده‌ی کمتر در روز است و آیا هزینه‌ی GPU و نگهداری را می‌ارزد. TF-IDF مزیت تفسیرپذیری دارد: می‌توانی واژه‌هایی که هر صف را تعیین می‌کنند ببینی. تحلیل خطا را جدا ببین: آیا خطاها روی تیکت‌های فینگلیش یا خیلی کوتاه متمرکزند؟
+  </details>
+</div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+  ادعا: «embedding همیشه از TF-IDF بهتر است، چون معنا را می‌فهمد.» دو موقعیت واقعی در داده‌ی اپ درخواست خودرو پیدا کن که TF-IDF بهتر یا کافی است، و یکی که embedding به‌وضوح برتری دارد.
+  <details><summary>راه‌حل (نمونه)</summary>
+  <b>TF-IDF بهتر یا کافی:</b> (۱) جست‌وجوی <b>کد دقیق</b>: شماره‌ی سفر، کد تخفیف، نام یک خیابان خاص یا مدل خودرو. embedding ممکن است «خیابان ولیعصر» را به «خیابان انقلاب» نزدیک بداند، چون هر دو خیابان‌اند، ولی کاربر دقیقاً ولیعصر را می‌خواهد. (۲) طبقه‌بندی با داده‌ی برچسب‌دار زیاد که در آن کلمه‌های کلیدی تعیین‌کننده‌اند («کیف پول»، «شارژ»)؛ TF-IDF + مدل خطی سریع، ارزان و تفسیرپذیر است و اغلب خط پایه‌ی سختی است. <b>embedding برتر:</b> خوشه‌بندی شکایت‌هایی که با کلمه‌های متفاوت یک چیز را می‌گویند: «راننده نیومد»، «منتظر موندم و خبری نشد»، «سفر رو قبول کرد ولی حرکت نکرد». TF-IDF واژه‌ی مشترک کمی می‌بیند؛ embedding معنای مشترک را می‌بیند. این همان مثال «cheap / inexpensive» اسلاید ۲۳ است.
+  </details>
+</div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۱۲</span> تست</h2>
+<div class="quiz"></div>
+</section>
+
+<section id="summary">
+<h2><span class="num">۱۳</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box thm"><div class="bt">۵ چیزی که باید یادت بماند</div>
+<ol>
+  <li><b>کدگذاری یک تصمیم مدل‌سازی است.</b> اول بپرس: «این عدد ترتیب واقعی است یا فقط کد؟». اسمی ← one-hot؛ ترتیبی ← mapping با ترتیبی که خودت تعریف کرده‌ای؛ دودویی ← ۰/۱.</li>
+  <li><b>Label encoding برای متغیر اسمی ترتیب و فاصله‌ی جعلی می‌سازد</b> و مدل خطی را به الفبا وابسته می‌کند. درخت‌ها تحملش می‌کنند؛ مدل خطی و فاصله‌محور نه.</li>
+  <li><b>هر چیزی که از داده یاد گرفته می‌شود فقط روی train fit می‌شود:</b> فهرست دسته‌ها، idf، target encoding. دسته‌ی جدید را با <code>handle_unknown="ignore"</code> مدیریت کن و مراقب برخوردش با <code>drop="first"</code> باش. target encoding بدون out-of-fold یعنی نشت.</li>
+  <li><b>نمودار جواب تصویری به یک سؤال است:</b> توزیع ← هیستوگرام، مقایسه ← میله، رابطه ← پراکندگی، پرت ← جعبه، همبستگی ← حرارتی. یک پیام، برچسب و واحد، عنوان عملیاتی، محور میله از صفر، رنگ فقط برای برجسته کردن.</li>
+  <li><b>متن ← توکن ← شناسه ← بردار.</b> TF-IDF تُنُک، سریع و تفسیرپذیر است ولی مترادف و بافت را نمی‌فهمد؛ embeddingهای بافتاری (BERT، E5) معنا را می‌گیرند. ساده شروع کن، کمّی مقایسه کن، و فارسی را قبلش یکسان‌سازی کن (ی/ک، نیم‌فاصله).</li>
+</ol>
+</div>
+<div class="lf">
+  <div class="s"><h4>حتماً بلد باش</h4><ul>
+    <li>سه نوع داده‌ی دسته‌ای و کدگذاری هرکدام</li>
+    <li><code>get_dummies</code>، <code>map</code>، <code>OneHotEncoder</code>، <code>ColumnTransformer</code></li>
+    <li>فرمول TF-IDF و کسینوس، و محاسبه‌ی دستی روی ۳ یا ۴ سند</li>
+    <li>جدول «هدف ← نمودار» اسلاید ۱۸</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul>
+    <li>one-hot: فاصله‌ی همه $\sqrt2$ / label: فاصله‌ی دلبخواه</li>
+    <li>drop_first: لازم برای OLS بدون جریمه؛ بی‌فایده برای درخت</li>
+    <li>TF-IDF (تُنُک، واژه‌ای) / embedding (چگال، معنایی)</li>
+    <li>BERT خام (fine-tune، توکن) / رمزگذار جمله (شباهت، خوشه)</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul>
+    <li><code>map</code> بی‌صدا NaN می‌سازد</li>
+    <li><code>get_dummies</code> جدا روی train و test ← ستون‌های ناجور</li>
+    <li>target encoding روی کل داده ← نشت</li>
+    <li>ستونی که بعد از لحظه‌ی پیش‌بینی ساخته می‌شود (نظر مسافر)</li>
+    <li>محور بریده، دو محور y، پای ۱۴ تکه، سه‌بعدی</li></ul></div>
+</div>
+<div class="box note"><div class="bt">برای جلسه‌ی بعد</div>
+  جلسه‌ی ۴ (تحلیل اکتشافی داده، EDA) از همین نمودارها استفاده می‌کند تا به سؤال «چرا سفرها ۱۲٪ کم شد؟» جواب بدهد: توزیع، مقایسه‌ی بخش‌ها، همبستگی، الگوی زمانی و این‌که چطور میانگین‌ها بخش‌ها را پنهان می‌کنند. جدول «هدف ← نمودار» و قاعده‌های عنوان عملیاتی را دم دست نگه دار.
+</div>
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>categorical variable</b>: متغیر دسته‌ای</div>
+  <div><b>nominal / ordinal / binary</b>: اسمی / ترتیبی / دودویی</div>
+  <div><b>label encoding</b>: کدگذاری برچسبی (یک عدد دلبخواه برای هر دسته)</div>
+  <div><b>ordinal mapping</b>: نگاشت ترتیبی با ترتیب واقعی</div>
+  <div><b>one-hot encoding</b>: کدگذاری یک‌داغ (یک ستون صفر/یک برای هر دسته)</div>
+  <div><b>dummy-variable trap</b>: دام متغیر ساختگی (هم‌خطی کامل با intercept)</div>
+  <div><b>reference category</b>: دسته‌ی مرجع (حذف‌شده با drop_first)</div>
+  <div><b>high cardinality</b>: تعداد دسته‌ی خیلی زیاد</div>
+  <div><b>target / mean encoding</b>: کدگذاری با میانگین متغیر هدف</div>
+  <div><b>frequency encoding</b>: کدگذاری با فراوانی دسته</div>
+  <div><b>sparse / dense</b>: تُنُک (بیشتر صفر) / چگال</div>
+  <div><b>action title</b>: عنوان عملیاتی که بینش را می‌گوید</div>
+  <div><b>pre-attentive attributes</b>: ویژگی‌های پیش‌توجهی (رنگ، اندازه، موقعیت)</div>
+  <div><b>diverging palette</b>: پالت واگرا (دو رنگ با مرکز خنثی)</div>
+  <div><b>token / tokenizer</b>: توکن / توکن‌ساز</div>
+  <div><b>TF-IDF</b>: فراوانی واژه × معکوس فراوانی سند</div>
+  <div><b>cosine similarity</b>: شباهت کسینوسی</div>
+  <div><b>embedding</b>: بردار نمایش (تعبیه)</div>
+  <div><b>contextual encoder</b>: رمزگذار بافتاری (مثل BERT)</div>
+  <div><b>sentence encoder</b>: رمزگذار جمله (SBERT، E5، BGE)</div>
+  <div><b>ZWNJ</b>: نیم‌فاصله (U+200C)</div>
+  <div><b>crawling / scraping</b>: خزش / خراشیدن صفحه‌های وب</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`ستون <code>postal_code</code> در pandas از نوع <code>int64</code> است. بهترین برداشت کدام است؟`,
+  o:[`اسمی است؛ int64 فقط نوع ذخیره‌سازی است و «بزرگ‌تر بودن» کد پستی معنا ندارد`,`عددی پیوسته است و می‌شود مستقیم وارد رگرسیون خطی کرد`,`ترتیبی است چون کدها به ترتیب جغرافیایی‌اند`,`دودویی است`],
+  a:0, e:`نوع داده‌ی pandas درباره‌ی ذخیره‌سازی است، نه معنا. میانگین یا شیب کد پستی بی‌معناست.`},
+ {q:`شهرها با کد الفبایی (Isfahan=0 … Tehran=4) وارد رگرسیون خطی شده‌اند. کدام جمله درست‌تر است؟`,
+  o:[`مدل فرض می‌کند اثر شهر یکنواخت و به ترتیب الفبا تغییر می‌کند، و نتیجه به ترتیب دلبخواه کدها بستگی دارد`,`مشکلی نیست، چون مدل خطی ضریب را خودش تنظیم می‌کند`,`فقط وقتی مشکل دارد که تعداد شهرها بیشتر از ۱۰ باشد`,`مشکل فقط سرعت آموزش است`],
+  a:0, e:`یک ضریب واحد برای کل ستون یعنی فرض خطی بودن روی کدهای دلبخواه. در مثال درس، R² بسته به ترتیب از ۰ تا ۰٫۹۵ تغییر می‌کرد.`},
+ {q:R`فاصله‌ی اقلیدسی بردار one-hot «تهران» و «تبریز» (بدون drop_first) چقدر است؟`,
+  o:[R`$\sqrt2$، و برای هر دو شهر متفاوت دیگر هم همین است`,`۱`,`بستگی به ترتیب الفبایی دارد`,`۰`],
+  a:0, e:R`دو بردار فقط در دو مختصات فرق دارند (۱ و ۰ جابه‌جا)، پس فاصله $\sqrt{1+1}=\sqrt2$ است. one-hot هیچ ادعای نزدیکی نمی‌کند.`},
+ {q:`در کدام حالت <code>drop_first=True</code> واقعاً لازم است؟`,
+  o:[`رگرسیون خطی OLS بدون regularization که می‌خواهی ضرایبش را تفسیر کنی`,`جنگل تصادفی`,`K-Means روی ستون‌های one-hot`,`رگرسیون لجستیک sklearn با L2 پیش‌فرض، همیشه`],
+  a:0, e:`با intercept، جمع ستون‌های one-hot برابر ۱ است و X رتبه‌ی کامل ندارد؛ OLS بدون جریمه ضرایب یکتا نمی‌دهد. regularization جواب یکتا انتخاب می‌کند و درخت‌ها اصلاً وارون ماتریس نمی‌گیرند. در K-Means، drop_first فاصله‌ها را نامتقارن می‌کند.`},
+ {q:`<code>rides["surge_level"].map({"low":0,"medium":1,"high":2})</code> روی مقدار <code>"High "</code> چه می‌کند؟`,
+  o:[`بدون خطا NaN برمی‌گرداند`,`خطای KeyError می‌دهد`,`عدد ۲ برمی‌گرداند چون pandas حروف را یکدست می‌کند`,`مقدار را دست‌نخورده نگه می‌دارد`],
+  a:0, e:`map با دیکشنری هر مقدار ناموجود را بی‌صدا NaN می‌کند. اول strip و lower، بعد map، بعد شمارش NaNهای جدید.`},
+ {q:`مدل روی شهرهای تهران، مشهد و اصفهان آموزش دیده و حالا سفری از «قم» می‌رسد. encoder برابر <code>OneHotEncoder(drop="first", handle_unknown="ignore")</code> است. چه می‌شود؟`,
+  o:[`قم بردار تمام‌صفر می‌گیرد که همان بردار دسته‌ی مرجع (Isfahan) است، پس مدل قم را اصفهان فرض می‌کند`,`خطا می‌دهد و پیش‌بینی انجام نمی‌شود`,`یک ستون جدید city_Qom ساخته می‌شود`,`قم به نزدیک‌ترین شهر از نظر جغرافیایی نگاشت می‌شود`],
+  a:0, e:`ignore یعنی همه‌ی ستون‌ها صفر؛ با drop="first" همه‌صفر یعنی دسته‌ی مرجع. sklearn فقط هشدار می‌دهد. برای داده‌ای که دسته‌ی جدید دارد drop نکن.`},
+ {q:`راننده‌ای فقط ۱ سفر داشته که لغو شده. target encoding خام (بدون هموارسازی، روی کل داده) برای این سطر چه مشکلی دارد؟`,
+  o:[`مقدارش ۱ است، یعنی دقیقاً برچسب همان سطر؛ نشت داده`,`مقدارش صفر می‌شود و اطلاعات از دست می‌رود`,`فقط حافظه‌ی بیشتری می‌گیرد`,`مشکلی ندارد چون یک سطر است`],
+  a:0, e:R`TE خام = میانگین هدف در دسته = ۱. مدل جواب را از ورودی می‌خواند. راه حل: fit فقط روی train، out-of-fold، هموارسازی $\frac{n\bar y_c+m\bar y}{n+m}$، و در داده‌ی زمانی فقط گذشته.`},
+ {q:`می‌خواهی نشان بدهی «کدام شهر بیشترین سهم را در افت سفرها داشته». بهترین انتخاب کدام است؟`,
+  o:[`میله‌ای افقی مرتب‌شده با یک رنگ برجسته و عنوانی که نتیجه را می‌گوید`,`نمودار دایره‌ای سه‌بعدی`,`نمودار خطی با دو محور y`,`نقشه‌ی حرارتی همبستگی`],
+  a:0, e:`مقایسه‌ی گروه‌ها ← میله. مرتب کردن و یک رنگ برجسته، پیام را پیش‌توجهی می‌کند. عنوان باید بینش باشد، نه موضوع.`},
+ {q:`نمودار میله‌ای میانگین زمان انتظار ۶٫۰ و ۶٫۳ دقیقه را با محوری که از ۵٫۹ شروع می‌شود نشان می‌دهد. مشکل اصلی چیست؟`,
+  o:[`طول میله دیگر با مقدار متناسب نیست و تفاوت ۵٪ حدود چهار برابر دیده می‌شود`,`رنگ‌ها مناسب نیستند`,`باید از نمودار دایره‌ای استفاده می‌شد`,`مشکلی نیست، چون اعداد دقیق‌اند`],
+  a:0, e:`در میله، طول خود مقدار است. میله‌ها از ۵٫۹ شروع می‌شوند، پس طولشان ۰٫۱ و ۰٫۴ است: نسبت ۴ به ۱ برای تفاوتی ۵ درصدی.`},
+ {q:`در یک مجموعه‌ی ۴ سندی، واژه‌ی «بود» در ۳ سند آمده. idf آن با فرمول پیش‌فرض sklearn چقدر است؟`,
+  o:[R`$\ln(5/4)+1\approx1.223$`,R`$\ln(4/3)\approx0.288$`,R`$\ln(4/3)+1\approx1.288$`,R`$\ln 4\approx1.386$`],
+  a:0, e:R`فرم هموارشده: $\ln\frac{1+N}{1+\text{df}}+1=\ln\frac{5}{4}+1$. گزینه‌ی دوم فرم کتابی $\log(N/\text{df})$ است. گزینه‌ی سوم فرمول درست با N=3 است.`},
+ {q:`دو شکایت «سفر گران بود» و «سفر پرهزینه بود» با TF-IDF شباهت کسینوسی حدود ۰٫۵ دارند و نه ۱. چرا؟`,
+  o:[`TF-IDF هر واژه را محور مستقل می‌داند و «گران» و «پرهزینه» را بی‌ربط می‌بیند؛ شباهت فقط از «سفر» و «بود» می‌آید`,`چون نرمال‌سازی L2 انجام نشده`,`چون idf منفی شده`,`چون جمله‌ها کوتاه‌اند و کسینوس برای جمله‌ی کوتاه تعریف نشده`],
+  a:0, e:`این همان ضعف اسلاید ۲۳ است («cheap» و «inexpensive»). embedding معنایی این دو را نزدیک می‌کند.`},
+ {q:`کدام انتخاب برای «خوشه‌بندی شکایت‌های فارسی مشتری‌ها بر اساس معنا» طبق اسلاید ۲۵ بهترین نقطه‌ی شروع (بعد از خط پایه‌ی TF-IDF) است؟`,
+  o:[`یک رمزگذار جمله‌ی چندزبانه (مثل multilingual-e5) و مقایسه‌ی کمّی با TF-IDF روی همان وظیفه`,`BERT خام بدون fine-tune و استفاده‌ی مستقیم از بردار [CLS]`,`label encoding روی متن شکایت`,`بزرگ‌ترین مدل LLM موجود، بدون مقایسه`],
+  a:0, e:`رمزگذارهای جمله (SBERT/E5/BGE) پیش‌فرض خوب برای شباهت و خوشه‌بندی‌اند و نسخه‌ی چندزبانه فارسی را پوشش می‌دهد. BERT خام برای شباهت جمله ایده‌آل نیست. قاعده: ساده شروع کن ← کمّی مقایسه کن.`},
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,css,alpha,fmt}=ML;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const faN=(x,d)=>ML.fa(fmt(x,d));
+  // background for heat cells
+  const heat=(v,vmax,col)=>`background:color-mix(in srgb, ${col} ${Math.round(Math.max(0,Math.min(1,v/vmax))*70)}%, var(--paper))`;
+
+  /* ------------------------------------------------ widget 1: encodings */
+  (function(){
+    const el=document.getElementById("w-enc"); if(!el) return;
+    ML.shell(el,"🔧 ابزار: هر کدگذاری چه «فاصله‌ای» بین شهرها می‌سازد؟",
+      "پنج شهر با نرخ واقعی لغو: تهران ۱۸٪، مشهد ۹٪، اصفهان ۱۱٪، شیراز ۸٪، تبریز ۱۴٪. یک کدگذاری انتخاب کن. جدول وسط بردار هر شهر را نشان می‌دهد، جدول کنارش فاصله‌ی اقلیدسی بین شهرها را، و نمودار پایین آنچه یک رگرسیون خطی (با intercept) با همین کدگذاری می‌تواند یاد بگیرد.");
+    const C=[{en:"Isfahan",fa:"اصفهان",rate:.11,freq:.14},{en:"Mashhad",fa:"مشهد",rate:.09,freq:.18},{en:"Shiraz",fa:"شیراز",rate:.08,freq:.10},{en:"Tabriz",fa:"تبریز",rate:.14,freq:.08},{en:"Tehran",fa:"تهران",rate:.18,freq:.50}];
+    const MODES=[["label","Label (الفبایی)"],["shuffle","Label (ترتیب تصادفی)"],["onehot","One-hot"],["drop","One-hot + drop_first"],["freq","Frequency"]];
+    let mode="label", seed=7, perm=[0,1,2,3,4];
+    const seg=h("div",{class:"seg"}); const btns={};
+    MODES.forEach(([k,t])=>{const b=h("button",{type:"button",class:"btn ghost"},t); b.onclick=()=>{mode=k;draw();}; btns[k]=b; seg.append(b);});
+    const shuf=h("button",{type:"button",class:"btn"},"🔀 بُر بزن (ترتیب کدها)");
+    shuf.onclick=()=>{seed++; const r=mulberry32(seed); perm=[0,1,2,3,4]; for(let i=4;i>0;i--){const j=Math.floor(r()*(i+1)); [perm[i],perm[j]]=[perm[j],perm[i]];} mode="shuffle"; draw();};
+    const ctr=h("div",{class:"controls"}); ctr.append(seg,shuf); el.append(ctr);
+    const grid=h("div",{class:"wgrid"}); const encBox=h("div"), distBox=h("div"); grid.append(encBox,distBox); el.append(grid);
+    const cv=h("canvas",{class:"wide"}); cv.style.marginTop="10px"; el.append(cv);
+    const leg=h("div",{class:"legend"}); el.append(leg);
+    const out=h("div",{class:"readout"}); el.append(out);
+
+    function encode(){
+      if(mode==="label") return {cols:["code"],X:C.map((_,i)=>[i])};
+      if(mode==="shuffle") return {cols:["code"],X:C.map((_,i)=>[perm[i]])};
+      if(mode==="onehot") return {cols:C.map(c=>c.en.slice(0,3)),X:C.map((_,i)=>C.map((_,j)=>i===j?1:0))};
+      if(mode==="drop") return {cols:C.slice(1).map(c=>c.en.slice(0,3)),X:C.map((_,i)=>C.slice(1).map((_,j)=>i===j+1?1:0))};
+      return {cols:["freq"],X:C.map(c=>[c.freq])};
+    }
+    function solve(A,b){ // gaussian elimination
+      const n=A.length; const M=A.map((r,i)=>[...r,b[i]]);
+      for(let i=0;i<n;i++){ let p=i; for(let k=i+1;k<n;k++) if(Math.abs(M[k][i])>Math.abs(M[p][i])) p=k; [M[i],M[p]]=[M[p],M[i]];
+        for(let k=i+1;k<n;k++){ const f=M[k][i]/M[i][i]; for(let j=i;j<=n;j++) M[k][j]-=f*M[i][j]; } }
+      const x=Array(n).fill(0); for(let i=n-1;i>=0;i--){ let s=M[i][n]; for(let j=i+1;j<n;j++) s-=M[i][j]*x[j]; x[i]=s/M[i][i]; } return x;
+    }
+    function fit(X,y){
+      const Z=X.map(r=>[1,...r]); const p=Z[0].length;
+      const A=[...Array(p)].map((_,i)=>[...Array(p)].map((_,j)=>Z.reduce((s,r)=>s+r[i]*r[j],0)+(i===j&&i>0?1e-9:0)));
+      const b=[...Array(p)].map((_,i)=>Z.reduce((s,r,k)=>s+r[i]*y[k],0));
+      const w=solve(A,b); const pred=Z.map(r=>r.reduce((s,v,i)=>s+v*w[i],0));
+      const ym=y.reduce((a,b)=>a+b,0)/y.length; const ss=y.reduce((s,v)=>s+(v-ym)**2,0); const se=y.reduce((s,v,i)=>s+(v-pred[i])**2,0);
+      return {w,pred,r2:1-se/ss};
+    }
+    // R2 distribution over all 120 orderings
+    const y=C.map(c=>c.rate);
+    const allR2=[]; (function permute(a,l){ if(l===a.length){ allR2.push(fit(a.map(v=>[v]),y).r2); return; } for(let i=l;i<a.length;i++){ [a[l],a[i]]=[a[i],a[l]]; permute(a,l+1); [a[l],a[i]]=[a[i],a[l]]; } })([0,1,2,3,4],0);
+    allR2.sort((a,b)=>a-b);
+    const r2min=allR2[0], r2max=allR2[allR2.length-1], r2med=(allR2[59]+allR2[60])/2;
+
+    function draw(){
+      Object.entries(btns).forEach(([k,b])=>b.className="btn"+(k===mode?"":" ghost"));
+      const {cols,X}=encode();
+      // encoded table
+      let t=`<h5>بردار هر شهر</h5><div class="tablewrap" style="margin:0"><table class="hm"><tr><th>شهر</th>${cols.map(c=>`<th>${c}</th>`).join("")}</tr>`;
+      C.forEach((c,i)=>{ t+=`<tr><td class="k">${c.fa}</td>${X[i].map(v=>`<td>${mode==="freq"?fmt(v,2):fmt(v,0)}</td>`).join("")}</tr>`; });
+      encBox.innerHTML=t+"</table></div>";
+      // distance table
+      const D=C.map((_,i)=>C.map((_,j)=>Math.sqrt(X[i].reduce((s,v,k)=>s+(v-X[j][k])**2,0))));
+      const dmax=Math.max(...D.flat())||1;
+      let d=`<h5>فاصله‌ی اقلیدسی (پررنگ‌تر = دورتر)</h5><div class="tablewrap" style="margin:0"><table class="hm"><tr><th></th>${C.map(c=>`<th>${c.fa}</th>`).join("")}</tr>`;
+      C.forEach((c,i)=>{ d+=`<tr><td class="k">${c.fa}</td>${D[i].map(v=>`<td style="${heat(v,dmax,"var(--plot-c3)")}">${fmt(v,2)}</td>`).join("")}</tr>`; });
+      distBox.innerHTML=d+"</table></div>";
+      // regression
+      const f=fit(X,y);
+      const P=new ML.Plot(cv,[-0.6,4.6],[0,0.22],{l:46,b:34});
+      P.axes("","نرخ لغو",{xstep:1,ystep:0.05,xfmt:i=>C[Math.round(i)]?C[Math.round(i)].fa:"",yfmt:v=>ML.fa(Math.round(v*100))+"٪"});
+      const c1=css("--plot-c3"), c2=css("--plot-c2");
+      C.forEach((c,i)=>{ P.bar(i-0.18,0.34,0,c.rate,alpha(c1,.75)); P.bar(i+0.18,0.34,0,Math.max(0,f.pred[i]),alpha(c2,.8)); });
+      if(cols.length===1 && mode!=="freq"){ // show the implied line over code order
+          const byCode=C.map((_,i)=>({x:i,code:X[i][0],p:f.pred[i]})).sort((a,b)=>a.code-b.code);
+        P.line(byCode.map(o=>[o.x+0.18,o.p]),alpha(c2,.55),1.5,[4,3]);
+      }
+      leg.innerHTML=`<span><i style="background:${c1}"></i>نرخ واقعی</span><span><i style="background:${c2}"></i>پیش‌بینی مدل خطی</span>`+(cols.length===1&&mode!=="freq"?`<span><i style="background:${alpha(c2,.55)}"></i>خط‌چین: ترتیب کدها (مدل فقط یک شیب روی این ترتیب دارد)</span>`:"");
+      // readout
+      const codeOrder=C.map((c,i)=>({c,v:X[i][0]})).sort((a,b)=>a.v-b.v).map(o=>o.c.fa).join(" < ");
+      let msg=`ستون‌ها: ${ML.fa(cols.length)}   ·   ${ML.L("R² = "+fmt(f.r2,3))}\n`;
+      if(mode==="label"||mode==="shuffle"){
+        msg+=`ترتیبی که مدل «می‌بیند»: ${codeOrder}\n`;
+        msg+=`مدل خطی فقط یک شیب دارد: ${ML.L("ŷ = "+fmt(f.w[0],3)+" + "+fmt(f.w[1],3)+"·code")}\n`;
+        msg+=`از ${ML.fa(120)} ترتیب ممکن، R² بین ${faN(r2min,2)} و ${faN(r2max,2)} است (میانه ${faN(r2med,2)}). کیفیت مدل به ترتیب دلبخواه کدها وابسته است: این همان «ترتیب جعلی» است.`;
+      } else if(mode==="onehot"){
+        msg+=`همه‌ی فاصله‌ها √۲ ≈ ۱٫۴۱ است: هیچ ادعای ترتیب یا نزدیکی. مدل برای هر شهر ضریب جدا دارد و نرخ‌ها را دقیقاً یاد می‌گیرد.\nنکته: ۵ ستون + intercept یعنی هم‌خطی کامل (دام متغیر ساختگی)؛ این‌جا یک جریمه‌ی بسیار کوچک جواب را یکتا کرده، مثل regularization در sklearn.`;
+      } else if(mode==="drop"){
+        msg+=`اصفهان «دسته‌ی مرجع» شد (بردار تمام‌صفر). پیش‌بینی‌ها همچنان دقیق‌اند و ضریب هر شهر یعنی «تفاوت با اصفهان».\nولی به جدول فاصله نگاه کن: اصفهان تا همه ۱ است و بقیه با هم ۱٫۴۱. برای KNN و K-Means این عدم تقارن مصنوعی است. و هر شهر جدید با ${ML.L('handle_unknown="ignore"')} هم تمام‌صفر می‌شود، یعنی «اصفهان»!`;
+      } else {
+        msg+=`سهم سفرها: تهران ۵۰٪، مشهد ۱۸٪، اصفهان ۱۴٪، شیراز ۱۰٪، تبریز ۸٪.\nاین ترتیب معنادار است (اندازه‌ی شهر) و بخشی از الگو را می‌گیرد (تهران بزرگ و پرلغو)، ولی تبریزِ کوچک و پرلغو را نمی‌بیند. شهرهای هم‌اندازه هم یک عدد می‌گیرند: اطلاعات از دست می‌رود.`;
+      }
+      out.textContent=msg;
+    }
+    ML.onResize(cv,draw); draw();
+  })();
+
+  /* ------------------------------------------------ widget 2: TF-IDF + cosine */
+  (function(){
+    const el=document.getElementById("w-tfidf"); if(!el) return;
+    ML.shell(el,"🔧 ابزار: آزمایشگاه TF-IDF و شباهت کسینوسی",
+      "چهار متن کوتاه را ویرایش کن یا یکی از مثال‌ها را بزن. محاسبه دقیقاً فرمول پیش‌فرض sklearn است (idf هموارشده و نرمال‌سازی L2)، پس با مثال بالا یکی درمی‌آید. گزینه‌های پیش‌پردازش را روشن و خاموش کن و ببین «شباهت» چطور عوض می‌شود.");
+    const PRESETS={
+      "مثال متن":["راننده دیر آمد","راننده دیر آمد و بی ادب بود","قیمت سفر گران بود","سفر گران و طولانی بود"],
+      "مترادف‌ها":["سفر گران بود","سفر پرهزینه بود","کرایه خیلی زیاد بود","راننده دیر آمد"],
+      "ی و ک عربی":["کرایه زیاد بود","كرايه زياد بود","کرایه منصفانه بود","راننده مؤدب بود"],
+      "ترتیب کلمات":["راننده مسافر را منتظر گذاشت","مسافر راننده را منتظر گذاشت","راننده به موقع رسید","مسافر دیر رسید"],
+      "نیم‌فاصله":["برنامه باز نمی‌شود","برنامه باز نمی شود","برنامه کند است","پرداخت انجام نمی‌شود"]
+    };
+    const STOP=new Set(["و","در","به","از","که","را","با","این","آن","بود","است","هم","یک","برای","تا","شد","می","the","was","a","is","and"]);
+    let docs=PRESETS["مثال متن"].slice();
+    const segp=h("div",{class:"seg"});
+    Object.keys(PRESETS).forEach(k=>{ const b=h("button",{type:"button",class:"btn ghost"},k); b.onclick=()=>{ docs=PRESETS[k].slice(); inputs.forEach((inp,i)=>inp.value=docs[i]); draw(); }; segp.append(b); });
+    el.append(segp);
+    const dbox=h("div",{class:"docs"}); const inputs=[];
+    for(let i=0;i<4;i++){ const lab=h("label"); const inp=h("input",{type:"text",value:docs[i],"aria-label":"متن "+(i+1)}); inp.oninput=()=>{docs[i]=inp.value; draw();}; inputs.push(inp); lab.append(h("b",null,"d"+(i+1)),inp); dbox.append(lab); }
+    el.append(dbox);
+    const ctr=h("div",{class:"controls"});
+    const mk=(txt,on)=>{ const l=h("label"); const c=h("input",{type:"checkbox"}); c.checked=on; c.onchange=draw; l.append(c," "+txt); ctr.append(l); return c; };
+    const cbNorm=mk("یکسان‌سازی ی/ک عربی",false), cbZW=mk("نیم‌فاصله را جداکننده بدان (مثل sklearn)",false), cbStop=mk("حذف ایست‌واژه‌ها (و، بود، را، …)",false);
+    el.append(ctr);
+    const grid=h("div",{class:"wgrid"}); const cosBox=h("div"), termBox=h("div"); grid.append(cosBox,termBox); el.append(grid);
+    const out=h("div",{class:"readout"}); el.append(out);
+
+    function tok(t){
+      t=t.toLowerCase();
+      if(cbNorm.checked){ t=t.replace(/ي/g,"ی").replace(/ك/g,"ک").replace(/ى/g,"ی").replace(/[\u064B-\u0652]/g,""); }
+      if(cbZW.checked) t=t.replace(/\u200c/g," ");
+      let w=t.split(/[^\p{L}\p{N}\u200c]+/u).map(s=>s.replace(/^\u200c+|\u200c+$/g,"")).filter(Boolean);
+      if(cbStop.checked) w=w.filter(x=>!STOP.has(x));
+      return w;
+    }
+    function draw(){
+      const T=docs.map(tok); const N=T.length;
+      const vocab=[...new Set(T.flat())].sort((a,b)=>a.localeCompare(b,"fa"));
+      const df={}; vocab.forEach(v=>df[v]=T.filter(d=>d.includes(v)).length);
+      const idf={}; vocab.forEach(v=>idf[v]=Math.log((1+N)/(1+df[v]))+1);
+      const V=T.map(d=>{ const tf={}; d.forEach(w=>tf[w]=(tf[w]||0)+1); const v=vocab.map(w=>(tf[w]||0)*idf[w]); const n=Math.hypot(...v)||1; return v.map(x=>x/n); });
+      const cos=V.map(a=>V.map(b=>a.reduce((s,x,i)=>s+x*b[i],0)));
+      const hasEmpty=T.some(d=>d.length===0);
+      // cosine heatmap
+      let c=`<h5>ماتریس شباهت کسینوسی</h5><table class="hm"><tr><th></th>${T.map((_,i)=>`<th>d${i+1}</th>`).join("")}</tr>`;
+      cos.forEach((r,i)=>{ c+=`<tr><th>d${i+1}</th>${r.map((v,j)=>`<td style="${i===j?"opacity:.55;":""}${heat(v,1,"var(--plot-c1)")}">${fmt(v,2)}</td>`).join("")}</tr>`; });
+      cosBox.innerHTML=c+"</table>";
+      // term table
+      let t=`<h5>وزن TF-IDF هر واژه (${ML.fa(vocab.length)} واژه)</h5><div class="tscroll"><table class="hm"><tr><th>واژه</th><th>df</th><th>idf</th>${T.map((_,i)=>`<th>d${i+1}</th>`).join("")}</tr>`;
+      const ord=vocab.map((w,k)=>({w,k})).sort((a,b)=>idf[b.w]-idf[a.w]||a.w.localeCompare(b.w,"fa"));
+      ord.forEach(({w,k})=>{ t+=`<tr><td class="k">${w}</td><td>${df[w]}</td><td>${fmt(idf[w],3)}</td>${V.map(v=>`<td style="${heat(v[k],1,"var(--plot-c3)")}">${v[k]?fmt(v[k],2):"·"}</td>`).join("")}</tr>`; });
+      termBox.innerHTML=t+"</table></div>";
+      // readout
+      let best=[-1,0,0]; for(let i=0;i<N;i++) for(let j=i+1;j<N;j++) if(cos[i][j]>best[0]) best=[cos[i][j],i,j];
+      const zeros=[]; for(let i=0;i<N;i++) for(let j=i+1;j<N;j++) if(cos[i][j]<1e-9) zeros.push(`d${i+1}–d${j+1}`);
+      let msg=`شبیه‌ترین جفت: d${best[1]+1} و d${best[2]+1} با ${ML.L("cos = "+fmt(best[0],3))}`;
+      const shared=T[best[1]].filter((w,k,a)=>a.indexOf(w)===k && T[best[2]].includes(w));
+      if(shared.length) msg+=`  (واژه‌های مشترک: ${shared.join("، ")})`;
+      if(zeros.length) msg+=`\nبدون هیچ واژه‌ی مشترک (کسینوس صفر): ${zeros.join("، ")}`;
+      for(let i=0;i<N;i++) for(let j=i+1;j<N;j++) if(cos[i][j]>0.9999 && docs[i].trim()!==docs[j].trim()){
+        if(T[i].join(" ")===T[j].join(" ")) msg+=`\n✓ d${i+1} و d${j+1} نوشتارشان فرق دارد، ولی بعد از پیش‌پردازش یکسان شدند (کسینوس ۱). یکسان‌سازی کار خودش را کرد.`;
+        else msg+=`\n⚠ d${i+1} و d${j+1} ترتیب کلمه‌هایشان فرق دارد ولی کسینوس ۱ دارند: TF-IDF «کیسه‌ی کلمات» است و ترتیب را نمی‌بیند (چه کسی منتظر ماند؟).`;
+      }
+      if(hasEmpty) msg+=`\nیک سند بعد از پیش‌پردازش خالی شد؛ بردارش صفر است.`;
+      out.textContent=msg;
+    }
+    draw();
+  })();
+};
+</script>
+</body></html>

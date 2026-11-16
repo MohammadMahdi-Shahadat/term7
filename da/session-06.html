@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۶ · کاهش بعد: PCA، SVD، t-SNE و UMAP</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.widget .chk{display:inline-flex;gap:6px;align-items:center;margin-inline-end:14px;cursor:pointer;font-size:.92em}
+.widget .chkrow{margin:4px 0 8px}
+.kc{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:700px){.kc{grid-template-columns:1fr}}
+.kc>div{border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;background:var(--paper);min-width:0}
+.kc b.q{display:block;margin-bottom:4px}
+</style>
+</head>
+<body data-session="6">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۶ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>مهندسی ویژگی (۲): نفرین ابعاد، انتخاب ویژگی، PCA، SVD، <span style="white-space:nowrap">t-SNE</span> و UMAP</h1>
+  <p class="lead">جدول سفرهای اپ ممکن است صدها ستون داشته باشد، ولی اطلاعات مستقلش خیلی کمتر است. این جلسه می‌پرسد: چه چیزی را <b>نگه داریم</b>، چه چیزی را <b>ترکیب کنیم</b>، چه چیزی را <b>دور بریزیم</b> و چه چیزی را فقط <b>ببینیم</b>؟ و مهم‌تر: هر کدام را کجای pipeline انجام بدهیم تا نشت داده پیش نیاید.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۰۰ تا ۱۳۰ دقیقه</span><span>📚 منبع: اسلاید slides05 (Feature Engineering Part 2، ۳۲ صفحه) + Géron فصل ۸ + ISLR فصل ۶ و ۱۲</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>نفرین ابعاد را با «تمرکز فاصله‌ها» و «خالی شدن فضا» توضیح بدهی و با عدد نشان بدهی.</li>
+    <li>انتخاب ویژگی (selection) را از استخراج ویژگی (extraction) جدا کنی و روش‌های filter / wrapper / embedded را بشناسی.</li>
+    <li>PCA را از «بیشینه کردن واریانس» استخراج کنی، یک مثال ۲×۲ را دستی حل کنی و explained variance و loadingها را تفسیر کنی.</li>
+    <li>رابطه‌ی SVD با PCA را بنویسی و بدانی چرا TruncatedSVD برای ماتریس‌های تُنُک (sparse) مناسب است.</li>
+    <li>PCA، t-SNE، UMAP و TruncatedSVD را درست مقایسه کنی و دام‌های تفسیر نقشه‌های دوبعدی را بشناسی.</li>
+    <li>کاهش بعد را داخل یک Pipeline بدون نشت (fit فقط روی train) قرار بدهی و k را با اعتبارسنجی انتخاب کنی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+  برای پیش‌بینی لغو سفر این ستون‌ها را داری: <code>distance_km</code>، <code>distance_mi</code>، <code>duration_min</code>، <code>fare</code>، <code>price</code>، <code>surge</code>، <code>eta_quoted</code> (ETA نشان‌داده‌شده به مسافر)، <code>eta_actual</code> (ETA واقعی راننده)، <code>driver_rating</code>، <code>user_cancel_rate</code>.
+  (۱) کدام ستون‌ها تقریباً <b>یک اطلاعات</b> را تکرار می‌کنند؟ (۲) اگر مجبور باشی فقط ۴ ستون نگه داری، کدام‌ها را نگه می‌داری و چرا؟ (۳) آیا ممکن است دو ستونی که ۹۶٪ همبستگی دارند، <b>اختلافشان</b> مهم‌ترین سیگنال باشد؟ جوابت را نگه دار؛ در بخش ۶ و مسئله‌ی حل‌شده به آن برمی‌گردیم.
+</div>
+
+<section id="where">
+<h2><span class="num">۱</span> کجای مسیر هستیم و مسئله چیست؟ <span class="tag core">اسلاید</span></h2>
+<p>این درس یک مسیر پیوسته است: از سؤال کسب‌وکار تا مدل قابل‌اعتماد. جلسه‌ی قبل (مهندسی ویژگی ۱) ویژگی ساختیم و مقیاس دادیم. حالا ویژگی‌ها <b>زیاد</b> شده‌اند و سؤال این است که کدام را نگه داریم.</p>
+<div class="flow"><span>۰۱ مسئله: اول سؤال</span><i>←</i><span>۰۲ آماده‌سازی: تمیز و کدگذاری</span><i>←</i><span>۰۳ EDA: یافتن الگو</span><i>←</i><span>۰۴ ویژگی: مقیاس و تبدیل</span><i>←</i><span><b>۰۵ کاهش بعد: نمایش بهتر</b></span><i>←</i><span>۰۶ Pipeline: آماده برای ML</span><i>←</i><span>۰۷ مدل‌ها</span></div>
+<p>سؤال امروز در اسلاید: <b>«چه چیزی را نگه داریم، ترکیب کنیم، دور بریزیم یا مصور کنیم؟»</b> محتوای این مرحله در نقشه‌ی درس: PCA و SVD، t-SNE و UMAP، انتخاب ویژگی، و تفسیر.</p>
+
+<h3>مسئله‌ی شهودی: ستون زیاد، اطلاعات مستقل کم</h3>
+<div class="two">
+<div class="box ex"><div class="bt">مثال الف: تحلیل سفر</div>مسافت، مدت سفر، تأخیر ترافیکی، کرایه، زمان انتظار، ساعت، امتیاز راننده، رفتار گذشته‌ی کاربر... مسافت و کرایه و مدت سفر تقریباً با هم بالا و پایین می‌روند. سه ستون داریم، ولی شاید فقط «یک و نیم» اطلاعات مستقل.</div>
+<div class="box ex"><div class="bt">مثال ب: embedding متن</div>هر نظر مسافر («راننده دیر رسید و لغو کردم») با صدها یا هزاران عدد نمایش داده می‌شود (یادت هست از جلسه‌ی ۳، متن به عدد). این مختصات‌ها مستقل نیستند؛ معنای جمله در یک زیرفضای خیلی کوچک‌تر خلاصه می‌شود.</div>
+</div>
+<div class="box note"><div class="bt">سؤال کلیدی اسلاید</div><b>چه مقدار از این اطلاعات تکراری (redundant) است؟</b> کاهش بعد (dimensionality reduction) یعنی پیدا کردن نمایشی با ستون‌های کمتر که «آنچه برای هدف ما مهم است» را نگه دارد. کلمه‌ی کلیدی «برای هدف ما» است؛ بخش ۳ نشان می‌دهد هدف‌های مختلف روش‌های مختلف می‌خواهند.</div>
+</section>
+
+<section id="curse">
+<h2><span class="num">۲</span> نفرین ابعاد (Curse of Dimensionality) <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<p>در دو یا سه بعد شهود ما خوب کار می‌کند. در صد بعد، <b>فاصله، چگالی و تعداد نمونه‌ی لازم</b> رفتار عجیبی پیدا می‌کنند. اسلاید چهار نکته می‌گوید:</p>
+<ol class="steps">
+  <li><b>همسایگی‌ها خالی می‌شوند (sparse neighborhoods):</b> پیدا کردن نقطه‌ی نزدیک سخت‌تر می‌شود.</li>
+  <li><b>تمرکز فاصله (distance concentration):</b> همه‌ی فاصله‌ها تقریباً یک اندازه می‌شوند، پس «نزدیک‌ترین همسایه» معنای تمایزدهنده‌اش را از دست می‌دهد.</li>
+  <li><b>نویز و هزینه:</b> بعد بیشتر یعنی نویز بیشتر و محاسبه‌ی گران‌تر.</li>
+  <li><b>ولی:</b> هر داده‌ی پربعدی ذاتاً پیچیده نیست. ممکن است ۱۰۰ ستون روی یک سطح ۳بعدی بنشینند (بعد ذاتی یا intrinsic dimension کم).</li>
+</ol>
+
+<h3>۲.۱ تمرکز فاصله با عدد</h3>
+<p>۲۰۰ نقطه‌ی تصادفی یکنواخت در مکعب $[0,1]^d$ بساز و همه‌ی ۱۹٬۹۰۰ فاصله‌ی دوبه‌دو را حساب کن. معیار «تمایز نسبی» (relative contrast) را $\frac{D_{\max}-D_{\min}}{D_{\min}}$ می‌گیریم:</p>
+<pre class="code">import numpy as np
+from scipy.spatial.distance import pdist
+rng = np.random.default_rng(0)
+for d in [2, 10, 100, 1000]:
+    X = rng.random((200, d))          # 200 points, uniform in [0,1]^d
+    D = pdist(X)                      # all 19,900 pairwise distances
+    print(f"d={d:4d}  min={D.min():6.3f}  max={D.max():6.3f}  "
+          f"(max-min)/min={(D.max()-D.min())/D.min():8.3f}  std/mean={D.std()/D.mean():.3f}")</pre>
+<div class="out">d=   2  min= 0.003  max= 1.358  (max-min)/min= 533.858  std/mean=0.476
+d=  10  min= 0.405  max= 2.212  (max-min)/min=   4.461  std/mean=0.194
+d= 100  min= 3.037  max= 4.927  (max-min)/min=   0.622  std/mean=0.060
+d=1000  min=11.955  max=13.823  (max-min)/min=   0.156  std/mean=0.019</div>
+<p>در ۲ بعد، دورترین جفت ۵۰۰ برابر نزدیک‌ترین جفت فاصله دارد. در ۱۰۰۰ بعد، دورترین فقط <b>۱۶٪</b> دورتر از نزدیک‌ترین است. یعنی برای k-NN، خوشه‌بندی مبتنی بر فاصله و حتی جست‌وجوی شباهت، «نزدیک» و «دور» تقریباً یکی شده‌اند.</p>
+<div class="box proof"><div class="bt">چرا؟ (استدلال یک‌خطی) <span class="tag book">تکمیلی</span></div>
+مجذور فاصله جمع $d$ جمله‌ی مستقل است: $D^2=\sum_{j=1}^{d}(x_j-y_j)^2$. برای توزیع یکنواخت، هر جمله میانگین $\tfrac16$ و واریانس $\tfrac{7}{180}$ دارد. پس میانگین $D^2$ برابر $d/6$ است (خطی رشد می‌کند) ولی انحراف معیارش $\sqrt{7d/180}$ است (فقط با $\sqrt d$ رشد می‌کند). نسبت پراکندگی به میانگین مثل $1/\sqrt d$ به صفر می‌رود: $\frac{\operatorname{std}(D)}{\operatorname{mean}(D)}\approx\frac{0.59}{\sqrt d}$. برای $d=100$ می‌شود ۰٫۰۵۹ و برای $d=1000$ می‌شود ۰٫۰۱۹؛ دقیقاً همان ستون آخر خروجی بالا.
+</div>
+
+<h3>۲.۲ فضا خالی می‌شود: حجم پوسته و تعداد نمونه</h3>
+<p>یک مکعب واحد را در نظر بگیر و یک «پوسته»ی نازک به ضخامت ۵٪ از هر طرف از آن جدا کن. مکعب درونی ضلع $0.9$ دارد، پس سهم حجم درونی $0.9^d$ است:</p>
+<div class="tablewrap"><table>
+<tr><th>بعد $d$</th><th>۱</th><th>۲</th><th>۱۰</th><th>۵۰</th><th>۱۰۰</th></tr>
+<tr><td>سهم حجم درونی $0.9^d$</td><td>۰٫۹</td><td>۰٫۸۱</td><td>۰٫۳۴۹</td><td>۰٫۰۰۵۲</td><td>۰٫۰۰۰۰۲۷</td></tr>
+<tr><td>سهم پوسته‌ی نازک</td><td>۱۰٪</td><td>۱۹٪</td><td>۶۵٪</td><td>۹۹٫۵٪</td><td>تقریباً ۱۰۰٪</td></tr>
+</table></div>
+<p>در ۱۰۰ بعد تقریباً <b>همه‌ی</b> نقاط «نزدیک لبه»اند. شهود دیگر: اگر هر محور را به ۱۰ بازه تقسیم کنی و بخواهی در هر خانه حداقل یک نمونه باشد، به $10^d$ نمونه نیاز داری: برای ۶ ویژگی یک میلیون سفر، برای ۱۰ ویژگی ده میلیارد سفر. برای همین با بعد زیاد، داده همیشه «کم» است.</p>
+
+<div id="w-curse"></div>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+نفرین ابعاد یعنی <b>«بعد بیشتر همیشه بد است»</b> نیست. اگر ستون جدید سیگنال واقعی داشته باشد، مدل بهتر می‌شود. مشکل وقتی است که بعد زیاد شود ولی (۱) نمونه کم باشد، (۲) ستون‌ها نویز یا تکراری باشند، یا (۳) روش به فاصله تکیه کند (k-NN، K-Means، SVM با کرنل RBF). مدل‌های درختی و خطیِ منظم‌شده (regularized) خیلی کمتر آسیب می‌بینند.
+</div>
+</section>
+
+<section id="selext">
+<h2><span class="num">۳</span> انتخاب ویژگی در برابر استخراج ویژگی <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<div class="vs">
+  <div><h4>انتخاب ویژگی (Feature Selection)</h4><ul><li><b>ستون‌های موجود را نگه می‌دارد</b> و بقیه را حذف می‌کند.</li><li>مثال اسلاید: <code>distance</code>، <code>ETA</code> و <code>price</code> بمانند؛ ستون‌های تکراری یا بی‌فایده حذف شوند.</li><li>➕ <b>تفسیرپذیری</b>: هنوز می‌توانی به تیم عملیات بگویی «ETA مهم است».</li></ul></div>
+  <div><h4>استخراج ویژگی (Feature Extraction)</h4><ul><li><b>مختصات جدید می‌سازد</b> که ترکیبی از ستون‌های قدیم‌اند.</li><li>مثال اسلاید: PCA صد متغیر را به ۱۰ مؤلفه‌ی اصلی تبدیل می‌کند.</li><li>➕ <b>فشرده‌سازی</b>: اطلاعات پخش‌شده در چند ستون همبسته در یک مؤلفه جمع می‌شود.</li></ul></div>
+</div>
+<div class="box thm"><div class="bt">نکته‌ی کلیدی اسلاید</div>کاهش بعد <b>خودبه‌خود بهتر نیست</b>. همیشه با <b>baseline بدون کاهش</b> مقایسه کن، با همان اعتبارسنجی. (در بخش ۹ می‌بینیم که در داده‌ی سفر، PCA مدل را بدتر می‌کند.)</div>
+
+<h3>۳.۱ سه سؤال قبل از انتخاب روش</h3>
+<p>روش درست به <b>هدف تحلیل</b> بستگی دارد. اسلاید سه هدف را جدا می‌کند و می‌گوید: «حفظ سیگنال پیش‌بینی، حفظ هندسه‌ی کلی و دقت بازسازی سه هدف متفاوت‌اند».</p>
+<div class="tablewrap"><table>
+<tr><th>هدف</th><th>سؤال اسلاید</th><th>روش‌های مناسب</th><th>معیار موفقیت</th></tr>
+<tr><td><b>پیش‌بینی (Predict)</b></td><td>آیا تعمیم، سرعت آموزش یا پایداری را بهتر می‌کنیم؟</td><td>انتخاب ویژگی داخل CV، L1، گاهی PCA</td><td>امتیاز اعتبارسنجی متقاطع در برابر baseline</td></tr>
+<tr><td><b>مصورسازی (Visualize)</b></td><td>می‌خواهیم گروه‌ها را در ۲ یا ۳ بعد ببینیم و الگو را منتقل کنیم؟</td><td>PCA (برای نمای کلی)، t-SNE، UMAP</td><td>پایداری نقشه با seed و پارامترهای مختلف؛ بررسی با داده‌ی خام</td></tr>
+<tr><td><b>فشرده‌سازی (Compress)</b></td><td>نمایش فشرده با خطای بازسازی کنترل‌شده لازم داریم؟</td><td>PCA، TruncatedSVD</td><td>خطای بازسازی، حافظه و سرعت</td></tr>
+</table></div>
+
+<h3>۳.۲ سه خانواده‌ی روش انتخاب ویژگی <span class="tag book">تکمیلی</span></h3>
+<div class="tablewrap"><table>
+<tr><th>خانواده</th><th>چطور کار می‌کند</th><th>نمونه‌ها (sklearn)</th><th>کی خوب است</th><th>ریسک</th></tr>
+<tr><td><b>Filter</b></td><td>هر ستون را <b>جدا از مدل</b> با یک آماره امتیاز می‌دهد</td><td><code>VarianceThreshold</code>، همبستگی بالا بین دو ستون، <code>mutual_info_classif</code>، <code>chi2</code> (فقط ویژگی نامنفی مثل شمارش)، <code>f_classif</code></td><td>سریع؛ گام اول برای حذف ستون ثابت و تکراری</td><td>اثر ترکیبی ستون‌ها را نمی‌بیند (دو ستونی که فقط با هم مفیدند)</td></tr>
+<tr><td><b>Wrapper</b></td><td>زیرمجموعه‌ها را با <b>آموزش واقعی مدل</b> می‌سنجد</td><td><code>RFE</code>، <code>RFECV</code>، <code>SequentialFeatureSelector</code></td><td>تعداد ستون متوسط، مدل ارزان</td><td>کند؛ بیش‌برازش روی اعتبارسنجی</td></tr>
+<tr><td><b>Embedded</b></td><td>انتخاب <b>حین آموزش</b> مدل اتفاق می‌افتد</td><td>رگرسیون L1 (Lasso)، اهمیت ویژگی درخت‌ها + <code>SelectFromModel</code></td><td>تعادل خوب سرعت و کیفیت</td><td>L1 از بین ستون‌های همبسته یکی را تصادفی برمی‌دارد؛ اهمیت درخت به ستون‌های پرمقدار سوگیری دارد</td></tr>
+</table></div>
+<p>روی داده‌ی شبیه‌سازی‌شده‌ی لغو سفر (کد کامل در بخش ۹؛ این‌جا فقط روی <code>X_tr</code>) ببین هر روش چه برمی‌دارد:</p>
+<pre class="code">import numpy as np, pandas as pd
+from sklearn.feature_selection import RFE, mutual_info_classif
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+# 1) filter: highly correlated pairs (train only!)
+C = X_tr.corr().abs()
+upper = C.where(np.triu(np.ones(C.shape, bool), k=1))
+pairs = upper.stack()
+print("corr&gt;0.95:", [f"{a}~{b}" for (a, b), v in pairs[pairs &gt; 0.95].items()])
+# 2) filter: mutual information
+mi = pd.Series(mutual_info_classif(X_tr, y_tr, random_state=0), index=X_tr.columns)
+print("MI top5 :", list(mi.nlargest(5).index))
+Xs = StandardScaler().fit_transform(X_tr)
+# 3) wrapper: RFE
+rfe = RFE(LogisticRegression(max_iter=2000), n_features_to_select=5).fit(Xs, y_tr)
+print("RFE 5   :", list(X_tr.columns[rfe.support_]))
+# 4) embedded: L1
+l1 = LogisticRegression(penalty="l1", C=0.02, solver="liblinear").fit(Xs, y_tr)
+print("L1 kept :", list(X_tr.columns[l1.coef_[0] != 0]))
+# 5) embedded: tree importances
+rf = RandomForestClassifier(200, min_samples_leaf=20, random_state=0, n_jobs=-1).fit(X_tr, y_tr)
+print("RF top5 :", list(pd.Series(rf.feature_importances_, index=X_tr.columns).nlargest(5).index))</pre>
+<div class="out">corr&gt;0.95: ['distance_km~fare', 'distance_km~distance_mi', 'fare~distance_mi']
+MI top5 : ['eta_actual', 'user_cancel_rate', 'eta_quoted', 'hour_cos', 'noise_1']
+RFE 5   : ['user_cancel_rate', 'eta_quoted', 'eta_actual', 'price', 'hour_cos']
+L1 kept : ['supply_nearby', 'user_cancel_rate', 'eta_quoted', 'eta_actual', 'surge', 'hour_cos']
+RF top5 : ['eta_actual', 'user_cancel_rate', 'eta_quoted', 'traffic_index', 'hour_cos']</div>
+<p>هر چهار روش روی هسته‌ی <code>user_cancel_rate</code>، <code>eta_quoted</code>، <code>eta_actual</code> و <code>hour_cos</code> توافق دارند؛ این توافق خودش نشانه‌ی خوبی است. ولی ببین mutual information یک ستون <b>کاملاً نویز</b> (<code>noise_1</code>) را در پنج‌تای اول آورده: تخمین MI روی نمونه‌ی محدود نوسان دارد. (در نسخه‌های جدید sklearn، <code>penalty="l1"</code> هشدار FutureWarning می‌دهد؛ جایگزینش <code>l1_ratio=1</code> است.)</p>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: انتخاب ویژگی روی کل داده، بعد اعتبارسنجی</div>
+اگر ستون‌ها را با نگاه به <b>همه‌ی</b> برچسب‌ها انتخاب کنی و بعد cross-validation بزنی، fold اعتبارسنجی قبلاً در انتخاب «دیده شده». نتیجه با داده‌ی کاملاً تصادفی:
+<pre class="code">import numpy as np
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline
+rng = np.random.default_rng(0)
+X = rng.normal(size=(100, 5000))        # 5000 pure-noise features
+y = rng.integers(0, 2, 100)             # random labels: true accuracy = 50%
+
+# WRONG: select on all rows, then cross-validate
+X_sel = SelectKBest(f_classif, k=20).fit_transform(X, y)
+wrong = cross_val_score(LogisticRegression(max_iter=1000), X_sel, y, cv=5)
+# RIGHT: selection inside the pipeline (refit on each training fold)
+pipe = make_pipeline(SelectKBest(f_classif, k=20), LogisticRegression(max_iter=1000))
+right = cross_val_score(pipe, X, y, cv=5)
+print(f"leaky : {wrong.mean():.2f}")
+print(f"honest: {right.mean():.2f}")</pre>
+<div class="out">leaky : 0.85
+honest: 0.48</div>
+دقت ۸۵٪ روی برچسب‌های <b>سکه‌ای</b>! از بین ۵۰۰۰ ستون نویز، همیشه چند ستون پیدا می‌شوند که تصادفاً با این ۱۰۰ برچسب همبسته‌اند. انتخاب ویژگی یک «یادگیری» است و باید مثل مدل فقط روی fold آموزش fit شود.
+</div>
+</section>
+
+<section id="pca-idea">
+<h2><span class="num">۴</span> PCA: شهود و هندسه‌ی تصویر کردن <span class="tag core">اسلاید</span></h2>
+<p>تحلیل مؤلفه‌های اصلی (Principal Component Analysis، PCA) دنبال <b>جهت‌های عمود بر هم</b> می‌گردد که بیشترین واریانس داده را بگیرند:</p>
+<ol class="steps">
+  <li>یک جهت با <b>بیشترین واریانس</b> (PC1).</li>
+  <li>یک جهت دوم <b>عمود</b> بر اولی که بیشترین واریانسِ باقی‌مانده را بگیرد (PC2).</li>
+  <li>جهت‌های بعدی به همین ترتیب.</li>
+</ol>
+<p>مثال اسلاید قد و وزن دانشجوهاست: نقاط در امتداد یک خط مورب کشیده شده‌اند. PC1 همان امتداد «بزرگی جثه» است و PC2 (عمود بر آن) چیزی شبیه «لاغری یا چاقی نسبت به قد».</p>
+<figure class="fig">
+<svg viewBox="0 0 560 196" width="560" role="img" aria-label="چهار گام PCA">
+<defs><marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#c0392b"/></marker><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" fill="#0f6e6a"/></marker></defs>
+<g font-family="Vazirmatn,Tahoma" text-anchor="middle">
+<rect x="420" y="22" width="130" height="165" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+<text x="485" y="40" fill="currentColor" font-size="11.5" font-weight="700">۱. داده‌ی اصلی</text>
+<circle cx="526" cy="102" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="493" cy="110" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="479" cy="118" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="454" cy="135" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="460" cy="105" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="490" cy="111" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="483" cy="118" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="470" cy="125" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="493" cy="108" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="501" cy="103" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="480" cy="104" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="495" cy="109" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="480" cy="111" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="516" cy="92" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="478" cy="110" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="472" cy="123" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="497" cy="99" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="484" cy="108" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="437" cy="138" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="476" cy="131" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="487" cy="105" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="482" cy="122" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="486" cy="112" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="504" cy="93" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="484" cy="104" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="485" cy="119" r="2.3" fill="#2456a6" opacity="0.75"/>
+<rect x="282" y="22" width="130" height="165" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+<text x="347" y="40" fill="currentColor" font-size="11.5" font-weight="700">۲. یافتن جهت‌ها</text>
+<circle cx="388" cy="102" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="355" cy="110" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="341" cy="118" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="316" cy="135" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="322" cy="105" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="352" cy="111" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="345" cy="118" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="332" cy="125" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="355" cy="108" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="363" cy="103" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="342" cy="104" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="357" cy="109" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="342" cy="111" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="378" cy="92" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="340" cy="110" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="334" cy="123" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="359" cy="99" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="346" cy="108" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="299" cy="138" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="338" cy="131" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="349" cy="105" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="344" cy="122" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="348" cy="112" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="366" cy="93" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="346" cy="104" r="2.3" fill="#2456a6" opacity="0.75"/>
+<circle cx="347" cy="119" r="2.3" fill="#2456a6" opacity="0.75"/>
+<line x1="311" y1="137" x2="383" y2="87" stroke="#c0392b" stroke-width="2.2" marker-end="url(#ar1)"/>
+<line x1="347" y1="112" x2="337" y2="98" stroke="#0f6e6a" stroke-width="2.2" marker-end="url(#ar2)"/>
+<text x="379" y="81" fill="#c0392b" font-size="10">PC1</text>
+<text x="327" y="94" fill="#0f6e6a" font-size="10">PC2</text>
+<rect x="144" y="22" width="130" height="165" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+<text x="209" y="40" fill="currentColor" font-size="11.5" font-weight="700">۳. تصویر روی PC1</text>
+<line x1="250" y1="102" x2="241" y2="90" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="241" cy="90" r="2" fill="#c0392b"/>
+<circle cx="250" cy="102" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="217" y1="110" x2="216" y2="107" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="216" cy="107" r="2" fill="#c0392b"/>
+<circle cx="217" cy="110" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="203" y1="118" x2="202" y2="117" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="202" cy="117" r="2" fill="#c0392b"/>
+<circle cx="203" cy="118" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="178" y1="135" x2="178" y2="134" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="178" cy="134" r="2" fill="#c0392b"/>
+<circle cx="178" cy="135" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="184" y1="105" x2="196" y2="121" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="196" cy="121" r="2" fill="#c0392b"/>
+<circle cx="184" cy="105" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="214" y1="111" x2="213" y2="110" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="213" cy="110" r="2" fill="#c0392b"/>
+<circle cx="214" cy="111" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="207" y1="118" x2="205" y2="115" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="205" cy="115" r="2" fill="#c0392b"/>
+<circle cx="207" cy="118" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="194" y1="125" x2="193" y2="123" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="193" cy="123" r="2" fill="#c0392b"/>
+<circle cx="194" cy="125" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="217" y1="108" x2="217" y2="107" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="217" cy="107" r="2" fill="#c0392b"/>
+<circle cx="217" cy="108" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="225" y1="103" x2="224" y2="102" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="224" cy="102" r="2" fill="#c0392b"/>
+<circle cx="225" cy="103" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="204" y1="104" x2="209" y2="112" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="209" cy="112" r="2" fill="#c0392b"/>
+<circle cx="204" cy="104" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="219" y1="109" x2="217" y2="106" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="217" cy="106" r="2" fill="#c0392b"/>
+<circle cx="219" cy="109" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="204" y1="111" x2="206" y2="114" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="206" cy="114" r="2" fill="#c0392b"/>
+<circle cx="204" cy="111" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="240" y1="92" x2="239" y2="91" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="239" cy="91" r="2" fill="#c0392b"/>
+<circle cx="240" cy="92" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="202" y1="110" x2="205" y2="115" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="205" cy="115" r="2" fill="#c0392b"/>
+<circle cx="202" cy="110" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="196" y1="123" x2="195" y2="122" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="195" cy="122" r="2" fill="#c0392b"/>
+<circle cx="196" cy="123" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="221" y1="99" x2="223" y2="102" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="223" cy="102" r="2" fill="#c0392b"/>
+<circle cx="221" cy="99" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="208" y1="108" x2="210" y2="111" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="210" cy="111" r="2" fill="#c0392b"/>
+<circle cx="208" cy="108" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="161" y1="138" x2="165" y2="143" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="165" cy="143" r="2" fill="#c0392b"/>
+<circle cx="161" cy="138" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="200" y1="131" x2="194" y2="122" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="194" cy="122" r="2" fill="#c0392b"/>
+<circle cx="200" cy="131" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="211" y1="105" x2="213" y2="109" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="213" cy="109" r="2" fill="#c0392b"/>
+<circle cx="211" cy="105" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="206" y1="122" x2="202" y2="117" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="202" cy="117" r="2" fill="#c0392b"/>
+<circle cx="206" cy="122" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="210" y1="112" x2="209" y2="112" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="209" cy="112" r="2" fill="#c0392b"/>
+<circle cx="210" cy="112" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="228" y1="93" x2="231" y2="97" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="231" cy="97" r="2" fill="#c0392b"/>
+<circle cx="228" cy="93" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="208" y1="104" x2="212" y2="110" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="212" cy="110" r="2" fill="#c0392b"/>
+<circle cx="208" cy="104" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="209" y1="119" x2="206" y2="114" stroke="#8e44ad" stroke-width=".7" opacity=".6"/>
+<circle cx="206" cy="114" r="2" fill="#c0392b"/>
+<circle cx="209" cy="119" r="2.3" fill="#2456a6" opacity="0.35"/>
+<line x1="173" y1="137" x2="245" y2="87" stroke="#c0392b" stroke-width="2.2" marker-end="url(#ar1)"/>
+<rect x="6" y="22" width="130" height="165" rx="8" fill="none" stroke="currentColor" opacity=".25"/>
+<text x="71" y="40" fill="currentColor" font-size="11.5" font-weight="700">۴. داده در فضای PCA</text>
+<line x1="14" y1="112" x2="128" y2="112" stroke="currentColor" opacity=".4"/>
+<line x1="71" y1="57" x2="71" y2="167" stroke="currentColor" opacity=".4"/>
+<circle cx="110" cy="128" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="79" cy="115" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="62" cy="113" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="33" cy="113" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="55" cy="92" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="75" cy="114" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="66" cy="116" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="51" cy="114" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="80" cy="113" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="89" cy="113" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="71" cy="103" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="81" cy="115" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="68" cy="109" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="108" cy="114" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="66" cy="106" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="54" cy="114" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="88" cy="108" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="73" cy="108" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="17" cy="106" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="53" cy="122" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="76" cy="108" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="63" cy="119" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="71" cy="112" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="98" cy="107" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="75" cy="105" r="2.3" fill="#2456a6" opacity=".75"/>
+<circle cx="67" cy="118" r="2.3" fill="#2456a6" opacity=".75"/>
+<text x="124" y="126" fill="currentColor" font-size="10">PC1</text><text x="85" y="64" fill="currentColor" font-size="10">PC2</text>
+</g></svg>
+<figcaption>چهار گام اسلاید ۱۰ و ۱۱ (از راست به چپ): (۱) داده‌ی اصلی، (۲) PC1 در جهت بیشترین واریانس و PC2 عمود بر آن، (۳) هر نقطه را عمود روی PC1 می‌اندازیم (خط بنفش)، (۴) با PC1 و PC2 به‌عنوان محور جدید، داده فقط «چرخیده» است؛ اگر فقط PC1 را نگه داریم، خلاصه‌ی یک‌بعدی هر نقطه را داریم.</figcaption>
+</figure>
+
+<h3>۴.۱ تصویر کردن از نظر ریاضی</h3>
+<p>اسلاید ۱۱ می‌پرسد: <b>«تصویر کردن از نظر ریاضی چیست؟»</b> اگر $\mathbf u_1$ بردار یکه‌ی جهت PC1 باشد ($\|\mathbf u_1\|=1$)، مختصات جدید نقطه‌ی $\mathbf x$ (پس از مرکزی کردن) فقط یک <b>ضرب داخلی</b> است:</p>
+$$z_1=\mathbf x\cdot\mathbf u_1,\qquad \begin{pmatrix}z_1\\ z_2\end{pmatrix}=\begin{pmatrix}\mathbf x\cdot\mathbf u_1\\ \mathbf x\cdot\mathbf u_2\end{pmatrix}$$
+<figure class="fig">
+<svg viewBox="0 0 380 200" width="380" role="img" aria-label="تصویر بردار روی PC1">
+<defs><marker id="pa" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#c0392b"/></marker><marker id="pb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#2456a6"/></marker></defs>
+<g font-family="Vazirmatn,Tahoma" font-size="12" direction="ltr">
+<line x1="40" y1="170" x2="340" y2="50" stroke="currentColor" opacity=".25" stroke-dasharray="4 4"/>
+<line x1="40" y1="170" x2="150" y2="30" stroke="#2456a6" stroke-width="2.4" marker-end="url(#pb)"/>
+<text x="156" y="30" fill="#2456a6">x</text>
+<line x1="40" y1="170" x2="110" y2="142" stroke="#c0392b" stroke-width="3" marker-end="url(#pa)"/>
+<text x="60" y="190" fill="#c0392b">u₁ (PC1)</text>
+<line x1="150" y1="30" x2="202" y2="99" stroke="#8e44ad" stroke-dasharray="5 4"/>
+<circle cx="202" cy="99" r="4.5" fill="#8e44ad"/>
+<text x="214" y="112" fill="currentColor">z₁ = x · u₁</text><text x="214" y="128" fill="currentColor" opacity=".8">(طول سایه روی PC1)</text>
+<text x="372" y="190" fill="currentColor" opacity=".8" text-anchor="end">خط بنفش = خطای بازسازی</text>
+</g></svg>
+<figcaption>مختصات جدید نقطه، طول «سایه»ی آن روی محور PC1 است. فاصله‌ی عمودی نقطه تا محور همان چیزی است که با نگه داشتن فقط PC1 از دست می‌رود.</figcaption>
+</figure>
+
+<h3>۴.۲ تفسیر هندسی (اسلاید ۱۳)</h3>
+<p>مشاهده‌های پربعد به <b>مختصات روی یک زیرفضای کوچک‌تر</b> تبدیل می‌شوند. اسلاید سه نکته را برجسته می‌کند:</p>
+<ul>
+  <li><b>محورهای جدید ترکیب خطی ستون‌های ورودی‌اند.</b> مثلاً $\text{PC1}=0.59\,\text{fare}+0.60\,\text{distance}+0.54\,\text{eta}$. ضرایب را <b>بار (loading)</b> می‌گویند (در sklearn: <code>pca.components_</code>).</li>
+  <li><b>مؤلفه‌ها بر هم عمودند</b>، پس امتیازهایشان (scores) با هم همبستگی صفر دارند.</li>
+  <li><b>PCA از برچسب کلاس استفاده نمی‌کند</b> (بدون ناظر است). در نمودار اسلاید، سه گروه رنگی در فضای PCA جدا افتاده‌اند، ولی این شانس است، نه تضمین: PCA فقط واریانس را دیده، نه رنگ‌ها را.</li>
+</ul>
+
+<div id="w-pca"></div>
+<p>با ابزار بالا این‌ها را امتحان کن: (۱) $\rho$ را به صفر و نسبت انحراف معیار را به ۱ ببر؛ PC1 هیچ جهت ترجیحی ندارد و سهمش ۵۰٪ است. (۲) $\rho=0.95$: سهم PC1 به بالای ۹۵٪ می‌رسد و خطای بازسازی ناچیز می‌شود. (۳) واحد مسافت را از کیلومتر به متر عوض کن: بدون استانداردسازی PC1 فقط «مسافت» می‌شود. این مقدمه‌ی بخش ۷ است.</p>
+</section>
+
+<section id="pca-math">
+<h2><span class="num">۵</span> ریاضی PCA: کوواریانس، بردار ویژه و یک مثال دستی <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<p>اسلاید ۱۲ دستور کار را در سه گام می‌دهد:</p>
+<div class="cards">
+  <div><b>۱. مرکزی کن</b>$X_c=X-\bar X$</div>
+  <div><b>۲. کوواریانس</b>$\Sigma=X_c^\top X_c/(n-1)$</div>
+  <div><b>۳. بردار ویژه</b>$\Sigma\mathbf v=\lambda\mathbf v$</div>
+</div>
+<p>بعد $k$ بردار ویژه‌ی اول ($V_k$، ستون‌ها مرتب بر اساس $\lambda$ نزولی) را انتخاب می‌کنی و تصویر می‌کنی: $Z=X_cV_k$. <b>مقدار ویژه‌ی هر جهت، واریانس داده در آن جهت است.</b></p>
+
+<div class="box proof"><div class="bt">اثبات: چرا بردار ویژه؟ (لاگرانژ در چهار خط) <span class="tag book">تکمیلی</span></div>
+<p>(۱) واریانس امتیاز $z=\mathbf w^\top\mathbf x$ برای داده‌ی مرکزی: $\operatorname{Var}(z)=\mathbf w^\top\Sigma\mathbf w$.</p>
+<p>(۲) می‌خواهیم این را بیشینه کنیم، ولی با قید $\|\mathbf w\|=1$؛ وگرنه با بزرگ کردن $\mathbf w$ واریانس بی‌نهایت می‌شود:</p>
+$$\max_{\mathbf w}\ \mathbf w^\top\Sigma\mathbf w\quad\text{s.t.}\quad \mathbf w^\top\mathbf w=1\qquad\Rightarrow\qquad \mathcal L(\mathbf w,\lambda)=\mathbf w^\top\Sigma\mathbf w-\lambda(\mathbf w^\top\mathbf w-1)$$
+<p>(۳) مشتق را صفر کن: $\nabla_{\mathbf w}\mathcal L=2\Sigma\mathbf w-2\lambda\mathbf w=0\ \Rightarrow\ \boxed{\Sigma\mathbf w=\lambda\mathbf w}$. پس جواب حتماً یک بردار ویژه است.</p>
+<p>(۴) کدام بردار ویژه؟ واریانس در آن جهت $\mathbf w^\top\Sigma\mathbf w=\lambda\,\mathbf w^\top\mathbf w=\lambda$ است. پس بزرگ‌ترین $\lambda$ را برمی‌داریم. برای PC2 قید $\mathbf w\perp\mathbf v_1$ را اضافه می‌کنیم و به بردار ویژه‌ی دوم می‌رسیم. چون $\Sigma$ متقارن است، بردارهای ویژه‌اش خودبه‌خود بر هم عمودند.</p>
+<p>نتیجه‌ی جانبی: واریانس کل حفظ می‌شود، $\sum_j\operatorname{Var}(x_j)=\operatorname{tr}(\Sigma)=\sum_j\lambda_j$. برای داده‌ی استانداردشده $\operatorname{tr}(\Sigma)=p$ (تعداد ستون‌ها).</p>
+</div>
+
+<h3>۵.۱ مثال کامل دستی: ۵ سفر، ۲ ویژگی</h3>
+<div class="box ex"><div class="bt">مثال: مسافت و تأخیر ترافیکی پنج سفر در اصفهان</div>
+<div class="tablewrap"><table class="data">
+<tr><th>سفر</th><th>distance_km</th><th>delay_min</th><th>مرکزی‌شده $(x_c, y_c)$</th></tr>
+<tr><td>1</td><td>5</td><td>4</td><td>(−3, 0)</td></tr>
+<tr><td>2</td><td>7</td><td>2</td><td>(−1, −2)</td></tr>
+<tr><td>3</td><td>8</td><td>4</td><td>(0, 0)</td></tr>
+<tr><td>4</td><td>9</td><td>4</td><td>(1, 0)</td></tr>
+<tr><td>5</td><td>11</td><td>6</td><td>(3, 2)</td></tr>
+</table></div>
+<p><b>گام ۱ (میانگین):</b> $\bar x=8$، $\bar y=4$.</p>
+<p><b>گام ۲ (کوواریانس، با $n-1=4$):</b> $\sum x_c^2=9+1+0+1+9=20$، $\sum y_c^2=0+4+0+0+4=8$، $\sum x_cy_c=0+2+0+0+6=8$. پس</p>
+$$\Sigma=\frac14\begin{pmatrix}20&8\\8&8\end{pmatrix}=\begin{pmatrix}5&2\\2&2\end{pmatrix}$$
+<p><b>گام ۳ (مقدار ویژه):</b> $\det(\Sigma-\lambda I)=(5-\lambda)(2-\lambda)-4=\lambda^2-7\lambda+6=0\Rightarrow\lambda_1=6,\ \lambda_2=1$. (چک: $\lambda_1+\lambda_2=7=\operatorname{tr}\Sigma$ و $\lambda_1\lambda_2=6=\det\Sigma$.)</p>
+<p><b>گام ۴ (بردار ویژه):</b> برای $\lambda_1=6$: $(5-6)a+2b=0\Rightarrow b=a/2$، پس $\mathbf v_1=\frac{1}{\sqrt5}(2,1)\approx(0.894,\,0.447)$. برای $\lambda_2=1$: $\mathbf v_2=\frac{1}{\sqrt5}(-1,2)\approx(-0.447,\,0.894)$. ضرب داخلی‌شان صفر است ✓.</p>
+<p><b>گام ۵ (سهم واریانس):</b> $\text{EVR}_1=\frac{6}{7}=85.7\%$ و $\text{EVR}_2=14.3\%$.</p>
+<p><b>گام ۶ (امتیازها):</b> $z_1=\frac{2x_c+y_c}{\sqrt5}$: برای سفر ۱، $-6/\sqrt5=-2.683$؛ سفر ۲، $-1.789$؛ سفر ۳، $0$؛ سفر ۴، $0.894$؛ سفر ۵، $3.578$. واریانسشان: $\frac{(36+16+0+4+64)/5}{4}=6=\lambda_1$ ✓.</p>
+<p><b>گام ۷ (بازسازی با k=۱):</b> سفر ۱: $\hat{\mathbf x}=(8,4)+(-2.683)(0.894,0.447)=(5.6,\ 2.8)$. مقدار واقعی $(5,4)$ بود. مجموع مربع خطاها روی ۵ سفر برابر $4=(n-1)\lambda_2$ است (بخش ۶ را ببین).</p>
+</div>
+<p>همین را با numpy چک کن:</p>
+<pre class="code">import numpy as np
+X = np.array([[5, 4], [7, 2], [8, 4], [9, 4], [11, 6]], dtype=float)  # distance_km, delay_min
+Xc = X - X.mean(axis=0)
+S = Xc.T @ Xc / (len(X) - 1)
+lam, V = np.linalg.eigh(S)              # eigh: for symmetric matrices, ascending order
+lam, V = lam[::-1], V[:, ::-1]          # sort descending
+print("Sigma:\n", S)
+print("eigenvalues:", lam, " EVR:", (lam / lam.sum()).round(3))
+print("PC1:", V[:, 0].round(3), " PC2:", V[:, 1].round(3))
+Z = Xc @ V[:, :1]                       # 1-D scores
+X_hat = Z @ V[:, :1].T + X.mean(axis=0) # reconstruction
+print("z1:", Z.ravel().round(3))
+print("SSE:", ((X - X_hat)**2).sum().round(6), " (n-1)*lambda2:", 4 * lam[1])
+U, s, Vt = np.linalg.svd(Xc, full_matrices=False)
+print("singular values:", s.round(3), " s^2/(n-1):", (s**2 / 4).round(6))</pre>
+<div class="out">Sigma:
+ [[5. 2.]
+ [2. 2.]]
+eigenvalues: [6. 1.]  EVR: [0.857 0.143]
+PC1: [-0.894 -0.447]  PC2: [ 0.447 -0.894]
+z1: [ 2.683  1.789  0.    -0.894 -3.578]
+SSE: 4.0  (n-1)*lambda2: 4.0
+singular values: [4.899 2.   ]  s^2/(n-1): [6. 1.]</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: علامت بردار ویژه دلخواه است</div>
+numpy جهت PC1 را $(-0.894,-0.447)$ داد و ما $(+0.894,+0.447)$. هر دو درست‌اند: اگر $\mathbf v$ بردار ویژه باشد، $-\mathbf v$ هم هست. فقط علامت همه‌ی امتیازها برعکس می‌شود. پس در امتحان «علامت loading» را مبنای تفسیر قطعی نگیر؛ <b>نسبت و علامت نسبی</b> ضرایب مهم است (این‌جا هر دو ضریب هم‌علامت‌اند: PC1 یعنی «سفر طولانی‌تر و پرتأخیرتر»).
+</div>
+</section>
+
+<section id="evr">
+<h2><span class="num">۶</span> واریانس توضیح‌داده‌شده، بازسازی و اطلاعات از دست‌رفته <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<h3>۶.۱ چند مؤلفه نگه داریم؟</h3>
+<p>نسبت واریانس توضیح‌داده‌شده (explained variance ratio) برای مؤلفه‌ی $j$: $\text{EVR}_j=\lambda_j/\sum_i\lambda_i$. در sklearn: <code>pca.explained_variance_ratio_</code>. زیرعنوان اسلاید مهم است: <b>«یک ابزار تشخیصی مفید، نه تضمین خودکار عملکرد مدل»</b>.</p>
+<figure class="fig">
+<svg viewBox="0 0 520 230" width="520" role="img" aria-label="نمودار scree"><g font-family="Vazirmatn,Tahoma" font-size="11" direction="ltr">
+<line x1="50" y1="190" x2="500" y2="190" stroke="currentColor" opacity=".12"/><text x="44" y="194" fill="currentColor" text-anchor="end">0.0</text>
+<line x1="50" y1="156" x2="500" y2="156" stroke="currentColor" opacity=".12"/><text x="44" y="160" fill="currentColor" text-anchor="end">0.2</text>
+<line x1="50" y1="122" x2="500" y2="122" stroke="currentColor" opacity=".12"/><text x="44" y="126" fill="currentColor" text-anchor="end">0.4</text>
+<line x1="50" y1="88" x2="500" y2="88" stroke="currentColor" opacity=".12"/><text x="44" y="92" fill="currentColor" text-anchor="end">0.6</text>
+<line x1="50" y1="54" x2="500" y2="54" stroke="currentColor" opacity=".12"/><text x="44" y="58" fill="currentColor" text-anchor="end">0.8</text>
+<line x1="50" y1="20" x2="500" y2="20" stroke="currentColor" opacity=".12"/><text x="44" y="24" fill="currentColor" text-anchor="end">1.0</text>
+<rect x="60" y="108" width="36" height="82" fill="#2456a6" opacity=".8"/><text x="78" y="205" fill="currentColor" text-anchor="middle">1</text>
+<rect x="116" y="130" width="36" height="60" fill="#2456a6" opacity=".8"/><text x="134" y="205" fill="currentColor" text-anchor="middle">2</text>
+<rect x="173" y="182" width="36" height="8" fill="#2456a6" opacity=".8"/><text x="191" y="205" fill="currentColor" text-anchor="middle">3</text>
+<rect x="229" y="184" width="36" height="6" fill="#2456a6" opacity=".8"/><text x="247" y="205" fill="currentColor" text-anchor="middle">4</text>
+<rect x="285" y="185" width="36" height="5" fill="#2456a6" opacity=".8"/><text x="303" y="205" fill="currentColor" text-anchor="middle">5</text>
+<rect x="341" y="186" width="36" height="4" fill="#2456a6" opacity=".8"/><text x="359" y="205" fill="currentColor" text-anchor="middle">6</text>
+<rect x="398" y="187" width="36" height="3" fill="#2456a6" opacity=".8"/><text x="416" y="205" fill="currentColor" text-anchor="middle">7</text>
+<rect x="454" y="187" width="36" height="3" fill="#2456a6" opacity=".8"/><text x="472" y="205" fill="currentColor" text-anchor="middle">8</text>
+<polyline points="78,108 134,49 191,41 247,35 303,30 359,26 416,23 472,20" fill="none" stroke="#d35400" stroke-width="2"/>
+<circle cx="78" cy="108" r="3.2" fill="#d35400"/>
+<circle cx="134" cy="49" r="3.2" fill="#d35400"/>
+<circle cx="191" cy="41" r="3.2" fill="#d35400"/>
+<circle cx="247" cy="35" r="3.2" fill="#d35400"/>
+<circle cx="303" cy="30" r="3.2" fill="#d35400"/>
+<circle cx="359" cy="26" r="3.2" fill="#d35400"/>
+<circle cx="416" cy="23" r="3.2" fill="#d35400"/>
+<circle cx="472" cy="20" r="3.2" fill="#d35400"/>
+<line x1="50" y1="46" x2="500" y2="46" stroke="#c0392b" stroke-dasharray="5 4"/><text x="496" y="40" fill="#c0392b" text-anchor="end">۸۵٪ واریانس تجمعی</text>
+<text x="275.0" y="224" fill="currentColor" text-anchor="middle">شماره‌ی مؤلفه (Principal component)</text>
+<text x="158" y="108" fill="#2456a6">«آرنج» (elbow)</text>
+<rect x="300" y="150" width="10" height="10" fill="#2456a6"/><text x="314" y="159" fill="currentColor">explained_variance_ratio_</text><rect x="300" y="168" width="10" height="3" fill="#d35400"/><text x="314" y="173" fill="currentColor">cumsum</text>
+</g></svg>
+<figcaption>نمودار scree (میله‌ها) و واریانس تجمعی (خط نارنجی)، مثل اسلاید ۱۴. دو مؤلفه‌ی اول بیش از ۸۰٪ واریانس را گرفته‌اند و بعد از مؤلفه‌ی ۲ یک «آرنج» واضح هست.</figcaption>
+</figure>
+<p>معیارهای تصمیم در اسلاید:</p>
+<div class="cards">
+  <div><b>Scree / آرنج</b>جایی که میله‌ها ناگهان کوتاه می‌شوند.</div>
+  <div><b>واریانس تجمعی</b>مثلاً اولین $k$ که به ۹۰٪ یا ۹۵٪ برسد (<code>PCA(n_components=0.95)</code>).</div>
+  <div><b>خطای بازسازی</b>اگر هدف فشرده‌سازی است.</div>
+  <div><b>اعتبارسنجی متقاطع پایین‌دستی</b>اگر هدف پیش‌بینی است: $k$ را مثل یک ابرپارامتر تنظیم کن.</div>
+  <div><b>محاسبه و تفسیرپذیری</b>$k$ کوچک‌تر سریع‌تر است ولی شاید سیگنال را دور بریزد.</div>
+</div>
+
+<h3>۶.۲ بازسازی و اطلاعات از دست‌رفته</h3>
+<div class="box thm"><div class="bt">فرمول‌های اسلاید ۱۵</div>
+$$\text{تصویر:}\quad Z=(X-\mu)V_k\qquad\qquad \text{بازسازی:}\quad \hat X=ZV_k^\top+\mu$$
+<b>واریانس از دست‌رفته (PCA متعامد) = مجموع مقدارهای ویژه‌ی کنارگذاشته‌شده:</b> $\ \sum_{j>k}\lambda_j$
+</div>
+<div class="box proof"><div class="bt">چرا؟ <span class="tag book">تکمیلی</span></div>
+هر نقطه‌ی مرکزی را می‌شود با پایه‌ی کامل بردارهای ویژه نوشت: $\mathbf x_c=\sum_{j=1}^{p}z_j\mathbf v_j$. بازسازی فقط $k$ جمله‌ی اول را نگه می‌دارد، پس باقی‌مانده $\mathbf r=\sum_{j>k}z_j\mathbf v_j$ است. چون $\mathbf v_j$ها یکه و عمودند، $\|\mathbf r\|^2=\sum_{j>k}z_j^2$. روی همه‌ی نمونه‌ها جمع بزن و بر $n-1$ تقسیم کن: $\frac{1}{n-1}\sum_i\|\mathbf r_i\|^2=\sum_{j>k}\operatorname{Var}(z_j)=\sum_{j>k}\lambda_j$. در مثال بخش ۵: $SSE/(n-1)=4/4=1=\lambda_2$ ✓. سهم نسبی خطا هم $1-\sum_{j\le k}\text{EVR}_j$ است.
+</div>
+
+<h3>۶.۳ سؤال بحث اسلاید: آیا جهت کم‌واریانس همیشه بی‌اهمیت است؟</h3>
+<p><b>نه.</b> PCA بدون ناظر است: فقط واریانس $X$ را می‌بیند، نه رابطه با $y$. مثال واقعی از اپ: <code>eta_quoted</code> (زمانی که اپ به مسافر قول می‌دهد) و <code>eta_actual</code> (زمان واقعی رسیدن راننده) ۹۶٪ همبسته‌اند. PC1 تقریباً «میانگین ETA» است و ۹۸٪ واریانس را دارد. PC2 تقریباً «اختلاف» این دو است، یعنی <b>غافلگیری مسافر</b>؛ فقط ۲٪ واریانس. ولی مسافر دقیقاً وقتی لغو می‌کند که راننده دیرتر از قول اپ برسد:</p>
+<pre class="code">import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import make_pipeline
+rng = np.random.default_rng(7); n = 3000
+eta_quoted = rng.gamma(5, 1.6, n)                    # ETA shown in app (min)
+eta_actual = eta_quoted + rng.normal(0, 1.0, n)      # real driver ETA (min)
+X = np.column_stack([eta_quoted, eta_actual])
+surprise = eta_actual - eta_quoted                   # the predictive signal
+y = (surprise + rng.normal(0, 0.3, n) &gt; 0.5).astype(int)
+print("corr:", np.corrcoef(X.T)[0,1].round(3), " cancel rate:", y.mean().round(3))
+for k in [1, 2]:
+    pipe = make_pipeline(StandardScaler(), PCA(n_components=k), LogisticRegression())
+    s = cross_val_score(pipe, X, y, cv=5, scoring="roc_auc")
+    pca = pipe.fit(X, y).named_steps["pca"]
+    print(f"k={k}: EVR={pca.explained_variance_ratio_.round(3)}  AUC={s.mean():.3f}")</pre>
+<div class="out">corr: 0.965  cancel rate: 0.303
+k=1: EVR=[0.982]  AUC=0.569
+k=2: EVR=[0.982 0.018]  AUC=0.973</div>
+<p>با نگه داشتن ۹۸٪ واریانس، AUC از ۰٫۹۷ به ۰٫۵۷ (نزدیک شیر یا خط) سقوط کرد. قاعده‌ی «۹۵٪ واریانس» این‌جا دقیقاً <b>سیگنال</b> را دور می‌ریخت.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+«PCA ۹۵٪ واریانس را نگه داشته» یعنی ۹۵٪ <b>تغییرات $X$</b> حفظ شده، نه ۹۵٪ <b>اطلاعات درباره‌ی $y$</b>. واریانس می‌تواند نویز باشد و سیگنال می‌تواند در جهت کم‌واریانس باشد. راه‌حل مهندسی ویژگی ساده‌تر بود: ستون <code>eta_surprise = eta_actual - eta_quoted</code> را خودت بساز.
+</div>
+</section>
+
+<section id="limits">
+<h2><span class="num">۷</span> فرض‌ها و محدودیت‌های PCA، و چرا اول باید مقیاس داد <span class="tag core">اسلاید</span></h2>
+<p>بدان PCA چه چیزی را بهینه می‌کند و چه چیزی را نه (اسلاید ۱۶):</p>
+<div class="tablewrap"><table>
+<tr><th>محدودیت</th><th>یعنی چه</th><th>چه کنیم</th></tr>
+<tr><td><b>خطی است</b></td><td>داده‌ای که روی یک منحنی یا «رول» نشسته با یک صفحه خوب خلاصه نمی‌شود</td><td>Kernel PCA، UMAP، یا ویژگی غیرخطی دستی</td></tr>
+<tr><td><b>به واحد حساس است</b></td><td>ستونی که عددش بزرگ است (ریال) واریانس را قبضه می‌کند</td><td><code>StandardScaler</code> قبل از PCA (روی train)</td></tr>
+<tr><td><b>واریانس ≠ سیگنال</b></td><td>جهت پرواریانس ممکن است نویز باشد (بخش ۶.۳)</td><td>k را با CV انتخاب کن؛ baseline بگذار</td></tr>
+<tr><td><b>تفسیر سخت</b></td><td>PC3 = ۰٫۴ کرایه − ۰٫۳ امتیاز + ۰٫۲ ساعت... یعنی چه؟</td><td>اگر تفسیر لازم است، انتخاب ویژگی</td></tr>
+<tr><td><b>حساس به داده‌ی پرت</b></td><td>کوواریانس با یک سفر ۸۰۰ کیلومتری (خطای ثبت) کج می‌شود</td><td>اول پرت‌ها را بررسی کن (جلسه‌ی ۲)، یا RobustScaler</td></tr>
+</table></div>
+
+<h3>۷.۱ چرا قبل از PCA باید مقیاس داد</h3>
+<div class="vs">
+  <div><h4>داده‌ی سفر بدون مقیاس</h4><ul><li>کرایه: حدود ۸۵۰٬۰۰۰ ریال</li><li>مسافت: حدود ۱۲ کیلومتر</li><li>امتیاز: حدود ۴٫۵</li></ul><p>واریانس خام به واحد وابسته است.</p></div>
+  <div><h4>داده‌ی استانداردشده</h4><ul><li>z-score برای هر ستون، با آماره‌های <b>train</b>.</li><li>PCA تغییرات را در مختصات استاندارد تحلیل می‌کند.</li></ul></div>
+</div>
+<pre class="code">import numpy as np, pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+rng = np.random.default_rng(42); n = 2000
+dist   = rng.gamma(4, 3, n)                                    # km
+eta    = np.clip(3 + 0.4*dist + rng.normal(0, 2, n), 1, None)  # minutes
+fare   = 150_000 + 58_000*dist + rng.normal(0, 60_000, n)      # rials
+rating = np.clip(rng.normal(4.5, 0.3, n), 1, 5)
+X = pd.DataFrame({"fare": fare, "distance_km": dist, "eta_min": eta, "driver_rating": rating})
+print(X.std().round(2).to_dict())
+raw = PCA().fit(X)
+print("raw EVR:", raw.explained_variance_ratio_.round(6))
+print("raw PC1:", raw.components_[0].round(3))
+std = PCA().fit(StandardScaler().fit_transform(X))
+print("std EVR:", std.explained_variance_ratio_.round(3))
+print("std PC1:", std.components_[0].round(3))
+print("std PC2:", std.components_[1].round(3))</pre>
+<div class="out">{'fare': 353711.23, 'distance_km': 6.02, 'eta_min': 3.13, 'driver_rating': 0.29}
+raw EVR: [1. 0. 0. 0.]
+raw PC1: [ 1.  0.  0. -0.]
+std EVR: [0.671 0.25  0.075 0.004]
+std PC1: [ 0.593  0.595  0.541 -0.005]
+std PC2: [ 0.004  0.006 -0.001  1.   ]</div>
+<p>بدون مقیاس، «۱۰۰٪ واریانس» در PC1 است و PC1 فقط خود ستون کرایه است؛ چون واریانس کرایه حدود $10^{11}$ و واریانس امتیاز حدود $0.08$ است. این «کشف» نیست، اثر واحد پول است. بعد از استانداردسازی، PC1 «اندازه‌ی سفر» است (کرایه، مسافت و ETA تقریباً با وزن برابر) و PC2 تقریباً خود امتیاز راننده، که اطلاعات مستقلی دارد.</p>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>«StandardScaler روی کل داده، بعد split». حتی میانگین و انحراف معیار هم از داده‌ی تست «یاد گرفته» می‌شوند. اسلاید صریح است: <b>scaler و PCA را فقط روی fold آموزش fit کن، نه کل داده.</b> (بخش ۱۰)</div>
+<div class="box tip"><div class="bt">💡 کی استانداردسازی <b>نکنیم</b>؟</div>وقتی همه‌ی ستون‌ها یک واحد و یک معنا دارند و تفاوت واریانس واقعی است: مثلاً پیکسل‌های تصویر (همه ۰ تا ۲۵۵) یا شمارش کلمات. آن‌جا استانداردسازی به پیکسل‌های تقریباً ثابت (نویز) همان وزن پیکسل‌های پرتغییر را می‌دهد.</div>
+</section>
+
+<section id="svd">
+<h2><span class="num">۸</span> PCA در پایتون و SVD: نمای ماتریسی <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<h3>۸.۱ کد اسلاید (فقط اکتشافی)</h3>
+<pre class="code">from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+X_scaled = StandardScaler().fit_transform(X)
+pca = PCA(n_components=0.95, random_state=42)   # keep enough PCs for 95% variance
+X_low = pca.fit_transform(X_scaled)
+print(X_low.shape)
+print(pca.explained_variance_ratio_)</pre>
+<p>اسلاید تأکید دارد: <b>این مثال فقط برای اکتشاف است.</b> برای پیش‌بینی، پیش‌پردازش باید داخل یک Pipeline فقط‌-روی-train باشد. ویژگی‌های مفید شیء: <code>components_</code> (loadingها، هر سطر یک PC)، <code>explained_variance_</code> (همان $\lambda_j$)، <code>explained_variance_ratio_</code>، <code>n_components_</code> و <code>inverse_transform</code> (بازسازی).</p>
+
+<h3>۸.۲ SVD و رابطه‌اش با PCA</h3>
+<p>تجزیه‌ی مقدار منفرد (Singular Value Decomposition) هر ماتریسی را به سه قطعه می‌شکند: $X=USV^\top$. ستون‌های $U$ و $V$ متعامد یکه‌اند و $S$ قطری با مقدارهای منفرد $s_1\ge s_2\ge\dots\ge0$ است.</p>
+<div class="box thm"><div class="bt">رابطه‌ی SVD و PCA (برای داده‌ی <b>مرکزی‌شده</b>)</div>
+$$X_c=USV^\top\ \Rightarrow\ X_c^\top X_c=VSU^\top USV^\top=VS^2V^\top\ \Rightarrow\ \Sigma=\frac{X_c^\top X_c}{n-1}=V\,\frac{S^2}{n-1}\,V^\top$$
+<ul>
+  <li><b>بردارهای منفرد راست ($V$) = جهت‌های اصلی</b> (همان بردارهای ویژه‌ی $\Sigma$).</li>
+  <li>$\lambda_j=\dfrac{s_j^2}{n-1}$: مجذور مقدار منفرد، متناسب با واریانس توضیح‌داده‌شده است.</li>
+  <li>امتیازها: $Z=X_cV=US$. پس اصلاً لازم نیست $\Sigma$ را بسازی.</li>
+</ul>
+</div>
+<p>در مثال بخش ۵: $s=(4.899,\ 2)$، پس $s^2/4=(6,\ 1)$، دقیقاً همان مقدارهای ویژه. خود sklearn هم PCA را با SVD حساب می‌کند، چون از نظر عددی پایدارتر است و ساختن $X^\top X$ دقت را از دست می‌دهد.</p>
+
+<h3>۸.۳ TruncatedSVD و متن: از کلمه تا معنای کم‌بعد</h3>
+<p>ماتریس TF-IDF (جلسه‌ی ۳) خیلی بزرگ و <b>تُنُک</b> است: صدهزار نظر × پنجاه‌هزار کلمه، و بیشتر خانه‌ها صفر. اگر آن را مرکزی کنی (از هر ستون میانگین را کم کنی)، همه‌ی صفرها غیرصفر می‌شوند و حافظه منفجر می‌شود. <b>TruncatedSVD در sklearn داده را مرکزی نمی‌کند</b>، پس مستقیم روی ماتریس sparse کار می‌کند. این ترکیب (TF-IDF ← TruncatedSVD) نام قدیمی‌ای دارد: <b>تحلیل معنایی پنهان (Latent Semantic Analysis، LSA)</b>. الگوهای اصلی هم‌رخدادی کلمه‌ها را نگه می‌دارد.</p>
+<pre class="code">from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+docs = ["راننده دیر رسید و لغو کردم", "راننده خیلی دیر آمد", "قیمت سفر خیلی بالا بود",
+        "قیمت بالا بود و لغو کردم", "راننده مودب بود و ماشین تمیز", "ماشین تمیز و راننده خوب"]
+tfidf = TfidfVectorizer()
+X = tfidf.fit_transform(docs)          # sparse matrix
+print(X.shape, "non-zeros:", X.nnz)
+svd = TruncatedSVD(n_components=2, random_state=42)
+Z = svd.fit_transform(X)
+print(Z.round(2))
+print(svd.explained_variance_ratio_.round(3))</pre>
+<div class="out">(6, 15) non-zeros: 28
+[[ 0.58 -0.16]
+ [ 0.48  0.02]
+ [ 0.58 -0.48]
+ [ 0.67 -0.55]
+ [ 0.61  0.59]
+ [ 0.5   0.73]]
+[0.006 0.355]</div>
+<p>دو چیز جالب: (۱) مؤلفه‌ی دوم نظرها را معنایی جدا کرده: نظرهای «قیمت/لغو» منفی‌اند و نظرهای «ماشین تمیز/راننده خوب» مثبت. (۲) مؤلفه‌ی اول برای همه مثبت و تقریباً برابر است و سهم واریانسش فقط ۰٫۶٪ است! چون داده مرکزی نشده، اولین جهت SVD تقریباً «جهت میانگین» است، نه جهت بیشترین واریانس. این همان تفاوت TruncatedSVD و PCA است.</p>
+
+<p>جمع‌بندی اسلاید ۲۰: <b>متن تُنُک</b> (TF-IDF) ← TruncatedSVD (LSA)، برای حفظ الگوهای اصلی هم‌رخدادی. <b>embedding متراکم</b> جمله‌ها ← در صورت نیاز PCA، برای مصورسازی یا ایندکس فشرده؛ و کیفیت جست‌وجوی معنایی را جدا ارزیابی کن.</p>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی (جمله‌ی اسلاید ۲۰)</div>«یک نقشه‌ی دوبعدی زیبا ثابت نمی‌کند که جست‌وجوی معنایی خوب کار می‌کند.» اگر embeddingها را برای جست‌وجو فشرده می‌کنی، معیار درست <b>کیفیت بازیابی</b> است (مثلاً آیا ۱۰ نتیجه‌ی اول هنوز مرتبط‌اند؟)، نه زیبایی scatter plot.</div>
+</section>
+
+<section id="nonlinear">
+<h2><span class="num">۹</span> کاهش بعد غیرخطی: t-SNE و UMAP <span class="tag core">اسلاید</span> <span class="tag book">تکمیلی</span></h2>
+<p>یک صفحه‌ی خطی نمی‌تواند ساختارهای خمیده یا درهم‌پیچیده را خوب توضیح بدهد (مثل یک ورق کاغذ لوله‌شده). روش‌های غیرخطی به‌جای «حفظ واریانس»، <b>حفظ همسایگی</b> را هدف می‌گیرند.</p>
+<div class="vs">
+  <div><h4>t-SNE</h4><ul><li>شباهت <b>همسایگی محلی</b> را حفظ می‌کند.</li><li>عالی برای مصورسازی اکتشافی ۲ یا ۳ بعدی.</li><li>فاصله‌های کلی و اندازه‌ی خوشه‌ها <b>می‌توانند گمراه کنند</b>.</li></ul></div>
+  <div><h4>UMAP</h4><ul><li>embedding مبتنی بر <b>گراف</b> و منیفلد.</li><li>برای مصورسازی اکتشافی؛ بعد از fit می‌تواند <b>نقاط جدید را transform کند</b>.</li><li>نقشه به ابرپارامترها و نمونه‌گیری وابسته است.</li></ul></div>
+</div>
+<div class="box warn"><div class="bt">⚠ جمله‌ی قرمز اسلاید ۲۱</div>هیچ‌کدام از این دو روش <b>خودبه‌خود</b> هندسه‌ی کلی وفادار یا فضای ویژگی بهینه برای مدل تولید نمی‌کند.</div>
+
+<h3>۹.۱ t-SNE: نقشه چه می‌گوید و چه نمی‌گوید</h3>
+<p><b>ایده:</b> در فضای اصلی، برای هر نقطه یک توزیع احتمال روی همسایه‌هایش می‌سازد (همسایه‌ی نزدیک‌تر احتمال بیشتر). بعد نقاط را در ۲ بعد طوری می‌چیند که همین احتمال‌ها تا حد ممکن حفظ شوند (کمینه کردن واگرایی KL). در ۲ بعد از توزیع t-Student با دم سنگین استفاده می‌کند تا نقاطی که کمی دورند بتوانند خیلی دور بیفتند؛ برای همین خوشه‌ها «جدا و فشرده» دیده می‌شوند.</p>
+<p><b>Perplexity</b> تقریباً «تعداد مؤثر همسایه‌ها»ست (معمولاً ۵ تا ۵۰). کوچک: جزئیات محلی و خوشه‌های کاذب ریز. بزرگ: ساختار کلی‌تر.</p>
+<div class="box mistake"><div class="bt">❌ سه برداشت غلط از نمودار t-SNE</div>
+<ul>
+  <li><b>«خوشه‌ی A دو برابر B است.»</b> t-SNE چگالی را یکسان می‌کند: خوشه‌ی متراکم باز می‌شود و خوشه‌ی پراکنده جمع. <b>اندازه‌ی ظاهری خوشه معنا ندارد.</b></li>
+  <li><b>«A به B نزدیک‌تر از C است.»</b> <b>فاصله‌ی بین خوشه‌ها قابل‌اعتماد نیست</b>؛ با seed دیگر ممکن است جابه‌جا شوند.</li>
+  <li><b>«سه خوشه دیدم، پس سه گروه واقعی هست.»</b> t-SNE حتی روی نویز گوسی هم با perplexity کم «خوشه» نشان می‌دهد. نقشه فرضیه می‌سازد، اثبات نمی‌کند.</li>
+</ul>
+</div>
+<p>اسلاید ۲۲ می‌گوید این‌ها را <b>با دقت کنترل کن</b>: perplexity، random seed، پیش‌پردازش و مقیاس، اندازه‌ی نمونه، و <b>پایداری بین اجراهای مختلف</b>. یک نکته‌ی عملی دیگر: <code>sklearn.manifold.TSNE</code> متد <code>transform</code> ندارد (فقط <code>fit_transform</code>)، پس نمی‌شود آن را مثل یک گام عادی در Pipeline پیش‌بینی گذاشت.</p>
+<pre class="code">from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+# common recipe: PCA to ~50 dims first (denoise + speed), then t-SNE to 2D
+X50 = PCA(n_components=50, random_state=0).fit_transform(X_scaled)
+for perp in [5, 30, 50]:
+    for seed in [0, 1]:
+        emb = TSNE(n_components=2, perplexity=perp, random_state=seed).fit_transform(X50)
+        # plot emb and compare: do the same groups survive across perp and seed?</pre>
+
+<h3>۹.۲ UMAP: شهود گراف همسایگی</h3>
+<figure class="fig">
+<svg viewBox="0 0 330 230" width="330" role="img" aria-label="گراف همسایگی"><g>
+<line x1="148" y1="192" x2="181" y2="205" stroke="currentColor" opacity=".35"/>
+<line x1="297" y1="33" x2="282" y2="57" stroke="currentColor" opacity=".35"/>
+<line x1="100" y1="41" x2="44" y2="42" stroke="currentColor" opacity=".35"/>
+<line x1="121" y1="160" x2="147" y2="165" stroke="currentColor" opacity=".35"/>
+<line x1="84" y1="104" x2="82" y2="115" stroke="currentColor" opacity=".35"/>
+<line x1="252" y1="55" x2="282" y2="57" stroke="currentColor" opacity=".35"/>
+<line x1="181" y1="205" x2="208" y2="189" stroke="currentColor" opacity=".35"/>
+<line x1="49" y1="106" x2="84" y2="104" stroke="currentColor" opacity=".35"/>
+<line x1="263" y1="62" x2="252" y2="55" stroke="currentColor" opacity=".35"/>
+<line x1="67" y1="68" x2="44" y2="42" stroke="currentColor" opacity=".35"/>
+<line x1="263" y1="62" x2="249" y2="60" stroke="currentColor" opacity=".35"/>
+<line x1="49" y1="106" x2="73" y2="103" stroke="currentColor" opacity=".35"/>
+<line x1="112" y1="75" x2="84" y2="104" stroke="currentColor" opacity=".35"/>
+<line x1="67" y1="68" x2="58" y2="94" stroke="currentColor" opacity=".35"/>
+<line x1="263" y1="62" x2="281" y2="64" stroke="currentColor" opacity=".35"/>
+<line x1="281" y1="64" x2="249" y2="60" stroke="currentColor" opacity=".35"/>
+<line x1="260" y1="39" x2="242" y2="50" stroke="currentColor" opacity=".35"/>
+<line x1="260" y1="39" x2="297" y2="33" stroke="currentColor" opacity=".35"/>
+<line x1="230" y1="56" x2="252" y2="55" stroke="currentColor" opacity=".35"/>
+<line x1="186" y1="187" x2="173" y2="170" stroke="currentColor" opacity=".35"/>
+<line x1="230" y1="56" x2="249" y2="60" stroke="currentColor" opacity=".35"/>
+<line x1="242" y1="50" x2="249" y2="60" stroke="currentColor" opacity=".35"/>
+<line x1="148" y1="192" x2="186" y2="187" stroke="currentColor" opacity=".35"/>
+<line x1="148" y1="192" x2="147" y2="165" stroke="currentColor" opacity=".35"/>
+<line x1="214" y1="151" x2="208" y2="189" stroke="currentColor" opacity=".35"/>
+<line x1="58" y1="94" x2="44" y2="42" stroke="currentColor" opacity=".35"/>
+<line x1="121" y1="160" x2="173" y2="170" stroke="currentColor" opacity=".35"/>
+<line x1="252" y1="55" x2="242" y2="50" stroke="currentColor" opacity=".35"/>
+<line x1="49" y1="106" x2="82" y2="115" stroke="currentColor" opacity=".35"/>
+<line x1="112" y1="75" x2="100" y2="41" stroke="currentColor" opacity=".35"/>
+<line x1="67" y1="68" x2="112" y2="75" stroke="currentColor" opacity=".35"/>
+<line x1="263" y1="62" x2="282" y2="57" stroke="currentColor" opacity=".35"/>
+<line x1="281" y1="64" x2="282" y2="57" stroke="currentColor" opacity=".35"/>
+<line x1="260" y1="39" x2="252" y2="55" stroke="currentColor" opacity=".35"/>
+<line x1="186" y1="187" x2="181" y2="205" stroke="currentColor" opacity=".35"/>
+<line x1="186" y1="187" x2="214" y2="151" stroke="currentColor" opacity=".35"/>
+<line x1="260" y1="39" x2="249" y2="60" stroke="currentColor" opacity=".35"/>
+<line x1="173" y1="170" x2="208" y2="189" stroke="currentColor" opacity=".35"/>
+<line x1="148" y1="192" x2="121" y2="160" stroke="currentColor" opacity=".35"/>
+<line x1="148" y1="192" x2="173" y2="170" stroke="currentColor" opacity=".35"/>
+<line x1="58" y1="94" x2="84" y2="104" stroke="currentColor" opacity=".35"/>
+<line x1="58" y1="94" x2="73" y2="103" stroke="currentColor" opacity=".35"/>
+<line x1="214" y1="151" x2="173" y2="170" stroke="currentColor" opacity=".35"/>
+<line x1="84" y1="104" x2="73" y2="103" stroke="currentColor" opacity=".35"/>
+<line x1="252" y1="55" x2="249" y2="60" stroke="currentColor" opacity=".35"/>
+<line x1="147" y1="165" x2="173" y2="170" stroke="currentColor" opacity=".35"/>
+<line x1="49" y1="106" x2="58" y2="94" stroke="currentColor" opacity=".35"/>
+<line x1="67" y1="68" x2="100" y2="41" stroke="currentColor" opacity=".35"/>
+<line x1="281" y1="64" x2="297" y2="33" stroke="currentColor" opacity=".35"/>
+<line x1="186" y1="187" x2="208" y2="189" stroke="currentColor" opacity=".35"/>
+<line x1="230" y1="56" x2="242" y2="50" stroke="currentColor" opacity=".35"/>
+<line x1="82" y1="115" x2="73" y2="103" stroke="currentColor" opacity=".35"/>
+<circle cx="49" cy="106" r="4.5" fill="#0f6e6a"/>
+<circle cx="67" cy="68" r="4.5" fill="#0f6e6a"/>
+<circle cx="112" cy="75" r="4.5" fill="#0f6e6a"/>
+<circle cx="58" cy="94" r="4.5" fill="#0f6e6a"/>
+<circle cx="100" cy="41" r="4.5" fill="#0f6e6a"/>
+<circle cx="84" cy="104" r="4.5" fill="#0f6e6a"/>
+<circle cx="44" cy="42" r="4.5" fill="#0f6e6a"/>
+<circle cx="82" cy="115" r="4.5" fill="#0f6e6a"/>
+<circle cx="73" cy="103" r="4.5" fill="#0f6e6a"/>
+<circle cx="263" cy="62" r="4.5" fill="#8e44ad"/>
+<circle cx="260" cy="39" r="4.5" fill="#8e44ad"/>
+<circle cx="281" cy="64" r="4.5" fill="#8e44ad"/>
+<circle cx="297" cy="33" r="4.5" fill="#8e44ad"/>
+<circle cx="230" cy="56" r="4.5" fill="#8e44ad"/>
+<circle cx="252" cy="55" r="4.5" fill="#8e44ad"/>
+<circle cx="242" cy="50" r="4.5" fill="#8e44ad"/>
+<circle cx="282" cy="57" r="4.5" fill="#8e44ad"/>
+<circle cx="249" cy="60" r="4.5" fill="#8e44ad"/>
+<circle cx="148" cy="192" r="4.5" fill="#a5600b"/>
+<circle cx="186" cy="187" r="4.5" fill="#a5600b"/>
+<circle cx="214" cy="151" r="4.5" fill="#a5600b"/>
+<circle cx="121" cy="160" r="4.5" fill="#a5600b"/>
+<circle cx="147" cy="165" r="4.5" fill="#a5600b"/>
+<circle cx="181" cy="205" r="4.5" fill="#a5600b"/>
+<circle cx="173" cy="170" r="4.5" fill="#a5600b"/>
+<circle cx="208" cy="189" r="4.5" fill="#a5600b"/>
+<text x="165" y="222" fill="currentColor" font-family="Vazirmatn,Tahoma" font-size="11" text-anchor="middle">هر نقطه به k=3 همسایه‌ی نزدیکش وصل است</text></g></svg>
+<figcaption>UMAP اول یک گراف k-نزدیک‌ترین-همسایه در فضای اصلی می‌سازد (هر نقطه به چند همسایه‌اش وصل است)، بعد یک چیدمان کم‌بعد پیدا می‌کند که همین اتصال‌ها را تا حد ممکن حفظ کند.</figcaption>
+</figure>
+<p>چیدمان کم‌بعد به این بستگی دارد که «همسایگی محلی» را چطور تعریف کنیم. دو کنترل اصلی:</p>
+<ul>
+  <li><code>n_neighbors</code>: کوچک ← ساختار <b>محلی</b>؛ بزرگ ← ساختار <b>کلی‌تر</b>.</li>
+  <li><code>min_dist</code>: فاصله‌ی حداقل نقاط در نقشه؛ کوچک ← خوشه‌های فشرده، بزرگ ← پخش‌تر.</li>
+</ul>
+<p>توصیه‌ی اسلاید: <b>«قبل از قصه‌گویی، حساسیت را چک کن.»</b> UMAP در sklearn نیست؛ بسته‌ی <code>umap-learn</code> است:</p>
+<pre class="code">import umap                                   # pip install umap-learn
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=42)
+emb_train = reducer.fit_transform(X_train_scaled)
+emb_new = reducer.transform(X_new_scaled)     # unlike sklearn's TSNE, new points can be mapped</pre>
+
+<h3>۹.۳ PCA در برابر t-SNE در برابر UMAP (اسلاید ۲۴، کامل‌شده)</h3>
+<p>همه‌ی نقشه‌های دوبعدی را هم‌ارز تفسیر نکن:</p>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>هدف اصلی</th><th>transform داده‌ی جدید</th><th>کی استفاده کن</th><th>کی نه</th><th>احتیاط اصلی</th></tr>
+<tr><td><b>انتخاب ویژگی</b></td><td>حذف ستون تکراری یا بی‌فایده</td><td>بله (همان ستون‌ها)</td><td>نیاز به تفسیر؛ مدل درختی</td><td>ستون‌ها تک‌تک ضعیف ولی با هم قوی</td><td>باید داخل CV انجام شود</td></tr>
+<tr><td><b>PCA</b></td><td>واریانس خطی</td><td>بله</td><td>ستون‌های عددی همبسته، فشرده‌سازی، نمای کلی</td><td>ساختار غیرخطی؛ تفسیر لازم</td><td>ممکن است غیرخطی بودن را نبیند؛ به مقیاس حساس</td></tr>
+<tr><td><b>t-SNE</b></td><td>مصورسازی محلی</td><td>در sklearn استاندارد نیست</td><td>کاوش ۲D خوشه‌ها و برچسب‌ها</td><td>ورودی مدل؛ استدلال درباره‌ی فاصله‌ی کلی</td><td>فاصله‌های کلی و اندازه‌ی خوشه‌ها نامعتبر</td></tr>
+<tr><td><b>UMAP</b></td><td>embedding همسایگی</td><td>معمولاً بله</td><td>کاوش داده‌ی بزرگ؛ گاهی ویژگی</td><td>نتیجه‌گیری بدون چک حساسیت</td><td>حساس به ابرپارامتر</td></tr>
+<tr><td><b>TruncatedSVD</b></td><td>تُنُک / رتبه‌پایین</td><td>بله</td><td>TF-IDF، ماتریس کاربر×آیتم</td><td>داده‌ی متراکم که PCA معمولی ممکن است</td><td>مرکزی‌سازی ندارد</td></tr>
+</table></div>
+</section>
+
+<section id="leak">
+<h2><span class="num">۱۰</span> وقتی کاهش بعد ضرر می‌زند، و مرز fit/transform <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<h3>۱۰.۱ کاهش بعد گام اجباری پیش‌پردازش نیست</h3>
+<ul>
+  <li>سیگنال‌های ضعیف پیش‌بینی ممکن است در <b>جهت‌های کم‌واریانس</b> باشند (بخش ۶.۳).</li>
+  <li>تصویرهای متراکم (dense) <b>تفسیرپذیری</b> ویژگی را کم می‌کنند.</li>
+  <li><b>بعد خیلی کم</b> ممکن است اطلاعات تمایزدهنده را حذف کند.</li>
+  <li>نقشه‌های غیرخطی دوبعدی ممکن است خوشه‌ها را <b>اغراق یا تحریف</b> کنند.</li>
+  <li>یک <b>مدل درختی</b> ممکن است روی ستون‌های اصلیِ انتخاب‌شده بهترین عملکرد را داشته باشد. (درخت روی یک ستون آستانه می‌گذارد؛ اگر PCA آن ستون را با ده ستون دیگر قاطی کند، آستانه‌ی تمیز از بین می‌رود.)</li>
+</ul>
+
+<h3>۱۰.۲ از نشت داده دوری کن</h3>
+<p>اسلاید ۲۶: <b>«مرز fit/transform به اندازه‌ی خود الگوریتم مهم است.»</b></p>
+<div class="vs">
+  <div><h4>❌ غلط</h4><div class="flow"><span>scale همه‌ی سطرها</span><i>←</i><span>PCA روی همه‌ی سطرها</span><i>←</i><span>split</span><i>←</i><span>ارزیابی</span></div><p>آماره‌های مجموعه‌ی تست فرایند آموزش را آلوده می‌کنند.</p></div>
+  <div><h4>✅ درست</h4><div class="flow"><span>split</span><i>←</i><span>fit scaler و PCA روی fold آموزش</span><i>←</i><span>transform اعتبارسنجی/تست</span><i>←</i><span>ارزیابی</span></div><p>برای cross-validation از Pipeline استفاده کن.</p></div>
+</div>
+<p>و یک جمله‌ی مهم که زیاد فراموش می‌شود: <b>تعداد مؤلفه‌ها ($k$) را هم فقط با اعتبارسنجی روی train انتخاب کن.</b> اگر $k$ را با نگاه به امتیاز تست انتخاب کنی، تست دیگر «دیده‌نشده» نیست.</p>
+<p>چرا این نشت است؟ «لحظه‌ی پیش‌بینی» را تصور کن: وقتی درخواست سفر جدید می‌آید، تو فقط داده‌ی گذشته را داری. میانگین و جهت‌های PCA باید هم فقط از گذشته (train) بیایند. اگر از کل داده بیایند، اطلاعات آینده (تست) در تبدیل نشسته است.</p>
+
+<h3>۱۰.۳ Pipeline بدون نشت در scikit-learn (اسلاید ۲۷)</h3>
+<pre class="code">from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+
+pipe = Pipeline([("scale", StandardScaler()),
+                 ("pca", PCA(n_components=0.95)),
+                 ("model", LogisticRegression(max_iter=1000))])
+scores = cross_val_score(pipe, X, y, cv=5)   # scaler+PCA refit inside every training fold
+print(scores.mean(), scores.std())</pre>
+<p>و انتخاب $k$ به‌عنوان ابرپارامتر (روی همان داده‌ی سفر بخش ۱۱):</p>
+<pre class="code">from sklearn.model_selection import GridSearchCV, StratifiedKFold
+cv = StratifiedKFold(5, shuffle=True, random_state=42)
+pipe = Pipeline([("scale", StandardScaler()), ("pca", PCA()),
+                 ("model", LogisticRegression(max_iter=2000))])
+grid = GridSearchCV(pipe, {"pca__n_components": [2, 5, 10, 0.95, 0.99, None]},
+                    cv=cv, scoring="roc_auc")
+grid.fit(X_tr, y_tr)                      # k is chosen with training folds only
+print(grid.best_params_, round(grid.best_score_, 3))</pre>
+<div class="out">{'pca__n_components': None} 0.812</div>
+<p>بهترین $k$ «بدون کاهش» (<code>None</code> یعنی همه‌ی مؤلفه‌ها، که با داده‌ی اصلی معادل است) شد. نتیجه‌ی صادقانه: در این مسئله PCA کمکی نمی‌کند.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+در سؤال‌های «کد زیر چه اشکالی دارد؟» دنبال <code>fit</code> یا <code>fit_transform</code> روی <code>X</code> کامل قبل از <code>train_test_split</code> یا قبل از <code>cross_val_score</code> بگرد. روی تست فقط <code>transform</code> مجاز است. این قاعده برای scaler، PCA، SelectKBest، imputer و target encoder یکسان است.
+</div>
+</section>
+
+<section id="case">
+<h2><span class="num">۱۱</span> مطالعه‌ی موردی و چالش کلاسی: «سفرهای تکمیل‌شده ۱۲٪ کم شد» <span class="tag core">اسلاید</span></h2>
+<div class="two">
+<div class="box def"><div class="bt">سؤال کسب‌وکار</div>کدام عوامل با تکمیل سفر مرتبط‌اند، و آیا می‌توانیم لغو را <b>قبل از تخصیص راننده</b> (dispatch) پیش‌بینی کنیم؟</div>
+<div class="box def"><div class="bt">سؤال تحلیلی</div>آیا می‌توانیم ویژگی‌های تکراری سفر را کم کنیم، <b>بدون</b> این‌که عملکرد پیش‌بینی آسیب ببیند یا عوامل عملیاتی پنهان شوند؟</div>
+</div>
+<p>ورودی‌های کاندید (اسلاید): قیمت، مسافت، ETA، ساعت، ترافیک، عرضه‌ی راننده، رفتار گذشته‌ی کاربر.</p>
+<h3>چالش کلاسی (اسلاید ۲۹): انتخاب در برابر PCA در برابر هیچ‌کدام، با اعتبارسنجی یکسان</h3>
+<ol class="steps">
+  <li>یک split تمیز train/test بساز و تست را <b>دست نزن</b>.</li>
+  <li><b>Baseline:</b> مدل با همه‌ی ویژگی‌های مهندسی‌شده.</li>
+  <li><b>PCA:</b> $k=2,5,10$ یا ۹۵٪ واریانس را مقایسه کن.</li>
+  <li><b>انتخاب:</b> $k$ ویژگی را <b>داخل</b> cross-validation انتخاب کن.</li>
+  <li>کیفیت مدل، زمان اجرا و تفسیرپذیری را مقایسه کن.</li>
+</ol>
+<p>یک پیاده‌سازی کامل روی داده‌ی شبیه‌سازی‌شده‌ی ۶۰۰۰ درخواست (۲۱ ستون: چند ستون تکراری، ۸ ستون نویز، و یک سیگنال مهم «غافلگیری ETA»):</p>
+<pre class="code">import numpy as np, pandas as pd
+from sklearn.model_selection import train_test_split, StratifiedKFold, cross_validate
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+rng = np.random.default_rng(42); n = 6000
+d = pd.DataFrame({
+    "distance_km": rng.gamma(4, 3, n),
+    "hour": rng.integers(0, 24, n),
+    "supply_nearby": rng.poisson(6, n),
+    "user_cancel_rate": rng.beta(2, 12, n),
+    "traffic_index": rng.uniform(0, 1, n),
+})
+d["eta_quoted"]   = 2 + 6/(1+d.supply_nearby) + 6*d.traffic_index + rng.normal(0, .8, n)
+d["eta_actual"]   = d.eta_quoted + rng.normal(0, 1.2, n)
+d["duration_min"] = 2.2*d.distance_km*(1+d.traffic_index) + rng.normal(0, 3, n)
+d["fare"]         = 150_000 + 58_000*d.distance_km + 20_000*d.traffic_index + rng.normal(0, 40_000, n)
+d["surge"]        = 1 + 0.6*(d.supply_nearby &lt; 3) + rng.normal(0, .05, n)
+d["price"]        = d.fare*d.surge
+d["distance_mi"]  = d.distance_km/1.609 + rng.normal(0, .05, n)   # near-duplicate
+d["hour_sin"]     = np.sin(2*np.pi*d.hour/24); d["hour_cos"] = np.cos(2*np.pi*d.hour/24)
+for j in range(8): d[f"noise_{j}"] = rng.normal(size=n)              # useless columns
+logit = (-3.3 + 0.9*(d.eta_actual-d.eta_quoted) + 0.25*d.eta_quoted
+         + 7*d.user_cancel_rate + 0.8*(d.surge-1) - 0.6*d.hour_cos)
+y = (rng.random(n) &lt; 1/(1+np.exp(-logit))).astype(int)
+X = d.drop(columns=["hour"])
+print(X.shape, "cancel rate =", round(y.mean(), 3))
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+cv = StratifiedKFold(5, shuffle=True, random_state=42)
+def make(step):
+    steps = [("scale", StandardScaler())] + ([step] if step else []) + [("model", LogisticRegression(max_iter=2000))]
+    return Pipeline(steps)
+cands = {
+    "baseline (all 21)": make(None),
+    "PCA k=2":  make(("pca", PCA(2))),
+    "PCA k=5":  make(("pca", PCA(5))),
+    "PCA k=10": make(("pca", PCA(10))),
+    "PCA 95%":  make(("pca", PCA(0.95))),
+    "SelectKBest k=5":  make(("sel", SelectKBest(f_classif, k=5))),
+    "SelectKBest k=10": make(("sel", SelectKBest(f_classif, k=10))),
+}
+for name, pipe in cands.items():
+    r = cross_validate(pipe, X_tr, y_tr, cv=cv, scoring="roc_auc")   # also returns fit_time
+    print(f"{name:18s} AUC={r['test_score'].mean():.3f} ± {r['test_score'].std():.3f}")
+p = make(("pca", PCA(0.95))).fit(X_tr, y_tr); print("PCA 95% keeps", p.named_steps["pca"].n_components_, "components")
+s = make(("sel", SelectKBest(f_classif, k=5))).fit(X_tr, y_tr)
+print("selected:", list(X.columns[s.named_steps["sel"].get_support()]))
+final = make(("sel", SelectKBest(f_classif, k=10))).fit(X_tr, y_tr)
+print("test AUC (once, at the end):", round(roc_auc_score(y_te, final.predict_proba(X_te)[:, 1]), 3))</pre>
+<div class="out">(6000, 21) cancel rate = 0.364
+baseline (all 21)  AUC=0.812 ± 0.015
+PCA k=2            AUC=0.661 ± 0.023
+PCA k=5            AUC=0.671 ± 0.020
+PCA k=10           AUC=0.689 ± 0.015
+PCA 95%            AUC=0.722 ± 0.010
+SelectKBest k=5    AUC=0.814 ± 0.013
+SelectKBest k=10   AUC=0.814 ± 0.014
+PCA 95% keeps 14 components
+selected: ['user_cancel_rate', 'traffic_index', 'eta_quoted', 'eta_actual', 'hour_cos']
+test AUC (once, at the end): 0.821</div>
+<div class="box ex"><div class="bt">تفسیر نتیجه (این را در گزارش MiniTask بنویس)</div>
+<ul>
+  <li><b>کیفیت:</b> انتخاب ۵ ستون همان AUC baseline را با یک‌چهارم ستون‌ها می‌دهد. PCA حتی با ۱۴ مؤلفه (۹۵٪ واریانس) حدود ۰٫۰۹ AUC کم می‌آورد، چون جهت «eta_actual − eta_quoted» کم‌واریانس است و حذف می‌شود.</li>
+  <li><b>تفسیرپذیری:</b> خروجی انتخاب به زبان تیم عملیات است: «نرخ لغو گذشته‌ی کاربر، ترافیک، ETA و ساعت». خروجی PCA «PC3 و PC7» است.</li>
+  <li><b>زمان اجرا:</b> با <code>r['fit_time']</code> بسنج. روی ۶۰۰۰ سطر همه زیر ۱۰۰ میلی‌ثانیه‌اند و فرق معنادار نیست؛ روی میلیون‌ها سطر و هزاران ستون مهم می‌شود.</li>
+  <li><b>انضباط:</b> همه‌ی گزینه‌ها با <b>یک</b> <code>cv</code> و یک split مقایسه شدند و تست فقط یک بار، آخر کار، برای مدل نهایی استفاده شد.</li>
+</ul>
+</div>
+</section>
+
+<section id="kc">
+<h2><span class="num">۱۲</span> بررسی دانش (اسلاید ۳۰) با پاسخ <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>اول خودت جواب بده، بعد باز کن.</p>
+<div class="kc">
+<div><b class="q">Q1. اگر PCA ۹۵٪ واریانس را توضیح دهد، آیا ۹۵٪ عملکرد پیش‌بینی تضمین می‌شود؟</b>
+<details><summary>پاسخ</summary><b>نه.</b> واریانس توضیح‌داده‌شده درباره‌ی $X$ است، نه رابطه‌ی $X$ با $y$. PCA برچسب را نمی‌بیند. ۵٪ دورریخته ممکن است کل سیگنال باشد (بخش ۶.۳: AUC از ۰٫۹۷ به ۰٫۵۷) و ۹۵٪ نگه‌داشته ممکن است بیشترش نویز باشد. عملکرد را فقط با CV پایین‌دستی می‌شود سنجید.</details></div>
+<div><b class="q">Q2. چرا fit کردن scaler قبل از split ارزیابی را خوش‌بینانه می‌کند؟</b>
+<details><summary>پاسخ</summary>چون میانگین و انحراف معیار (و در PCA جهت‌ها) با سطرهای تست حساب شده‌اند. تبدیل از داده‌ای «یاد گرفته» که در لحظه‌ی پیش‌بینی واقعی وجود ندارد، پس تست دیگر دیده‌نشده نیست. برای scaler ساده اثر معمولاً کوچک است، ولی برای گام‌های یادگیرنده‌تر (PCA، انتخاب ویژگی، target encoding) می‌تواند بزرگ باشد (دقت ۸۵٪ روی برچسب تصادفی در بخش ۳). در ضمن عادت غلط است و بالاخره جایی گران تمام می‌شود.</details></div>
+<div><b class="q">Q3. آیا یک نمودار t-SNE می‌تواند ثابت کند داده سه خوشه‌ی واقعی دارد؟</b>
+<details><summary>پاسخ</summary><b>نه.</b> t-SNE ممکن است از نویز خوشه بسازد یا خوشه‌ها را جدا نشان بدهد. اندازه و فاصله‌ی بین خوشه‌ها معنا ندارد و نتیجه با perplexity و seed عوض می‌شود. نقشه فقط <b>فرضیه</b> می‌سازد. برای سنجیدنش: پایداری بین seed و perplexity، اجرای یک روش خوشه‌بندی روی داده‌ی اصلی (نه روی مختصات t-SNE) با معیاری مثل silhouette، و مهم‌تر از همه، بررسی این‌که خوشه‌ها در ستون‌های اصلی (مثلاً ساعت، شهر، نرخ لغو) واقعاً فرق دارند و معنای کسب‌وکاری دارند.</details></div>
+<div><b class="q">Q4. کی انتخاب ویژگی بهتر از استخراج مؤلفه‌های اصلی است؟</b>
+<details><summary>پاسخ</summary>(۱) وقتی <b>تفسیرپذیری</b> لازم است (تیم عملیات باید بداند کدام اهرم را بکشد). (۲) وقتی سیگنال در چند ستون مشخص است و بقیه نویز یا تکراری‌اند. (۳) با <b>مدل‌های درختی</b> که روی ستون‌های اصلی آستانه می‌گذارند. (۴) وقتی جمع‌آوری ستون هزینه دارد: PCA برای محاسبه‌ی هر مؤلفه به <b>همه‌ی</b> ستون‌ها نیاز دارد، ولی انتخاب واقعاً ستون‌ها را از pipeline حذف می‌کند. (۵) وقتی سیگنال در جهت کم‌واریانس است.</details></div>
+</div>
+</section>
+
+<section id="solved">
+<h2><span class="num">۱۳</span> مسئله‌ی حل‌شده به سبک تمرین درس <span class="tag exam">سبک امتحان</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله: «PCA را بزنیم یا نه؟»</div>
+تیم داده‌ی یک اپ اسنپ‌مانند در تهران برای پیش‌بینی لغو در لحظه‌ی درخواست ۶ ویژگی عددی دارد. یک تحلیل‌گر این کار را کرده است:
+<pre class="code">X_s = StandardScaler().fit_transform(X)            # all of 2025
+Z = PCA(n_components=0.90).fit_transform(X_s)
+X_tr, X_te, y_tr, y_te = train_test_split(Z, y, test_size=0.2)
+# tried k = 2..6 and kept the k with the best AUC on X_te</pre>
+مقدارهای ویژه‌ی ماتریس کوواریانسِ داده‌ی استانداردشده: $2.9,\ 1.5,\ 0.8,\ 0.4,\ 0.25,\ 0.15$.
+<br>(الف) نسبت واریانس هر مؤلفه و واریانس تجمعی را حساب کن. <code>n_components=0.90</code> چند مؤلفه نگه می‌دارد؟ اگر $k=2$ باشد، چند درصد واریانس از دست می‌رود؟
+<br>(ب) دو ستون از این شش ستون <code>eta_quoted</code> و <code>eta_actual</code>اند با همبستگی $r=0.96$. فقط برای این دو ستون (استانداردشده) مقدارها و بردارهای ویژه را دستی پیدا کن و بگو PC2 چه معنایی دارد.
+<br>(ج) دو نشت در کد بالا پیدا کن و نسخه‌ی درست را بنویس.
+<br>(د) مدیر عملیات می‌خواهد بداند «چه چیزی لغو را بالا می‌برد». توصیه‌ی نهایی تو چیست؟
+</div>
+<details><summary>پاسخ کامل (اول خودت حل کن)</summary>
+<p><b>(الف)</b> چک: جمع مقدارهای ویژه $=6.0=p$ ✓ (برای داده‌ی استانداردشده $\operatorname{tr}\Sigma=p$). نسبت‌ها با تقسیم بر ۶:</p>
+<div class="tablewrap"><table>
+<tr><th>مؤلفه</th><th>۱</th><th>۲</th><th>۳</th><th>۴</th><th>۵</th><th>۶</th></tr>
+<tr><td>$\lambda$</td><td>2.9</td><td>1.5</td><td>0.8</td><td>0.4</td><td>0.25</td><td>0.15</td></tr>
+<tr><td>EVR</td><td>۴۸٫۳٪</td><td>۲۵٫۰٪</td><td>۱۳٫۳٪</td><td>۶٫۷٪</td><td>۴٫۲٪</td><td>۲٫۵٪</td></tr>
+<tr><td>تجمعی</td><td>۴۸٫۳٪</td><td>۷۳٫۳٪</td><td>۸۶٫۷٪</td><td>۹۳٫۳٪</td><td>۹۷٫۵٪</td><td>۱۰۰٪</td></tr>
+</table></div>
+<p>اولین $k$ با تجمعی $\ge90\%$ برابر <b>۴</b> است. با $k=2$، واریانس از دست‌رفته $=\frac{0.8+0.4+0.25+0.15}{6}=\frac{1.6}{6}=26.7\%$ (مجموع مقدارهای ویژه‌ی کنارگذاشته).</p>
+<p><b>(ب)</b> برای دو ستون استانداردشده $\Sigma=\begin{pmatrix}1&0.96\\0.96&1\end{pmatrix}$. معادله‌ی مشخصه: $(1-\lambda)^2-0.96^2=0\Rightarrow\lambda=1\pm0.96$، یعنی $\lambda_1=1.96$ و $\lambda_2=0.04$. بردارها: $\mathbf v_1=\frac{1}{\sqrt2}(1,1)$ و $\mathbf v_2=\frac{1}{\sqrt2}(1,-1)$. EVR: ۹۸٪ و ۲٪.</p>
+<p>PC1 $\propto z_{\text{quoted}}+z_{\text{actual}}$ یعنی «سطح کلی ETA». PC2 $\propto z_{\text{quoted}}-z_{\text{actual}}$ یعنی (تا یک علامت) <b>اختلاف ETA واقعی و قول‌داده‌شده</b>؛ همان «غافلگیری» که مسافر را به لغو می‌کشاند. با ۲٪ واریانس، هر قاعده‌ی مبتنی بر واریانس (۹۰٪ یا ۹۵٪) اول همین را حذف می‌کند. شبیه‌سازی بخش ۶.۳ نشان داد AUC از ۰٫۹۷ به ۰٫۵۷ می‌افتد.</p>
+<p><b>(ج)</b> نشت ۱: <code>StandardScaler</code> و <code>PCA</code> روی کل داده‌ی ۲۰۲۵ <b>قبل از split</b> fit شده‌اند؛ میانگین، انحراف معیار و جهت‌ها از سطرهای تست هم آمده‌اند. نشت ۲: $k$ با <b>AUC روی تست</b> انتخاب شده؛ تست عملاً به مجموعه‌ی اعتبارسنجی تبدیل شده و عدد گزارش‌شده خوش‌بینانه است. (نکته‌ی سوم: داده‌ی سفر زمانی است؛ split تصادفی آینده را در train می‌گذارد. split زمانی موضوع جلسه‌ی بعد است.) نسخه‌ی درست:</p>
+<pre class="code">X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
+pipe = Pipeline([("scale", StandardScaler()), ("pca", PCA()),
+                 ("model", LogisticRegression(max_iter=2000))])
+grid = GridSearchCV(pipe, {"pca__n_components": [2, 3, 4, 5, None]},
+                    cv=StratifiedKFold(5, shuffle=True, random_state=42), scoring="roc_auc")
+grid.fit(X_tr, y_tr)                                   # everything learned on train folds only
+test_auc = roc_auc_score(y_te, grid.predict_proba(X_te)[:, 1])   # touched once</pre>
+<p><b>(د)</b> برای سؤال «چه چیزی لغو را بالا می‌برد؟» PCA ابزار درستی نیست، چون جواب را به زبان «PC2» می‌دهد و سیگنال کلیدی را هم دور می‌ریزد. توصیه: (۱) ستون <code>eta_surprise = eta_actual - eta_quoted</code> را صریحاً بساز (مهندسی ویژگی بر کاهش بعد کور برتری دارد). (۲) با انتخاب ویژگی <b>داخل CV</b> (مثلاً L1 یا SelectKBest) مجموعه‌ی کوچک و قابل‌توضیح بساز. (۳) همیشه با baseline بدون کاهش مقایسه کن. (۴) PCA را فقط برای اکتشاف نگه دار؛ مثلاً برای دیدن این‌که کدام ستون‌ها تکراری‌اند. اقدام عملیاتی هم روشن است: اگر ETA قول‌داده‌شده سیستماتیک خوش‌بینانه است، کالیبره کردن ETA در اپ می‌تواند لغو را کم کند. این یک فرضیه است که باید با آزمایش A/B سنجیده شود، نه با همبستگی.</p>
+</details>
+</section>
+
+<section id="exercises">
+<h2><span class="num">۱۴</span> تمرین</h2>
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+هر کار را «انتخاب» یا «استخراج» دسته‌بندی کن: (الف) حذف <code>distance_mi</code> چون تکرار <code>distance_km</code> است. (ب) PCA روی ۴۰ ستون عددی. (ج) Lasso که ضریب ۱۲ ستون را صفر می‌کند. (د) TruncatedSVD روی TF-IDF نظرها. (هـ) RFE با رگرسیون لجستیک. (و) ساختن <code>eta_surprise</code> از دو ستون.
+<details><summary>راه‌حل</summary>الف: انتخاب (filter). ب: استخراج. ج: انتخاب (embedded). د: استخراج. هـ: انتخاب (wrapper). و: نه کاهش بعد خودکار، بلکه <b>مهندسی ویژگی دستی</b>؛ ولی از نظر شکل یک «استخراج» است (ستون جدید = ترکیب خطی با ضرایب ۱ و ۱−). فرقش با PCA این است که ضرایب را دانش دامنه تعیین کرده، نه واریانس.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">· 🟢 پایه</span></div>
+(الف) در مکعب واحد ۲۰بعدی، چه کسری از حجم در پوسته‌ای به ضخامت ۵٪ از هر طرف است؟ (ب) با ۱۰ بازه در هر محور، برای ۶ ویژگی چند خانه داریم؟ اگر ۵۰٬۰۰۰ سفر داشته باشیم، به‌طور میانگین چند سفر در هر خانه می‌افتد؟
+<details><summary>راه‌حل</summary>(الف) $1-0.9^{20}=1-0.1216\approx87.8\%$. (ب) $10^6$ خانه. میانگین $50{,}000/10^6=0.05$ سفر در هر خانه؛ یعنی ۹۵٪ خانه‌ها خالی‌اند. هر روش «محلی» (مثل k-NN یا هیستوگرام چندبعدی) در این فضا تقریباً همسایه‌ای پیدا نمی‌کند.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">· 🟡 مهارتی</span></div>
+$\Sigma=\begin{pmatrix}3&1\\1&3\end{pmatrix}$. مقدارها و بردارهای ویژه، EVR هر مؤلفه، و واریانس از دست‌رفته با $k=1$ را حساب کن.
+<details><summary>راه‌حل</summary>$(3-\lambda)^2-1=0\Rightarrow\lambda=3\pm1$: $\lambda_1=4$ و $\lambda_2=2$. بردارها $\frac{1}{\sqrt2}(1,1)$ و $\frac{1}{\sqrt2}(1,-1)$. EVR: $4/6=66.7\%$ و $33.3\%$. با $k=1$ واریانس از دست‌رفته $\lambda_2=2$ (یعنی ۳۳٫۳٪ کل). نکته: همبستگی این‌جا $1/3$ است و برای همین PC1 «فقط» دو سوم واریانس را دارد. هرچه همبستگی بیشتر، فشرده‌سازی بهتر.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">· 🟡 مهارتی</span></div>
+دو ستون مستقل داریم: مسافت با انحراف معیار ۳ کیلومتر و تأخیر با انحراف معیار ۱ دقیقه. (الف) EVR مؤلفه‌ی اول PCA بدون مقیاس؟ (ب) اگر مسافت را به جای کیلومتر به «صد متر» بنویسیم؟ (ج) بعد از StandardScaler؟ با ابزار بخش ۴ چک کن.
+<details><summary>راه‌حل</summary>ستون‌ها مستقل‌اند، پس $\Sigma$ قطری است و مقدارهای ویژه همان واریانس‌ها هستند. (الف) $\Sigma=\operatorname{diag}(9,1)$: $\text{EVR}_1=9/10=90\%$ و PC1 = محور مسافت. (ب) انحراف معیار ۳۰ «صدمتر»، $\Sigma=\operatorname{diag}(900,1)$: $\text{EVR}_1=900/901=99.9\%$. فقط واحد عوض شد و «ساختار» ظاهراً تغییر کرد! (ج) $\Sigma=I$: هر دو ۵۰٪ و جهت PC1 عملاً دلخواه است. یعنی اصلاً ساختار همبستگی‌ای برای فشرده کردن وجود ندارد و PCA هیچ کمکی نمی‌کند.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">· 🟡 مهارتی</span></div>
+ماتریس مرکزی‌شده‌ی $X_c$ با $n=101$ سطر مقدارهای منفرد $10,\ 4,\ 2$ دارد. مقدارهای ویژه‌ی کوواریانس و EVR را حساب کن. اگر $k=1$ نگه داریم، $\frac{1}{n-1}\sum_i\|\mathbf x_i-\hat{\mathbf x}_i\|^2$ چقدر است؟
+<details><summary>راه‌حل</summary>$\lambda_j=s_j^2/(n-1)$: $100/100=1$، $16/100=0.16$، $4/100=0.04$. جمع $1.2$. EVR: $83.3\%$، $13.3\%$، $3.3\%$. خطای بازسازی با $k=1$ برابر مجموع مقدارهای ویژه‌ی کنارگذاشته است: $0.16+0.04=0.20$ (۱۶٫۷٪ واریانس کل).</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">· 🟡 مهارتی</span></div>
+کد زیر را از نظر نشت بررسی کن و درستش کن:
+<pre class="code">pca = PCA(n_components=10).fit(X)
+X_tr, X_te, y_tr, y_te = train_test_split(pca.transform(X), y)
+model = LogisticRegression().fit(X_tr, y_tr)
+print(model.score(X_te, y_te))</pre>
+<details><summary>راه‌حل</summary>سه مشکل: (۱) PCA روی کل $X$ (شامل تست) fit شده: نشت. (۲) قبل از PCA مقیاس داده نشده: اگر ستون‌ها واحد متفاوت دارند (ریال و کیلومتر)، PC1 فقط ستون پول است. (۳) $k=10$ بی‌دلیل انتخاب شده و baseline ندارد. نسخه‌ی درست:
+<pre class="code">X_tr, X_te, y_tr, y_te = train_test_split(X, y, stratify=y, random_state=0)
+pipe = Pipeline([("scale", StandardScaler()), ("pca", PCA()),
+                 ("model", LogisticRegression(max_iter=1000))])
+grid = GridSearchCV(pipe, {"pca__n_components": [5, 10, 20, None]}, cv=5).fit(X_tr, y_tr)
+print(grid.best_params_, grid.score(X_te, y_te))</pre></details>
+</div>
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">· 🔴 تحلیلی</span></div>
+یک همکار نمودار t-SNE رانندگان را آورده و می‌گوید: «سه نوع راننده داریم. خوشه‌ی A دو برابر B است، پس بیشتر رانندگان از نوع A هستند. C از همه دورتر است، پس رانندگان C کاملاً متفاوت‌اند.» هر ادعا را نقد کن و سه بررسی پیشنهاد بده.
+<details><summary>راه‌حل</summary>«سه نوع»: t-SNE فرضیه می‌سازد و ممکن است خوشه‌ی کاذب نشان بدهد. «A دو برابر B»: اندازه‌ی ظاهری خوشه در t-SNE معنا ندارد؛ <b>تعداد</b> نقاط هر خوشه را بشمار، نه مساحتش را. «C دورتر»: فاصله‌ی بین خوشه‌ها قابل‌اعتماد نیست. بررسی‌ها: (۱) اجرا با چند seed و perplexity (مثلاً ۵، ۳۰، ۵۰): آیا همان نقاط با هم می‌مانند؟ (۲) خوشه‌بندی روی داده‌ی اصلی استانداردشده (مثلاً K-Means یا DBSCAN، جلسه‌ی ۱۱) و مقایسه‌ی برچسب‌ها. (۳) مقایسه‌ی میانگین ستون‌های اصلی (ساعات کار، شهر، نرخ قبول، امتیاز) بین گروه‌ها: آیا تفاوت معنادار و قابل‌اقدام است؟ (۴) نمای PCA هم بکش؛ فاصله‌ی کلی در PCA معنادارتر است.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">· 🔴 تحلیلی</span></div>
+تیم مدل‌سازی برای پیش‌بینی لغو از Gradient Boosting روی ۴۰ ویژگی استفاده می‌کند. کسی پیشنهاد می‌دهد «اول PCA بزنیم تا مدل سریع‌تر و دقیق‌تر شود». موافقی؟ استدلال کن و یک آزمایش منصفانه طراحی کن.
+<details><summary>راه‌حل</summary>پیش‌فرض: <b>مخالف</b>، تا وقتی آزمایش خلافش را نشان بدهد. (۱) درخت‌ها روی تک‌ستون‌ها آستانه می‌گذارند؛ PCA هر ستون را با همه قاطی می‌کند و آستانه‌های تمیز (مثل «ETA بیش از ۸ دقیقه») را محو می‌کند. (۲) درخت‌ها به مقیاس و ستون‌های همبسته حساسیت کمی دارند، پس دلیل اصلی PCA (رفع هم‌خطی) برایشان مطرح نیست. (۳) تفسیر (اهمیت ویژگی، SHAP) از دست می‌رود. (۴) با ۴۰ ستون، سرعت معمولاً مسئله نیست. آزمایش: یک split تمیز، <code>StratifiedKFold</code> یکسان، سه Pipeline (بدون کاهش / scaler+PCA با k در گرید / انتخاب ویژگی با k در گرید)، معیار AUC یا PR-AUC و زمان fit؛ تست فقط برای مدل نهایی. اگر PCA فرقی ایجاد نکرد یا بدتر بود، ساده‌ترین را نگه دار.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+ثابت کن برای داده‌ی استانداردشده با $p$ ستون، $\sum_j\lambda_j=p$، و نشان بده اگر همه‌ی ستون‌ها دوبه‌دو همبستگی $\rho\ge 0$ داشته باشند، $\lambda_1=1+(p-1)\rho$ است. برای $p=10$ و $\rho=0.5$، PC1 چند درصد واریانس را دارد؟
+<details><summary>راه‌حل</summary>$\sum_j\lambda_j=\operatorname{tr}(\Sigma)$ و برای داده‌ی استانداردشده قطر $\Sigma$ همه ۱ است، پس جمع $p$ است. با همبستگی برابر، $\Sigma=(1-\rho)I+\rho\,\mathbf 1\mathbf 1^\top$. بردار $\mathbf 1$: $\Sigma\mathbf 1=(1-\rho)\mathbf 1+\rho p\,\mathbf 1=(1+(p-1)\rho)\mathbf 1$. هر بردار عمود بر $\mathbf 1$ مقدار ویژه‌ی $1-\rho$ دارد ($p-1$ بار). پس $\lambda_1=1+(p-1)\rho$ و $\text{EVR}_1=\frac{1+(p-1)\rho}{p}$. برای $p=10,\rho=0.5$: $\frac{5.5}{10}=55\%$. PC1 هم میانگین ساده‌ی ستون‌هاست ($\mathbf v_1\propto\mathbf 1$)، همان «شاخص ترکیبی» که دستی هم می‌ساختیم.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+کد بخش ۲.۱ را برای $d\in\{2,5,10,20,50,100,200,500,1000\}$ اجرا کن و $\operatorname{std}(D)/\operatorname{mean}(D)$ را بر حسب $1/\sqrt d$ رسم کن. پیش‌بینی نظری $0.59/\sqrt d$ را از کجا آوردیم؟ اگر داده به‌جای یکنواخت، گوسی استاندارد باشد ضریب چه می‌شود؟
+<details><summary>راه‌حل</summary>برای $X,Y\sim U(0,1)$ مستقل: $E[(X-Y)^2]=\tfrac16$ و $E[(X-Y)^4]=\tfrac1{15}$، پس $\operatorname{Var}[(X-Y)^2]=\tfrac1{15}-\tfrac1{36}=\tfrac{7}{180}$. $D^2$ جمع $d$ جمله است: میانگین $d/6$ و واریانس $7d/180$. با تقریب دلتا $\operatorname{std}(D)/\operatorname{mean}(D)\approx\tfrac12\operatorname{std}(D^2)/\operatorname{mean}(D^2)=\tfrac12\cdot\frac{\sqrt{7d/180}}{d/6}=\frac{3\sqrt{7/180}}{\sqrt d}\approx\frac{0.59}{\sqrt d}$. نمودار باید یک خط راست از مبدأ باشد. برای گوسی: $X-Y\sim N(0,2)$، پس $E[(X-Y)^2]=2$ و $\operatorname{Var}[(X-Y)^2]=2\cdot2^2=8$. نسبت: $\tfrac12\cdot\frac{\sqrt{8d}}{2d}=\frac{\sqrt2}{2\sqrt d}\approx\frac{0.71}{\sqrt d}$. شکل توزیع فقط ضریب را عوض می‌کند؛ نرخ $1/\sqrt d$ ثابت است. این همان قانون اعداد بزرگ است.</details>
+</div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۱۵</span> تست</h2>
+<div class="quiz"></div>
+</section>
+
+<section id="summary">
+<h2><span class="num">۱۶</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<h3>۵ چیزی که باید یادت بماند</h3>
+<ol class="steps">
+  <li><b>ابعاد را فقط وقتی کم کن که به هدف روشنی خدمت کند</b> (پیش‌بینی، مصورسازی یا فشرده‌سازی)، و همیشه با baseline بدون کاهش مقایسه کن.</li>
+  <li><b>PCA و SVD فشرده‌سازی خطی و ریاضی‌محکم‌اند:</b> $\Sigma\mathbf v=\lambda\mathbf v$، $\lambda$ = واریانس هر جهت، خطای بازسازی = $\sum_{j>k}\lambda_j$، و $\lambda_j=s_j^2/(n-1)$. قبلش مقیاس بده.</li>
+  <li><b>t-SNE و UMAP نقشه‌های اکتشافی قوی‌اند، نه اثبات خوشه.</b> اندازه و فاصله‌ی خوشه‌ها در t-SNE معنا ندارد؛ حساسیت به seed و پارامتر را چک کن.</li>
+  <li><b>انتخاب ویژگی معنای اصلی را حفظ می‌کند؛ استخراج مختصات جدید می‌سازد.</b> واریانس زیاد یعنی سیگنال نیست: جهت کم‌واریانس می‌تواند همه‌ی سیگنال باشد.</li>
+  <li><b>هر تبدیل یادگیرنده جایش داخل Pipeline بدون نشت است:</b> scaler، PCA، انتخاب ویژگی و انتخاب $k$ همه فقط روی fold آموزش.</li>
+</ol>
+<div class="lf">
+  <div class="s"><h4>حتماً بلد باش</h4><ul><li>سه گام PCA: مرکزی، کوواریانس، بردار ویژه</li><li>حل دستی ۲×۲ و EVR</li><li>filter / wrapper / embedded</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul><li>انتخاب ↔ استخراج</li><li>PCA ↔ TruncatedSVD (مرکزی‌سازی)</li><li>t-SNE ↔ UMAP (transform داده‌ی جدید)</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul><li>۹۵٪ واریانس ≠ ۹۵٪ عملکرد</li><li>PCA بدون مقیاس روی ریال و کیلومتر</li><li>انتخاب ویژگی یا k روی کل داده یا تست</li></ul></div>
+</div>
+<div class="box note"><div class="bt">برای جلسه‌ی بعد (اسلاید ۰۶: آماده‌سازی داده برای ML)</div>
+تقسیم train / validation / test، راهبردهای اعتبارسنجی متقاطع، نشت هدف و نشت پیش‌پردازش، عدم‌توازن کلاس، و pipelineهای تکرارپذیر سرتاسری. مورد جدید: «آیا این سفر لغو می‌شود؟» با لحظه‌ی پیش‌بینی در زمان درخواست.
+<br><b>MiniTask اسلاید:</b> یک notebook تحویل بده که PCA، انتخاب ویژگی و baseline بدون کاهش را مقایسه کند. کد بخش ۱۱ نقطه‌ی شروع خوبی است؛ روی داده‌ی واقعی تمرین، با split زمانی، تکرارش کن.
+</div>
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>curse of dimensionality</b>: نفرین ابعاد</div>
+  <div><b>distance concentration</b>: تمرکز فاصله؛ یکسان شدن فاصله‌ها در بعد بالا</div>
+  <div><b>intrinsic dimension</b>: بعد ذاتی داده</div>
+  <div><b>feature selection</b>: انتخاب ویژگی (نگه داشتن ستون‌های موجود)</div>
+  <div><b>feature extraction</b>: استخراج ویژگی (ساختن مختصات جدید)</div>
+  <div><b>filter / wrapper / embedded</b>: سه خانواده‌ی روش انتخاب ویژگی</div>
+  <div><b>principal component (PC)</b>: مؤلفه‌ی اصلی</div>
+  <div><b>loading</b>: بار؛ ضریب هر ستون اصلی در یک مؤلفه</div>
+  <div><b>score</b>: امتیاز؛ مختصات نقطه روی مؤلفه</div>
+  <div><b>eigenvalue / eigenvector</b>: مقدار ویژه / بردار ویژه</div>
+  <div><b>explained variance ratio</b>: نسبت واریانس توضیح‌داده‌شده</div>
+  <div><b>scree plot</b>: نمودار سنگ‌ریزه؛ میله‌های EVR برای یافتن «آرنج»</div>
+  <div><b>reconstruction error</b>: خطای بازسازی</div>
+  <div><b>SVD</b>: تجزیه‌ی مقدار منفرد</div>
+  <div><b>TruncatedSVD / LSA</b>: SVD بریده‌شده بدون مرکزی‌سازی / تحلیل معنایی پنهان</div>
+  <div><b>sparse matrix</b>: ماتریس تُنُک (بیشتر خانه‌ها صفر)</div>
+  <div><b>manifold</b>: منیفلد؛ سطح کم‌بعد خمیده در فضای پربعد</div>
+  <div><b>perplexity</b>: پارامتر t-SNE؛ تقریباً تعداد مؤثر همسایه‌ها</div>
+  <div><b>n_neighbors / min_dist</b>: دو کنترل اصلی UMAP</div>
+  <div><b>data leakage</b>: نشت داده</div>
+  <div><b>fit/transform boundary</b>: مرز یادگیری تبدیل (فقط train) و اعمال آن</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`PCA با ۱۴ مؤلفه ۹۵٪ واریانس داده‌ی سفر را نگه داشته است. کدام نتیجه‌گیری درست است؟`, o:[`مدل روی داده‌ی کاهش‌یافته تقریباً ۹۵٪ عملکرد مدل اصلی را خواهد داشت`,`۹۵٪ تغییرات X حفظ شده؛ اثر روی پیش‌بینی را فقط با CV پایین‌دستی می‌شود فهمید`,`۵٪ واریانس حذف‌شده حتماً نویز است`,`چون PCA بهینه است، عملکرد هرگز بدتر نمی‌شود`], a:1, e:`PCA برچسب را نمی‌بیند. در داده‌ی سفر، PCA 95% با ۱۴ مؤلفه AUC را از ۰٫۸۱ به ۰٫۷۲ رساند، چون جهت «غافلگیری ETA» کم‌واریانس بود.`},
+ {q:`ستون‌ها: کرایه (ریال، انحراف معیار حدود ۳۵۰٬۰۰۰)، مسافت (کیلومتر)، امتیاز راننده (۱ تا ۵). PCA <b>بدون</b> استانداردسازی چه می‌دهد؟`, o:[`PC1 تقریباً خود ستون کرایه است و نزدیک ۱۰۰٪ واریانس را دارد`,`PC1 ترکیب متعادل هر سه ستون است`,`PC1 امتیاز راننده است چون کم‌تغییرترین است`,`PCA خودش داده را استاندارد می‌کند`], a:0, e:`واریانس به واحد وابسته است. sklearn.PCA فقط مرکزی می‌کند، مقیاس نمی‌دهد.`},
+ {q:R`مقدارهای ویژه‌ی کوواریانس $6,3,1$ هستند. با $k=2$، سهم واریانس از دست‌رفته چقدر است؟`, o:[`۱۰٪`,`۳۰٪`,`۶۰٪`,`۹۰٪`], a:0, e:R`خطای بازسازی برابر مجموع مقدارهای ویژه‌ی کنارگذاشته است: $1/(6+3+1)=10\%$.`},
+ {q:`کدام روال <b>بدون نشت</b> است؟`, o:[`StandardScaler و PCA روی کل داده، بعد cross_val_score روی خروجی`,`split، بعد PCA روی train+test با هم برای پایداری بیشتر`,`Pipeline(scaler, PCA, model) داخل cross_val_score روی داده‌ی train، و انتخاب k با GridSearchCV روی همان train`,`انتخاب k بر اساس بیشترین دقت روی مجموعه‌ی تست`], a:2, e:`هر چیزی که «یاد گرفته می‌شود» (میانگین، جهت‌ها، k) باید فقط از foldهای آموزش بیاید.`},
+ {q:`در یک نمودار t-SNE کدام برداشت <b>نسبتاً</b> قابل‌اعتمادتر است؟`, o:[`خوشه‌ای که بزرگ‌تر دیده می‌شود نقاط بیشتری دارد`,`فاصله‌ی دو خوشه نشان می‌دهد چقدر متفاوت‌اند`,`نقاطی که در نقشه همسایه‌ی نزدیک‌اند احتمالاً در فضای اصلی هم همسایه‌اند`,`تعداد خوشه‌های دیده‌شده برابر تعداد گروه‌های واقعی است`], a:2, e:`t-SNE برای حفظ همسایگی محلی طراحی شده؛ اندازه‌ی خوشه، فاصله‌ی بین خوشه‌ها و حتی وجود خوشه قابل‌اعتماد نیست.`},
+ {q:`چرا برای ماتریس TF-IDF از TruncatedSVD استفاده می‌کنیم و نه PCA معمولی؟`, o:[`چون TruncatedSVD داده را مرکزی نمی‌کند و ماتریس تُنُک، تُنُک می‌ماند`,`چون PCA روی متن کار نمی‌کند`,`چون TruncatedSVD همیشه واریانس بیشتری نگه می‌دارد`,`چون TruncatedSVD غیرخطی است`], a:0, e:`مرکزی کردن همه‌ی صفرها را غیرصفر می‌کند و حافظه منفجر می‌شود. TruncatedSVD خطی است و بدون مرکزی‌سازی کار می‌کند.`},
+ {q:R`ماتریس مرکزی‌شده‌ی $X_c$ با $n=11$ سطر، مقدارهای منفرد $10$ و $5$ دارد. EVR مؤلفه‌ی اول چقدر است؟`, o:[`۶۶٫۷٪`,`۸۰٪`,`۹۰٪`,`۵۰٪`], a:1, e:R`$\lambda_j=s_j^2/(n-1)$: $100/10=10$ و $25/10=2.5$. EVR$=10/12.5=80\%$. (نسبت مقدارهای منفرد ۲ به ۱ است، ولی نسبت واریانس‌ها ۴ به ۱؛ دام رایج: $10/15=66.7\%$.)`},
+ {q:R`با بزرگ شدن بعد $d$ برای نقاط تصادفی یکنواخت، نسبت $(D_{\max}-D_{\min})/D_{\min}$ چه می‌شود و چه پیامدی دارد؟`, o:[`زیاد می‌شود؛ k-NN دقیق‌تر می‌شود`,`به صفر میل می‌کند؛ «نزدیک‌ترین همسایه» تمایزدهنده نمی‌ماند`,`ثابت می‌ماند؛ بعد اثری ندارد`,`منفی می‌شود`], a:1, e:R`پراکندگی فاصله مثل $\sqrt d$ رشد می‌کند و میانگینش مثل $d$؛ نسبت مثل $1/\sqrt d$ کم می‌شود. در شبیه‌سازی: ۵۳۴ در $d=2$ و ۰٫۱۶ در $d=1000$.`},
+ {q:`مدیر عملیات می‌پرسد «کدام عامل‌ها لغو را بالا می‌برند؟». کدام رویکرد مناسب‌تر است؟`, o:[`PCA و گزارش PC1 تا PC5`,`t-SNE و نشان دادن خوشه‌ها`,`انتخاب ویژگی داخل CV و گزارش ستون‌های اصلی منتخب`,`TruncatedSVD روی ویژگی‌های عددی`], a:2, e:`انتخاب ویژگی معنای ستون‌های اصلی را حفظ می‌کند. مؤلفه‌های PCA ترکیب همه‌ی ستون‌ها هستند و قابل‌اقدام نیستند.`},
+ {q:`eta_quoted و eta_actual همبستگی ۰٫۹۶ دارند و لغو به اختلافشان بستگی دارد. با StandardScaler + PCA(1)، AUC از ۰٫۹۷ به ۰٫۵۷ افتاد. چرا؟`, o:[`چون StandardScaler اطلاعات را حذف کرد`,`چون PC1 «سطح کلی ETA» است و جهت «اختلاف» (PC2، فقط ۲٪ واریانس) که سیگنال بود حذف شد`,`چون PCA روی دو ستون کار نمی‌کند`,`چون PC1 و PC2 همبسته‌اند`], a:1, e:R`برای دو ستون استاندارد با همبستگی $r$: $\lambda=1\pm r$، یعنی $1.96$ و $0.04$. PCA بدون ناظر است و جهت پیش‌بین کم‌واریانس را دور ریخت.`},
+ {q:`کدام روش انتخاب ویژگی از خانواده‌ی <b>wrapper</b> است؟`, o:[`mutual_info_classif`,`VarianceThreshold`,`RFE (حذف بازگشتی ویژگی با آموزش مکرر مدل)`,`Lasso (L1)`], a:2, e:`Filter: آماره‌ی مستقل از مدل (MI، واریانس، chi2). Wrapper: آموزش مکرر مدل روی زیرمجموعه‌ها (RFE). Embedded: انتخاب حین آموزش (L1، اهمیت درخت).`},
+ {q:`در UMAP اگر <code>n_neighbors</code> را از ۵ به ۱۰۰ ببریم، معمولاً چه اتفاقی می‌افتد؟`, o:[`نقشه ساختار کلی‌تر را نشان می‌دهد و جزئیات محلی کمتر می‌شود`,`نقشه دقیقاً همان PCA می‌شود`,`فقط سرعت عوض می‌شود و نقشه ثابت است`,`خوشه‌های بیشتر و ریزتری ظاهر می‌شوند`], a:0, e:`همسایگی بزرگ‌تر یعنی هر نقطه با نقاط دورتر هم «همسایه» حساب می‌شود، پس ساختار کلی پررنگ‌تر می‌شود. min_dist فشردگی را کنترل می‌کند. برای همین قبل از قصه‌گویی باید حساسیت را چک کرد.`},
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,slider,css,alpha,fmt,fa,onResize,Plot,L}=ML;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const gauss=r=>{let u=0,v=0;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+  const P=x=>fa(x);
+
+  /* ---------- Widget A: PCA on a 2D cloud ---------- */
+  (function(){
+    const el=document.getElementById("w-pca"); if(!el) return;
+    ML.shell(el,"🔧 ابزار: PCA روی ابر نقطه‌ی دوبعدی (مسافت و تأخیر)", R`۱۵۰ سفر. محور افقی مسافت و محور عمودی تأخیر ترافیکی است. پیکان قرمز PC1 و سبز PC2 است (طول هر پیکان $2\sqrt{\lambda}$). خط‌های بنفش خطای بازسازی با نگه داشتن فقط PC1 را نشان می‌دهند. نوار پایین، نمایش یک‌بعدی هر سفر (امتیاز $z_1$) است. محورها هم‌مقیاس‌اند تا زاویه‌ها واقعی دیده شوند.`);
+    const rnd=mulberry32(20261);const N=150;
+    let A=[],B=[];for(let i=0;i<N;i++){A.push(gauss(rnd));B.push(gauss(rnd));}
+    // whiten to exact mean 0, var 1, corr 0 so the sliders are exact
+    const mean=v=>v.reduce((s,x)=>s+x,0)/v.length;
+    let ma=mean(A),mb=mean(B);A=A.map(x=>x-ma);B=B.map(x=>x-mb);
+    const dot=(u,v)=>u.reduce((s,x,i)=>s+x*v[i],0)/(N-1);
+    let sa=Math.sqrt(dot(A,A));A=A.map(x=>x/sa);
+    let c=dot(A,B);B=B.map((x,i)=>x-c*A[i]);let sb=Math.sqrt(dot(B,B));B=B.map(x=>x/sb);
+    const st={rho:0.8,ratio:0.6,unit:0,std:false,proj:true};
+    const units=["کیلومتر","صد متر","ده متر","متر"];
+    const ctr=h("div",{class:"controls"});
+    ctr.append(slider("همبستگی ρ",-0.95,0.95,0.05,st.rho,v=>{st.rho=v;draw();},v=>P(v.toFixed(2))));
+    ctr.append(slider("نسبت پراکندگی σ_y/σ_x",0.2,2,0.05,st.ratio,v=>{st.ratio=v;draw();},v=>P(v.toFixed(2))));
+    ctr.append(slider("واحد مسافت",0,3,1,st.unit,v=>{st.unit=v;draw();},v=>units[v]));
+    const row=h("div",{class:"chkrow"});
+    const mk=(lab,key)=>{const l=h("label",{class:"chk"});const c=h("input",{type:"checkbox"});c.checked=st[key];c.onchange=()=>{st[key]=c.checked;draw();};l.append(c,lab);return l;};
+    row.append(mk("استانداردسازی (StandardScaler)","std"),mk("نمایش تصویر روی PC1","proj"));
+    const cv=h("canvas",{class:"wide"}),cv2=h("canvas",{class:"strip"});
+    const leg=h("div",{class:"legend"});
+    const out=h("div",{class:"readout"});
+    el.append(ctr,row,cv,cv2,leg,out);
+    function arrow(Pl,x0,y0,x1,y1,col){const g=Pl.ctx;const X0=Pl.X(x0),Y0=Pl.Y(y0),X1=Pl.X(x1),Y1=Pl.Y(y1);g.strokeStyle=col;g.fillStyle=col;g.lineWidth=3;g.beginPath();g.moveTo(X0,Y0);g.lineTo(X1,Y1);g.stroke();const a=Math.atan2(Y1-Y0,X1-X0),s=10;g.beginPath();g.moveTo(X1,Y1);g.lineTo(X1-s*Math.cos(a-0.4),Y1-s*Math.sin(a-0.4));g.lineTo(X1-s*Math.cos(a+0.4),Y1-s*Math.sin(a+0.4));g.closePath();g.fill();}
+    function draw(){
+      const u=Math.pow(10,st.unit);
+      let xs=A.map(a=>a*u), ys=A.map((a,i)=>st.ratio*(st.rho*a+Math.sqrt(1-st.rho*st.rho)*B[i]));
+      if(st.std){const sx=Math.sqrt(dot(xs,xs)),sy=Math.sqrt(dot(ys,ys));xs=xs.map(x=>x/sx);ys=ys.map(y=>y/sy);}
+      const sxx=dot(xs,xs),syy=dot(ys,ys),sxy=dot(xs,ys);
+      const tr=sxx+syy,det=sxx*syy-sxy*sxy,disc=Math.sqrt(Math.max(0,tr*tr/4-det));
+      const l1=tr/2+disc,l2=Math.max(0,tr/2-disc);
+      let v1;
+      if(Math.abs(sxy)>1e-12*Math.max(sxx,syy)) v1=[sxy,l1-sxx]; else v1=sxx>=syy?[1,0]:[0,1];
+      let nv=Math.hypot(v1[0],v1[1]);v1=[v1[0]/nv,v1[1]/nv];if(v1[0]<0||(v1[0]===0&&v1[1]<0))v1=[-v1[0],-v1[1]];
+      const v2=[-v1[1],v1[0]];
+      const z=xs.map((x,i)=>x*v1[0]+ys[i]*v1[1]);
+      let sse=0;xs.forEach((x,i)=>{const px=z[i]*v1[0],py=z[i]*v1[1];sse+=(x-px)**2+(ys[i]-py)**2;});
+      // equal-aspect ranges
+      const Pl=new Plot(cv,[-1,1],[-1,1],{l:56,r:14,t:14,b:34});
+      const pw=Pl.W-Pl.p.l-Pl.p.r,ph=Pl.H-Pl.p.t-Pl.p.b;
+      const Rx=Math.max(...xs.map(Math.abs))*1.12,Ry=Math.max(...ys.map(Math.abs))*1.12;
+      const s=Math.min(pw/(2*Rx),ph/(2*Ry));
+      Pl.xr=[-pw/(2*s),pw/(2*s)];Pl.yr=[-ph/(2*s),ph/(2*s)];
+      const ufmt=x=>Math.abs(x)>=1000?fmt(x/1000,1)+"k":fmt(x,2);
+      Pl.axes(st.std?"مسافت (z-score)":"مسافت ("+units[st.unit]+")",st.std?"تأخیر (z-score)":"تأخیر (دقیقه)",{xfmt:ufmt,yfmt:ufmt});
+      const cP=css("--plot-c1"),cR=css("--bad")||"#c0392b",cG=css("--good")||"#0f6e6a",cV="#8e44ad";
+      if(st.proj){xs.forEach((x,i)=>{Pl.line([[x,ys[i]],[z[i]*v1[0],z[i]*v1[1]]],alpha(cV,0.45),1);});}
+      xs.forEach((x,i)=>Pl.dot(x,ys[i],alpha(cP,0.7),3));
+      if(st.proj){z.forEach(t=>Pl.dot(t*v1[0],t*v1[1],alpha(cR,0.8),2));}
+      const a1=2*Math.sqrt(l1),a2=2*Math.sqrt(l2);
+      arrow(Pl,0,0,a1*v1[0],a1*v1[1],cR);
+      if(a2*s>3) arrow(Pl,0,0,a2*v2[0],a2*v2[1],cG);
+      // strip: 1D scores
+      const zm=Math.max(...z.map(Math.abs))*1.08||1;
+      const S2=new Plot(cv2,[-zm,zm],[-1,1],{l:56,r:14,t:6,b:32});
+      S2.axes("z₁ = score on PC1","",{xfmt:ufmt,ystep:5});
+      S2.hline(0,css("--plot-diag"),[2,3]);
+      z.forEach((t,i)=>S2.dot(t,((i*37)%17)/17*1.2-0.6,alpha(cR,0.65),3));
+      leg.innerHTML=`<span><i style="background:${cR}"></i>PC1</span><span><i style="background:${cG}"></i>PC2</span><span><i style="background:${cV}"></i>خطای بازسازی</span><span><i style="background:${cP}"></i>سفرها</span>`;
+      const ev1=l1/(l1+l2);
+      const ff=x=>Math.abs(x)>=1e4?x.toExponential(2):fmt(x,3);
+      out.textContent=
+`ماتریس کوواریانس: ${L(`Σ = [[${ff(sxx)}, ${ff(sxy)}], [${ff(sxy)}, ${ff(syy)}]]`)}
+مقدارهای ویژه: ${L(`λ₁ = ${ff(l1)}    λ₂ = ${ff(l2)}`)}
+سهم واریانس PC1: ${P((100*ev1).toFixed(2))}٪    سهم PC2: ${P((100*(1-ev1)).toFixed(2))}٪
+بردار PC1 (loadingها، وزن مسافت و تأخیر): ${L(`(${fmt(v1[0],3)}, ${fmt(v1[1],3)})`)}
+خطای بازسازی با یک مؤلفه: ${L(`SSE/(n−1) = ${ff(sse/(N-1))} = λ₂ ✓`)}
+${!st.std&&st.unit>0?"⚠ بدون استانداردسازی، فقط عوض کردن واحد، PC1 را به سمت محور مسافت چرخانده است.":(st.std?"✓ با استانداردسازی، واحد اثری ندارد: واحد را عوض کن و ببین هیچ‌چیز تغییر نمی‌کند.":"")}`;
+    }
+    onResize(cv,draw);draw();
+  })();
+
+  /* ---------- Widget B: curse of dimensionality ---------- */
+  (function(){
+    const el=document.getElementById("w-curse"); if(!el) return;
+    ML.shell(el,"🔧 ابزار: نفرین ابعاد با چشم خودت",R`۱۲۰ نقطه‌ی تصادفی یکنواخت در مکعب $[0,1]^d$ (با هر بعد جدید، به همان نقاط یک مختصات اضافه می‌شود). نمودار بالا: هیستوگرام همه‌ی ۷۱۴۰ فاصله‌ی دوبه‌دو، تقسیم بر $\sqrt d$ (بیشترین فاصله‌ی ممکن)، تا همه‌ی بعدها روی یک محور بیایند. نمودار پایین: سهم حجم مکعبِ درونی $(1-2\varepsilon)^d$ وقتی پوسته‌ای به ضخامت $\varepsilon$ از هر طرف جدا شود.`);
+    const dims=[1,2,3,5,10,20,50,100,200,500,1000];const N=120,DM=1000;
+    const rnd=mulberry32(7);const pts=[];for(let i=0;i<N;i++){const r=new Float64Array(DM);for(let j=0;j<DM;j++)r[j]=rnd();pts.push(r);}
+    const cache={};
+    function dists(d){if(cache[d])return cache[d];const D=[];for(let i=0;i<N;i++)for(let k=i+1;k<N;k++){let s=0;const a=pts[i],b=pts[k];for(let j=0;j<d;j++){const t=a[j]-b[j];s+=t*t;}D.push(Math.sqrt(s));}return cache[d]=D;}
+    const st={di:4,eps:0.05};
+    const ctr=h("div",{class:"controls"});
+    ctr.append(slider("بعد d",0,dims.length-1,1,st.di,v=>{st.di=v;draw();},v=>P(dims[v])));
+    ctr.append(slider("ضخامت پوسته ε",0.01,0.2,0.01,st.eps,v=>{st.eps=v;draw();},v=>P(v.toFixed(2))));
+    const cv=h("canvas",{class:"wide"}),cv2=h("canvas",{class:"wide"});
+    const wrap=h("div",{class:"canvases"});wrap.append(cv,cv2);
+    const out=h("div",{class:"readout"});
+    el.append(ctr,wrap,out);
+    function draw(){
+      const d=dims[st.di],D=dists(d),sq=Math.sqrt(d);
+      const nb=50,cnt=new Array(nb).fill(0);let mn=Infinity,mx=0,sm=0,ss=0;
+      D.forEach(x=>{mn=Math.min(mn,x);mx=Math.max(mx,x);sm+=x;ss+=x*x;const b=Math.min(nb-1,Math.floor(x/sq*nb));cnt[b]++;});
+      const m=sm/D.length,sd=Math.sqrt(ss/D.length-m*m);
+      const dens=cnt.map(c=>c/D.length*nb);const ymax=Math.max(...dens)*1.12;
+      const Pl=new Plot(cv,[0,1],[0,ymax],{l:44,r:10,t:16,b:32});
+      Pl.axes("distance / √d","چگالی",{xstep:0.2});
+      const c1=css("--plot-c1"),c2=css("--plot-c2");
+      dens.forEach((v,i)=>Pl.bar((i+0.5)/nb,1/nb*0.92,0,v,alpha(c1,0.75)));
+      Pl.vline(mn/sq,c2);Pl.vline(mx/sq,c2);
+      Pl.text(mn/sq,ymax*0.93,"min",c2,"right",0);Pl.text(mx/sq,ymax*0.93," max",c2,"left",0);
+      const keep=1-2*st.eps;
+      const Q=new Plot(cv2,[0,3],[0,1],{l:44,r:10,t:16,b:32});
+      Q.axes("d (log scale)","سهم حجم درونی",{xstep:1,xfmt:x=>P(Math.round(Math.pow(10,x))),ystep:0.2});
+      const pts2=[];for(let t=0;t<=3.0001;t+=0.02)pts2.push([t,Math.pow(keep,Math.pow(10,t))]);
+      Q.area(pts2,alpha(c1,0.15));Q.line(pts2,c1,2.2);
+      const ld=Math.log10(d),fr=Math.pow(keep,d);Q.vline(ld,c2);Q.dot(ld,fr,c2,5);
+      Q.text(ld,Math.min(0.95,fr+0.08),fr<1e-4?"≈ ۰٪":P((100*fr).toPrecision(3))+"٪",c2,ld>2.4?"right":"left");
+      out.textContent=
+`بعد: ${L("d = "+d)}
+فاصله‌ها: ${L(`min = ${fmt(mn,3)}   max = ${fmt(mx,3)}   mean = ${fmt(m,3)}`)}
+تمایز نسبی: ${L(`(max−min)/min = ${fmt((mx-mn)/mn,3)}`)}
+پراکندگی نسبی: ${L(`std/mean = ${fmt(sd/m,3)}`+(d>=10?`   (theory ≈ ${fmt(0.59/Math.sqrt(d),3)})`:""))}
+سهم حجم در پوسته‌ی نازک: ${P((100*(1-fr)).toFixed(2))}٪
+تعداد خانه با ۱۰ بازه در هر محور: ${d<=15?L(P(Math.pow(10,d).toLocaleString("en-US"))):L("10^"+d)}
+${d>=100?"→ همه‌ی فاصله‌ها تقریباً یکی‌اند؛ «نزدیک‌ترین همسایه» تقریباً بی‌معنا شده است.":"→ بعد را بالا ببر و ببین هیستوگرام چطور باریک می‌شود."}`;
+    }
+    onResize(cv,draw);draw();
+  })();
+};
+</script>
+</body></html>

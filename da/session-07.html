@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۷ · لحظه‌ی پیش‌بینی، تقسیم داده، اعتبارسنجی متقاطع و نشت</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.rt{width:100%;font-size:.9em}
+.rt td:first-child{white-space:nowrap;font-weight:700;color:var(--accent)}
+.rt td.en{direction:ltr;text-align:left;font-family:ui-monospace,Consolas,monospace;font-size:.88em}
+td.tr{background:color-mix(in srgb,var(--plot-c3) 16%,var(--paper));text-align:center}
+td.te{background:color-mix(in srgb,var(--plot-c2) 16%,var(--paper));text-align:center}
+@media (max-width:640px){#w-split canvas.wide{aspect-ratio:1/1}}
+.wbtn{font:inherit;font-size:.9em;border:1px solid var(--line-2);background:var(--paper);color:var(--ink);border-radius:8px;padding:3px 12px;cursor:pointer}
+</style>
+</head>
+<body data-session="7">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۷ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>آماده‌سازی داده برای ML (۱): لحظه‌ی پیش‌بینی، تقسیم داده، اعتبارسنجی متقاطع و نشت</h1>
+  <p class="lead">تا این‌جا یاد گرفتیم ویژگی بسازیم. سؤال این جلسه سخت‌تر است: <b>آیا می‌شود به عددی که مدل گزارش می‌کند اعتماد کرد؟</b> یک AUC برابر ۰٫۹۶ ممکن است فقط یک باگ باشد که لباس موفقیت پوشیده. این‌جا یاد می‌گیری تقسیم داده را مثل یک «شبیه‌سازی استقرار» طراحی کنی و نشت را قبل از این‌که مدیرت را گول بزند پیدا کنی.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۲۰ تا ۱۵۰ دقیقه</span><span>📚 منبع: اسلاید ۰۶ (صفحه‌های ۱ تا ۲۴)، Géron فصل ۲، ISLR فصل ۵، مستندات scikit-learn</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li><b>splitter درست را انتخاب کنی</b>: تنظیم اعتبارسنجی را با استقرار واقعی (چه کسی، کجا، کی) جور کنی.</li>
+    <li><b>از اعتبارسنجی متقاطع دفاع کنی</b>: بگویی کدام foldها واقعاً مستقل‌اند و نتیجه را با عدم‌قطعیت گزارش کنی.</li>
+    <li><b>نشت را پیدا کنی</b>: هر ویژگی را با «قرارداد لحظه‌ی پیش‌بینی» بسنجی و سه مسیر نشت را بشناسی.</li>
+    <li><b>یک pipeline بازتولیدپذیر بسازی</b> که همه‌ی fit‌ها را داخل هر fold انجام دهد.</li>
+    <li>ویژگی تاریخی مثل «نرخ لغو گذشته‌ی کاربر» را <b>به‌صورت point-in-time</b> با <code>merge_asof</code> بسازی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+  یکی از هم‌تیمی‌هایت در تیم داده‌ی یک اپ اسنپ‌مانند خوشحال می‌آید و می‌گوید: «مدل پیش‌بینی لغو سفر را ساختم. با <code>KFold</code> پنج‌تایی، <b>AUC = ۰٫۹۶</b>. فردا روی همه‌ی درخواست‌های تهران فعالش کنیم؟»
+  <br>قبل از این‌که تبریک بگویی، <b>پنج سؤال</b> بنویس که از او می‌پرسی. راهنمایی: به این فکر کن که مدل <i>کی</i> پیش‌بینی می‌کند، روی <i>چه کسی</i>، و هر ستون <i>کی</i> پر می‌شود. آخر جلسه فهرستت را با «شش سؤال تیم قرمز» در بخش ۸ مقایسه کن.
+</div>
+
+<section id="where">
+<h2><span class="num">۱</span> کجای درس هستیم؟ از «ویژگی بسازیم» به «به عدد اعتماد کنیم» <span class="tag core">اسلاید</span></h2>
+<p>نقشه‌ی درس هفت ایستگاه دارد: <b>فهم مسئله</b> ← <b>آماده‌سازی داده</b> (پاک‌سازی و کدگذاری) ← <b>EDA</b> (پیدا کردن الگو) ← <b>مهندسی ویژگی</b> (مقیاس و تبدیل) ← <b>کاهش بعد</b> (نمایش بهتر) ← <b>آماده‌سازی برای مدل</b> ← <b>مدل‌های یادگیری ماشین</b>. اسلاید ۰۶ همان ایستگاه ششم است: train/validation/test، داده‌ی نامتوازن، pipeline و اعتبارسنجی متقاطع. خروجی کل این مسیر به زبان اسلاید: «از داده به بینش و پیش‌بینی، با یک فرایند ساخت‌یافته و بازتولیدپذیر».</p>
+<div class="box thm"><div class="bt">جمله‌ی کلیدی جلسه</div>
+  «<b>یک نمایش خوب هنوز یک آزمایش قابل‌اعتماد نیست.</b>» (A good representation is not yet a trustworthy experiment.)<br>
+  امروز از سؤال «<i>Can we build features?</i>» به سؤال «<i>Can we believe the score?</i>» می‌رویم.
+</div>
+<p>اسلاید اهداف یادگیری را با یک جمله شروع می‌کند: «دانشجو باید بتواند <b>طراحی را توضیح دهد، نه فقط Python اجرا کند</b>». پنج هدف اسلاید این‌هاست:</p>
+<div class="tablewrap"><table>
+<tr><th>#</th><th>هدف</th><th>یعنی</th><th>کجای این صفحه</th></tr>
+<tr><td>۰۱</td><td>Choose the right split</td><td>تنظیم اعتبارسنجی را با استقرار واقعی جور کن</td><td>بخش ۳ و ۴</td></tr>
+<tr><td>۰۲</td><td>Defend cross-validation</td><td>بدان کدام foldها واقعاً مستقل‌اند</td><td>بخش ۵</td></tr>
+<tr><td>۰۳</td><td>Detect leakage</td><td>به آن‌چه در لحظه‌ی پیش‌بینی قابل‌دانستن بود احترام بگذار</td><td>بخش ۲، ۶، ۷، ۸</td></tr>
+<tr><td>۰۴</td><td>Evaluate rare events</td><td>precision، recall، PR-AUC و هزینه‌ی عملیاتی</td><td>جلسه‌ی ۸</td></tr>
+<tr><td>۰۵</td><td>Build a reproducible pipeline</td><td>encode، impute، fit و مقایسه، بدون نشت</td><td>بخش ۹</td></tr>
+</table></div>
+<p>سازمان سخنرانی هم پنج بخش دارد: <b>۰۱ تقسیم معتبر</b> (train / validate / test) ← <b>۰۲ اعتبارسنجی متقاطع</b> (استقلال و واریانس) ← <b>۰۳ ممیزی نشت</b> (جلوگیری از اطمینان کاذب) ← <b>۰۴ رویداد نادر</b> (معیار، هزینه، کالیبراسیون) ← <b>۰۵ pipeline</b> (آزمایش بازتولیدپذیر). یک «مسیر قابل‌ممیزی از سؤال تا ارزیابی نهایی روی داده‌ی کنار گذاشته‌شده». این جلسه بخش‌های ۰۱، ۰۲، ۰۳ و ۰۵ را پوشش می‌دهد و بخش ۰۴ (رویداد نادر) مال جلسه‌ی ۸ است.</p>
+</section>
+
+<section id="moment">
+<h2><span class="num">۲</span> مورد درس: «آیا این سفر لغو می‌شود؟» و قرارداد لحظه‌ی پیش‌بینی <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>مسئله‌ی جلسه‌های قبل «۱۲٪ افت سفرهای تکمیل‌شده» بود. یکی از فرضیه‌ها لغو سفر بود. حالا می‌خواهیم <b>قبل از این‌که لغو اتفاق بیفتد</b> ریسکش را پیش‌بینی کنیم تا مثلاً راننده‌ی نزدیک‌تری بفرستیم یا به مسافر پیام بدهیم. داده‌ی مصنوعی اسلاید: <b>۹٬۶۰۰ سفر، حدود ۱۲٪ لغوشده، در ۱۸۰ روز</b>.</p>
+<div class="box def"><div class="bt">تعریف ۷.۱ · لحظه‌ی پیش‌بینی (prediction moment)</div>
+  نقطه‌ای در زمان که مدل در استقرار واقعی باید جواب بدهد. در این مسئله: <b>همان لحظه‌ای که مسافر درخواست سفر می‌دهد</b>، نه بعد از تمام شدن سفر. هر چیزی که بعد از این لحظه به وجود می‌آید، برای مدل «آینده» است.
+</div>
+<figure class="fig">
+<svg direction="ltr" viewBox="0 0 540 150" width="540" role="img" aria-label="خط زمانی یک سفر">
+ <g font-family="Vazirmatn,Tahoma" font-size="12" text-anchor="middle">
+  <line x1="50" y1="55" x2="490" y2="55" stroke="currentColor" opacity=".3" stroke-width="2"/>
+  <rect x="10" y="8" width="100" height="22" rx="6" fill="#0f6e6a" opacity=".18"/>
+  <text x="60" y="24" fill="currentColor" font-weight="700">PREDICT</text>
+  <circle cx="60" cy="55" r="10" fill="#0f6e6a"/><circle cx="165" cy="55" r="9" fill="#8a8a8a"/><circle cx="270" cy="55" r="9" fill="#8a8a8a"/><circle cx="375" cy="55" r="9" fill="#2456a6"/><circle cx="480" cy="55" r="10" fill="#c0392b"/>
+  <text x="60" y="87" fill="currentColor" font-weight="700">Request</text><text x="165" y="87" fill="currentColor">Driver match</text><text x="270" y="87" fill="currentColor">Pickup</text><text x="375" y="87" fill="currentColor">Trip ends</text><text x="480" y="87" fill="currentColor">Refund</text>
+  <text x="60" y="107" fill="#0f6e6a" font-weight="700">FEATURES</text><text x="165" y="107" fill="currentColor" opacity=".6">LATER</text><text x="270" y="107" fill="currentColor" opacity=".6">LATER</text><text x="375" y="107" fill="#2456a6" font-weight="700">LABEL</text><text x="480" y="107" fill="#c0392b" font-weight="700">LEAK</text>
+  <text x="60" y="130" fill="currentColor" font-size="11">ویژگی مجاز</text><text x="217" y="130" fill="currentColor" font-size="11">هنوز رخ نداده</text><text x="375" y="130" fill="currentColor" font-size="11">برچسب نهایی</text><text x="480" y="130" fill="currentColor" font-size="11">نتیجه‌ی برچسب</text>
+ </g>
+</svg>
+<figcaption>اسلاید ۵: مدل در لحظه‌ی Request پیش‌بینی می‌کند. Driver match و Pickup «بعداً» اتفاق می‌افتند، پایان سفر برچسب را معلوم می‌کند و Refund <b>نتیجه‌ی</b> لغو است، پس نشت است.</figcaption>
+</figure>
+<div class="box thm"><div class="bt">قانون شماره‌ی ۱ (Rule #1)</div>
+  <b>در لحظه‌ی پیش‌بینی، آیا این ویژگی از قبل وجود داشت؟</b> (At prediction time, would this feature already exist?)
+</div>
+<p>اسلاید ۶ این قانون را به یک <b>قرارداد لحظه‌ی پیش‌بینی (prediction-time contract)</b> تبدیل می‌کند: <i>قبل از تقسیم داده</i> دقیقاً تصمیم بگیر مدل اجازه‌ی دیدن چه اطلاعاتی را دارد.</p>
+<div class="vs">
+  <div><h4>✅ موجود در لحظه‌ی درخواست: ورودی‌های مجاز</h4><ul><li>شهر، زمان درخواست</li><li>فاصله‌ی تخمینی، قیمت پیشنهادی (price quote)</li><li>ETA مورد انتظار راننده</li><li>سابقه‌ی <b>واقعی قبلی</b> کاربر (genuine prior user history)</li></ul></div>
+  <div><h4>⛔ فقط بعداً معلوم می‌شود: ورودی‌های ممنوع</h4><ul><li>وضعیت نهایی سفر</li><li>بازپرداخت انجام‌شده (refund issued)</li><li>زمان واقعی پیاده شدن (actual drop-off)</li><li>دلیل لغو (cancellation reason)</li><li>اصلاحیه‌های بعد از نتیجه (post-outcome corrections)</li></ul></div>
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: «در دسترس بودن، نه همبستگی»</div>
+  جمله‌ی پایین اسلاید ۶ را حفظ کن: <b>Availability, not correlation, decides whether a feature is valid.</b> این‌که یک ستون با برچسب همبستگی بالایی دارد، دلیل خوب بودنش نیست. اغلب دقیقاً برعکس: ستونی که «خیلی خوب» پیش‌بینی می‌کند، اول از همه مشکوک به نشت است. معیار فقط این است که آن ستون در لحظه‌ی درخواست وجود داشته یا نه.
+</div>
+<p>برای بقیه‌ی جلسه یک داده‌ی مصنوعی شبیه داده‌ی اسلاید می‌سازیم. هر کاربر یک «عادت لغو» پنهان دارد که مدل مستقیم آن را نمی‌بیند. این همان چیزی است که بعداً باعث نشت هویت می‌شود. کد را در یک نوت‌بوک اجرا کن. بقیه‌ی قطعه‌ها ادامه‌ی همین نوت‌بوک‌اند.</p>
+<pre class="code">import numpy as np, pandas as pd
+
+def make_rides(n=9600, n_users=400, seed=7):
+    """Synthetic ride requests: 180 days, ~12% cancelled, repeated users."""
+    rng = np.random.default_rng(seed)
+    users = pd.DataFrame({
+        "user_id": np.arange(n_users),
+        "home_city": rng.choice(["Tehran", "Mashhad", "Isfahan", "Shiraz", "Tabriz"],
+                                n_users, p=[.45, .2, .13, .12, .1]),
+        "flaky": rng.normal(0, 1.4, n_users),          # hidden habit: NOT a column we may use
+        "signup_days": rng.integers(30, 2000, n_users)})
+    uid = rng.integers(0, n_users, n)
+    t0 = pd.Timestamp("2026-01-01")
+    req = (t0 + pd.to_timedelta(rng.uniform(0, 180*24*3600, n), unit="s")).floor("min")
+    df = pd.DataFrame({"user_id": uid, "request_time": req}).merge(users, on="user_id")
+    df = df.rename(columns={"home_city": "city"})
+    df["hour"] = df.request_time.dt.hour
+    df["distance_km"] = np.round(rng.gamma(2.2, 3.0, n), 1)
+    df["eta_min"] = np.clip(np.round(rng.gamma(3, 2.5, n) + (df.city == "Tehran")*3), 1, 40)
+    df["fare"] = (np.round((25000 + 9000*df.distance_km) * rng.uniform(.9, 1.3, n), -3)).astype(int)
+    z = (-2.9 + 0.12*(df.eta_min - 8) + 1.0*df.flaky
+         + 0.35*df.hour.isin([7, 8, 17, 18, 19]) + 0.03*df.distance_km)
+    df["cancelled"] = (rng.uniform(size=n) &lt; 1/(1 + np.exp(-z))).astype(int)
+    # refund is CREATED BY the cancellation -&gt; a post-outcome column
+    df["refund_issued"] = np.where(df.cancelled == 1, rng.uniform(size=n) &lt; .93,
+                                   rng.uniform(size=n) &lt; .01).astype(int)
+    return df.drop(columns="flaky").sort_values("request_time").reset_index(drop=True)
+
+rides = make_rides()
+print(rides.shape, f"cancel rate = {rides.cancelled.mean():.3f}")
+print(rides.user_id.value_counts().describe()[["mean", "min", "max"]].to_dict())
+print(rides.head(4).to_string())</pre>
+<div class="out">(9600, 10) cancel rate = 0.119
+{'mean': 24.0, 'min': 9.0, 'max': 37.0}
+   user_id        request_time    city  signup_days  hour  distance_km  eta_min    fare  cancelled  refund_issued
+0      879 2026-01-01 00:22:00  Tabriz         1132     0          7.8     12.0  116000          0              0
+1       21 2026-01-01 00:28:00  Tehran          836     0          0.7      8.0   40000          1              1
+2      807 2026-01-01 00:31:00  Tehran         1077     0         12.8      4.0  170000          0              0
+3      111 2026-01-01 00:49:00  Tabriz          524     0          1.8      3.0   53000          0              0</div>
+<p>دو چیز را از همین خروجی ببین: هر کاربر به‌طور میانگین <b>۲۴ سفر</b> دارد (پس سطرها مستقل نیستند) و <code>refund_issued</code> تقریباً کپی <code>cancelled</code> است. هر دو در بخش‌های بعد دردسر می‌سازند.</p>
+</section>
+
+<section id="split">
+<h2><span class="num">۳</span> تقسیم داده یعنی شبیه‌سازی استقرار <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۸ می‌گوید: «<b>تصادفی بودن هدف نیست. تعمیم به آینده هدف است.</b>» تقسیم train/test یک «تمرین لباس‌پوشیده» برای روز استقرار است. پس اول باید بپرسی مدل <b>به چه کسی، کجا و کی</b> سرویس می‌دهد. سه سؤال اسلاید سه طراحی متفاوت می‌خواهند:</p>
+<div class="cards">
+  <div><b>سؤال A · سفر بعدی</b>می‌توانی روی سفرهای قبلی آموزش بدهی، ولی باید روی <b>درخواست‌های بعدی</b> تست کنی. ← تقسیم زمانی.</div>
+  <div><b>سؤال B · کاربر جدید</b>کاربری که هم در train است و هم در test یک <b>میان‌بُر</b> است، نه تعمیم به کاربر جدید. ← تقسیم گروهی.</div>
+  <div><b>سؤال C · شهر جدید</b>ارزیابی با کنار گذاشتن یک شهر (city-held-out) <b>انتقال جغرافیایی</b> را می‌سنجد. ← یک شهر کامل در test.</div>
+</div>
+<div class="box thm"><div class="bt">اصل طراحی</div>The correct split depends on <b>whom, where and when</b> the model will serve. تقسیم درست به این بستگی دارد که مدل به چه کسی، کجا و کی سرویس می‌دهد.</div>
+
+<h3>۳.۱ train، validation، test: سه کار متفاوت</h3>
+<figure class="fig">
+<svg direction="ltr" viewBox="0 0 540 140" width="540" role="img" aria-label="تقسیم زمانی train validate test">
+ <g font-family="Vazirmatn,Tahoma" font-size="12">
+  <text x="10" y="16" fill="currentColor" opacity=".6">EARLIER</text><text x="530" y="16" fill="currentColor" opacity=".6" text-anchor="end">LATER</text>
+  <rect x="10" y="24" width="330" height="48" rx="6" fill="#2456a6" opacity=".85"/>
+  <rect x="346" y="24" width="88" height="48" rx="6" fill="#0f6e6a" opacity=".85"/>
+  <rect x="440" y="24" width="90" height="48" rx="6" fill="#1d2433" opacity=".85"/>
+  <text x="22" y="46" fill="#fff" font-weight="700">TRAIN</text><text x="22" y="63" fill="#fff" font-size="11">Jan–Apr</text>
+  <text x="356" y="46" fill="#fff" font-weight="700">VALIDATE</text><text x="356" y="63" fill="#fff" font-size="11">May</text>
+  <text x="450" y="46" fill="#fff" font-weight="700">TEST</text><text x="450" y="63" fill="#fff" font-size="11">June</text>
+  <g text-anchor="middle" font-size="11.5">
+  <text x="175" y="94" fill="currentColor">یادگیری پارامترها و پیش‌پردازش</text>
+  <text x="390" y="94" fill="currentColor">انتخاب مدل / آستانه</text>
+  <text x="485" y="94" fill="currentColor">یک ممیزی نهایی</text>
+  <text x="270" y="126" fill="currentColor" font-weight="700">The test set is a lockbox. If you tune on it, it becomes validation data.</text>
+  </g>
+ </g>
+</svg>
+<figcaption>اسلاید ۹: مثال زمانی برای پیش‌بینی لغو درخواست‌های آینده.</figcaption>
+</figure>
+<div class="tablewrap"><table>
+<tr><th>بخش</th><th>کارش</th><th>چه چیزی روی آن fit می‌شود</th><th>چند بار نگاهش می‌کنی</th></tr>
+<tr><td><b>Train</b> (ژانویه تا آوریل)</td><td>یادگرفتن پارامترهای مدل <b>و پیش‌پردازش</b> (میانه‌ی imputer، میانگین scaler، دسته‌های encoder)</td><td>همه‌چیز</td><td>هر چند بار که بخواهی</td></tr>
+<tr><td><b>Validation</b> (مه)</td><td>انتخاب مدل، ابرپارامتر، <b>آستانه</b></td><td>هیچ‌چیز (فقط امتیاز می‌گیرد)</td><td>زیاد، و به همین دلیل کم‌کم «خوش‌بین» می‌شود</td></tr>
+<tr><td><b>Test</b> (ژوئن)</td><td>یک ممیزی نهایی و گزارش</td><td>هیچ‌چیز</td><td><b>یک بار</b></td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: مجموعه‌ی test یک صندوق قفل‌شده است</div>
+  اگر با دیدن امتیاز test چیزی را تغییر بدهی (ویژگی، آستانه، مدل)، آن مجموعه دیگر test نیست، <b>validation شده است</b>. عددی که روی آن گزارش می‌دهی دیگر تخمین بی‌طرفی از آینده نیست. سؤال رایج امتحان: «تیم ۷ بار روی test آستانه را عوض کرد. مشکل چیست؟» جواب: test به validation تبدیل شده و برای تخمین بی‌طرف یک دوره‌ی تازه (مثلاً ژوئیه) لازم است.
+</div>
+
+<h3>۳.۲ لایه‌بندی (stratification) کی کمک می‌کند؟</h3>
+<p>با ۱۲٪ لغو، یک تقسیم تصادفی ساده ممکن است سهم لغوها را در train، val و test نابرابر کند. <b>تقسیم لایه‌ای</b> نسبت کلاس‌ها را در هر بخش ثابت نگه می‌دارد. اسلاید ۱۰ این را با سه نوار نشان می‌دهد: در تقسیم ساده، تکه‌ی نارنجی (cancelled) در val بزرگ‌تر از بقیه است. در تقسیم لایه‌ای هر سه یکسان‌اند. زیرعنوان اسلاید هم مهم است: «یک پیش‌فرض مفید برای طبقه‌بندی IID، <b>نه جایگزینی برای اعتبار زمانی</b>».</p>
+<p>چقدر نابرابری؟ اگر test فقط $m$ سطر داشته باشد و نرخ لغو $\pi$ باشد، تعداد لغوهای test تقریباً دوجمله‌ای است با انحراف معیار $\sqrt{m\pi(1-\pi)}$. برای یک پایلوت ۵۰۰‌سفره در تبریز با test صدتایی: $\sqrt{100\times0.12\times0.88}\approx3.25$. یعنی «۱۲ لغو» به‌راحتی ۶ یا ۱۸ می‌شود. شبیه‌سازی:</p>
+<pre class="code">from sklearn.model_selection import train_test_split
+y = np.r_[np.ones(60), np.zeros(440)].astype(int)          # 500 rides, 12% cancelled
+rnd   = [train_test_split(y, test_size=100, random_state=s)[1].sum() for s in range(1000)]
+strat = [train_test_split(y, test_size=100, stratify=y, random_state=s)[1].sum() for s in range(1000)]
+print(f"random    : cancelled in test  min={min(rnd)}  max={max(rnd)}  std={np.std(rnd):.2f}")
+print(f"stratified: cancelled in test  min={min(strat)}  max={max(strat)}  std={np.std(strat):.2f}")</pre>
+<div class="out">random    : cancelled in test  min=3  max=21  std=2.86
+stratified: cancelled in test  min=12  max=12  std=0.00</div>
+<p>انحراف معیار شبیه‌سازی (۲٫۸۶) کمی کمتر از ۳٫۲۵ است، چون نمونه‌گیری بدون جای‌گذاری از جمعیت محدود است (توزیع فوق‌هندسی). در بدترین قرعه فقط <b>۳ لغو</b> در test هست. با ۳ نمونه‌ی مثبت هیچ recall یا PR-AUC معناداری نمی‌شود حساب کرد.</p>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «stratify زدم، پس تقسیمم درست است»</div>
+  stratification فقط <b>نسبت کلاس</b> را درست می‌کند. اگر سفرهای ژوئن در train باشند و سفرهای مارس در test، یا یک کاربر در هر دو طرف باشد، <code>stratify=y</code> هیچ‌کدام را درست نمی‌کند. اول سؤال استقرار (زمان؟ کاربر؟ شهر؟) را جواب بده، بعد اگر لازم بود لایه‌بندی را <b>اضافه</b> کن (مثلاً <code>StratifiedGroupKFold</code>).
+</div>
+</section>
+
+<section id="groups">
+<h2><span class="num">۴</span> کاربر تکراری، شکاف زمانی و انتخاب splitter بر اساس ریسک <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<h3>۴.۱ کاربران تکراری هویت را نشت می‌دهند</h3>
+<p>اسلاید ۱۱: برای استقرار روی <b>کاربران دیده‌نشده</b>، هیچ کاربری نباید هم‌زمان در دو fold باشد. در تقسیم سطری (row-wise) این اتفاق می‌افتد:</p>
+<div class="tablewrap"><table class="data">
+<tr><th>WRONG: row-wise</th><th>ride 1</th><th>ride 2</th><th>ride 3</th><th>ride 4</th><th>ride 5</th></tr>
+<tr><td>user 12</td><td class="tr">TRAIN</td><td class="tr">TRAIN</td><td class="tr">TRAIN</td><td class="te">TEST</td><td class="te">TEST</td></tr>
+<tr><td>user 47</td><td class="te">TEST</td><td class="tr">TRAIN</td><td class="te">TEST</td><td class="tr">TRAIN</td><td class="tr">TRAIN</td></tr>
+<tr><td>user 83</td><td class="tr">TRAIN</td><td class="te">TEST</td><td class="tr">TRAIN</td><td class="tr">TRAIN</td><td class="te">TEST</td></tr>
+</table></div>
+<p><b>RIGHT: GroupKFold</b>: کل <code>user_id</code> را یک‌جا به یک fold بده. چرا مهم است؟ اگر مدل بتواند کاربر را از روی ویژگی‌ها «شناسایی» کند (این‌جا <code>signup_days</code> برای هر کاربر ثابت است و عملاً یک شناسه است)، عادت لغو او را حفظ می‌کند. در validation هم همان کاربر را می‌بیند و جواب را «به یاد می‌آورد». این حافظه است، نه تعمیم.</p>
+<pre class="code">from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold, GroupKFold, cross_val_score
+
+X = rides[["hour", "distance_km", "eta_min", "fare", "signup_days"]]
+y = rides.cancelled
+rf = RandomForestClassifier(n_estimators=300, min_samples_leaf=3, n_jobs=-1, random_state=0)
+for name, cv, g in [("KFold (row-wise)", KFold(5, shuffle=True, random_state=0), None),
+                    ("GroupKFold(user)", GroupKFold(5), rides.user_id)]:
+    s = cross_val_score(rf, X, y, cv=cv, groups=g, scoring="roc_auc")
+    print(f"{name:18s} AUC = {s.mean():.3f} ± {s.std():.3f}")
+
+# leakage check you should always run:
+tr, va = next(KFold(5, shuffle=True, random_state=0).split(X))
+shared = set(rides.user_id.iloc[tr]) &amp; set(rides.user_id.iloc[va])
+print(f"KFold fold 1: {len(shared)} of {rides.user_id.iloc[va].nunique()} validation users also in train")</pre>
+<div class="out">KFold (row-wise)   AUC = 0.640 ± 0.023
+GroupKFold(user)   AUC = 0.598 ± 0.026
+KFold fold 1: 397 of 397 validation users also in train</div>
+<p>همه‌ی ۳۹۷ کاربر validation در train هم بوده‌اند. فاصله‌ی ۰٫۶۴۰ و ۰٫۵۹۸ همان «میان‌بُر هویت» است. در داده‌ی واقعی، با شناسه‌های قوی‌تر (مدل گوشی، آدرس خانه، شماره‌ی کارت) این فاصله خیلی بزرگ‌تر می‌شود. کدام عدد درست است؟ <b>به سؤال استقرار بستگی دارد.</b> برای «کاربر جدید» ۰٫۵۹۸ صادقانه است. برای «سفر بعدی کاربران فعلی» هیچ‌کدام کافی نیست و باید تقسیم زمانی بزنی (بخش ۴.۲). آن‌جا شناختن کاربر مجاز است، به شرط این‌که فقط از <b>گذشته‌ی</b> او بیاید (بخش ۷).</p>
+
+<h3>۴.۲ اعتبارسنجی زمانی به شکاف (gap) نیاز دارد</h3>
+<figure class="fig">
+<svg direction="ltr" viewBox="0 0 540 92" width="540" role="img" aria-label="train gap validate">
+ <g font-family="Vazirmatn,Tahoma" font-size="12" text-anchor="middle">
+  <text x="14" y="14" fill="currentColor" opacity=".6" text-anchor="start">PAST</text><text x="526" y="14" fill="currentColor" opacity=".6" text-anchor="end">FUTURE</text>
+  <rect x="10" y="22" width="270" height="44" rx="6" fill="#2456a6" opacity=".85"/><text x="145" y="49" fill="#fff" font-weight="700">TRAIN</text>
+  <rect x="286" y="22" width="80" height="44" rx="6" fill="#c28a2a" opacity=".3"/><text x="326" y="49" fill="currentColor" font-weight="700">GAP</text>
+  <rect x="372" y="22" width="158" height="44" rx="6" fill="#0f6e6a" opacity=".85"/><text x="451" y="49" fill="#fff" font-weight="700">VALIDATE</text>
+  <text x="270" y="86" fill="currentColor" font-size="11">برچسب تا ۲۴ ساعت بعد نهایی می‌شود ← شکاف ≥ ۲۴ ساعت</text>
+ </g>
+</svg>
+<figcaption>اسلاید ۱۲: یک شکاف زمانی جلوی نشت برچسب‌های آینده به دوره‌ی بعدی را می‌گیرد.</figcaption>
+</figure>
+<p>چرا شکاف؟ فرض کن برچسب لغو تا <b>۲۴ ساعت</b> بعد از درخواست قطعی می‌شود (مثلاً لغو دیرهنگام یا اصلاح وضعیت). روزی که مدل را آموزش می‌دهی و مستقر می‌کنی، برچسب سفرهای ۲۴ ساعت آخر <b>هنوز معلوم نیست</b>. اگر در شبیه‌سازی، train درست تا لحظه‌ی شروع validation ادامه پیدا کند، از برچسب‌هایی استفاده کرده‌ای که در واقعیت نداشتی. اسلاید سه نکته دارد:</p>
+<ul>
+  <li>مثال: برچسب لغو تا ۲۴ ساعت بعد از درخواست نهایی می‌شود.</li>
+  <li>اگر برچسب‌ها با مرز ارزیابی هم‌پوشانی دارند، یک <b>embargo / gap</b> تعریف کن.</li>
+  <li><code>TimeSeriesSplit</code> گزینه‌ی <code>gap</code> دارد، ولی <b>فرض‌هایش باید بررسی شود</b>.</li>
+</ul>
+<p>یکی از آن فرض‌ها این است: <code>gap</code> بر حسب <b>تعداد سطر</b> است، نه ساعت. <code>TimeSeriesSplit</code> فرض می‌کند سطرها به ترتیب زمانی‌اند و فاصله‌ی زمانی بین‌شان کمابیش یکسان است. با حدود ۵۳ سفر در روز، <code>gap=55</code> تقریباً یک روز است:</p>
+<pre class="code">from sklearn.model_selection import TimeSeriesSplit
+print("rides per day ≈", round(len(rides) / 180, 1))
+tss = TimeSeriesSplit(n_splits=4, gap=55)     # gap counts ROWS (~1 day), not hours!
+for i, (tr, va) in enumerate(tss.split(rides)):   # rides must be sorted by request_time
+    t = rides.request_time
+    print(f"fold {i+1}: train ..{t[tr[-1]]:%m-%d %H:%M}  |gap|  val {t[va[0]]:%m-%d %H:%M}..{t[va[-1]]:%m-%d}"
+          f"  (n_train={len(tr)}, n_val={len(va)})")</pre>
+<div class="out">rides per day ≈ 53.3
+fold 1: train ..02-05 14:48  |gap|  val 02-06 16:03..03-14  (n_train=1865, n_val=1920)
+fold 2: train ..03-13 19:12  |gap|  val 03-14 21:03..04-20  (n_train=3785, n_val=1920)
+fold 3: train ..04-19 22:35  |gap|  val 04-20 23:03..05-25  (n_train=5705, n_val=1920)
+fold 4: train ..05-24 11:00  |gap|  val 05-25 13:59..06-29  (n_train=7625, n_val=1920)</div>
+<p>شکاف واقعی بین ۲۴٫۵ تا ۲۷ ساعت است، نه دقیقاً ۲۴. اگر تعداد سفر در روز خیلی نوسان دارد (تعطیلات، شب‌ها)، به‌جای <code>gap</code> سطری، مرزها را مستقیم با تاریخ بساز: <code>train = rides[t &lt; cut - 1 day]</code> و <code>val = rides[(t &gt;= cut) &amp; (t &lt; cut + 30 days)]</code>. پنجره‌ی train هم در <code>TimeSeriesSplit</code> <b>گسترش‌یابنده (expanding)</b> است. اگر رفتار کاربران خیلی عوض می‌شود، <code>max_train_size</code> پنجره را لغزان (rolling) می‌کند.</p>
+
+<h3>۴.۳ splitter را با ریسک انتخاب کن</h3>
+<p>اسلاید ۱۳: قبل از انتخاب splitter یک سؤال مشخص بپرس.</p>
+<div class="tablewrap"><table>
+<tr><th>سؤال</th><th>splitter</th></tr>
+<tr><td>مشاهدات آینده؟ (Future observations)</td><td>holdout زمانی + CV غلتان (chronological holdout + rolling CV)</td></tr>
+<tr><td>آدم‌ها یا دستگاه‌های دیده‌نشده؟</td><td><code>GroupKFold</code> یا گروه‌های کنار گذاشته‌شده</td></tr>
+<tr><td>عدم‌توازن کلاس، سطرهای مستقل؟</td><td><code>StratifiedKFold</code></td></tr>
+<tr><td>هم گروه، هم عدم‌توازن کلاس؟</td><td><code>StratifiedGroupKFold</code></td></tr>
+</table></div>
+<p>جدول کامل‌تر، با «کی استفاده کن» و «ریسک»: <span class="tag book">تکمیلی</span></p>
+<div class="tablewrap"><table>
+<tr><th>splitter</th><th>چه چیزی را «مستقل» فرض می‌کند</th><th>کی استفاده کن</th><th>ریسک / کی نه</th></tr>
+<tr><td><code>KFold(shuffle=True)</code></td><td>سطرها مستقل و هم‌توزیع‌اند (IID)</td><td>خط پایه برای داده‌ی واقعاً IID، کلاس‌های تقریباً متوازن</td><td>با کاربر تکراری نشت هویت، با داده‌ی زمانی نشت آینده. در کلاس نادر ممکن است foldی تقریباً بی‌مثبت بسازد</td></tr>
+<tr><td><code>StratifiedKFold</code></td><td>IID + نسبت کلاس در هر fold ثابت</td><td>طبقه‌بندی نامتوازن روی سطرهای مستقل</td><td>همان ریسک‌های KFold در زمان و گروه. stratify اعتبار زمانی نمی‌سازد</td></tr>
+<tr><td><code>GroupKFold</code></td><td>گروه‌ها (کاربر، راننده، دستگاه) مستقل‌اند</td><td>استقرار روی کاربر/راننده‌ی جدید</td><td>نسبت کلاس بین foldها ممکن است نابرابر شود. اندازه‌ی foldها با اندازه‌ی گروه‌ها جور نیست. زمان را رعایت نمی‌کند</td></tr>
+<tr><td><code>StratifiedGroupKFold</code></td><td>گروه‌ها مستقل + نسبت کلاس تا حد امکان ثابت</td><td>کاربر جدید + لغوِ نادر</td><td>توازن کلاس فقط «تا حد امکان» است. زمان را رعایت نمی‌کند</td></tr>
+<tr><td><code>TimeSeriesSplit(gap=g)</code></td><td>گذشته قبل از آینده. سطرها مرتب و با فاصله‌ی کمابیش یکسان</td><td>پیش‌بینی درخواست‌های آینده</td><td><code>gap</code> سطری است نه زمانی. foldهای اول train کوچکی دارند. کاربر می‌تواند در دو طرف باشد (که برای سؤال A اشکالی ندارد)</td></tr>
+<tr><td><code>LeaveOneGroupOut</code> (گروه = شهر)</td><td>هر شهر یک دامنه‌ی جدا است</td><td>سؤال C: انتقال به شهر جدید</td><td>با ۵ شهر فقط ۵ fold داری و واریانس بالاست. شهرها هم‌اندازه نیستند</td></tr>
+</table></div>
+<div class="box tip"><div class="bt">💡 ترکیب کردن مجاز است</div>
+  سؤال «کاربر جدید در ماه آینده» هم زمان و هم گروه را می‌خواهد: اول دوره‌ی test را از نظر زمانی جدا کن (ژوئن)، بعد از test فقط کاربرانی را نگه دار که <b>قبل از ژوئن</b> هیچ سفری نداشته‌اند. scikit-learn برای این ترکیب splitter آماده ندارد. با چند خط pandas می‌سازی و ایندکس‌ها را به <code>cv=</code> می‌دهی (لیستی از <code>(train_idx, val_idx)</code>).
+</div>
+<p>با ویجت زیر خودت ببین هر splitter چه سطرهایی را کجا می‌فرستد. ده کاربر، هر نقطه یک سفر، مربع یعنی سفر لغوشده.</p>
+<div id="w-split"></div>
+<div class="box note"><div class="bt">با ویجت این کارها را بکن</div>
+  (۱) روی «تصادفی» چند بار «قرعه‌ی دوباره» بزن و درصد لغو test را نگاه کن، بعد «لایه‌ای» را امتحان کن. (۲) «گروهی» را بزن: نشت هویت صفر می‌شود، ولی نشت آینده نه. (۳) «زمانی» را با شکاف ۰ و تأخیر برچسب ۱ روز ببین: هشدار نشت برچسب می‌آید. شکاف را به ۱ روز برسان تا رفع شود. (۴) شکاف خیلی بزرگ هم هزینه دارد: سفرهای خاکستری دور ریخته می‌شوند.
+</div>
+</section>
+
+<section id="cv">
+<h2><span class="num">۵</span> اعتبارسنجی متقاطع: تمرین‌های صادقانه‌ی متعدد <span class="tag core">اسلاید</span></h2>
+<p>یک تقسیم train/validation یک «تمرین» است. <b>اعتبارسنجی متقاطع (cross-validation)</b> همین تمرین را چند بار تکرار می‌کند: هر سطر جدول یک تقسیم تازه است. مدل روی بخش آبی fit و روی بخش سبز امتیازدهی می‌شود. هر سطر داده دقیقاً یک بار در validation حضور دارد.</p>
+<figure class="fig">
+<svg direction="ltr" viewBox="0 0 540 170" width="540" role="img" aria-label="KFold و TimeSeriesSplit">
+ <g font-family="Vazirmatn,Tahoma" font-size="11">
+  <text x="130" y="14" fill="currentColor" text-anchor="middle" font-weight="700">KFold (اسلاید ۱۴)</text>
+  <text x="405" y="14" fill="currentColor" text-anchor="middle" font-weight="700">TimeSeriesSplit + gap</text>
+  <g id="kf">
+   <text x="10" y="37" fill="currentColor">Fold 1</text><text x="10" y="63" fill="currentColor">Fold 2</text><text x="10" y="89" fill="currentColor">Fold 3</text><text x="10" y="115" fill="currentColor">Fold 4</text><text x="10" y="141" fill="currentColor">Fold 5</text>
+  </g>
+  <g>
+   <rect x="52" y="26" width="38" height="16" rx="3" fill="#0f6e6a"/><rect x="94" y="26" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="136" y="26" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="178" y="26" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="220" y="26" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/>
+   <rect x="52" y="52" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="94" y="52" width="38" height="16" rx="3" fill="#0f6e6a"/><rect x="136" y="52" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="178" y="52" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="220" y="52" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/>
+   <rect x="52" y="78" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="94" y="78" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="136" y="78" width="38" height="16" rx="3" fill="#0f6e6a"/><rect x="178" y="78" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="220" y="78" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/>
+   <rect x="52" y="104" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="94" y="104" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="136" y="104" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="178" y="104" width="38" height="16" rx="3" fill="#0f6e6a"/><rect x="220" y="104" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/>
+   <rect x="52" y="130" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="94" y="130" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="136" y="130" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="178" y="130" width="38" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="220" y="130" width="38" height="16" rx="3" fill="#0f6e6a"/>
+  </g>
+  <g>
+   <rect x="290" y="26" width="46" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="338" y="26" width="10" height="16" fill="#c28a2a" opacity=".45"/><rect x="350" y="26" width="46" height="16" rx="3" fill="#0f6e6a"/>
+   <rect x="290" y="52" width="94" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="386" y="52" width="10" height="16" fill="#c28a2a" opacity=".45"/><rect x="398" y="52" width="46" height="16" rx="3" fill="#0f6e6a"/>
+   <rect x="290" y="78" width="142" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="434" y="78" width="10" height="16" fill="#c28a2a" opacity=".45"/><rect x="446" y="78" width="46" height="16" rx="3" fill="#0f6e6a"/>
+   <rect x="290" y="104" width="190" height="16" rx="3" fill="#2456a6" opacity=".8"/><rect x="482" y="104" width="10" height="16" fill="#c28a2a" opacity=".45"/><rect x="494" y="104" width="40" height="16" rx="3" fill="#0f6e6a"/>
+   <text x="290" y="141" fill="currentColor">time →  (train grows; val is always later)</text>
+  </g>
+  <rect x="60" y="154" width="12" height="10" fill="#2456a6" opacity=".8"/><text x="76" y="163" fill="currentColor">FIT TRAIN PART</text>
+  <rect x="180" y="154" width="12" height="10" fill="#0f6e6a"/><text x="196" y="163" fill="currentColor">SCORE VALIDATION</text>
+  <rect x="330" y="154" width="12" height="10" fill="#c28a2a" opacity=".45"/><text x="346" y="163" fill="currentColor">GAP (دور ریخته)</text>
+ </g>
+</svg>
+<figcaption>چپ: KFold اسلاید ۱۴. هر fold یک بار validation است. راست: نسخه‌ی زمانی. validation هیچ‌وقت قبل از train نیست و شکاف بینشان است.</figcaption>
+</figure>
+
+<h3>۵.۱ CV معناهای متفاوتی دارد</h3>
+<p>اسلاید ۱۵: «<b>validator تعریف می‌کند چه چیزی یک نمونه‌ی مستقل حساب می‌شود.</b>» با انتخاب splitter در واقع داری ادعا می‌کنی واحد استقلال چیست:</p>
+<div class="tablewrap"><table>
+<tr><th>Validator</th><th>فرض استقلال</th><th>کاربرد</th></tr>
+<tr><td><code>KFold</code></td><td>سطرهای مستقل و جابه‌جاپذیر (exchangeable)</td><td>خط پایه‌ی عمومی IID</td></tr>
+<tr><td><code>StratifiedKFold</code></td><td>نسبت کلاس مشابه</td><td>برچسب‌های نامتوازن IID</td></tr>
+<tr><td><code>GroupKFold</code></td><td>گروه‌های مشترک‌نشده</td><td>کاربر / راننده‌ی دیده‌نشده</td></tr>
+<tr><td><code>TimeSeriesSplit</code></td><td>گذشته قبل از آینده</td><td>نمونه‌های زمانی مرتب و قابل‌مقایسه</td></tr>
+</table></div>
+
+<h3>۵.۲ انتخاب مدل بیرون از مجموعه‌ی test زندگی می‌کند</h3>
+<p>اسلاید ۱۶: «امتیاز test یک <b>تخمین نهایی</b> است، نه یک ابزار طراحی». داده به سه منطقه تقسیم می‌شود:</p>
+<div class="cards">
+  <div><b>Development data · Train folds &amp; CV</b>انتخاب ویژگی‌ها، تعداد مؤلفه‌ی PCA، وزن کلاس‌ها، ابرپارامترها.</div>
+  <div><b>Validation period · کالیبراسیون و تصمیم</b>مقایسه‌ی آستانه‌ها یا هزینه‌های کسب‌وکار روی validation کنار گذاشته‌شده.</div>
+  <div><b>Future test period · ارزیابی صندوق قفل</b>انتشار امتیاز نهایی، عدم‌قطعیت، نتایج بخش‌به‌بخش (slices) و محدودیت‌های شناخته‌شده.</div>
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+  «<b>If you repeatedly inspect test scores to choose settings, you are training on the test.</b>» اگر بارها امتیاز test را نگاه کنی تا تنظیمات را انتخاب کنی، داری روی test آموزش می‌دهی، فقط با یک واسطه‌ی انسانی.
+</div>
+
+<h3>۵.۳ چرا بهترین امتیاز grid search خوش‌بینانه است؟ CV تودرتو <span class="tag book">تکمیلی</span></h3>
+<p>وقتی ۴۰ تنظیم ابرپارامتر را با CV امتحان می‌کنی و <b>بیشینه</b> را گزارش می‌کنی، آن بیشینه دو چیز را با هم دارد: کیفیت واقعی بهترین تنظیم، به‌اضافه‌ی <b>شانس</b>. هر امتیاز CV یک تخمین نویزی است. ماکزیمم ۴۰ تخمین نویزی به‌طور سیستماتیک از مقدار واقعی بالاتر است. اسمش «نفرین برنده» (winner's curse) یا سوگیری انتخاب است:</p>
+$$\mathbb{E}\Big[\max_{j}\hat s_j\Big]\;\ge\;\max_j\,\mathbb{E}[\hat s_j].$$
+<p><b>CV تودرتو (nested CV)</b> راه‌حل است: یک حلقه‌ی <b>درونی</b> ابرپارامتر را انتخاب می‌کند و یک حلقه‌ی <b>بیرونی</b> کل فرایند «تنظیم + آموزش» را روی داده‌ای ارزیابی می‌کند که تنظیم آن را ندیده. در sklearn کافی است خود <code>GridSearchCV</code> را به‌عنوان estimator به <code>cross_val_score</code> بدهی. روی ۱۰ دیتاست نویز خالص (دقت واقعی = ۰٫۵۰):</p>
+<pre class="code">from sklearn.neighbors import KNeighborsClassifier
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
+
+grid = {"n_neighbors": list(range(1, 40, 2)), "weights": ["uniform", "distance"]}  # 40 settings
+flat, nested = [], []
+for seed in range(10):                                   # 10 pure-noise datasets
+    rng = np.random.default_rng(seed)
+    X, y = rng.normal(size=(150, 10)), rng.integers(0, 2, 150)   # true accuracy = 0.50
+    inner = StratifiedKFold(5, shuffle=True, random_state=1)
+    outer = StratifiedKFold(5, shuffle=True, random_state=2)
+    gs = GridSearchCV(KNeighborsClassifier(), grid, cv=inner)
+    flat.append(gs.fit(X, y).best_score_)                       # tune &amp; report on same folds
+    nested.append(cross_val_score(gs, X, y, cv=outer).mean())   # tuning repeated inside each outer fold
+print(f"non-nested best_score_ : {np.mean(flat):.3f}")
+print(f"nested CV estimate     : {np.mean(nested):.3f}")</pre>
+<div class="out">non-nested best_score_ : 0.568
+nested CV estimate     : 0.515</div>
+<p>روی دیتاست‌های تکی ممکن است ترتیب برعکس شود (نویز است)، ولی به‌طور میانگین <code>best_score_</code> حدود ۵ واحد درصد خوش‌بین است و تخمین تودرتو به ۰٫۵ نزدیک است. هزینه‌اش: $5\times(40\times5+1)=1005$ بار fit. در داده‌ی زمانی معمولاً به‌جای nested CV همان ساختار اسلاید ۱۶ کافی است: CV روی دوره‌ی development و یک <b>دوره‌ی validation جدا</b>.</p>
+
+<h3>۵.۴ عدم‌قطعیت عملکرد را گزارش کن</h3>
+<p>اسلاید ۱۷: «<b>یک fold خوش‌شانس سیستم قوی را ثابت نمی‌کند.</b>» عددهای اسلاید (Average Precision در ۵ fold):</p>
+<figure class="fig">
+<svg direction="ltr" viewBox="0 0 540 150" width="540" role="img" aria-label="AP پنج fold">
+ <g font-family="Vazirmatn,Tahoma" font-size="12">
+  <text x="10" y="24" fill="currentColor">Fold 1</text><rect x="60" y="12" width="223" height="16" rx="4" fill="#2456a6" opacity=".85"/><text x="290" y="25" fill="currentColor">0.31</text>
+  <text x="10" y="48" fill="currentColor">Fold 2</text><rect x="60" y="36" width="259" height="16" rx="4" fill="#2456a6" opacity=".85"/><text x="326" y="49" fill="currentColor">0.36</text>
+  <text x="10" y="72" fill="currentColor">Fold 3</text><rect x="60" y="60" width="180" height="16" rx="4" fill="#2456a6" opacity=".85"/><text x="247" y="73" fill="currentColor">0.25</text>
+  <text x="10" y="96" fill="currentColor">Fold 4</text><rect x="60" y="84" width="310" height="16" rx="4" fill="#2456a6" opacity=".85"/><text x="377" y="97" fill="currentColor">0.43</text>
+  <text x="10" y="120" fill="currentColor">Fold 5</text><rect x="60" y="108" width="202" height="16" rx="4" fill="#2456a6" opacity=".85"/><text x="269" y="121" fill="currentColor">0.28</text>
+  <rect x="420" y="20" width="110" height="96" rx="8" fill="#2456a6" opacity=".12"/>
+  <text x="475" y="44" fill="currentColor" text-anchor="middle">AP</text>
+  <text x="475" y="74" fill="currentColor" text-anchor="middle" font-size="22" font-weight="700">0.33</text>
+  <text x="475" y="98" fill="currentColor" text-anchor="middle" font-size="11">range 0.25–0.43</text>
+  <text x="270" y="145" fill="currentColor" text-anchor="middle" font-size="11">Report each fold, its time span and minority-class count — not mean alone.</text>
+ </g>
+</svg>
+<figcaption>اسلاید ۱۷: میانگین ۰٫۳۳ است، ولی foldها از ۰٫۲۵ تا ۰٫۴۳ پخش‌اند.</figcaption>
+</figure>
+<div class="box thm"><div class="bt">گزارش میانگین ± انحراف معیار <span class="tag book">تکمیلی</span></div>
+  برای $K$ امتیاز fold یعنی $s_1,\dots,s_K$:
+  $$\bar s=\frac1K\sum_{k=1}^K s_k,\qquad \mathrm{sd}=\sqrt{\frac{1}{K-1}\sum_{k=1}^K (s_k-\bar s)^2},\qquad \mathrm{SE}\approx\frac{\mathrm{sd}}{\sqrt K}.$$
+  عددهای اسلاید: $\bar s=1.63/5=0.326$، $\mathrm{sd}\approx0.071$ و $\mathrm{SE}\approx0.032$. گزارش درست: «AP = ۰٫۳۳ ± ۰٫۰۷ (انحراف معیار بین ۵ fold، بازه‌ی ۰٫۲۵ تا ۰٫۴۳)» به‌اضافه‌ی جدول هر fold.<br>
+  <b>احتیاط:</b> foldهای CV مستقل نیستند (trainهایشان هم‌پوشانی دارد)، پس $\mathrm{SE}$ بالا عدم‌قطعیت را <b>کمتر از واقع</b> نشان می‌دهد. sd بین foldها را به‌عنوان «پراکندگی» گزارش کن، نه یک بازه‌ی اطمینان دقیق.
+</div>
+<p>چرا یک تقسیم تکی کافی نیست؟ همان مدل ساده (چهار ویژگی لحظه‌ی درخواست) را با ۳۰ تقسیم تصادفی ۸۰/۲۰ ارزیابی کردیم. فقط <code>random_state</code> فرق داشت:</p>
+<pre class="code">from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import average_precision_score
+
+cols = ["eta_min", "distance_km", "fare", "hour"]
+aps = []
+for seed in range(30):
+    Xtr, Xte, ytr, yte = train_test_split(rides[cols], rides.cancelled, test_size=0.2,
+                                          stratify=rides.cancelled, random_state=seed)
+    m = make_pipeline(SimpleImputer(strategy="median"), StandardScaler(),
+                      LogisticRegression(max_iter=1000)).fit(Xtr, ytr)
+    aps.append(average_precision_score(yte, m.predict_proba(Xte)[:, 1]))
+aps = np.array(aps)
+print(f"30 random 80/20 splits: AP min={aps.min():.3f}  max={aps.max():.3f}  "
+      f"mean={aps.mean():.3f}  std={aps.std(ddof=1):.3f}")</pre>
+<div class="out">30 random 80/20 splits: AP min=0.161  max=0.265  mean=0.217  std=0.022</div>
+<p>یک مدل، یک داده، و AP از ۰٫۱۶ تا ۰٫۲۷ فقط با عوض کردن seed. اگر دو مدل را هر کدام با یک تقسیم تکی مقایسه کنی، فرق ۰٫۰۳ ممکن است کاملاً تصادفی باشد. برای مقایسه‌ی دو مدل، آن‌ها را روی <b>همان foldها</b> اجرا کن و <b>تفاوت جفتی</b> را در هر fold ببین (تمرین ۳). این تمرین فقط برای نشان دادن نویز است. برای مسئله‌ی لغو، تقسیم درست همان تقسیم زمانی است.</p>
+</section>
+
+<section id="leakage">
+<h2><span class="num">۶</span> نشت: سه مسیر به اطمینان کاذب <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>اسلاید ۱۸: «<b>یک امتیاز بالا می‌تواند یک باگ نرم‌افزاری در لباس مبدل باشد.</b>» <b>نشت داده (data leakage)</b> یعنی در آموزش یا ارزیابی، اطلاعاتی به مدل برسد که در لحظه‌ی پیش‌بینی واقعی در دسترس نیست. نتیجه‌اش امتیازی است که در استقرار تکرار نمی‌شود. اسلاید سه مسیر را نام می‌برد:</p>
+<div class="cards">
+  <div><b>۱. پس از نتیجه · سفر در زمان (Time travel)</b>refund issued، نتیجه‌ی نهایی، یا ستونی که فقط بعد از لغو پر می‌شود.</div>
+  <div><b>۲. میان‌بُر هویت · حفظ کردن (Memorization)</b>همان کاربر، رویداد تکراری، یا نماینده‌های شناسایی‌کننده‌ی قوی که بین splitها نشت می‌کنند.</div>
+  <div><b>۳. پیش‌پردازش · fit سراسری (Global fitting)</b>imputation، PCA، encoding، انتخاب ویژگی یا نمونه‌گیری مجدد که <b>قبل از CV</b> روی کل داده fit شده‌اند.</div>
+</div>
+<div class="box thm"><div class="bt">جمع‌بندی اسلاید</div>False confidence can come from <b>feature values</b>, <b>row relations</b>, or the <b>workflow</b>. اطمینان کاذب از مقدار ویژگی‌ها، از رابطه‌ی بین سطرها، یا از روند کار می‌آید.</div>
+
+<h3>۶.۱ یک طبقه‌بندی دیگر که در کتاب‌ها می‌بینی <span class="tag book">تکمیلی</span></h3>
+<div class="tablewrap"><table>
+<tr><th>نوع نشت (اصطلاح رایج)</th><th>تعریف</th><th>مثال در مورد لغو</th><th>مسیر اسلاید</th><th>درمان</th></tr>
+<tr><td><b>نشت هدف (target leakage)</b></td><td>ویژگی‌ای که از خود برچسب یا از نتیجه‌ی آن ساخته شده</td><td><code>refund_issued</code>، <code>cancel_reason</code>، نرخ لغو کاربر با احتساب همین سفر</td><td>۱ (پس از نتیجه)</td><td>قرارداد لحظه‌ی پیش‌بینی، ممیزی ستون‌به‌ستون</td></tr>
+<tr><td><b>آلودگی train–test (train-test contamination)</b></td><td>اطلاعات سطرهای test از طریق پیش‌پردازش یا سطرهای تکراری وارد train شود</td><td>scaler یا target encoder روی کل داده. سفر تکراری در دو طرف</td><td>۲ و ۳</td><td><code>Pipeline</code> داخل CV، حذف تکراری‌ها قبل از split، <code>GroupKFold</code></td></tr>
+<tr><td><b>نشت زمانی (temporal leakage)</b></td><td>آموزش یا ویژگی‌سازی با اطلاعاتی از آینده‌ی لحظه‌ی پیش‌بینی</td><td>split تصادفی روی داده‌ی زمانی. «لغوهای ۳۰ روز اخیر» بدون محدود کردن به گذشته. برچسب‌های هنوز نهایی‌نشده</td><td>۱ و ۳</td><td>split زمانی + gap، ویژگی point-in-time (بخش ۷)</td></tr>
+</table></div>
+<p>این سه دسته هم‌پوشانی دارند. مثلاً «نرخ لغو کل کاربر» هم نشت هدف است (برچسب خود سطر در آن هست) و هم نشت زمانی (لغوهای آینده هم در آن هست).</p>
+
+<h3>۶.۲ تله‌ی ستون refund: یک تله‌ی بی‌نقص</h3>
+<p>اسلاید ۱۹ این جدول را نشان می‌دهد. نگاه کن ستون «Refund issued» چقدر «عالی» است:</p>
+<div class="tablewrap"><table class="data">
+<tr><th>Request time</th><th>ETA</th><th>Quoted fare</th><th>Refund issued</th><th>Cancelled</th></tr>
+<tr><td>08:02</td><td>9 min</td><td>96,000</td><td class="bad">YES</td><td>YES</td></tr>
+<tr><td>08:07</td><td>15 min</td><td>173,000</td><td class="bad">NO</td><td>NO</td></tr>
+<tr><td>08:11</td><td>6 min</td><td>62,000</td><td class="bad">YES</td><td>YES</td></tr>
+<tr><td>08:18</td><td>11 min</td><td>124,000</td><td class="bad">NO</td><td>NO</td></tr>
+</table></div>
+<p>(کرایه‌ها به تومان.) ستون refund <b>بعد از</b> تصمیم لغو تولید می‌شود. «<b>یک پیش‌بین نمی‌تواند از واقعیت‌هایی استفاده کند که خود رویداد مورد پیش‌بینی ساخته است.</b>» در داده‌ی ما:</p>
+<pre class="code">from sklearn.model_selection import StratifiedKFold
+cv = StratifiedKFold(5, shuffle=True, random_state=0)
+for cols in [["eta_min", "distance_km", "fare", "hour"],
+             ["eta_min", "distance_km", "fare", "hour", "refund_issued"]]:
+    m = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000))
+    s = cross_val_score(m, rides[cols], rides.cancelled, cv=cv, scoring="roc_auc")
+    print(f"{'+ refund_issued' if 'refund_issued' in cols else 'request-time only':18s} AUC = {s.mean():.3f}")</pre>
+<div class="out">request-time only  AUC = 0.645
++ refund_issued    AUC = 0.960</div>
+<p>همان ۰٫۹۶ داستان اول جلسه! در استقرار، لحظه‌ی درخواست، <code>refund_issued</code> همیشه صفر است (هنوز هیچ refundی صادر نشده)، پس مدل عملاً به یک مدل خراب تبدیل می‌شود. علامت هشدار: <b>یک ویژگی تکی که تقریباً همه‌ی کار را انجام می‌دهد</b>. اگر importance یک ستون از بقیه خیلی جلوتر است، اول برو ببین آن ستون <i>کی</i> پر می‌شود.</p>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «ستون را نگه داریم، چون در دیتابیس هست»</div>
+  وجود یک ستون در جدول نهایی هیچ چیزی درباره‌ی <b>زمان پر شدنش</b> نمی‌گوید. جدول‌های تحلیلی معمولاً «snapshot امروز» هستند و همه‌ی اصلاحیه‌ها را دارند. برای هر ستون باید بپرسی: «این مقدار <b>در لحظه‌ی درخواست</b> چه بود؟» اگر سیستم فقط مقدار فعلی را نگه می‌دارد و تاریخچه ندارد (مثل امتیاز فعلی راننده)، احتمالاً نشت دارد.
+</div>
+
+<h3>۶.۳ target encoding فقط out-of-fold <span class="tag book">تکمیلی</span></h3>
+<p>در جلسه‌ی ۳ دیدیم <b>کدگذاری هدف (target encoding)</b> هر دسته را با میانگین برچسب آن دسته جایگزین می‌کند. اگر این میانگین را روی <b>کل داده</b> حساب کنی، برچسب هر سطر در مقدار ویژگی خودش حضور دارد. وقتی دسته‌ها کوچک‌اند، این خیلی خطرناک است. آزمایش: یک ستون <code>pickup_zone</code> با ۳۰۰۰ منطقه‌ی کاملاً تصادفی (حدود ۳ سفر در هر منطقه) که <b>هیچ ربطی</b> به لغو ندارد:</p>
+<pre class="code">from sklearn.preprocessing import TargetEncoder
+rng = np.random.default_rng(1)
+rides["pickup_zone"] = rng.integers(0, 3000, len(rides)).astype(str)   # pure noise, ~3 rides/zone
+y = rides.cancelled
+
+# WRONG: encode with zone means computed on ALL rows (including each row's own label)
+rides["zone_te_wrong"] = rides.groupby("pickup_zone").cancelled.transform("mean")
+s1 = cross_val_score(LogisticRegression(), rides[["zone_te_wrong"]], y, cv=cv, scoring="roc_auc")
+
+# RIGHT: TargetEncoder inside the pipeline (cross-fitting inside each training fold)
+pipe = make_pipeline(TargetEncoder(target_type="binary"), LogisticRegression())
+s2 = cross_val_score(pipe, rides[["pickup_zone"]], y, cv=cv, scoring="roc_auc")
+print(f"WRONG  global mean-encoding : AUC = {s1.mean():.3f}")
+print(f"RIGHT  out-of-fold encoding : AUC = {s2.mean():.3f}")</pre>
+<div class="out">WRONG  global mean-encoding : AUC = 0.900
+RIGHT  out-of-fold encoding : AUC = 0.486</div>
+<p>یک ستون نویز خالص AUC = ۰٫۹۰ گرفت! منطقه‌ای که فقط یک سفر لغوشده دارد کد «۱٫۰» می‌گیرد و مدل جواب را از روی خود جواب می‌خواند. <code>TargetEncoder</code> در sklearn دو لایه محافظت دارد: (۱) داخل pipeline فقط روی train fold یاد می‌گیرد، (۲) در <code>fit_transform</code> خودش <b>cross-fitting</b> می‌کند. یعنی کد هر سطر train از foldهای <i>دیگرِ</i> train می‌آید (out-of-fold) و میانگین‌ها به سمت میانگین کل کوچک (shrink) می‌شوند. اگر دستی پیاده‌سازی می‌کنی، باید همین دو کار را بکنی.</p>
+</section>
+
+<section id="pit">
+<h2><span class="num">۷</span> تجمیع‌های تاریخی باید point-in-time درست باشند <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>اسلاید ۲۴: «<b>برای هر سفر، «گذشته‌ی» کاربر واقعاً باید قبل از همین درخواست تمام شود.</b>» ویژگی «نرخ لغو قبلی کاربر» مجاز است (در قرارداد اسلاید ۶ هم «سابقه‌ی واقعی قبلی کاربر» آمده بود)، ولی فقط اگر <b>به‌ازای هر درخواست</b> و فقط از روی گذشته حساب شود.</p>
+<figure class="fig">
+<svg direction="ltr" viewBox="0 0 540 120" width="540" role="img" aria-label="خط زمانی point-in-time">
+ <g font-family="Vazirmatn,Tahoma" font-size="12" text-anchor="middle">
+  <line x1="80" y1="40" x2="460" y2="40" stroke="currentColor" opacity=".3" stroke-width="2"/>
+  <text x="80" y="18" fill="#c0392b" font-weight="700">JAN 04</text><text x="270" y="18" fill="#0f6e6a" font-weight="700">JAN 10</text><text x="460" y="18" fill="#c28a2a" font-weight="700">JAN 17</text>
+  <circle cx="80" cy="40" r="10" fill="#c0392b"/><circle cx="270" cy="40" r="10" fill="#0f6e6a"/><circle cx="460" cy="40" r="10" fill="#c28a2a"/>
+  <text x="80" y="70" fill="currentColor" font-weight="700">User cancels</text><text x="270" y="70" fill="currentColor" font-weight="700">Next request</text><text x="460" y="70" fill="currentColor" font-weight="700">Future event</text>
+  <text x="80" y="90" fill="currentColor" font-size="11">بعداً به «تاریخچه» تبدیل می‌شود</text><text x="270" y="90" fill="currentColor" font-size="11">مجاز: لغوهای قبلیِ معلوم</text><text x="460" y="90" fill="currentColor" font-size="11">نباید وارد ویژگی‌های ۱۰ ژانویه شود</text>
+  <text x="270" y="114" fill="currentColor" font-size="11">A “last 30 days” feature must be computed AS OF each request time.</text>
+ </g>
+</svg>
+<figcaption>اسلاید ۲۴: ویژگی «۳۰ روز اخیر» باید «از دید» (as of) زمان هر درخواست حساب شود.</figcaption>
+</figure>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: <code>groupby().transform("mean")</code> روی کل جدول</div>
+  <code>rides.groupby("user_id").cancelled.transform("mean")</code> برای هر سفر، میانگین <b>همه‌ی</b> سفرهای آن کاربر را می‌دهد: گذشته، <b>خود همین سفر</b> و <b>آینده</b>. یعنی هم نشت هدف دارد و هم نشت زمانی. <code>rolling</code> بدون <code>closed="left"</code> هم خود سطر را شامل می‌شود.
+</div>
+<h3>۷.۱ پیاده‌سازی با <code>merge_asof</code> <span class="tag book">تکمیلی</span></h3>
+<p>دو ظرافت داریم: (۱) فقط سفرهایی که <b>برچسبشان قبل از درخواست فعلی نهایی شده</b> حساب شوند. برچسب ۲۴ ساعت بعد نهایی می‌شود، پس «زمان دانستن» هر برچسب <code>request_time + 24h</code> است. (۲) مرز باید <b>اکید</b> باشد: برچسبی که دقیقاً در همان لحظه نهایی می‌شود هم نباید وارد شود. <code>pd.merge_asof</code> برای هر سطر چپ، آخرین سطر راست با کلید کوچک‌تر را پیدا می‌کند (<code>direction="backward"</code>). <code>by="user_id"</code> جست‌وجو را به همان کاربر محدود می‌کند و <code>allow_exact_matches=False</code> مرز را اکید می‌کند.</p>
+<pre class="code">toy = pd.DataFrame({
+    "ride_id": [1, 2, 3, 4, 5, 6, 7],
+    "user_id": [12, 12, 12, 12, 47, 47, 47],
+    "request_time": pd.to_datetime(["2026-01-04 08:00", "2026-01-04 20:00", "2026-01-10 09:00",
+                                    "2026-01-17 18:00", "2026-01-05 07:30", "2026-01-06 07:30",
+                                    "2026-01-09 08:00"]),
+    "cancelled": [1, 0, 0, 1, 1, 0, 0]})
+LABEL_DELAY = pd.Timedelta("24h")            # label is final 24h after request
+
+def add_past_cancel_rate(df):
+    hist = df[["user_id", "request_time", "cancelled"]].copy()
+    hist["label_time"] = hist.request_time + LABEL_DELAY     # when the label becomes KNOWN
+    hist = hist.sort_values("label_time")
+    g = hist.groupby("user_id")
+    hist["n_known"] = g.cumcount() + 1                       # labels known up to this label_time
+    hist["n_cancel_known"] = g.cancelled.cumsum()
+    out = pd.merge_asof(
+        df.sort_values("request_time"),
+        hist[["user_id", "label_time", "n_known", "n_cancel_known"]],
+        left_on="request_time", right_on="label_time", by="user_id",
+        direction="backward", allow_exact_matches=False)   # strictly BEFORE the request
+    out[["n_known", "n_cancel_known"]] = out[["n_known", "n_cancel_known"]].fillna(0).astype(int)
+    out["past_cancel_rate"] = out.n_cancel_known / out.n_known.replace(0, np.nan)
+    return out.drop(columns="label_time")
+
+res = add_past_cancel_rate(toy).sort_values("ride_id")
+res["WRONG_global_rate"] = toy.groupby("user_id").cancelled.transform("mean").values
+print(res.to_string(index=False))</pre>
+<div class="out"> ride_id  user_id        request_time  cancelled  n_known  n_cancel_known  past_cancel_rate  WRONG_global_rate
+       1       12 2026-01-04 08:00:00          1        0               0               NaN           0.500000
+       2       12 2026-01-04 20:00:00          0        0               0               NaN           0.500000
+       3       12 2026-01-10 09:00:00          0        2               1          0.500000           0.500000
+       4       12 2026-01-17 18:00:00          1        3               1          0.333333           0.500000
+       5       47 2026-01-05 07:30:00          1        0               0               NaN           0.333333
+       6       47 2026-01-06 07:30:00          0        0               0               NaN           0.333333
+       7       47 2026-01-09 08:00:00          0        2               1          0.500000           0.333333</div>
+<p>سطر به سطر بخوان، چون هر سطر یک درس دارد:</p>
+<ul>
+  <li><b>سفر ۲</b> (۴ ژانویه ساعت ۲۰): کاربر ۱۲ صبح همان روز لغو کرده، ولی برچسب آن تا ۵ ژانویه ساعت ۸ نهایی نمی‌شود. پس <code>n_known = 0</code>. این همان «شکاف برچسب» اسلاید ۱۲ است، این بار در سطح ویژگی.</li>
+  <li><b>سفر ۳</b> (۱۰ ژانویه): دو برچسب قبلی معلوم است (۱ لغو) ← ۰٫۵. این همان سناریوی اسلاید ۲۴ است.</li>
+  <li><b>سفر ۶</b> (۶ ژانویه ساعت ۷:۳۰): برچسب سفر ۵ <b>دقیقاً</b> در همین لحظه نهایی می‌شود. با <code>allow_exact_matches=False</code> وارد نمی‌شود. مرز اکید یعنی «قبل از»، نه «تا».</li>
+  <li><b>ستون WRONG</b>: سفر ۱ مقدار ۰٫۵ دارد، در حالی که کاربر هنوز هیچ سابقه‌ای ندارد. این عدد از خود سفر ۱ و از لغو ۱۷ ژانویه ساخته شده است.</li>
+  <li>اولین سفر هر کاربر <code>NaN</code> دارد. این «کاربر بی‌سابقه» است. با <code>SimpleImputer</code> <b>داخل pipeline</b> پر کن و <code>n_known</code> را هم به‌عنوان ویژگی نگه دار تا مدل بداند نرخ چقدر قابل‌اعتماد است.</li>
+</ul>
+<p>حالا روی کل داده: train = ژانویه تا آوریل، test = ژوئن. سه نسخه را مقایسه کن:</p>
+<pre class="code">from sklearn.metrics import roc_auc_score
+rides = add_past_cancel_rate(make_rides())
+rides["WRONG_user_rate"] = rides.groupby("user_id").cancelled.transform("mean")
+train = rides[rides.request_time &lt;  "2026-05-01"]
+test  = rides[rides.request_time &gt;= "2026-06-01"]
+base = ["eta_min", "distance_km", "fare", "hour"]
+for name, cols in [("base", base), ("base + WRONG_user_rate", base + ["WRONG_user_rate"]),
+                   ("base + past_cancel_rate (PIT)", base + ["past_cancel_rate", "n_known"])]:
+    m = make_pipeline(SimpleImputer(strategy="median"), StandardScaler(), LogisticRegression(max_iter=1000))
+    m.fit(train[cols], train.cancelled)
+    p = m.predict_proba(test[cols])[:, 1]
+    print(f"{name:32s} test AUC = {roc_auc_score(test.cancelled, p):.3f}   "
+          f"AP = {average_precision_score(test.cancelled, p):.3f}")</pre>
+<div class="out">base                             test AUC = 0.660   AP = 0.222
+base + WRONG_user_rate           test AUC = 0.860   AP = 0.501
+base + past_cancel_rate (PIT)    test AUC = 0.795   AP = 0.415</div>
+<p>دو درس از این سه خط: (۱) سابقه‌ی کاربر <b>واقعاً</b> ارزش دارد (AP از ۰٫۲۲ به ۰٫۴۲). ویژگی خوب را دور نریز، درستش بساز. (۲) نسخه‌ی غلط ۰٫۰۹ AP بیشتر «قول» می‌دهد که در استقرار هرگز به دست نمی‌آید. توجه کن که split این‌جا کاملاً زمانی است، ولی <b>ویژگی</b> خودش نشت دارد. split درست، ویژگی غلط را نجات نمی‌دهد.</p>
+<div class="box note"><div class="bt">در دنیای واقعی: feature store و جدول‌های «as of»</div>
+  در شرکت‌های بزرگ، همین مسئله را «point-in-time join» می‌نامند و feature storeها (مثل Feast) آن را خودکار انجام می‌دهند. ولی منطق همین است: هر مقدار ویژگی یک <b>زمان اعتبار</b> دارد و join باید با «آخرین مقدار معتبر قبل از لحظه‌ی پیش‌بینی» انجام شود. اگر جدولی فقط مقدار فعلی را نگه می‌دارد (بدون تاریخچه)، نمی‌توانی از آن ویژگی point-in-time بسازی.
+</div>
+</section>
+
+<section id="snooping">
+<h2><span class="num">۸</span> تجسس در داده و چک‌لیست تیم قرمز <span class="tag core">اسلاید</span> <span class="tag exam">امتحانی</span></h2>
+<p>اسلاید ۲۰: «<b>تجسس در داده (data snooping) می‌تواند از نویز سیگنال بسازد.</b>» انتخاب «بهترین» ویژگی‌ها روی کل داده، validation را آلوده می‌کند.</p>
+<div class="vs">
+  <div><h4>❌ WRONG</h4><ol><li>ویژگی‌ها را با <b>همه‌ی سطرها</b> انتخاب کن</li><li>مدل را cross-validate کن</li><li>امتیاز خوش‌بینانه گزارش کن</li></ol></div>
+  <div><h4>✅ RIGHT</h4><ol><li>داده را به foldهای CV تقسیم کن</li><li>انتخاب ویژگی را <b>داخل train fold</b> fit کن</li><li>فقط روی validation دست‌نخورده امتیاز بگیر</li></ol></div>
+</div>
+<div class="box thm"><div class="bt">پیام پایین اسلاید</div>Even “unsupervised” transformations should be fit on training data only. حتی تبدیل‌های «بدون ناظر» (مثل PCA، scaler، imputer) هم فقط باید روی داده‌ی train fit شوند.</div>
+<p><b>چرا از نویز سیگنال ساخته می‌شود؟</b> با $n$ نمونه و $p$ ویژگی نویز، همبستگی هر ویژگی با برچسب تصادفی تقریباً $\mathcal N(0,1/n)$ است. بزرگ‌ترین همبستگی از بین $p$ تا حدوداً $\sqrt{2\ln p/n}$ است. با $n=100$ و $p=5000$ می‌شود $\sqrt{2\times8.52/100}\approx0.41$. اگر ۲۰ ویژگی برتر را روی کل داده انتخاب کنی، ویژگی‌هایی را برداشته‌ای که <b>اتفاقاً روی همین ۱۰۰ سطر</b> (از جمله سطرهایی که بعداً validation می‌شوند) با برچسب هم‌خوان‌اند. این آزمایش کلاسیک را خودمان اجرا کردیم:</p>
+<pre class="code">from sklearn.feature_selection import SelectKBest, f_classif
+
+rng = np.random.default_rng(0)
+n, p, k = 100, 5000, 20
+X = rng.normal(size=(n, p))          # pure noise
+y = rng.integers(0, 2, size=n)       # random labels -&gt; true accuracy is 50%
+cv = StratifiedKFold(5, shuffle=True, random_state=0)
+
+# WRONG: select on all rows, then CV
+X_sel = SelectKBest(f_classif, k=k).fit_transform(X, y)
+wrong = cross_val_score(LogisticRegression(max_iter=1000), X_sel, y, cv=cv)
+
+# RIGHT: selection inside the pipeline (refit in every training fold)
+pipe = make_pipeline(SelectKBest(f_classif, k=k), LogisticRegression(max_iter=1000))
+right = cross_val_score(pipe, X, y, cv=cv)
+print(f"WRONG (select outside CV): {wrong.mean():.3f} ± {wrong.std():.3f}")
+print(f"RIGHT (select inside CV):  {right.mean():.3f} ± {right.std():.3f}")</pre>
+<div class="out">WRONG (select outside CV): 0.870 ± 0.051
+RIGHT (select inside CV):  0.500 ± 0.095</div>
+<p>عدد واقعی ما <b>۸۷٪ در برابر ۵۰٪</b> است، حتی بدتر از «حدود ۷۰٪» که معمولاً در کتاب‌ها نقل می‌شود. با ۲۰ seed مختلف هم نسخه‌ی غلط بین ۷۹٪ و ۹۳٪ بود (میانگین ۸۷٪) و نسخه‌ی درست به‌طور میانگین ۵۰٪. اندازه‌ی این خوش‌بینی به $n$، $p$ و $k$ بستگی دارد. با ویجت زیر خودت ببین:</p>
+<div id="w-snoop"></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: این همان اشتباه معروف ESL است</div>
+  در کتاب Elements of Statistical Learning (بخش ۷.۱۰.۲، «The Wrong and Right Way to Do Cross-validation») همین سناریو آمده است. قاعده: <b>هر مرحله‌ای که به برچسب‌ها نگاه می‌کند</b> (انتخاب ویژگی، target encoding، تنظیم آستانه، oversampling) باید داخل حلقه‌ی CV تکرار شود. مراحل بدون ناظر معمولاً نشت کوچک‌تری دارند، ولی قاعده‌ی اسلاید برای آن‌ها هم همین است.
+</div>
+
+<h3>۸.۱ شش سؤال در بازبینی تیم قرمز نشت</h3>
+<p>اسلاید ۲۱: «این چک‌لیست را <b>قبل از باور کردن امتیاز cross-validation</b> یک مدل اجرا کن.» «تیم قرمز» یعنی کسی که نقش مهاجم را بازی می‌کند و تلاش می‌کند ثابت کند عدد تو دروغ است.</p>
+<div class="tablewrap"><table class="rt">
+<tr><th>#</th><th>سؤال اسلاید (عین متن)</th><th>ترجمه</th><th>چطور بررسی کنی (مورد لغو)</th></tr>
+<tr><td>01</td><td class="en">Was every feature available at prediction time?</td><td>آیا هر ویژگی در لحظه‌ی پیش‌بینی موجود بود؟</td><td>جدول «ستون ← زمان پر شدن». <code>refund_issued</code> و <code>cancel_reason</code> حذف.</td></tr>
+<tr><td>02</td><td class="en">Are labels finalized only after all input snapshots?</td><td>آیا برچسب‌ها فقط بعد از همه‌ی snapshotهای ورودی نهایی می‌شوند؟</td><td>زمان نهایی شدن برچسب (۲۴ ساعت) را با زمان snapshot ویژگی‌ها مقایسه کن. gap بگذار.</td></tr>
+<tr><td>03</td><td class="en">Can the same user, ride or duplicate span folds?</td><td>آیا یک کاربر، یک سفر یا یک رکورد تکراری می‌تواند در چند fold باشد؟</td><td><code>set(train.user_id) &amp; set(val.user_id)</code>، <code>duplicated()</code> قبل از split.</td></tr>
+<tr><td>04</td><td class="en">Were missing values / PCA / scaling fit within folds?</td><td>آیا imputation، PCA و scaling داخل foldها fit شدند؟</td><td>همه‌چیز داخل <code>Pipeline</code>. هیچ <code>fit_transform</code> قبل از split نباشد.</td></tr>
+<tr><td>05</td><td class="en">Was class balancing performed on training folds only?</td><td>آیا متوازن‌سازی کلاس‌ها فقط روی foldهای train انجام شد؟</td><td>SMOTE یا undersampling فقط داخل pipeline از <code>imblearn</code>، نه روی کل داده.</td></tr>
+<tr><td>06</td><td class="en">Did the test set influence any modeling decision?</td><td>آیا مجموعه‌ی test روی هیچ تصمیم مدل‌سازی اثر گذاشت؟</td><td>لاگ کن test چند بار باز شده. هر بار بیشتر از یک بار یعنی test سوخته است.</td></tr>
+</table></div>
+<div class="box tip"><div class="bt">💡 چک‌لیست را به تست تبدیل کن</div>
+  سؤال‌های ۱ و ۳ را می‌شود خودکار کرد: یک <code>assert</code> که هیچ ستونی با timestamp بعد از <code>request_time</code> در ماتریس ویژگی نباشد، و یک <code>assert len(set(tr_users) &amp; set(te_users)) == 0</code> وقتی سؤال استقرار «کاربر جدید» است. یک ترفند دیگر: مدل را روی <b>برچسب‌های به‌هم‌ریخته (shuffled y)</b> اجرا کن. اگر امتیاز به‌طور معنادار از شانس بالاتر شد، workflow نشت دارد.
+</div>
+</section>
+
+<section id="pipeline">
+<h2><span class="num">۹</span> pipeline داخل هر fold دوباره fit می‌شود <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۲۲: «<b>مرز fit / transform از انتخاب estimator مهم‌تر است.</b>» در هر fold:</p>
+<div class="flow"><span>TRAIN FOLD</span><i>←</i><span>FIT IMPUTER</span><i>←</i><span>FIT ENCODER</span><i>←</i><span>FIT SCALER</span><i>←</i><span>FIT MODEL</span></div>
+<div class="flow"><span>VALIDATION FOLD</span><i>←</i><span>transform</span><i>←</i><span>predict</span><i>←</i><span>score</span><i>(هرگز fit نمی‌شود)</i></div>
+<p>«Cross-validation clones and re-fits the full pipeline in every split.» <code>cross_val_score</code> در هر split یک <b>کپی تازه</b> (<code>clone</code>) از کل pipeline می‌سازد و همه‌ی مراحل را فقط روی train همان split، fit می‌کند. به همین دلیل اگر چیزی بیرون از pipeline fit شود، CV نمی‌تواند از آن محافظت کند.</p>
+<h3>۹.۱ پایتون زنده: حداقل pipeline قابل‌اعتماد</h3>
+<p>اسلاید ۲۳ (عین کد اسلاید): «<b>هر چیزی که از داده یاد می‌گیرد باید داخل estimator باشد.</b>»</p>
+<pre class="code">num = Pipeline([('fill', SimpleImputer(strategy='median')),
+                ('scale', StandardScaler())])
+cat = Pipeline([('fill', SimpleImputer(strategy='most_frequent')),
+                ('ohe', OneHotEncoder(handle_unknown='ignore'))])
+prep = ColumnTransformer([('num', num, numeric_cols),
+                          ('cat', cat, categorical_cols)])
+model = Pipeline([('prep', prep),
+                  ('clf', LogisticRegression(max_iter=1000))])
+# Fit only on training data; CV will refit the ENTIRE pipeline.</pre>
+<p>هر خط یک تصمیم است: میانه برای عددی‌ها (مقاوم به پرت، جلسه‌ی ۲)، پرتکرارترین مقدار برای دسته‌ای‌ها، <code>handle_unknown='ignore'</code> تا شهر جدیدی که در train نبود مدل را نشکند (جلسه‌ی ۳)، و <code>ColumnTransformer</code> تا هر نوع ستون مسیر خودش را برود. حالا همین pipeline را کامل اجرا می‌کنیم: با ویژگی point-in-time بخش ۷، CV زمانی با شکاف یک‌روزه، و گزارش هر fold به سبک اسلاید ۱۷ (بازه‌ی زمانی، تعداد کلاس اقلیت، امتیاز):</p>
+<pre class="code">from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import cross_validate
+
+rides = add_past_cancel_rate(make_rides())          # sorted by request_time
+numeric_cols = ["eta_min", "distance_km", "fare", "hour", "past_cancel_rate", "n_known"]
+categorical_cols = ["city"]
+# ... num / cat / prep / model exactly as above ...
+
+X, y = rides[numeric_cols + categorical_cols], rides.cancelled
+tss = TimeSeriesSplit(n_splits=5, gap=55)            # ~55 rides ≈ 1 day of requests
+res = cross_validate(model, X, y, cv=tss, scoring="average_precision", return_indices=True)
+for i, (s, va) in enumerate(zip(res["test_score"], res["indices"]["test"])):
+    t = rides.request_time.iloc[va]
+    print(f"fold {i+1}: {t.min():%b %d}–{t.max():%b %d}  n_val={len(va)}  "
+          f"cancelled={y.iloc[va].sum():3d}  AP={s:.3f}")
+s = res["test_score"]
+print(f"AP = {s.mean():.3f} ± {s.std(ddof=1):.3f}  (range {s.min():.3f}–{s.max():.3f}, base rate {y.mean():.3f})")</pre>
+<div class="out">fold 1: Jan 31–Mar 03  n_val=1600  cancelled=181  AP=0.268
+fold 2: Mar 03–Apr 02  n_val=1600  cancelled=172  AP=0.354
+fold 3: Apr 02–May 02  n_val=1600  cancelled=176  AP=0.363
+fold 4: May 02–May 31  n_val=1600  cancelled=210  AP=0.341
+fold 5: May 31–Jun 29  n_val=1600  cancelled=201  AP=0.421
+AP = 0.349 ± 0.055  (range 0.268–0.421, base rate 0.119)</div>
+<p>دقیقاً همان چیزی که اسلاید ۱۷ می‌خواهد. و یک بینش که فقط با گزارش هر fold دیده می‌شود: AP با زمان <b>بالا می‌رود</b>. دلیلش این نیست که مدل بهتر شده. در foldهای اول، بیشتر کاربران هنوز سابقه‌ی کمی دارند (<code>n_known</code> کوچک است)، پس <code>past_cancel_rate</code> ضعیف‌تر است. در استقرار واقعی (ژوئیه به بعد) عملکرد به fold ۵ نزدیک‌تر خواهد بود، ولی برای کاربر تازه‌وارد به fold ۱ شبیه است. میانگین تنهای ۰٫۳۴۹ این داستان را پنهان می‌کرد. AP پایه (مدل تصادفی) برابر نرخ لغو یعنی ۰٫۱۱۹ است. جلسه‌ی ۸ دقیق‌تر توضیح می‌دهد چرا برای رویداد نادر AP را به AUC ترجیح می‌دهیم.</p>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: پیش‌پردازش قبل از split</div>
+<pre class="code">X_scaled = StandardScaler().fit_transform(X)        # sees validation rows
+X_bal, y_bal = SMOTE().fit_resample(X_scaled, y)    # synthetic points built from validation rows
+cross_val_score(LogisticRegression(), X_bal, y_bal, cv=5)   # optimistic</pre>
+  خط دوم بدتر از خط اول است: نمونه‌های مصنوعی SMOTE از روی همسایه‌ها ساخته می‌شوند. وقتی قبل از split اجرا شود، نقطه‌ی validation و «فرزند مصنوعی‌اش» در دو طرف مرز قرار می‌گیرند. علاوه بر این، validation دیگر توزیع واقعی (۱۲٪ لغو) را ندارد. درمان: <code>imblearn.pipeline.make_pipeline(StandardScaler(), SMOTE(), LogisticRegression())</code> تا resampling فقط روی train fold انجام شود (سؤال ۵ تیم قرمز).
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: کدام fitها در امتحان «نشت» حساب می‌شوند؟</div>
+  هر <code>.fit</code> یا <code>.fit_transform</code> روی داده‌ای که شامل سطرهای validation/test است: <code>SimpleImputer</code> (میانه‌ی کل)، <code>StandardScaler</code>، <code>PCA</code>، <code>OneHotEncoder</code> (دسته‌هایی که فقط در test هستند)، <code>TargetEncoder</code>، <code>SelectKBest</code>، <code>SMOTE</code>. شدتشان یکسان نیست (scaler معمولاً اثر کمی دارد، انتخاب ویژگی و target encoding اثر بزرگی دارند)، ولی <b>همه</b> از نظر روش‌شناسی غلط‌اند. جوابی که «اثرش کم است» را بهانه کند نمره‌ی کامل نمی‌گیرد.
+</div>
+</section>
+
+<section id="solved">
+<h2><span class="num">۱۰</span> مسئله‌ی حل‌شده به سبک تمرین شریف <span class="tag exam">سبک امتحان</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله: «AUC = ۰٫۹۴؛ جشن بگیریم؟»</div>
+تیم داده‌ی یک اپ اسنپ‌مانند داده‌ی ۱ ژانویه تا ۳۰ ژوئن (۹٬۶۰۰ درخواست، حدود ۵۳ درخواست در روز، ۱۲٪ لغو) را دارد. مدل باید از ژوئیه <b>در لحظه‌ی درخواست</b> ریسک لغو را برای همه‌ی کاربران پیش‌بینی کند، هم کاربران فعلی و هم کاربران تازه‌وارد. برچسب لغو تا ۲۴ ساعت بعد از درخواست نهایی می‌شود. گزارش تیم: «RandomForest، <code>KFold(5, shuffle=True)</code>، AUC = ۰٫۹۴». ستون‌های مدل:
+<div class="tablewrap"><table class="data">
+<tr><th>column</th><th>description</th></tr>
+<tr><td>eta_min</td><td>expected driver ETA shown at request</td></tr>
+<tr><td>fare_quote</td><td>price quoted at request (Toman)</td></tr>
+<tr><td>surge</td><td>surge multiplier at request</td></tr>
+<tr><td>user_cancel_rate</td><td><code>groupby('user_id').cancelled.mean()</code> on the full table</td></tr>
+<tr><td>driver_rating_after_trip</td><td>rating the passenger gave the driver</td></tr>
+<tr><td>minutes_to_pickup_actual</td><td>actual time until pickup</td></tr>
+<tr><td>city_te</td><td>target-encoded city (means on full data)</td></tr>
+<tr><td>refund_issued</td><td>refund flag</td></tr>
+</table></div>
+<b>(الف)</b> هر ستون را با قرارداد لحظه‌ی پیش‌بینی بسنج: حذف، اصلاح یا نگه‌داری؟ <b>(ب)</b> یک طرح ارزیابی کامل (train/val/test، splitter داخل development، gap) پیشنهاد کن و پارامتر <code>gap</code> را برای <code>TimeSeriesSplit</code> حساب کن. <b>(ج)</b> بعد از اصلاح، APهای ۵ fold زمانی برابر ۰٫۲۷، ۰٫۳۵، ۰٫۳۶، ۰٫۳۴ و ۰٫۴۲ شد. میانگین، انحراف معیار و SE را حساب کن و بگو در گزارش چه می‌نویسی. <b>(د)</b> مدیر تبریز می‌گوید: «یک پایلوت ۵۰۰‌سفره داریم، ۱۰۰ تا را تصادفی test کنیم.» با عدد نشان بده چرا این test شکننده است.
+</div>
+<details><summary>پاسخ کامل (اول خودت جواب بده)</summary>
+<p><b>(الف) ممیزی ستون‌ها</b>، با یک سؤال برای هر ستون: «در لحظه‌ی درخواست وجود داشت؟»</p>
+<div class="tablewrap"><table>
+<tr><th>ستون</th><th>حکم</th><th>دلیل</th></tr>
+<tr><td>eta_min، fare_quote، surge</td><td>✅ نگه دار</td><td>همه در لحظه‌ی درخواست به مسافر نشان داده می‌شوند. (فقط مطمئن شو مقدار <i>لحظه‌ی درخواست</i> ثبت شده، نه آخرین مقدار به‌روزشده.)</td></tr>
+<tr><td>user_cancel_rate</td><td>🔧 اصلاح</td><td>روی کل جدول = خود سطر + آینده (نشت هدف و زمانی). با <code>merge_asof</code> و <code>label_time = request_time + 24h</code> و <code>allow_exact_matches=False</code> بازسازی کن.</td></tr>
+<tr><td>driver_rating_after_trip</td><td>⛔ حذف</td><td>بعد از سفر ثبت می‌شود. برای سفر لغوشده اصلاً وجود ندارد، پس «گم بودن» آن خودش برچسب را لو می‌دهد.</td></tr>
+<tr><td>minutes_to_pickup_actual</td><td>⛔ حذف</td><td>بعد از pickup معلوم می‌شود (در خط زمانی اسلاید ۵ «LATER» است). برای لغوها معمولاً خالی است.</td></tr>
+<tr><td>city_te</td><td>🔧 اصلاح</td><td>شهر خودش مجاز است، ولی encoding روی کل داده آلودگی است. یا one-hot (فقط ۵ شهر) یا <code>TargetEncoder</code> داخل pipeline.</td></tr>
+<tr><td>refund_issued</td><td>⛔ حذف</td><td>نتیجه‌ی لغو است (اسلاید ۱۹).</td></tr>
+</table></div>
+<p>به‌علاوه <code>KFold(shuffle=True)</code> برای سؤال «ژوئیه» غلط است (نشت آینده و نشت هویت). احتمالاً بیشتر ۰٫۹۴ از <code>refund_issued</code> و ستون‌های بعد از سفر آمده است. در داده‌ی ما، فقط refund کافی بود تا AUC از ۰٫۶۵ به ۰٫۹۶ برسد.</p>
+<p><b>(ب) طرح ارزیابی.</b> سؤال استقرار «درخواست‌های آینده» است (سؤال A اسلاید ۸)، به‌علاوه‌ی زیرسؤال «کاربر تازه‌وارد» (سؤال B).</p>
+<ol>
+  <li><b>Development:</b> ژانویه تا آوریل. داخلش <code>TimeSeriesSplit</code> با gap، برای انتخاب ویژگی و ابرپارامتر.</li>
+  <li><b>Validation:</b> مه (با شروع از ۲ مه، یعنی یک روز شکاف بعد از train). برای انتخاب آستانه و مقایسه‌ی هزینه‌ها.</li>
+  <li><b>Test (صندوق قفل):</b> ژوئن، با یک روز شکاف. یک بار اجرا. نتایج را جداگانه برای <b>کاربرانی که قبل از ژوئن سابقه داشتند</b> و <b>کاربرانی که اولین بار در ژوئن آمدند</b> گزارش کن (slice). دومی همان سؤال B است، بدون نیاز به splitter جدا.</li>
+  <li><b>gap:</b> برچسب ۲۴ ساعت بعد نهایی می‌شود و حدود $9600/180\approx53.3$ درخواست در روز داریم. پس <code>gap</code> $\ge\lceil53.3\rceil=54$ سطر است. با حاشیه‌ی امن ۵۵ تا ۶۰. چون gap سطری است، بعد از split تاریخ آخرین سطر train و اولین سطر val را چاپ کن و مطمئن شو فاصله واقعاً ≥ ۲۴ ساعت است. (در اجرای ما با ۵۵ سطر بین ۲۴٫۵ تا ۲۷ ساعت شد.)</li>
+  <li>همه‌ی پیش‌پردازش‌ها داخل یک <code>Pipeline</code>.</li>
+</ol>
+<p><b>(ج) محاسبه.</b> جمع امتیازها ۱٫۷۴ است، پس $\bar s=1.74/5=0.348$. انحراف‌ها از میانگین: $-0.078$، $0.002$، $0.012$، $-0.008$ و $0.072$. مجموع مجذورها:</p>
+$$\textstyle\sum (s_k-\bar s)^2=0.006084+0.000004+0.000144+0.000064+0.005184=0.01148$$
+$$\mathrm{sd}=\sqrt{0.01148/4}=\sqrt{0.00287}\approx0.0536,\qquad \mathrm{SE}\approx0.0536/\sqrt5\approx0.024.$$
+<p>گزارش: «AP = ۰٫۳۵ ± ۰٫۰۵ (sd بین ۵ fold زمانی، بازه‌ی ۰٫۲۷ تا ۰٫۴۲؛ نرخ پایه‌ی لغو ۰٫۱۲)» به‌اضافه‌ی جدول هر fold با بازه‌ی زمانی و تعداد لغوها، و این توضیح که fold ۱ ضعیف‌تر است چون سابقه‌ی کاربران هنوز کوتاه بوده. SE را با احتیاط بیاور، چون foldها مستقل نیستند.</p>
+<p><b>(د) پایلوت تبریز.</b> test صدتایی با $\pi=0.12$ به‌طور میانگین ۱۲ لغو دارد با انحراف معیار $\sqrt{100\times0.12\times0.88}\approx3.25$. بازه‌ی تقریبی ۹۵٪ از ۶ تا ۱۸ لغو است. در شبیه‌سازی ما (بخش ۳.۲) حتی ۳ لغو هم دیده شد. با چنین تعدادی recall یکی از ۳ مقدار ۰، ۰٫۳۳، ۰٫۶۷ یا ۱ است و هر عددی بی‌معنی است. پیشنهاد: (۱) stratify تا دست‌کم ۱۲ لغو تضمین شود، (۲) به‌جای یک test، CV (ترجیحاً زمانی) و گزارش پراکندگی، (۳) اگر سؤال «تعمیم به شهر جدید» است، بهتر است مدل روی چهار شهر دیگر train و روی <b>کل</b> داده‌ی تبریز ارزیابی شود (سؤال C اسلاید ۸)، نه یک برش تصادفی از آن.</p>
+</details>
+</section>
+
+<section id="exercises">
+<h2><span class="num">۱۱</span> تمرین</h2>
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+برای مدل «لغو در لحظه‌ی درخواست»، هر ویژگی را «مجاز» یا «ممنوع» کن و یک کلمه دلیل بیاور: (الف) <code>payment_method</code> انتخاب‌شده در فرم درخواست (ب) <code>cancel_reason</code> (ج) <code>driver_distance_at_match</code> (د) تعداد لغوهای کاربر در ۷ روز قبل، با زمان نهایی شدن برچسب (هـ) <code>trip_duration_min</code> (و) <code>is_holiday</code> برای تاریخ درخواست (ز) <code>surge_multiplier</code> چند دقیقه بعد از درخواست.
+<details><summary>راه‌حل</summary>الف مجاز (در فرم درخواست هست). ب ممنوع (فقط بعد از لغو وجود دارد). ج ممنوع برای این لحظه‌ی پیش‌بینی، چون match بعد از درخواست است. اگر لحظه‌ی پیش‌بینی را «بعد از match» تعریف کنی مجاز می‌شود، و این یعنی <b>لحظه‌ی پیش‌بینی بخشی از تعریف مسئله است</b>. د مجاز، اگر point-in-time ساخته شود. هـ ممنوع (بعد از پایان سفر). و مجاز (تقویم از قبل معلوم است). ز ممنوع: فقط مقدار <b>در لحظه‌ی درخواست</b> مجاز است. اگر جدول مقدار فعلی را نگه می‌دارد، باید از لاگ تاریخی بازسازی شود.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">· 🟢 پایه</span></div>
+برای هر سؤال استقرار، splitter مناسب را نام ببر: (۱) پیش‌بینی لغو درخواست‌های هفته‌ی بعد (۲) مدل تشخیص تقلب راننده که روی رانندگان تازه‌ثبت‌نام اجرا می‌شود و تقلب ۲٪ است (۳) راه‌اندازی سرویس در شهر رشت (۴) طبقه‌بندی نظرهای متنی مستقل کاربران به مثبت/منفی، با ۸٪ منفی.
+<details><summary>راه‌حل</summary>(۱) holdout زمانی + <code>TimeSeriesSplit</code> با gap. (۲) <code>StratifiedGroupKFold</code> با گروه = <code>driver_id</code>، چون هم راننده‌ی جدید است و هم کلاس نادر. اگر زمان هم مهم است، test را دوره‌ی آخر بگیر. (۳) گروه = شهر: <code>LeaveOneGroupOut</code>. هر شهر یک بار test است تا ببینی مدل به شهر نادیده چطور منتقل می‌شود. (۴) اگر نظرها واقعاً مستقل‌اند (هر کاربر یک نظر)، <code>StratifiedKFold</code>. اگر یک کاربر چند نظر دارد، گروهی.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">· 🟡 مهارتی</span></div>
+دو مدل A و B روی <b>همان</b> ۵ fold زمانی ارزیابی شده‌اند. AP مدل A: ۰٫۲۶۸، ۰٫۳۵۴، ۰٫۳۶۳، ۰٫۳۴۱، ۰٫۴۲۱. AP مدل B: ۰٫۲۵۱، ۰٫۳۳۰، ۰٫۳۵۲، ۰٫۳۱۸، ۰٫۳۷۹. (الف) میانگین و sd هر مدل را حساب کن. بازه‌های «میانگین ± sd» هم‌پوشانی دارند؟ (ب) تفاوت جفتی در هر fold، میانگین و sd آن را حساب کن. (ج) کدام مقایسه درست‌تر است و چرا؟
+<details><summary>راه‌حل</summary>(الف) A: میانگین ۰٫۳۴۹، sd ≈ ۰٫۰۵۵. B: میانگین ۰٫۳۲۶، sd ≈ ۰٫۰۴۸. بازه‌ها کاملاً هم‌پوشانی دارند ([۰٫۲۹۴، ۰٫۴۰۴] و [۰٫۲۷۸، ۰٫۳۷۴]). (ب) تفاوت‌ها: ۰٫۰۱۷، ۰٫۰۲۴، ۰٫۰۱۱، ۰٫۰۲۳، ۰٫۰۴۲. میانگین ۰٫۰۲۳۴، sd ≈ ۰٫۰۱۲، SE ≈ ۰٫۰۰۵. (ج) مقایسه‌ی جفتی درست‌تر است. بیشتر پراکندگی بین foldها مال «سختی fold» است (مثلاً fold ۱ برای هر دو مدل سخت است) و در تفاوت جفتی حذف می‌شود. A در <b>هر ۵ fold</b> بهتر است و میانگین تفاوت حدود ۴٫۵ برابر SE آن است. پس برتری A احتمالاً واقعی است، هرچند کوچک. (احتیاط: foldها کاملاً مستقل نیستند. با ۵ fold آزمون رسمی قدرت کمی دارد.)</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">· 🟡 مهارتی</span></div>
+<code>TimeSeriesSplit(n_splits=5, gap=55)</code> روی ۹٬۶۰۰ سطر مرتب‌شده اجرا می‌شود. با دانستن این‌که sklearn اندازه‌ی validation را <code>n_samples // (n_splits + 1)</code> می‌گیرد، حساب کن: (الف) اندازه‌ی هر validation (ب) ایندکس شروع validation در fold ۱ و تعداد سطرهای train آن (ج) تعداد سطرهای train در fold ۵. بعد با کد چک کن.
+<details><summary>راه‌حل</summary>(الف) $9600//6=1600$. (ب) validationها از $9600-5\times1600=1600$ شروع می‌شوند. fold ۱: val = ایندکس ۱۶۰۰ تا ۳۱۹۹. train = ایندکس ۰ تا $1600-55-1=1544$، یعنی <b>۱۵۴۵</b> سطر. (ج) fold ۵: val از ۸۰۰۰ تا ۹۵۹۹. train = $8000-55=$ <b>۷۹۴۵</b> سطر.
+<pre class="code">for tr, va in TimeSeriesSplit(5, gap=55).split(np.zeros(9600)):
+    print(len(tr), tr[-1], va[0], va[-1])</pre>
+<div class="out">1545 1544 1600 3199
+3145 3144 3200 4799
+4745 4744 4800 6399
+6345 6344 6400 7999
+7945 7944 8000 9599</div></details>
+</div>
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">· 🟡 مهارتی</span></div>
+ویژگی «تعداد لغوهای کاربر در ۳۰ روز قبل از درخواست» را point-in-time بساز. برچسب ۲۴ ساعت بعد نهایی می‌شود. راهنمایی: «شمار تجمعی لغوهای معلوم تا لحظه‌ی $t$» را با <code>merge_asof</code> بگیر و دو بار صدا بزن: در $t$ و در $t-30$ روز.
+<details><summary>راه‌حل</summary>
+<pre class="code">toy = pd.DataFrame({"user_id": [12]*5,
+    "request_time": pd.to_datetime(["2026-01-04 08:00", "2026-01-20 10:00", "2026-02-01 09:00",
+                                    "2026-02-10 18:00", "2026-02-12 07:00"]),
+    "cancelled": [1, 1, 0, 1, 0]})
+hist = toy.assign(label_time=toy.request_time + pd.Timedelta("24h")).sort_values("label_time")
+hist["cum_cancel"] = hist.groupby("user_id").cancelled.cumsum()
+h = hist[["user_id", "label_time", "cum_cancel"]]
+
+def cum_as_of(df, when):                       # cancellations KNOWN strictly before `when`
+    q = df[["user_id"]].assign(t=when).sort_values("t")
+    m = pd.merge_asof(q, h, left_on="t", right_on="label_time", by="user_id",
+                      direction="backward", allow_exact_matches=False)
+    m.index = q.index                          # merge_asof resets the index
+    return m.cum_cancel.fillna(0).reindex(df.index)
+
+toy["cancels_30d"] = (cum_as_of(toy, toy.request_time)
+                      - cum_as_of(toy, toy.request_time - pd.Timedelta("30D"))).astype(int)
+print(toy.to_string(index=False))</pre>
+<div class="out"> user_id        request_time  cancelled  cancels_30d
+      12 2026-01-04 08:00:00          1            0
+      12 2026-01-20 10:00:00          1            1
+      12 2026-02-01 09:00:00          0            2
+      12 2026-02-10 18:00:00          1            1
+      12 2026-02-12 07:00:00          0            2</div>
+چک دستی برای ۱۰ فوریه ساعت ۱۸: پنجره از ۱۱ ژانویه ساعت ۱۸ است. برچسب‌هایی که در این پنجره معلوم شده‌اند: سفر ۲۰ ژانویه (لغو) و سفر ۱ فوریه (تکمیل). لغو ۴ ژانویه (معلوم‌شده در ۵ ژانویه) بیرون است. جواب ۱ است ✓. دو دام: (۱) <code>merge_asof</code> ایندکس را ریست می‌کند. اگر <code>m.index = q.index</code> را ننویسی، روی داده‌ی نامرتب جواب‌ها جابه‌جا می‌شوند. (۲) پنجره روی <b>زمان دانستن برچسب</b> تعریف شده، نه زمان درخواست. این انتخاب را در مستندات ویژگی بنویس.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">· 🟡 مهارتی</span></div>
+در این کد همه‌ی نشت‌ها را پیدا کن و نسخه‌ی درست را بنویس:
+<pre class="code">df = rides.copy()
+df["fare"] = df.fare.fillna(df.fare.median())
+df["zone_te"] = df.groupby("pickup_zone").cancelled.transform("mean")
+X = PCA(10).fit_transform(StandardScaler().fit_transform(df[num_cols + ["zone_te"]]))
+best_k = max(range(1, 30), key=lambda k: cross_val_score(KNeighborsClassifier(k), X, df.cancelled, cv=5).mean())
+print("final accuracy:", cross_val_score(KNeighborsClassifier(best_k), X, df.cancelled, cv=5).mean())</pre>
+<details><summary>راه‌حل</summary>
+نشت‌ها: (۱) میانه‌ی <code>fare</code> روی کل داده (پیش‌پردازش سراسری). (۲) target encoding سراسری که <b>بزرگ‌ترین</b> نشت است (بخش ۶.۳). (۳) scaler و PCA روی کل داده. (۴) <code>best_k</code> با همان CVای انتخاب شده که گزارش می‌شود (خوش‌بینی انتخاب، بخش ۵.۳). (۵) <code>cv=5</code> روی داده‌ی زمانی با کاربر تکراری، یعنی KFold بی‌توجه به زمان و گروه. (۶) accuracy برای ۱۲٪ لغو معیار مناسبی نیست (جلسه‌ی ۸).
+<pre class="code">pipe = make_pipeline(
+    ColumnTransformer([("num", make_pipeline(SimpleImputer(strategy="median"), StandardScaler()), num_cols),
+                       ("zone", TargetEncoder(target_type="binary"), ["pickup_zone"])]),
+    PCA(10), KNeighborsClassifier())
+search = GridSearchCV(pipe, {"kneighborsclassifier__n_neighbors": range(1, 30)},
+                      cv=TimeSeriesSplit(5, gap=55), scoring="average_precision")
+dev, test = rides[rides.request_time &lt; "2026-06-01"], rides[rides.request_time &gt;= "2026-06-02"]
+search.fit(dev[num_cols + ["pickup_zone"]], dev.cancelled)        # tuning only on development data
+print("June AP:", average_precision_score(test.cancelled,
+      search.predict_proba(test[num_cols + ["pickup_zone"]])[:, 1]))   # opened ONCE</pre></details>
+</div>
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">· 🔴 تحلیلی</span></div>
+در بخش ۴.۱ دیدیم <code>KFold</code> عدد ۰٫۶۴۰ و <code>GroupKFold</code> عدد ۰٫۵۹۸ داد. هم‌تیمی‌ات می‌گوید: «مدل ما برای کاربران <b>فعلی</b> در ماه آینده است، پس شناختن کاربر اشکالی ندارد و ۰٫۶۴ درست است.» تا کجا حق دارد و کجا اشتباه می‌کند؟ چه آزمایشی اختلاف را حل می‌کند؟
+<details><summary>راه‌حل</summary>حق دارد که برای کاربران فعلی، <b>استفاده از اطلاعات کاربر</b> مجاز است و <code>GroupKFold</code> (که کاربران را کاملاً نادیده نگه می‌دارد) برای این سؤال بیش از حد بدبینانه است. اشتباهش این است که <code>KFold</code> تصادفی به مدل اجازه می‌دهد عادت کاربر را از سفرهای <b>آینده‌ی</b> او یاد بگیرد (سفر ژوئن در train، سفر مارس در val). در استقرار، فقط گذشته‌ی کاربر را داری. پس ۰٫۶۴ هم نشت زمانی دارد. علاوه بر این، <code>signup_days</code> یک شناسه‌ی پنهان است و مدل از طریق آن «حفظ» می‌کند، نه از طریق یک ویژگی معنادار. آزمایش درست: split زمانی (train تا آوریل، test ژوئن) + ویژگی صریح <code>past_cancel_rate</code> به‌شکل point-in-time. این همان چیزی است که در بخش ۷ AP را از ۰٫۲۲ به ۰٫۴۲ رساند، به‌روشی که در استقرار هم تکرار می‌شود. و اگر بخشی از کاربران ژوئیه تازه‌وارد باشند، نتیجه را برای این دو slice جدا گزارش کن.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">· 🔴 تحلیلی</span></div>
+در آزمایش تجسس ($n=100$، $p=5000$، $k=20$) نسخه‌ی غلط ۸۷٪ داد. (الف) با تقریب $\sqrt{2\ln p/n}$ بزرگ‌ترین همبستگی تصادفی را تخمین بزن. (ب) پیش‌بینی کن اگر $n$ را به ۱۰۰۰ برسانی یا $p$ را به ۵۰ کم کنی، فاصله‌ی «غلط» و «درست» چه تغییری می‌کند. با ویجت بخش ۸ چک کن. (ج) چرا نسخه‌ی درست <b>دقیقاً</b> ۵۰٪ نیست و sd آن (۰٫۰۹۵) از نسخه‌ی غلط بیشتر است؟
+<details><summary>راه‌حل</summary>(الف) $\sqrt{2\ln5000/100}=\sqrt{17.03/100}\approx0.41$. (در شبیه‌سازی ما بزرگ‌ترین همبستگی ۰٫۳۵ بود و ۲۰ تای برتر بالای ۰٫۲۸ بودند. این تقریب یک کران بالای خوب است.) (ب) همبستگی جعلی با $1/\sqrt n$ کوچک می‌شود و فقط با $\sqrt{\ln p}$ بزرگ می‌شود. با $n$ بزرگ‌تر، ویژگی‌های انتخاب‌شده سیگنال جعلی کمتری دارند و فاصله کم می‌شود. با $p$ کوچک، انتخاب «از میان» گزینه‌های کمتری انجام می‌شود و خوش‌بینی کم می‌شود. بدترین حالت $p\gg n$ است، یعنی دقیقاً وضعیت ژنومیک یا متن با هزاران ویژگی. (ج) هر fold فقط ۲۰ نمونه‌ی validation دارد. دقت روی ۲۰ نمونه گسسته است (گام‌های ۵٪) و حول ۵۰٪ با sd حدود $\sqrt{0.25/20}\approx0.11$ نوسان می‌کند. نسخه‌ی غلط sd کمتری دارد چون همه‌ی foldها از <b>یک</b> مجموعه‌ی ویژگی جعلی استفاده می‌کنند که روی همه‌ی سطرها «کار می‌کند». این ثبات خودش یک علامت هشدار است.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+شرکت می‌خواهد سرویس را در شهر جدید (رشت) راه بیندازد و فقط داده‌ی پنج شهر فعلی را دارد. یک پروتکل ارزیابی کامل طراحی کن که هم «شهر نادیده» را بسنجد و هم «آینده» را. بگو چه چیزی گزارش می‌کنی و ریسک‌های باقی‌مانده چیست.
+<details><summary>راه‌حل (نمونه)</summary>(۱) <b>بیرونی:</b> <code>LeaveOneGroupOut</code> با گروه = شهر. هر بار یک شهر کامل test است. (۲) <b>زمان:</b> در هر چرخش، train = چهار شهر دیگر در ژانویه تا آوریل، test = شهر کنار گذاشته‌شده در مه و ژوئن (با شکاف). این «شهر جدید <i>و</i> آینده» را با هم شبیه‌سازی می‌کند. (۳) <b>ویژگی‌ها:</b> ویژگی‌هایی که به شهر وابسته‌اند (one-hot شهر، target encoding منطقه) برای شهر جدید بی‌معنی‌اند. آن‌ها را با ویژگی‌های قابل‌انتقال (تراکم، ETA، ساعت) جایگزین کن. <code>past_cancel_rate</code> برای همه‌ی کاربران رشت در ابتدا NaN است، پس مسیر «کاربر بی‌سابقه» باید جداگانه ارزیابی شود. (۴) <b>گزارش:</b> AP هر شهر جدا، با تعداد لغو و بازه‌ی زمانی. بدترین شهر را برجسته کن، نه فقط میانگین. (۵) <b>ریسک‌ها:</b> فقط ۵ نقطه‌ی «شهر» داری، پس تخمین واریانس انتقال خیلی نامطمئن است. رشت ممکن است از همه‌ی پنج شهر متفاوت باشد (آب‌وهوا، الگوی ترافیک). پیشنهاد: استقرار مرحله‌ای (shadow mode) و پایش AP روی برچسب‌های واقعی رشت در هفته‌های اول.</details>
+</div>
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+(الف) هزینه‌ی nested CV با grid ۴۰تایی، CV درونی ۵‌تایی و CV بیرونی ۵‌تایی، بر حسب تعداد fit، چقدر است (refit بعد از هر جست‌وجو را هم بشمار)؟ (ب) چه زمانی می‌توانی به‌جای nested CV از «CV روی development + یک دوره‌ی validation جدا» (اسلاید ۱۶) استفاده کنی؟ (ج) آیا nested CV مسئله‌ی «انتخاب ویژگی خارج از fold» را هم حل می‌کند؟
+<details><summary>راه‌حل</summary>(الف) هر fold بیرونی: $40\times5=200$ fit درونی + ۱ refit بهترین تنظیم روی کل train بیرونی، یعنی ۲۰۱. ضرب در ۵ fold بیرونی: <b>۱۰۰۵ fit</b>. اگر مدل نهایی را هم با یک grid search روی کل داده بسازی، ۲۰۱ fit دیگر اضافه می‌شود. (ب) وقتی داده کافی است تا یک دوره‌ی validation بزرگ (با تعداد مثبت کافی، مثلاً صدها لغو) کنار بگذاری، و مخصوصاً در داده‌ی زمانی که تقسیم طبیعی زمانی داری. nested CV بیشتر برای داده‌ی کوچک IID ارزش دارد که نمی‌شود چیزی کنار گذاشت. (ج) فقط اگر انتخاب ویژگی <b>داخل</b> pipelineای باشد که در حلقه‌ی درونی fit می‌شود. اگر قبل از همه‌چیز روی کل داده انتخاب کنی، nested CV هم همان ۸۷٪ دروغین را تأیید می‌کند. nested CV فقط از چیزهایی محافظت می‌کند که داخل آن هستند.</details>
+</div>
+</section>
+
+<section id="quiz"><h2><span class="num">۱۲</span> تست</h2><div class="quiz"></div></section>
+
+<section id="summary">
+<h2><span class="num">۱۳</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<h3>۵ چیزی که باید یادت بماند</h3>
+<ol class="steps">
+  <li><b>اول لحظه‌ی پیش‌بینی، بعد داده.</b> قبل از split، قرارداد بنویس: چه چیزی در لحظه‌ی درخواست وجود دارد. در دسترس بودن تعیین‌کننده است، نه همبستگی.</li>
+  <li><b>split یعنی شبیه‌سازی استقرار.</b> به چه کسی (گروه)، کجا (شهر)، کی (زمان + gap ≥ تأخیر برچسب). stratify فقط نسبت کلاس را درست می‌کند.</li>
+  <li><b>test صندوق قفل است.</b> انتخاب مدل در CV و validation، test فقط یک بار. بیشینه‌ی grid search خوش‌بین است (nested CV).</li>
+  <li><b>هر چیزی که از داده یاد می‌گیرد داخل pipeline.</b> imputer، scaler، PCA، encoder، انتخاب ویژگی، SMOTE. تجسس روی نویز ۸۷٪ «دقت» ساخت.</li>
+  <li><b>عدد تنها گزارش نکن.</b> هر fold با بازه‌ی زمانی و تعداد مثبت، میانگین ± sd، و ویژگی‌های تاریخی فقط point-in-time (<code>merge_asof</code>، <code>allow_exact_matches=False</code>).</li>
+</ol>
+<div class="lf">
+  <div class="s"><h4>حتماً بلد باش</h4><ul><li>Rule #1 و قرارداد لحظه‌ی پیش‌بینی</li><li>سه کار train / validation / test</li><li>سه مسیر نشت اسلاید ۱۸</li><li>شش سؤال تیم قرمز</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul><li>KFold ↔ Stratified ↔ Group ↔ StratifiedGroup ↔ TimeSeriesSplit</li><li>نشت هدف ↔ آلودگی ↔ نشت زمانی</li><li>best_score_ ↔ nested CV</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul><li><code>gap</code> سطری است، نه ساعتی</li><li><code>groupby().transform("mean")</code> = نشت</li><li>target encoding سراسری روی نویز AUC = ۰٫۹۰</li><li>SMOTE قبل از split</li></ul></div>
+</div>
+<div class="box note"><div class="bt">برای جلسه‌ی بعد</div>
+  جلسه‌ی ۸ بقیه‌ی اسلاید ۰۶ (صفحه‌های ۲۵ تا ۳۳) است: <b>رویداد نادر</b>. چرا با ۱۲٪ لغو، accuracy گمراه‌کننده است؟ precision، recall، PR-AUC (همان AP که این‌جا گزارش کردیم)، انتخاب آستانه با هزینه‌ی عملیاتی، و کالیبراسیون. قبل از آن از خودت بپرس: «اگر مدلی همیشه بگوید <i>لغو نمی‌شود</i>، accuracyاش چند است؟»
+</div>
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>prediction moment</b>: لحظه‌ی پیش‌بینی؛ زمانی که مدل در استقرار باید جواب بدهد</div>
+  <div><b>prediction-time contract</b>: قرارداد لحظه‌ی پیش‌بینی؛ فهرست ورودی‌های مجاز و ممنوع</div>
+  <div><b>data leakage</b>: نشت داده؛ رسیدن اطلاعات غیرقابل‌دسترس در استقرار به آموزش یا ارزیابی</div>
+  <div><b>target leakage</b>: نشت هدف؛ ویژگی ساخته‌شده از برچسب یا نتیجه‌ی آن</div>
+  <div><b>train-test contamination</b>: آلودگی train و test از طریق پیش‌پردازش یا سطر تکراری</div>
+  <div><b>temporal leakage</b>: نشت زمانی؛ استفاده از اطلاعات آینده</div>
+  <div><b>holdout / lockbox test</b>: مجموعه‌ی کنار گذاشته‌شده؛ صندوق قفل برای ارزیابی نهایی</div>
+  <div><b>validation set</b>: مجموعه‌ی اعتبارسنجی برای انتخاب مدل و آستانه</div>
+  <div><b>cross-validation (CV)</b>: اعتبارسنجی متقاطع؛ چند تقسیم train/val پشت سر هم</div>
+  <div><b>stratification</b>: لایه‌بندی؛ حفظ نسبت کلاس در هر بخش</div>
+  <div><b>GroupKFold</b>: تقسیم گروهی؛ هر گروه (کاربر) کامل در یک fold</div>
+  <div><b>TimeSeriesSplit / gap / embargo</b>: تقسیم زمانی؛ شکاف بین train و val</div>
+  <div><b>nested CV</b>: اعتبارسنجی متقاطع تودرتو برای تنظیم و ارزیابی هم‌زمان</div>
+  <div><b>data snooping</b>: تجسس در داده؛ تصمیم‌گیری با دیدن داده‌ی ارزیابی</div>
+  <div><b>point-in-time correctness</b>: درستی در لحظه؛ ویژگی فقط از گذشته‌ی هر درخواست</div>
+  <div><b>merge_asof</b>: join «آخرین مقدار قبل از لحظه» در pandas</div>
+  <div><b>out-of-fold (OOF)</b>: مقداری که بدون استفاده از fold خود سطر ساخته شده</div>
+  <div><b>Pipeline</b>: زنجیره‌ی پیش‌پردازش و مدل که با هم fit می‌شوند</div>
+  <div><b>hyperparameter</b>: ابرپارامتر؛ تنظیمی که از داده یاد گرفته نمی‌شود</div>
+  <div><b>average precision (AP)</b>: میانگین دقت؛ خلاصه‌ی منحنی precision–recall</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`مدل لغو باید <b>در لحظه‌ی درخواست</b> پیش‌بینی کند. کدام ویژگی مجاز است؟`, o:[`ETA مورد انتظار راننده که به مسافر نشان داده می‌شود`,`زمان واقعی پیاده شدن مسافر`,`دلیل لغو ثبت‌شده`,`بازپرداخت انجام‌شده (refund issued)`], a:0, e:`فقط ETA در لحظه‌ی درخواست وجود دارد. بقیه بعد از سفر یا بعد از لغو ساخته می‌شوند و در قرارداد اسلاید ۶ جزو «Known only after» هستند.`},
+ {q:`ستونی با برچسب «لغو» همبستگی ۰٫۹۵ دارد، ولی فقط بعد از ثبت لغو پر می‌شود. تصمیم درست کدام است؟`, o:[`نگه‌داشتن، چون قوی‌ترین ویژگی است`,`حذف، چون در لحظه‌ی پیش‌بینی وجود ندارد`,`نگه‌داشتن، ولی با regularization قوی‌تر`,`نگه‌داشتن، به شرط استفاده از StratifiedKFold`], a:1, e:`در دسترس بودن، نه همبستگی، معتبر بودن ویژگی را تعیین می‌کند. همبستگی خیلی بالا خودش علامت هشدار نشت است.`},
+ {q:`تیم برای انتخاب آستانه ۷ بار به امتیاز مجموعه‌ی test (ژوئن) نگاه کرده است. کدام جمله درست است؟`, o:[`مشکلی نیست، چون مدل روی test آموزش ندیده`,`ژوئن حالا عملاً validation است و برای تخمین بی‌طرف به دوره‌ی تازه‌ای نیاز است`,`کافی است میانگین ۷ امتیاز را گزارش کنند`,`باید test را stratify کنند`], a:1, e:`«If you tune on it, it becomes validation data.» انتخاب‌های مکرر بر اساس test، آن را خوش‌بینانه می‌کند.`},
+ {q:`مدل تشخیص تقلب قرار است روی <b>رانندگان تازه‌ثبت‌نام</b> اجرا شود و تقلب نادر است. مناسب‌ترین splitter کدام است؟`, o:[`KFold(shuffle=True)`,`StratifiedKFold`,`StratifiedGroupKFold با گروه driver_id`,`TimeSeriesSplit بدون gap`], a:2, e:`«کاربر یا دستگاه دیده‌نشده» گروه می‌خواهد و «عدم‌توازن کلاس» لایه‌بندی. اسلاید ۱۳ برای ترکیب این دو StratifiedGroupKFold را پیشنهاد می‌کند.`},
+ {q:R`داده ۵۳ درخواست در روز دارد و برچسب ۲۴ ساعت بعد نهایی می‌شود. کدام تنظیم TimeSeriesSplit درست‌تر است؟`, o:[`gap=24 چون شکاف ۲۴ ساعت لازم است`,`gap=1 چون یک روز کافی است`,`حدود gap=55 و بعد بررسی تاریخ مرزها، چون gap بر حسب تعداد سطر است`,`gap لازم نیست، چون TimeSeriesSplit خودش ترتیب زمانی را رعایت می‌کند`], a:2, e:`gap در sklearn تعداد سطر است. ۲۴ سطر فقط حدود ۱۱ ساعت است. چون سطرها با فاصله‌ی زمانی یکسان نیستند، باید تاریخ واقعی مرزها را چک کرد.`},
+ {q:`کاربری که سفرهایش هم در train و هم در validation است، برای سؤال «کاربر جدید» چه مشکلی ایجاد می‌کند؟`, o:[`مشکلی ندارد، چون سطرها متفاوت‌اند`,`عدم‌توازن کلاس`,`مدل عادت همان کاربر را حفظ می‌کند و امتیاز، تعمیم به کاربر جدید را بیش از واقع نشان می‌دهد`,`فقط زمان آموزش زیاد می‌شود`], a:2, e:`میان‌بُر هویت (identity shortcut). در داده‌ی ما KFold عدد ۰٫۶۴۰ و GroupKFold عدد ۰٫۵۹۸ داد و همه‌ی ۳۹۷ کاربر validation در train هم بودند.`},
+ {q:`روی ۱۰۰ نمونه با ۵۰۰۰ ویژگی <b>نویز خالص</b>، ۲۰ ویژگی برتر را روی کل داده انتخاب و بعد 5-fold CV کردیم. نتیجه‌ی تقریبی؟`, o:[`حدود ۵۰٪، چون داده نویز است`,`خیلی بالاتر از ۵۰٪ (در اجرای ما ۸۷٪)، چون انتخاب ویژگی سطرهای validation را دیده است`,`کمتر از ۵۰٪`,`دقیقاً ۱۰۰٪`], a:1, e:`تجسس در داده (data snooping). وقتی انتخاب داخل pipeline باشد، نتیجه به ۵۰٪ برمی‌گردد. قاعده‌ی اسلاید ۲۰.`},
+ {q:`StandardScaler را روی کل داده fit_transform کردی و بعد CV زدی. کدام توصیف دقیق‌تر است؟`, o:[`نشت نیست، چون scaler بدون ناظر است`,`نشت از نوع «fit سراسری» است. اثرش معمولاً کم است، ولی روش غلط است و باید داخل Pipeline برود`,`نشت هدف است`,`فقط وقتی مهم است که داده پرت داشته باشد`], a:1, e:`«Even unsupervised transformations should be fit on training data only.» شدت با انتخاب ویژگی یکی نیست، ولی اصل یکی است.`},
+ {q:R`APهای ۵ fold: 0.31، 0.36، 0.25، 0.43، 0.28. کدام گزارش با اسلاید ۱۷ سازگارتر است؟`, o:[`AP = 0.43 (بهترین fold)`,`AP = 0.33`,`AP ≈ 0.33 ± 0.07 همراه با امتیاز، بازه‌ی زمانی و تعداد لغو هر fold`,`AP = 0.25 (بدبینانه‌ترین)`], a:2, e:R`میانگین $0.326$ و sd حدود $0.071$ است. اسلاید می‌گوید: «Report each fold, its time span and minority-class count — not mean alone.»`},
+ {q:`چرا best_score_ در GridSearchCV با ۴۰ تنظیم معمولاً خوش‌بینانه است؟`, o:[`چون GridSearchCV از train برای امتیاز استفاده می‌کند`,`چون بیشینه‌ی چند تخمین نویزی به‌طور سیستماتیک از مقدار واقعی بالاتر است و همان foldها هم برای انتخاب و هم برای گزارش استفاده شده‌اند`,`چون refit=True است`,`خوش‌بینانه نیست`], a:1, e:`سوگیری انتخاب (winner's curse). در آزمایش ما روی نویز، best_score_ به‌طور میانگین ۰٫۵۶۸ و nested CV برابر ۰٫۵۱۵ بود.`},
+ {q:`ویژگی «نرخ لغو کاربر» با <code>groupby("user_id")</code> و <code>.transform("mean")</code> روی کل جدول ساخته شده. مشکل چیست؟`, o:[`مشکلی ندارد، سابقه‌ی کاربر در قرارداد مجاز است`,`فقط برای کاربران جدید NaN می‌دهد`,`برچسب خود سفر و لغوهای آینده در آن است. باید point-in-time ساخته شود (مثلاً merge_asof با allow_exact_matches=False)`,`فقط کند است`], a:2, e:`سابقه‌ی «واقعی قبلی» مجاز است، نه میانگین کل. در داده‌ی ما نسخه‌ی غلط AP = ۰٫۵۰ قول داد و نسخه‌ی point-in-time به ۰٫۴۲ رسید.`},
+ {q:`ستون pickup_zone با ۳۰۰۰ مقدار <b>کاملاً تصادفی</b> را با میانگین برچسب هر منطقه روی کل داده کدگذاری کردیم و AUC = ۰٫۹۰ شد. بهترین توضیح؟`, o:[`منطقه واقعاً روی لغو اثر دارد`,`هر منطقه حدود ۳ سفر دارد و برچسب هر سطر در کد خودش هست. target encoding باید out-of-fold و داخل pipeline باشد`,`باید از one-hot استفاده می‌کردیم چون AUC بالاتر می‌شد`,`AUC برای این مسئله معیار مناسبی نیست`], a:1, e:`با TargetEncoder داخل pipeline (cross-fitting) AUC به ۰٫۴۸۶ یعنی سطح شانس برگشت.`},
+];
+
+window.PAGE_INIT=function(ML){
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const fa=ML.fa||(n=>String(n).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]));
+  const pct=x=>fa(Math.round(100*x))+"٪";
+  const faD=x=>fa(String(x)).replace(".","٫");
+
+  /* ---------------- Widget A: split visualizer ---------------- */
+  (function(){
+    const el=document.getElementById("w-split"); if(!el) return;
+    ML.shell(el,"شبیه‌ساز تقسیم داده: هر سفر کجا می‌رود؟","۱۰ کاربر در ۱۸۰ روز. دایره = سفر تکمیل‌شده، مربع = سفر لغوشده. رنگ نشان می‌دهد سفر در train، val یا test است. خاکستری یعنی سفر در شکاف افتاده و دور ریخته شده. هشدارها برای دو سؤال استقرار حساب می‌شوند.");
+    const ids=[12,47,83,105,161,208,256,319,377,402];
+    const rides=[]; (function(){ const r=mulberry32(2026); ids.forEach((u,ui)=>{ const m=6+Math.floor(r()*9); const flaky=r()<0.3?0.4:0.07; for(let j=0;j<m;j++) rides.push({u:ui,t:r()*180,c:r()<flaky?1:0}); }); rides.sort((a,b)=>a.t-b.t); })();
+    let mode="random", gap=0, delay=1, seed=1;
+    const cv=ML.h("canvas",{class:"wide"});
+    const ctr=ML.h("div",{class:"controls"});
+    const selL=ML.h("label",null,"splitter: ");
+    const sel=ML.h("select");
+    [["random","تصادفی (row-wise)"],["strat","لایه‌ای (stratified)"],["group","گروهی (GroupKFold، کاربر)"],["time","زمانی + شکاف"]].forEach(([v,t])=>{const o=ML.h("option",{value:v},t); sel.append(o);});
+    sel.onchange=()=>{mode=sel.value; draw();}; selL.append(sel);
+    const gS=ML.slider("شکاف (روز):",0,14,0.5,0,v=>{gap=v;draw();},v=>faD(v));
+    const dS=ML.slider("تأخیر نهایی شدن برچسب (روز):",0,5,0.5,1,v=>{delay=v;draw();},v=>faD(v));
+    const btn=ML.h("button",{class:"wbtn",type:"button"},"🎲 قرعه‌ی دوباره");
+    btn.onclick=()=>{seed++; draw();};
+    ctr.append(selL,gS,dS,btn);
+    const out=ML.h("div",{class:"readout"});
+    el.append(cv,ctr,out);
+    let bounds=null;
+    function assign(){
+      const n=rides.length, r=mulberry32(seed*7919+13), set=new Array(n).fill(0);
+      const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+      const cut=arr=>{const m=arr.length,a=Math.round(.6*m),b=Math.round(.8*m); arr.forEach((i,ix)=>{set[i]=ix<a?0:ix<b?1:2;});};
+      bounds=null;
+      if(mode==="random") cut(shuf([...Array(n).keys()]));
+      else if(mode==="strat"){ const all=[...Array(n).keys()]; cut(shuf(all.filter(i=>rides[i].c))); cut(shuf(all.filter(i=>!rides[i].c))); }
+      else if(mode==="group"){ const us=shuf([...ids.keys()]); const g={}; us.forEach((u,ix)=>g[u]=ix<6?0:ix<8?1:2); rides.forEach((x,i)=>set[i]=g[x.u]); }
+      else { const t1=rides[Math.round(.6*n)].t, t2=rides[Math.round(.8*n)].t; bounds=[t1,t2];
+        rides.forEach((x,i)=>{ set[i]= x.t<t1?0 : x.t<t1+gap?3 : x.t<t2?1 : x.t<t2+gap?3 : 2; }); }
+      return set;
+    }
+    function draw(){
+      const set=assign();
+      const C=[ML.css("--plot-c3"),ML.css("--plot-c1"),ML.css("--plot-c4"),ML.css("--plot-axis")];
+      const bad=ML.css("--bad");
+      const P=new ML.Plot(cv,[0,180],[-0.7,ids.length-0.3],{l:58,r:10,t:30,b:30});
+      // identity leak users
+      const inTr=new Set(), inEv=new Set();
+      rides.forEach((x,i)=>{ if(set[i]===0) inTr.add(x.u); else if(set[i]===1||set[i]===2) inEv.add(x.u); });
+      const shared=[...inTr].filter(u=>inEv.has(u));
+      if(bounds){ const c=P.ctx; c.fillStyle=ML.alpha(ML.css("--plot-diag"),.18);
+        [bounds[0],bounds[1]].forEach(b=>{ if(gap>0){ const x0=P.X(b), x1=P.X(Math.min(180,b+gap)); c.fillRect(x0,P.p.t,x1-x0,P.H-P.p.t-P.p.b);} }); }
+      P.axes("day (Jan → Jun)","",{xstep:30,ystep:1,yfmt:()=>""});
+      const c=P.ctx; c.font="11px Vazirmatn,Tahoma,sans-serif"; c.textAlign="right";
+      ids.forEach((id,ui)=>{ const leak=shared.includes(ui); c.fillStyle=leak?bad:ML.css("--ink-2"); c.fillText((leak?"⚠ ":"")+"user "+id,P.p.l-5,P.Y(ui)+4); });
+      if(bounds){ P.vline(bounds[0],C[0],[4,3]); P.vline(bounds[1],C[1],[4,3]); }
+      const rad=Math.max(3.2,Math.min(6,P.W/120));
+      rides.forEach((x,i)=>{ const X=P.X(x.t), Y=P.Y(x.u); const col=C[set[i]];
+        c.fillStyle=set[i]===3?ML.alpha(col,.35):col;
+        if(x.c){ c.fillRect(X-rad,Y-rad,2*rad,2*rad); c.strokeStyle=bad; c.lineWidth=1.6; c.strokeRect(X-rad,Y-rad,2*rad,2*rad); }
+        else { c.beginPath(); c.arc(X,Y,rad,0,7); c.fill(); } });
+      // legend
+      const narrow=P.W<520; const lg=[["train",C[0]],["val",C[1]],["test",C[2]],[narrow?"gap":"gap (dropped)",ML.alpha(C[3],.5)]]; let lx=narrow?6:P.p.l; c.textAlign="left";
+      lg.forEach(([t,col])=>{ c.fillStyle=col; c.beginPath(); c.arc(lx+5,14,5,0,7); c.fill(); c.fillStyle=ML.css("--ink-2"); c.fillText(t,lx+13,18); lx+=c.measureText(t).width+(narrow?20:30); });
+      c.strokeStyle=bad; c.lineWidth=1.6; c.strokeRect(lx,9,10,10); c.fillStyle=ML.css("--ink-2"); c.fillText(narrow?"cancel":"= cancelled",lx+14,18);
+      // metrics
+      const S=[0,1,2].map(k=>{const r=rides.filter((x,i)=>set[i]===k); return {n:r.length, c:r.filter(x=>x.c).length};});
+      const drop=set.filter(s=>s===3).length;
+      const evT=rides.filter((x,i)=>set[i]===1||set[i]===2).map(x=>x.t); const evStart=Math.min(...evT);
+      const fut=rides.filter((x,i)=>set[i]===0 && x.t>evStart).length;
+      const valT=rides.filter((x,i)=>set[i]===1).map(x=>x.t); const valStart=valT.length?Math.min(...valT):180;
+      const lab=rides.filter((x,i)=>set[i]===0 && x.t<=evStart && x.t+delay>valStart).length;
+      const ok=b=>b?"✅":"❌";
+      const nm=["train","val","test"]; let s="اندازه‌ها: "+[0,1,2].map(k=>`${fa(S[k].n)} سفر در ${nm[k]} (لغو ${S[k].n?pct(S[k].c/S[k].n):"–"})`).join(" · ")+(drop?` · دور ریخته: ${fa(drop)}`:"")+"\n";
+      s+=`${ok(shared.length===0)} نشت هویت: ${fa(shared.length)} از ${fa(ids.length)} کاربر هم در train هستند و هم در val/test\n`;
+      s+=`${ok(fut===0)} نشت آینده: ${fa(fut)} سفرِ train بعد از اولین سفرِ val/test رخ داده‌اند\n`;
+      if(mode==="time") s+=`${ok(lab===0)} نشت برچسب: ${fa(lab)} سفرِ train برچسبشان بعد از شروع val نهایی می‌شود (شکاف ${faD(gap)} روز، تأخیر برچسب ${faD(delay)} روز)\n`;
+      const A=fut===0&&(mode!=="time"||lab===0), B=shared.length===0;
+      s+=`حکم ← سؤال A (سفر بعدیِ کاربران فعلی): ${A?"✅ شبیه‌سازی معتبر":"❌ نامعتبر"} · سؤال B (کاربر جدید): ${B?"✅ بدون میان‌بُر هویت":"❌ میان‌بُر هویت"}`;
+      if(mode==="time"&&A) s+=`\n(برای سؤال A اشکالی ندارد که کاربر در دو طرف باشد: در استقرار هم گذشته‌ی او را داری.)`;
+      if(mode==="time") s+=`\nتقسیم زمانی قرعه ندارد: «قرعه‌ی دوباره» آن را عوض نمی‌کند.`;
+      out.textContent=s;
+    }
+    ML.onResize(cv,draw); draw();
+  })();
+
+  /* ---------------- Widget B: data snooping simulator ---------------- */
+  (function(){
+    const el=document.getElementById("w-snoop"); if(!el) return;
+    ML.shell(el,"شبیه‌ساز تجسس در داده: سیگنال از هیچ","داده نویز خالص است: X ∼ N(0,1) و برچسب تصادفی ۵۰/۵۰، پس دقت واقعی هر مدلی ۵۰٪ است. در هر تکرار، k ویژگی با بیشترین اختلاف میانگین دو کلاس انتخاب می‌شود و یک طبقه‌بند نزدیک‌ترین مرکز (nearest centroid) با 5-fold CV ارزیابی می‌شود. «غلط» یعنی انتخاب یک بار روی همه‌ی سطرها. «درست» یعنی انتخاب از نو داخل هر train fold. هر نقطه یک دیتاست تصادفی است.");
+    const PV=[10,30,100,300,1000,2000,3000];
+    let n=100, pi=5, k=20, seed=1; const REPS=8;
+    const cv=ML.h("canvas",{class:"wide"}); const ctr=ML.h("div",{class:"controls"}); const out=ML.h("div",{class:"readout"});
+    ctr.append(
+      ML.slider("n (نمونه):",40,200,20,n,v=>{n=v;sched();},v=>fa(v)),
+      ML.slider("p (ویژگی نویز):",0,PV.length-1,1,pi,v=>{pi=v;sched();},v=>fa(PV[v])),
+      ML.slider("k (انتخاب‌شده):",1,50,1,k,v=>{k=v;sched();},v=>fa(v)));
+    const btn=ML.h("button",{class:"wbtn",type:"button"},"🎲 داده‌ی تازه"); btn.onclick=()=>{seed+=REPS;sched();}; ctr.append(btn);
+    el.append(cv,ctr,out);
+    function gaussFill(r,X){ for(let i=0;i<X.length;i+=2){ let u=r(); if(u<1e-12)u=1e-12; const v=r(); const R=Math.sqrt(-2*Math.log(u)); X[i]=R*Math.cos(6.283185307*v); if(i+1<X.length) X[i+1]=R*Math.sin(6.283185307*v);} }
+    function topk(X,y,p,rows,kk){
+      const m1=new Float64Array(p),m0=new Float64Array(p),q=new Float64Array(p); let n1=0;
+      for(const i of rows){ const o=i*p; const m=y[i]?m1:m0; if(y[i])n1++; for(let j=0;j<p;j++){const v=X[o+j]; m[j]+=v; q[j]+=v*v;} }
+      const n0=rows.length-n1, s=new Float64Array(p);
+      for(let j=0;j<p;j++){ const mu=(m1[j]+m0[j])/rows.length, va=q[j]/rows.length-mu*mu; s[j]=Math.abs(m1[j]/n1-m0[j]/n0)/Math.sqrt(va+1e-9); }
+      const idx=Array.from({length:p},(_,j)=>j); idx.sort((a,b)=>s[b]-s[a]); return idx.slice(0,kk);
+    }
+    function acc(X,y,p,tr,va,f){
+      const K=f.length,c1=new Float64Array(K),c0=new Float64Array(K); let n1=0,n0=0;
+      for(const i of tr){ const o=i*p; if(y[i]){n1++; for(let a=0;a<K;a++) c1[a]+=X[o+f[a]];} else {n0++; for(let a=0;a<K;a++) c0[a]+=X[o+f[a]];} }
+      for(let a=0;a<K;a++){c1[a]/=n1;c0[a]/=n0;}
+      let ok=0; for(const i of va){ const o=i*p; let d1=0,d0=0; for(let a=0;a<K;a++){const v=X[o+f[a]]; d1+=(v-c1[a])**2; d0+=(v-c0[a])**2;} if((d1<d0?1:0)===y[i]) ok++; }
+      return ok/va.length;
+    }
+    function one(n,p,k,sd){
+      const r=mulberry32(sd); const X=new Float32Array(n*p); gaussFill(r,X);
+      const y=new Uint8Array(n), ord=[...Array(n).keys()];
+      for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));[ord[i],ord[j]]=[ord[j],ord[i]];}
+      ord.forEach((i,ix)=>{ y[i]=ix<n/2?1:0; });
+      const fold=new Uint8Array(n), o2=[...Array(n).keys()];
+      for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));[o2[i],o2[j]]=[o2[j],o2[i]];}
+      // stratified folds: alternate classes
+      const pos=o2.filter(i=>y[i]), neg=o2.filter(i=>!y[i]); pos.forEach((i,ix)=>fold[i]=ix%5); neg.forEach((i,ix)=>fold[i]=ix%5);
+      const all=[...Array(n).keys()], g=topk(X,y,p,all,k); let w=0,h=0;
+      for(let f=0;f<5;f++){ const tr=all.filter(i=>fold[i]!==f), va=all.filter(i=>fold[i]===f); w+=acc(X,y,p,tr,va,g); h+=acc(X,y,p,tr,va,topk(X,y,p,tr,k)); }
+      return [w/5,h/5];
+    }
+    let res=[], timer=null;
+    function compute(){ const p=PV[pi], kk=Math.min(k,p); res=[]; for(let s=0;s<REPS;s++) res.push(one(n,p,kk,seed+s)); draw(); }
+    function sched(){ out.textContent="در حال محاسبه…"; clearTimeout(timer); timer=setTimeout(compute,120); }
+    function draw(){
+      if(!res.length) return;
+      const P=new ML.Plot(cv,[-0.6,1.6],[0.2,1.0],{l:44,r:12,t:14,b:30});
+      P.axes("","CV accuracy",{xstep:1,ystep:0.1,xfmt:()=>"",yfmt:v=>Math.round(v*100)+"%"});
+      P.hline(0.5,ML.css("--plot-diag"),[6,4]); P.text(-0.57,0.5,"true = 50%",ML.css("--plot-diag"),"left",-6);
+      const cols=[ML.css("--plot-c2"),ML.css("--plot-c1")]; const lab=P.W<520?["WRONG (outside)","RIGHT (inside)"]:["WRONG: select on all rows","RIGHT: select inside each fold"];
+      const mean=[0,1].map(j=>res.reduce((a,b)=>a+b[j],0)/res.length);
+      [0,1].forEach(j=>{ P.bar(j,0.5,0.2,mean[j],ML.alpha(cols[j],.18)); res.forEach((r,ix)=>P.dot(j+(ix-(res.length-1)/2)*0.05,r[j],cols[j],4.5));
+        P.line([[j-0.25,mean[j]],[j+0.25,mean[j]]],cols[j],2.5); P.text(j,0.2,lab[j],ML.css("--ink-2"),"center",18); P.text(j+0.27,mean[j],Math.round(mean[j]*100)+"%",cols[j],"left",4); });
+      const p=PV[pi], kk=Math.min(k,p);
+      const corr=Math.sqrt(2*Math.log(p)/n);
+      out.textContent=`${ML.L(`n = ${n} · p = ${p} · k = ${kk}`)} · ${fa(REPS)} دیتاست تصادفی\n`+
+        `میانگین «غلط» (انتخاب بیرون CV): ${pct(mean[0])} · میانگین «درست» (انتخاب داخل fold): ${pct(mean[1])}\n`+
+        `خوش‌بینی جعلی ≈ ${fa(Math.round(100*(mean[0]-mean[1])))} واحد درصد · بزرگ‌ترین همبستگی تصادفی ≈ ${ML.L("√(2 ln p / n)")} ≈ ${faD(corr.toFixed(2))}\n`+
+        (p<=30?"با p کوچک، «انتخاب» از میان گزینه‌های کمی است و خوش‌بینی کم می‌شود.":n>=160?"با n بزرگ، همبستگی‌های جعلی کوچک‌ترند (∝ 1/√n).":"p را بالا ببر یا n را کم کن تا ببینی دروغ چقدر بزرگ می‌شود.");
+    }
+    ML.onResize(cv,draw); compute();
+  })();
+};
+</script>
+</body></html>

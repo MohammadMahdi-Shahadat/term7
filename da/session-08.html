@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۸ · رویداد نادر، آستانه و کالیبراسیون</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.cmx td,.cmx th{text-align:center}
+.cmx td.hit{background:color-mix(in srgb,var(--good) 14%,var(--paper));font-weight:700}
+.cmx td.miss{background:color-mix(in srgb,var(--bad) 12%,var(--paper));font-weight:700}
+.kpi{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.kpi span{border:1px solid var(--line-2);border-radius:8px;padding:3px 10px;font-size:.88em;background:var(--bg)}
+.kpi span b{font-weight:800}
+.tablewrap,.katex-display{position:relative}
+.lab12 td:first-child{font-family:ui-monospace,Consolas,monospace;font-size:.8em;direction:ltr;text-align:left;overflow-wrap:anywhere;width:36%}
+</style>
+</head>
+<body data-session="8">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۸ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>آماده‌سازی داده برای ML (۲): رویداد نادر، precision–recall، آستانه و کالیبراسیون</h1>
+  <p class="lead">جلسه‌ی قبل یاد گرفتیم امتیاز مدل را صادقانه به دست بیاوریم: تقسیم درست، اعتبارسنجی متقاطع و بدون نشت. حالا سؤال بعدی این است که آن امتیاز را چطور بخوانیم و چطور به تصمیم تبدیلش کنیم. وقتی فقط ۱۲٪ درخواست‌ها لغو می‌شوند، «دقت ۹۵٪» می‌تواند یعنی هیچ. این جلسه از معیار درست شروع می‌کند، به آستانه و هزینه‌ی تومانی می‌رسد، احتمال‌ها را کالیبره می‌کند، برش‌ها را می‌کاود و با یک آزمایش کامل ۱۲ خطی تمام می‌شود.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۵۰ تا ۱۸۰ دقیقه (با تمرین‌ها)</span><span>📚 منبع: اسلاید ۰۶ (Preparing Data for ML)، صفحه‌های ۲۵ تا ۳۳ + تکمیلی از Géron فصل ۳، Practical Statistics for Data Scientists فصل ۵ و مستندات scikit-learn</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>توضیح بدهی چرا accuracy برای رویداد نادر گمراه‌کننده است و همیشه مدل احمق (dummy) را خط پایه بگیری.</li>
+    <li>از روی ماتریس درهم‌ریختگی همه‌ی معیارها را حساب کنی: precision، recall، FPR، specificity، F1، $F_\beta$، balanced accuracy و MCC.</li>
+    <li>منحنی PR و AP را بخوانی، با خط پایه‌ی شیوع مقایسه کنی و توضیح بدهی چرا ROC-AUC در داده‌ی نامتوازن خوش‌بینانه به نظر می‌رسد.</li>
+    <li>آستانه را با ماتریس هزینه (به تومان) و روی validation انتخاب کنی و فرمول $t^*=\frac{C_{FP}}{C_{FP}+C_{FN}}$ را اثبات کنی.</li>
+    <li>کالیبراسیون را با نمودار اطمینان و Brier بسنجی، با Platt یا isotonic اصلاحش کنی و اثر resampling بر احتمال را برگردانی.</li>
+    <li>عملکرد را روی برش‌ها (شهر، کاربر جدید، هفته) با بازه‌ی اطمینان bootstrap گزارش کنی و یک آزمایش سرتاسری قابل‌حسابرسی بنویسی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+  یک اپ تاکسی اینترنتی می‌خواهد قبل از تخصیص راننده، درخواست‌هایی را که احتمالاً لغو می‌شوند پیدا کند و برایشان کاری بکند (مثلاً راننده‌ی نزدیک‌تر یا کد تخفیف). تیم مدل می‌گوید «دقت مدل ۸۸٪ است». سه سؤال را روی کاغذ جواب بده:
+  <ol>
+    <li>قبل از هر قضاوتی دانستن <b>چه عددی</b> لازم است تا بفهمی ۸۸٪ خوب است یا بد؟</li>
+    <li>مدل برای هر درخواست عددی بین ۰ و ۱ می‌دهد. از کجا معلوم «۰٫۳» یعنی واقعاً ۳۰٪ احتمال لغو؟</li>
+    <li>از چه امتیازی به بالا باید اقدام کرد؟ ۰٫۵؟ چه چیزی این عدد را تعیین می‌کند: آمار یا کسب‌وکار؟</li>
+  </ol>
+  جواب‌هایت را نگه دار و در بخش‌های ۱، ۴ و ۵ چک کن.
+</div>
+
+<div class="box note"><div class="bt">🔁 مرور جلسه‌ی ۷ در یک نگاه (اسلاید ۰۶، صفحه‌های ۱ تا ۲۴)</div>
+<ul>
+  <li><b>مسئله‌ی جاری:</b> «آیا این سفر لغو می‌شود؟» <b>لحظه‌ی پیش‌بینی (prediction moment)</b> همان لحظه‌ای است که مسافر درخواست می‌دهد، نه بعد از پایان سفر.</li>
+  <li><b>داده‌ی درس:</b> ۹٬۶۰۰ سفر مصنوعی در ۱۸۰ روز، حدود ۱۲٪ لغوشده.</li>
+  <li><b>قرارداد زمان پیش‌بینی:</b> شهر، ساعت، تخمین مسافت، قیمت پیشنهادی، ETA راننده و سابقه‌ی واقعیِ <i>گذشته‌ی</i> کاربر مجازند. وضعیت نهایی سفر، بازپرداخت (refund)، دلیل لغو و اصلاحات بعدی ممنوع‌اند.</li>
+  <li><b>تقسیم زمانی:</b> train = ژانویه تا آوریل، validation = مه، test = ژوئن. test یک «صندوق قفل‌شده» (lockbox) است؛ اگر رویش تنظیم کنی، دیگر validation شده.</li>
+  <li><b>Pipeline:</b> هر چیزی که از داده یاد می‌گیرد (imputer، encoder، scaler، انتخاب ویژگی، مدل) داخل pipeline است و در هر fold دوباره و فقط روی بخش train فیت می‌شود.</li>
+</ul>
+جلسه‌ی ۷ پرسید «آیا می‌توانیم امتیاز را باور کنیم؟». امروز می‌پرسیم: «کدام امتیاز؟ و با آن چه کار کنیم؟»
+</div>
+
+<section id="accuracy">
+<h2><span class="num">۱</span> دقت ۹۵٪ و صفر کشف: پارادوکس دقت <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۲۵ یک آزمایش ذهنی ساده دارد: ۱٬۰۰۰ درخواست داریم که ۵۰ تایش لغو می‌شود (۵٪). «مدلی» می‌سازیم که <b>همیشه</b> می‌گوید «سفر انجام می‌شود». نتیجه:</p>
+
+<div class="tablewrap"><table class="cmx">
+<tr><th></th><th>واقعاً انجام‌شده</th><th>واقعاً لغوشده</th></tr>
+<tr><th>پیش‌بینی: انجام می‌شود</th><td class="hit">۹۵۰<br><small>انجام‌شده‌ی درست (TN)</small></td><td class="miss">۵۰<br><small>لغو ازدست‌رفته (FN)</small></td></tr>
+<tr><th>پیش‌بینی: لغو می‌شود</th><td>۰<br><small>هشدار بیهوده (FP)</small></td><td>۰<br><small>لغو کشف‌شده (TP)</small></td></tr>
+</table></div>
+<div class="kpi"><span>Accuracy = <b>۹۵٪</b></span><span>Recall لغو = <b>۰٪</b></span><span>تعداد هشدار = <b>۰</b></span></div>
+
+<p>دقت (accuracy) ۹۵٪ است، ولی مدل حتی یک لغو را هم پیدا نکرده. پیام اسلاید: <b>«برای رویداد نادر، از نرخ پایه (base rate) و هزینه‌های عملیاتی خطا شروع کن.»</b></p>
+
+<div class="box thm"><div class="bt">چرا accuracy فریب می‌دهد؟</div>
+اگر شیوع (prevalence) کلاس مثبت را $\pi$ بنامیم، accuracy میانگین وزنی عملکرد روی دو کلاس است:
+$$\text{Accuracy}=\pi\cdot \text{TPR} + (1-\pi)\cdot \text{TNR}$$
+وقتی $\pi=0.05$ است، ۹۵٪ وزن روی کلاس اکثریت است. مدلی که کلاس نادر را کاملاً نادیده بگیرد ($\text{TPR}=0$) و همه‌ی منفی‌ها را درست بگوید ($\text{TNR}=1$)، دقیقاً $1-\pi=0.95$ می‌گیرد. پس accuracy مدل احمق همیشه $\max(\pi,1-\pi)$ است.
+</div>
+
+<p>در scikit-learn این مدل احمق اسم دارد: <code>DummyClassifier</code>. همیشه اول آن را بساز تا بدانی عدد مدلت را با چه چیزی مقایسه کنی:</p>
+<pre class="code">import numpy as np
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import accuracy_score, recall_score, confusion_matrix
+
+y = np.r_[np.ones(50), np.zeros(950)].astype(int)    # 1 = cancelled (5%)
+X = np.zeros((1000, 1))                               # features don't matter here
+dummy = DummyClassifier(strategy="most_frequent").fit(X, y)
+pred = dummy.predict(X)                               # always "completed"
+print("accuracy:", accuracy_score(y, pred))
+print("recall  :", recall_score(y, pred, zero_division=0))
+print(confusion_matrix(y, pred, labels=[1, 0]))      # rows = actual [cancel, complete]</pre>
+<div class="out">accuracy: 0.95
+recall  : 0.0
+[[  0  50]
+ [  0 950]]</div>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+در <code>confusion_matrix</code> کتابخانه‌ی sklearn <b>سطرها برچسب واقعی</b> و ستون‌ها پیش‌بینی‌اند. در اسلاید ۲۵ برعکس است: سطرها پیش‌بینی و ستون‌ها واقعیت. در امتحان اول عنوان سطر و ستون را بخوان، بعد عدد را. با <code>labels=[1, 0]</code> ترتیب را طوری می‌چینیم که کلاس مثبت (لغو) اول بیاید: $\begin{bmatrix}TP & FN\\ FP & TN\end{bmatrix}$.
+</div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+«دقت مدل ۸۸٪ است، پس مدل خوبی داریم.» در داده‌ی درس که ۱۲٪ لغو دارد، مدل احمقِ «همیشه انجام می‌شود» خودش ۸۸٪ می‌گیرد. عدد ۸۸٪ بدون خط پایه هیچ معنایی ندارد. اول بپرس «شیوع چند است؟» و «مدل احمق چند می‌گیرد؟».
+</div>
+
+<p>با ابزار زیر پارادوکس را خودت بساز. نسبت کلاس مثبت را روی ۵٪ بگذار و آستانه را بالا ببر (مثلاً ۴): accuracy به ۹۵٪ می‌رسد ولی TP صفر می‌شود. بعد آستانه را پایین بیاور و ببین accuracy <i>کم</i> می‌شود در حالی که مدل واقعاً لغو پیدا می‌کند. آخر سر شیوع را روی ۰٫۵٪ ببر و ببین precision چطور فرو می‌ریزد.</p>
+<div data-widget="confusion"></div>
+</section>
+
+<section id="metrics">
+<h2><span class="num">۲</span> ماتریس درهم‌ریختگی و خانواده‌ی معیارها <span class="tag book">تکمیلی</span> <span class="tag exam">امتحانی</span></h2>
+<p>هر معیار طبقه‌بندی دودویی فقط ترکیبی از چهار عدد ماتریس درهم‌ریختگی (confusion matrix) است. در مسئله‌ی ما «مثبت» یعنی لغو و «هشدار» یعنی مدل گفته لغو می‌شود:</p>
+<div class="cards">
+  <div><b>TP · لغو کشف‌شده</b>هشدار دادیم و واقعاً لغو شد. اینجا مداخله ارزش دارد.</div>
+  <div><b>FP · هشدار بیهوده</b>هشدار دادیم ولی سفر انجام شد. کد تخفیف یا تماس هدر رفت.</div>
+  <div><b>FN · لغو ازدست‌رفته</b>هشدار ندادیم و لغو شد. درآمد و رضایت مسافر از دست رفت.</div>
+  <div><b>TN · انجام‌شده‌ی درست</b>هشدار ندادیم و سفر انجام شد. هزینه‌ای نداشت.</div>
+</div>
+
+<div class="tablewrap"><table>
+<tr><th>معیار</th><th>فرمول</th><th>به چه سؤالی جواب می‌دهد؟</th></tr>
+<tr><td>Accuracy</td><td>$\frac{TP+TN}{N}$</td><td>چه کسری از کل پیش‌بینی‌ها درست بود؟</td></tr>
+<tr><td>Precision (PPV)</td><td>$\frac{TP}{TP+FP}$</td><td>از هشدارهایی که دادیم، چند تا واقعاً لغو شدند؟</td></tr>
+<tr><td>Recall = TPR = Sensitivity</td><td>$\frac{TP}{TP+FN}$</td><td>از همه‌ی لغوها، چند تا را گرفتیم؟</td></tr>
+<tr><td>FPR (نرخ هشدار کاذب)</td><td>$\frac{FP}{FP+TN}$</td><td>از سفرهای سالم، چه کسری را بی‌دلیل هشدار دادیم؟</td></tr>
+<tr><td>Specificity = TNR</td><td>$\frac{TN}{TN+FP}=1-\text{FPR}$</td><td>از سفرهای سالم، چه کسری را درست رها کردیم؟</td></tr>
+<tr><td>F1</td><td>$\frac{2PR}{P+R}=\frac{2TP}{2TP+FP+FN}$</td><td>میانگین هارمونیک precision و recall</td></tr>
+<tr><td>$F_\beta$</td><td>$(1+\beta^2)\frac{PR}{\beta^2P+R}$</td><td>اگر $\beta&gt;1$، recall مهم‌تر است (مثلاً $F_2$)</td></tr>
+<tr><td>Balanced accuracy</td><td>$\frac{\text{TPR}+\text{TNR}}{2}$</td><td>accuracy‌ای که هر کلاس را هم‌وزن می‌کند؛ مدل احمق ۰٫۵ می‌گیرد</td></tr>
+<tr><td>MCC</td><td>$\frac{TP\cdot TN-FP\cdot FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}$</td><td>همبستگی پیش‌بینی و واقعیت، بین ۱- و ۱؛ مدل احمق ۰</td></tr>
+</table></div>
+
+<div class="box ex"><div class="bt">مثال حل‌شده · ۱٬۰۰۰ درخواست، ۱۲۰ لغو، ۱۵۰ هشدار</div>
+مدلی روی ۱٬۰۰۰ درخواست ۱۵۰ هشدار داده که ۶۰ تایش واقعاً لغو شده‌اند. پس $TP=60$، $FP=90$، $FN=120-60=60$ و $TN=880-90=790$.
+<ul>
+  <li>$\text{Accuracy}=\frac{60+790}{1000}=0.85$ و مدل احمق: $\frac{880}{1000}=0.88$. یعنی <b>مدل از مدل احمق «بدتر» است!</b></li>
+  <li>$\text{Precision}=\frac{60}{150}=0.40$ (خط پایه‌ی تصادفی ۰٫۱۲ است، پس هشدارهای مدل ۳٫۳ برابر «تمیزتر» از تصادف‌اند).</li>
+  <li>$\text{Recall}=\frac{60}{120}=0.50$ و $\text{FPR}=\frac{90}{880}\approx0.102$ و $\text{Specificity}\approx0.898$.</li>
+  <li>$F_1=\frac{2\cdot 60}{2\cdot 60+90+60}=\frac{120}{270}\approx0.444$ و $F_2=\frac{5\cdot0.4\cdot0.5}{4\cdot0.4+0.5}\approx0.476$.</li>
+  <li>$\text{Balanced acc}=\frac{0.5+0.898}{2}\approx0.699$ و
+  $$\text{MCC}=\frac{60\cdot790-90\cdot60}{\sqrt{150\cdot120\cdot880\cdot850}}=\frac{42000}{116035}\approx0.362$$</li>
+</ul>
+مدلی که accuracy‌اش از مدل احمق کمتر است، نصف لغوها را با precision چهل‌درصدی پیدا می‌کند. اینکه ارزشمند است یا نه را هزینه‌ها تعیین می‌کنند (بخش ۴)، نه accuracy.
+</div>
+<pre class="code">from sklearn.metrics import (precision_score, recall_score, f1_score, fbeta_score,
+                             balanced_accuracy_score, matthews_corrcoef, classification_report)
+TP, FP, FN, TN = 60, 90, 60, 790                      # 1,000 requests, 120 cancellations
+y_true = np.r_[np.ones(TP + FN), np.zeros(FP + TN)].astype(int)
+y_pred = np.r_[np.ones(TP), np.zeros(FN), np.ones(FP), np.zeros(TN)].astype(int)
+
+print("accuracy   ", accuracy_score(y_true, y_pred))
+print("precision  ", precision_score(y_true, y_pred))
+print("recall/TPR ", recall_score(y_true, y_pred))
+print("specificity", round(recall_score(y_true, y_pred, pos_label=0), 4))
+print("FPR        ", round(FP / (FP + TN), 4))
+print("F1         ", round(f1_score(y_true, y_pred), 4))
+print("F2         ", round(fbeta_score(y_true, y_pred, beta=2), 4))
+print("balanced   ", round(balanced_accuracy_score(y_true, y_pred), 4))
+print("MCC        ", round(matthews_corrcoef(y_true, y_pred), 4))
+print(classification_report(y_true, y_pred, target_names=["completed", "cancelled"], digits=3))</pre>
+<div class="out">accuracy    0.85
+precision   0.4
+recall/TPR  0.5
+specificity 0.8977
+FPR         0.1023
+F1          0.4444
+F2          0.4762
+balanced    0.6989
+MCC         0.362
+              precision    recall  f1-score   support
+
+   completed      0.929     0.898     0.913       880
+   cancelled      0.400     0.500     0.444       120
+
+    accuracy                          0.850      1000
+   macro avg      0.665     0.699     0.679      1000
+weighted avg      0.866     0.850     0.857      1000</div>
+
+<div class="box thm"><div class="bt">قضیه · precision به شیوع وابسته است، recall نه</div>
+TPR و FPR فقط به توزیع امتیاز <i>درون</i> هر کلاس بستگی دارند. ولی با قاعده‌ی بیز:
+$$\text{Precision}=\frac{\pi\cdot\text{TPR}}{\pi\cdot\text{TPR}+(1-\pi)\cdot\text{FPR}}$$
+همان مدل و همان آستانه، اگر شیوع لغو از ۱۲٪ به ۳٪ برسد (مثلاً در یک شهر دیگر یا فصل دیگر)، precision کمتری خواهد داشت. برای همین precision و AP را نمی‌شود بین دو دیتاست با شیوع متفاوت مستقیم مقایسه کرد.
+</div>
+
+<div class="tablewrap"><table>
+<tr><th>معیار</th><th>کی استفاده کنیم</th><th>کی نه</th><th>ریسک</th></tr>
+<tr><td>Accuracy</td><td>کلاس‌ها تقریباً متوازن و هزینه‌ی خطاها مشابه</td><td>رویداد نادر</td><td>مدل احمق را برنده نشان می‌دهد</td></tr>
+<tr><td>Precision</td><td>ظرفیت مداخله محدود است؛ هر هشدار گران است</td><td>وقتی از دست دادن مثبت فاجعه است</td><td>با بالا بردن آستانه می‌شود precision را مصنوعی بالا برد</td></tr>
+<tr><td>Recall</td><td>از دست دادن مثبت گران است (تقلب، بیماری)</td><td>وقتی هشدار کاذب گران است</td><td>هشدار برای همه، recall=۱ می‌دهد</td></tr>
+<tr><td>F1 / $F_\beta$</td><td>یک عدد خلاصه برای مقایسه‌ی سریع مدل‌ها</td><td>وقتی هزینه‌ها معلوم‌اند</td><td>TN را نمی‌بیند و هزینه‌ی واقعی را نمایندگی نمی‌کند</td></tr>
+<tr><td>Balanced acc / MCC</td><td>خلاصه‌ی متقارن در داده‌ی نامتوازن</td><td>تصمیم کسب‌وکاری نهایی</td><td>MCC وقتی یک ستون صفر است تعریف نمی‌شود (sklearn صفر برمی‌گرداند)</td></tr>
+<tr><td>ROC-AUC</td><td>کیفیت رتبه‌بندی، مستقل از آستانه و شیوع</td><td>رویداد خیلی نادر که precision مهم است</td><td>خوش‌بینانه (بخش ۳)</td></tr>
+<tr><td>AP (PR-AUC)</td><td>رویداد نادر؛ کیفیت هشدارها</td><td>مقایسه بین دیتاست‌های با شیوع متفاوت</td><td>باید با خط پایه‌ی شیوع مقایسه شود</td></tr>
+</table></div>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+F1 <b>متقارن نیست</b>: اگر جای «مثبت» و «منفی» را عوض کنی (کلاس «انجام‌شده» را مثبت بگیری) F1 کاملاً عوض می‌شود (در مثال بالا از ۰٫۴۴۴ به ۰٫۹۱۳). F1 اصلاً TN را نمی‌بیند. MCC و balanced accuracy با جابه‌جایی کلاس‌ها ثابت می‌مانند. همیشه بگو F1 «برای کدام کلاس» است.
+</div>
+</section>
+
+<section id="pr">
+<h2><span class="num">۳</span> منحنی precision–recall، AP و خط پایه <span class="tag core">اسلاید</span></h2>
+<p>مدل لجستیک به هر درخواست یک <b>امتیاز</b> (score) می‌دهد. با هر آستانه یک ماتریس درهم‌ریختگی جدید داریم. اگر آستانه را از ۱ تا ۰ پایین بیاوریم و برای هر کدام (recall، precision) را رسم کنیم، <b>منحنی precision–recall</b> به دست می‌آید. اسلاید ۲۶ سه چیز را برجسته می‌کند:</p>
+<ul>
+  <li><b>Precision:</b> چه کسری از هشدارها واقعاً لغو بودند.</li>
+  <li><b>Recall:</b> چه کسری از لغوها کشف شدند.</li>
+  <li><b>خط پایه‌ی PR ≈ شیوع (~۱۲٪)</b>: مدل بی‌مهارت (no-skill) که امتیاز تصادفی می‌دهد، در هر recall همان precision برابر $\pi$ را دارد. پس منحنی مدل باید <b>بالای</b> خط ۰٫۱۲ باشد.</li>
+</ul>
+<p>جمله‌ی کلیدی اسلاید: <b>«Average precision به شیوع وابسته است؛ آن را با خط پایه‌ی بی‌مهارت مقایسه کن.»</b></p>
+
+<div class="box def"><div class="bt">تعریف · Average Precision (AP)</div>
+اگر نمونه‌ها را به ترتیب امتیاز نزولی بچینیم و در هر آستانه‌ی $n$ مقدار recall را $R_n$ و precision را $P_n$ بنامیم:
+$$\text{AP}=\sum_n (R_n-R_{n-1})\,P_n$$
+یعنی میانگین precision، وزن‌دار با افزایش recall در هر قدم. AP خلاصه‌ی یک‌عددی منحنی PR است و بین $\pi$ (تصادفی، به‌طور متوسط) و ۱ (کامل) قرار دارد.
+</div>
+
+<p>حالا یک مدل واقعی روی داده‌ی مصنوعی درس می‌سازیم. کدهای این صفحه مثل یک نوت‌بوک <b>پشت‌سرهم</b> اجرا می‌شوند و متغیرها را با هم شریک‌اند (<code>model</code>، <code>pv</code> برای امتیاز مه و <code>pt</code> برای امتیاز ژوئن):</p>
+<pre class="code">import pandas as pd
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+
+def make_rides(n=9600, seed=7):
+    """Synthetic rides, Jan-Jun 2026, ~12% cancelled (same spirit as the course case)."""
+    rng = np.random.default_rng(seed)
+    df = pd.DataFrame({
+        "request_time": pd.Timestamp("2026-01-01") + pd.to_timedelta(rng.uniform(0, 181, n), unit="D"),
+        "city": rng.choice(["Tehran", "Mashhad", "Isfahan", "Shiraz", "Tabriz"], n,
+                           p=[.40, .20, .15, .15, .10]),
+        "eta_min": rng.gamma(3, 2.5, n).round(1),
+        "distance_km": rng.gamma(2, 4, n).round(1),
+        "is_new_user": rng.random(n) &lt; 0.18,
+        "prior_cancel_rate": rng.beta(1, 9, n).round(3),   # computed AS OF request time
+    })
+    df["hour"] = df.request_time.dt.hour
+    df["quoted_fare"] = (25_000 + 9_000 * df.distance_km * rng.lognormal(0, .15, n)).round(-3)
+    city_eff = df.city.map({"Tehran": .25, "Mashhad": 0, "Isfahan": -.1, "Shiraz": .05, "Tabriz": -.2})
+    z = (-5.0 + 0.16*df.eta_min + 1.0*df.is_new_user + 9*df.prior_cancel_rate
+         + 0.35*df.hour.between(17, 20) + city_eff + rng.normal(0, .9, n))
+    df["cancelled"] = (rng.random(n) &lt; 1 / (1 + np.exp(-z))).astype(int)
+    return df
+
+rides = make_rides()
+features = ["city", "hour", "eta_min", "distance_km", "quoted_fare", "is_new_user", "prior_cancel_rate"]
+month = rides.request_time.dt.month
+train, val, test = rides[month &lt;= 4], rides[month == 5], rides[month == 6]   # Jan-Apr | May | June
+Xtr, ytr = train[features], train["cancelled"]
+Xv,  yv  = val[features],   val["cancelled"]
+Xt,  yt  = test[features],  test["cancelled"]
+
+prep = ColumnTransformer([
+    ("cat", OneHotEncoder(handle_unknown="ignore"), ["city"]),
+    ("num", StandardScaler(), ["hour", "eta_min", "distance_km", "quoted_fare",
+                                "is_new_user", "prior_cancel_rate"])])
+model = Pipeline([("prep", prep), ("clf", LogisticRegression(max_iter=1000))]).fit(Xtr, ytr)
+pv = model.predict_proba(Xv)[:, 1]          # validation scores (May)
+pt = model.predict_proba(Xt)[:, 1]          # test scores (June) - look only at the very end
+print("rows:", len(train), len(val), len(test))
+print("cancel rate:", round(ytr.mean(), 3), round(yv.mean(), 3), round(yt.mean(), 3))</pre>
+<div class="out">rows: 6326 1640 1634
+cancel rate: 0.122 0.127 0.121</div>
+<pre class="code">from sklearn.metrics import average_precision_score, precision_recall_curve
+ap, base = average_precision_score(yv, pv), yv.mean()
+print(f"AP = {ap:.3f}   no-skill baseline = {base:.3f}   lift = {ap/base:.2f}x")
+prec, rec, thr = precision_recall_curve(yv, pv)
+for r in [0.25, 0.50, 0.75, 0.90]:
+    i = np.where(rec[:-1] &gt;= r)[0][-1]           # highest threshold that still reaches recall r
+    print(f"recall &gt;= {r:.2f}: precision = {prec[i]:.3f}  (threshold {thr[i]:.3f})")</pre>
+<div class="out">AP = 0.364   no-skill baseline = 0.127   lift = 2.87x
+recall &gt;= 0.25: precision = 0.448  (threshold 0.328)
+recall &gt;= 0.50: precision = 0.365  (threshold 0.197)
+recall &gt;= 0.75: precision = 0.259  (threshold 0.110)
+recall &gt;= 0.90: precision = 0.186  (threshold 0.061)</div>
+<p>AP برابر ۰٫۳۶۴ در نگاه اول کم به نظر می‌رسد، ولی خط پایه ۰٫۱۲۷ است: مدل حدود <b>۲٫۹ برابر</b> بهتر از تصادف است. خروجی همچنین نشان می‌دهد هر نقطه‌ی منحنی یک «معامله» است: اگر بخواهی ۷۵٪ لغوها را بگیری، از هر ۴ هشدار تقریباً ۱ تایش درست است (precision ۰٫۲۶).</p>
+
+<h3>ROC-AUC در برابر PR-AUC وقتی داده نامتوازن است <span class="tag book">تکمیلی</span></h3>
+<p>منحنی ROC محور افقی‌اش FPR و محور عمودی‌اش TPR است. ROC-AUC یک تعبیر زیبا دارد: <b>احتمال اینکه یک لغوِ تصادفی امتیاز بالاتری از یک سفرِ سالمِ تصادفی بگیرد</b>. خط پایه‌اش همیشه ۰٫۵ است، فارغ از شیوع.</p>
+<p>مشکل در مخرج FPR است: $FP/(FP+TN)$. وقتی منفی‌ها خیلی زیادند، حتی هزاران هشدار کاذب هم FPR کوچکی می‌سازند و منحنی ROC عالی به نظر می‌رسد. ولی precision، که مخرجش خود هشدارهاست، این هزاران خطا را مستقیم می‌بیند.</p>
+
+<div class="box ex"><div class="bt">مثال عددی · همان مدل، دو شیوع</div>
+مدلی با $\text{TPR}=0.50$ و $\text{FPR}=0.067$ (یک نقطه از ROC، مستقل از شیوع). روی ۱۰۰٬۰۰۰ درخواست:
+<ul>
+  <li><b>شیوع ۱۲٪:</b> ۱۲٬۰۰۰ لغو ← $TP=6000$؛ ۸۸٬۰۰۰ سالم ← $FP\approx5879$. Precision ≈ <b>۰٫۵۱</b>.</li>
+  <li><b>شیوع ۱٪:</b> ۱٬۰۰۰ لغو ← $TP=500$؛ ۹۹٬۰۰۰ سالم ← $FP\approx6614$. Precision ≈ <b>۰٫۰۷</b>.</li>
+</ul>
+نقطه‌ی ROC دقیقاً یکی است، ولی در حالت دوم از هر ۱۴ هشدار فقط ۱ تا درست است.
+</div>
+<pre class="code">from sklearn.metrics import roc_auc_score
+rng = np.random.default_rng(0)
+for prev in [0.50, 0.12, 0.01]:
+    n_pos = 2000
+    n_neg = int(n_pos * (1 - prev) / prev)
+    s = np.r_[rng.normal(1.5, 1, n_pos), rng.normal(0, 1, n_neg)]   # same scorer, d = 1.5
+    y = np.r_[np.ones(n_pos), np.zeros(n_neg)]
+    print(f"prevalence={prev:.2f}   ROC-AUC={roc_auc_score(y, s):.3f}   AP={average_precision_score(y, s):.3f}")</pre>
+<div class="out">prevalence=0.50   ROC-AUC=0.851   AP=0.847
+prevalence=0.12   ROC-AUC=0.861   AP=0.533
+prevalence=0.01   ROC-AUC=0.854   AP=0.116</div>
+<p>ROC-AUC در هر سه حالت حدود ۰٫۸۵ است (نظری: $\Phi(1.5\times0.707)=\Phi(1.06)\approx0.856$). AP از ۰٫۸۵ به ۰٫۱۲ سقوط می‌کند. هیچ‌کدام «غلط» نیستند: ROC کیفیت <b>رتبه‌بندی</b> را می‌سنجد و PR کیفیت <b>هشدارها</b> را در شیوع واقعی.</p>
+
+<div class="tablewrap"><table>
+<tr><th></th><th>ROC-AUC</th><th>PR-AUC (AP)</th></tr>
+<tr><td>محورها</td><td>FPR در برابر TPR</td><td>Recall در برابر Precision</td></tr>
+<tr><td>خط پایه‌ی تصادفی</td><td>همیشه ۰٫۵</td><td>شیوع $\pi$</td></tr>
+<tr><td>حساسیت به شیوع</td><td>تقریباً ندارد</td><td>شدید</td></tr>
+<tr><td>TN را می‌بیند؟</td><td>بله (در FPR)</td><td>نه</td></tr>
+<tr><td>کی بهتر است</td><td>مقایسه‌ی مدل‌ها بین جمعیت‌های مختلف، کلاس‌های نسبتاً متوازن</td><td>رویداد نادر، وقتی هزینه‌ی هر هشدار مهم است</td></tr>
+</table></div>
+
+<div class="box tip"><div class="bt">💡 نکته‌ی پیاده‌سازی</div>
+<code>average_precision_score</code> همان فرمول جمع پله‌ای بالاست. محاسبه‌ی مساحت با <code>auc(recall, precision)</code> درون‌یابی خطی (trapezoid) می‌کند و معمولاً کمی <b>خوش‌بینانه</b> است. در گزارش بنویس کدام را استفاده کردی. برای رسم هم <code>PrecisionRecallDisplay.from_predictions(yv, pv)</code> کافی است.
+</div>
+</section>
+
+<section id="threshold">
+<h2><span class="num">۴</span> آستانه یک تصمیم سیاستی است <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۲۷ می‌گوید: <b>«امتیاز ≠ اقدام (Score ≠ action). نقطه‌ی کار (operating point) را با validation انتخاب کن، نه با test نهایی.»</b> مدل فقط می‌گوید ریسک چقدر است. اینکه از چه ریسکی به بالا کاری بکنیم، تصمیم کسب‌وکار است:</p>
+<div class="flow"><span>امتیاز مدل $\hat p$</span><i>←</i><span>آستانه $t$ (سیاست)</span><i>←</i><span>اقدام: کد تخفیف، راننده‌ی نزدیک‌تر، تماس</span><i>←</i><span>نتیجه و هزینه به تومان</span></div>
+
+<div class="tablewrap"><table>
+<tr><th>آستانه</th><th>رفتار</th><th>پیامد</th></tr>
+<tr><td>۰٫۲۰</td><td>recall بالا</td><td>هشدار کاذب زیاد</td></tr>
+<tr><td>۰٫۴۰</td><td>بده‌بستان میانه</td><td>بار مداخله‌ی متوسط</td></tr>
+<tr><td>۰٫۶۰</td><td>precision بالاتر</td><td>لغوهای ازدست‌رفته‌ی بیشتر</td></tr>
+</table></div>
+<p>اسلاید هزینه‌های فرضی هم می‌دهد: <b>هشدار کاذب = ۱ واحد، لغو ازدست‌رفته = ۸ واحد</b>، و نتیجه می‌گیرد: <b>«بهینه کردن F1 با کمینه کردن هزینه‌ی کسب‌وکار لزوماً یکی نیست.»</b></p>
+
+<h3>ماتریس هزینه به تومان <span class="tag book">تکمیلی</span></h3>
+<p>همان نسبت ۱ به ۸ اسلاید را به تومان می‌نویسیم (اعداد فرضی‌اند):</p>
+<div class="tablewrap"><table>
+<tr><th></th><th>واقعاً لغو می‌شود</th><th>واقعاً انجام می‌شود</th></tr>
+<tr><td><b>اقدام می‌کنیم</b> (هشدار)</td><td>TP: هزینه ≈ ۰ (لغو را نجات دادیم؛ ساده‌سازی)</td><td>FP: $C_{FP}=20{,}000$ تومان (تخفیف هدر رفت)</td></tr>
+<tr><td><b>اقدام نمی‌کنیم</b></td><td>FN: $C_{FN}=160{,}000$ تومان (کمیسیون و مشتری از دست رفت)</td><td>TN: ۰</td></tr>
+</table></div>
+
+<div class="box proof"><div class="bt">اثبات · آستانه‌ی بهینه برای مدل کالیبره</div>
+فرض کن مدل کالیبره است، یعنی برای درخواستی با امتیاز $p$، احتمال واقعی لغو هم $p$ است. دو گزینه داریم:
+<ul>
+  <li>اقدام کنیم: هزینه‌ی مورد انتظار $=(1-p)\,C_{FP}$ (اگر لغو نشود، تخفیف هدر رفته).</li>
+  <li>اقدام نکنیم: هزینه‌ی مورد انتظار $=p\,C_{FN}$ (اگر لغو شود، ضرر کرده‌ایم).</li>
+</ul>
+اقدام وقتی بهتر است که
+$$(1-p)\,C_{FP} &lt; p\,C_{FN}\iff C_{FP} &lt; p\,(C_{FP}+C_{FN})$$
+پس:
+$$\boxed{t^*=\frac{C_{FP}}{C_{FP}+C_{FN}}}$$
+برای مثال ما: $t^*=\frac{20{,}000}{180{,}000}=\frac19\approx0.111$.
+در حالت کلی که TP و TN هم هزینه دارند (مثلاً خود مداخله هزینه‌ی $C_{TP}$ دارد):
+$$t^*=\frac{C_{FP}-C_{TN}}{(C_{FP}-C_{TN})+(C_{FN}-C_{TP})}$$
+این آستانه به شیوع ربطی ندارد؛ شیوع از قبل در خود $p$ نشسته است. ولی <b>فقط برای مدل کالیبره</b> درست است. اگر مدل احتمال‌ها را باد کرده باشد (بخش ۵)، $t^*$ در جای غلط می‌نشیند. <span class="qed">∎</span>
+</div>
+
+<p>حالا روی validation (مه) هزینه را برای چند آستانه حساب کنیم و آستانه‌ی کمینه‌ی هزینه را با آستانه‌ی بیشینه‌ی F1 مقایسه کنیم. بعد <b>فقط یک بار</b> روی test (ژوئن) گزارش بدهیم:</p>
+<pre class="code">C_FP, C_FN = 20_000, 160_000      # toman: wasted discount vs lost ride (hypothetical)
+
+def cost_table(y, p, thresholds):
+    y, rows = np.asarray(y), []
+    for t in thresholds:
+        alert = p &gt;= t
+        TP = int((alert &amp; (y == 1)).sum()); FP = int((alert &amp; (y == 0)).sum())
+        FN = int((~alert &amp; (y == 1)).sum())
+        prec, rec = TP / max(TP + FP, 1), TP / (TP + FN)
+        rows.append(dict(t=t, alerts=TP + FP, TP=TP, FP=FP, FN=FN,
+                         precision=round(prec, 3), recall=round(rec, 3),
+                         F1=round(2 * prec * rec / (prec + rec), 3),
+                         cost_M=round((FP * C_FP + FN * C_FN) / 1e6, 2)))   # million toman
+    return pd.DataFrame(rows)
+
+print(cost_table(yv, pv, [0.05, 0.111, 0.2, 0.3, 0.4, 0.6]).to_string(index=False))
+tab = cost_table(yv, pv, np.round(np.arange(0.02, 0.81, 0.01), 2))     # VALIDATION only
+t_cost, t_f1 = tab.loc[tab.cost_M.idxmin(), "t"], tab.loc[tab.F1.idxmax(), "t"]
+print("cost-optimal t:", t_cost, "| F1-optimal t:", t_f1, "| theory t* =", round(C_FP / (C_FP + C_FN), 3))
+print("--- June test, evaluated once ---")
+print(cost_table(yt, pt, [t_cost, t_f1]).to_string(index=False))</pre>
+<div class="out">    t  alerts  TP  FP  FN  precision  recall    F1  cost_M
+0.050    1194 195 999  13      0.163   0.938 0.278   22.06
+0.111     593 155 438  53      0.261   0.745 0.387   17.24
+0.200     278 102 176 106      0.367   0.490 0.420   20.48
+0.300     139  54  85 154      0.388   0.260 0.311   26.34
+0.400      74  35  39 173      0.473   0.168 0.248   28.46
+0.600      16   9   7 199      0.562   0.043 0.080   31.98
+cost-optimal t: 0.09 | F1-optimal t: 0.19 | theory t* = 0.111
+--- June test, evaluated once ---
+   t  alerts  TP  FP  FN  precision  recall    F1  cost_M
+0.09     704 154 550  43      0.219   0.782 0.342   17.88
+0.19     285  95 190 102      0.333   0.482 0.394   20.12</div>
+<ul>
+  <li>آستانه‌ی بهینه‌ی تجربی (۰٫۰۹) نزدیک $t^*=0.111$ نظری است. این نزدیکی خودش نشانه‌ی خوبی از کالیبره بودن مدل است.</li>
+  <li>آستانه‌ی بهینه‌ی F1 (۰٫۱۹) روی ژوئن حدود <b>۲٫۲ میلیون تومان</b> گران‌تر تمام می‌شود (۲۰٫۱۲ در برابر ۱۷٫۸۸ میلیون، فقط برای ۱٬۶۳۴ درخواست). F1 فرض می‌کند FP و FN تقریباً هم‌وزن‌اند، در حالی که اینجا FN هشت برابر گران‌تر است.</li>
+  <li>دو سیاست ساده برای مقایسه: «هیچ‌وقت اقدام نکن» روی مه ۳۳٫۳ میلیون و «همیشه اقدام کن» ۲۸٫۶ میلیون تومان هزینه دارد. مدل با آستانه‌ی درست حدود ۴۰٪ کمتر.</li>
+</ul>
+
+<div id="w-cost"></div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+«آستانه را روی test تنظیم کردم تا بهترین F1 را بگیرم.» از آن لحظه test دیگر test نیست، validation است و عدد گزارش‌شده خوش‌بینانه است (جلسه‌ی ۷: test یک lockbox است). یک اشتباه هم‌خانواده: استفاده از ۰٫۵ پیش‌فرض <code>predict()</code> فقط چون پیش‌فرض است. ۰٫۵ فقط وقتی بهینه است که $C_{FP}=C_{FN}$ و مدل کالیبره باشد.
+</div>
+
+<div class="box note"><div class="bt">📌 وقتی ظرفیت محدود است</div>
+اگر مرکز تماس روزی فقط ۵۰ تماس می‌تواند بگیرد، سیاست «۵۰ درخواست پرریسک‌تر هر روز» (top-k) است و آستانه را ظرفیت تعیین می‌کند، نه هزینه. آن‌وقت معیار مناسب <b>precision@k</b> است و تحلیل هزینه به سؤال دیگری جواب می‌دهد: «یک اپراتور بیشتر چقدر می‌ارزد؟» (تمرین ۹).
+</div>
+
+<div class="box tip"><div class="bt">💡 در scikit-learn ≥ ۱٫۵</div>
+<code>TunedThresholdClassifierCV</code> آستانه را با اعتبارسنجی متقاطع و هر scorer دلخواه (مثلاً یک تابع هزینه با <code>make_scorer</code>) تنظیم می‌کند و <code>FixedThresholdClassifier</code> یک آستانه‌ی ثابت را به مدل می‌چسباند. حواست باشد <code>cv</code> پیش‌فرضش StratifiedKFold است؛ برای داده‌ی زمانی خودت <code>TimeSeriesSplit</code> بده.
+</div>
+</section>
+
+<section id="calibration">
+<h2><span class="num">۵</span> کالیبراسیون: به «۳۰٪ ریسک» اعتماد کنیم؟ <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۲۸: <b>«کیفیت رتبه‌بندی و کیفیت احتمال دو ویژگی متفاوت‌اند.»</b> مدلی که همه‌ی لغوها را بالای همه‌ی سفرهای سالم بنشاند، رتبه‌بندی کامل دارد. ولی اگر به همه‌ی لغوها «۰٫۰۲» و به سالم‌ها «۰٫۰۱» بدهد، این اعداد احتمال نیستند.</p>
+<p>سؤالی که اسلاید از سطل «۳۰٪ ریسک» می‌پرسد: <b>آیا از ۱۰۰ درخواستِ مشابه، حدود ۳۰ تا واقعاً لغو می‌شوند؟</b></p>
+
+<div class="box def"><div class="bt">تعریف · کالیبره بودن</div>
+مدل کالیبره (calibrated) است اگر برای هر مقدار $p$:
+$$\Pr\big(Y=1\mid \hat p=p\big)=p$$
+<b>نمودار اطمینان (reliability diagram):</b> پیش‌بینی‌ها را سطل‌بندی کن (مثلاً ۱۰ سطل)، در هر سطل میانگین امتیاز را روی محور افقی و نرخ واقعی لغو را روی محور عمودی بگذار. مدل کالیبره روی قطر می‌نشیند. زیر قطر یعنی مدل ریسک را <b>بیش‌برآورد</b> می‌کند و بالای قطر یعنی <b>کم‌برآورد</b>.
+</div>
+
+<p>چرا مهم است؟ (۱) فرمول $t^*$ بخش ۴ فقط برای مدل کالیبره درست است. (۲) برنامه‌ریزی عملیات: «فردا حدود چند لغو داریم؟» $=\sum_i \hat p_i$. (۳) وقتی به تیم عملیات می‌گویی «۳۰٪»، باید واقعاً ۳۰٪ باشد. توصیه‌ی اسلاید: <b>روی داده‌ی توسعه کالیبره کن و قابلیت اطمینان را دوباره روی دوره‌ی دست‌نخورده‌ی test بسنج.</b></p>
+
+<h3>Brier score و ECE <span class="tag book">تکمیلی</span></h3>
+<div class="box thm"><div class="bt">معیارهای کیفیت احتمال</div>
+$$\text{Brier}=\frac1N\sum_{i=1}^N(\hat p_i-y_i)^2$$
+$$\text{ECE}=\sum_{b}\frac{n_b}{N}\,\big|\bar y_b-\bar p_b\big|$$
+Brier همان MSE روی احتمال است: هر چه کمتر، بهتر. هم کالیبراسیون و هم قدرت تفکیک را با هم می‌سنجد. مرجع طبیعی‌اش مدلی است که به همه شیوع را بدهد: $\text{Brier}_{\text{ref}}=\pi(1-\pi)$. پس <b>Brier skill score</b> $=1-\text{Brier}/\text{Brier}_{\text{ref}}$ می‌گوید چقدر از «فقط دانستن شیوع» بهتریم. ECE (خطای کالیبراسیون مورد انتظار) فاصله‌ی وزن‌دار نقاط نمودار اطمینان از قطر است.
+</div>
+<p><b>مثال کوچک:</b> پیش‌بینی‌های $(0.9, 0.3, 0.3, 0.1)$ برای برچسب‌های $(1, 0, 1, 0)$:
+$$\text{Brier}=\frac{0.01+0.09+0.49+0.01}{4}=0.15$$ روی مه با شیوع ۰٫۱۲۷، مرجع $0.127\times0.873\approx0.111$ است و مدل ما Brier برابر ۰٫۰۹۶ دارد، یعنی skill score حدود ۰٫۱۳.</p>
+
+<p>حالا یک آزمایش آموزنده: همان مدل را با <code>class_weight="balanced"</code> آموزش بدهیم (راه رایج «درمان» عدم‌توازن، بخش ۶):</p>
+<pre class="code">from sklearn.base import clone
+from sklearn.metrics import brier_score_loss, roc_auc_score
+from sklearn.calibration import calibration_curve
+
+def report(name, y, p):
+    print(f"{name:&lt;26} AP={average_precision_score(y, p):.3f}  ROC={roc_auc_score(y, p):.3f}  "
+          f"Brier={brier_score_loss(y, p):.4f}  mean_p={p.mean():.3f}")
+
+bal = clone(model).set_params(clf__class_weight="balanced").fit(Xtr, ytr)
+pb = bal.predict_proba(Xv)[:, 1]
+print("actual May cancel rate:", round(yv.mean(), 3))
+report("plain LR", yv, pv)
+report("LR class_weight=balanced", yv, pb)
+for name, p in [("plain", pv), ("balanced", pb)]:
+    obs, pred = calibration_curve(yv, p, n_bins=5, strategy="quantile")
+    print(name, "reliability:", [f"{a:.2f}-&gt;{b:.2f}" for a, b in zip(pred, obs)])
+    bucket = (p &gt;= 0.25) &amp; (p &lt; 0.35)
+    print(f"   '30% bucket': n={bucket.sum()}, observed cancel rate={yv[bucket].mean():.3f}")</pre>
+<div class="out">actual May cancel rate: 0.127
+plain LR                   AP=0.364  ROC=0.787  Brier=0.0961  mean_p=0.123
+LR class_weight=balanced   AP=0.362  ROC=0.788  Brier=0.1913  mean_p=0.424
+plain reliability: ['0.03-&gt;0.02', '0.05-&gt;0.05', '0.08-&gt;0.07', '0.13-&gt;0.16', '0.32-&gt;0.34']
+   '30% bucket': n=95, observed cancel rate=0.284
+balanced reliability: ['0.19-&gt;0.02', '0.29-&gt;0.04', '0.38-&gt;0.07', '0.52-&gt;0.15', '0.74-&gt;0.35']
+   '30% bucket': n=382, observed cancel rate=0.045</div>
+<p>نتیجه را با دقت بخوان: AP و ROC-AUC دو مدل <b>تقریباً یکی</b> است (رتبه‌بندی دست نخورده)، ولی مدل balanced میانگین ریسک را ۰٫۴۲ پیش‌بینی می‌کند در حالی که نرخ واقعی ۰٫۱۲۷ است. در سطل «۳۰٪» آن، فقط ۴٫۵٪ واقعاً لغو شده‌اند. اگر $t^*=0.111$ را روی این مدل بگذاری، تقریباً به همه تخفیف می‌دهی. مدل ساده در همان سطل ۲۸٫۴٪ لغو دارد: کالیبره است.</p>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+هر تبدیل <b>صعودی اکید</b> روی امتیازها (مثل Platt scaling) ترتیب را حفظ می‌کند، پس ROC-AUC و AP را عوض نمی‌کند ولی Brier و کالیبراسیون را عوض می‌کند. «کالیبراسیون رتبه‌بندی را بهتر نمی‌کند» و «AUC بالا یعنی احتمال‌های درست» هر دو از تله‌های کلاسیک‌اند. Isotonic استثنای کوچکی دارد: چون تابع پله‌ای است، امتیازهای نزدیک را <b>هم‌مقدار</b> می‌کند و ممکن است AP کمی افت کند (پایین‌تر می‌بینی).
+</div>
+
+<h3>روش‌های کالیبراسیون <span class="tag book">تکمیلی</span></h3>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>چه می‌کند</th><th>کی خوب است</th><th>ریسک</th></tr>
+<tr><td>Platt / sigmoid</td><td>$\hat p=\sigma(A\cdot s+B)$ که $s$ امتیاز (یا logit آن) است؛ دو پارامتر</td><td>داده‌ی کالیبراسیون کم؛ اعوجاج سیگموئیدی (SVM، مدل‌های وزن‌دار)</td><td>اعوجاج‌های غیرسیگموئیدی را درست نمی‌کند</td></tr>
+<tr><td>Isotonic</td><td>یک تابع پله‌ای صعودی دلخواه</td><td>داده‌ی کالیبراسیون زیاد (چند صد مثبت به بالا)</td><td>بیش‌برازش روی داده‌ی کم؛ امتیازهای هم‌مقدار</td></tr>
+<tr><td>Temperature scaling</td><td>$\sigma(z/T)$ با یک پارامتر</td><td>شبکه‌های عصبی بیش‌اطمینان</td><td>فقط شیب را درست می‌کند، نه جابه‌جایی</td></tr>
+<tr><td>تصحیح شیوع (prior correction)</td><td>فرمول بسته؛ بدون فیت</td><td>وقتی دقیقاً می‌دانی resampling شیوع را چقدر عوض کرد</td><td>فقط اثر شیوع را برمی‌گرداند</td></tr>
+</table></div>
+
+<p>در scikit-learn ابزار اصلی <code>CalibratedClassifierCV</code> است. طبق جدول اسلاید ۱۶ (جلسه‌ی ۷)، دوره‌ی validation جای «کالیبراسیون و تصمیم‌ها» است: مدل آموزش‌دیده را منجمد می‌کنیم، کالیبراتور را روی مه فیت می‌کنیم و روی ژوئن حسابرسی می‌کنیم:</p>
+<pre class="code">from sklearn.calibration import CalibratedClassifierCV
+from sklearn.frozen import FrozenEstimator        # sklearn &gt;= 1.6 (replaces cv="prefit")
+
+pb_test = bal.predict_proba(Xt)[:, 1]
+report("June: balanced, raw", yt, pb_test)
+for method in ["sigmoid", "isotonic"]:
+    cal = CalibratedClassifierCV(FrozenEstimator(bal), method=method).fit(Xv, yv)  # fit on May
+    report(f"June: + {method} (fit May)", yt, cal.predict_proba(Xt)[:, 1])          # audit on June</pre>
+<div class="out">June: balanced, raw        AP=0.385  ROC=0.789  Brier=0.1900  mean_p=0.420
+June: + sigmoid (fit May)  AP=0.385  ROC=0.789  Brier=0.0913  mean_p=0.128
+June: + isotonic (fit May) AP=0.359  ROC=0.787  Brier=0.0907  mean_p=0.126</div>
+<p>Sigmoid، Brier را از ۰٫۱۹۰ به ۰٫۰۹۱ رساند بدون اینکه AP تکان بخورد. Isotonic، Brier را کمی بهتر کرد ولی AP را از ۰٫۳۸۵ به ۰٫۳۵۹ پایین آورد (اثر هم‌مقدارسازی). راه دیگر، <code>CalibratedClassifierCV(model, method="sigmoid", cv=TimeSeriesSplit(5))</code> روی خود train است که مدل و کالیبراتور را در foldهای زمانی می‌سازد. نکته: <code>cv="prefit"</code> از نسخه‌ی ۱٫۶ منسوخ شده و جایش <code>FrozenEstimator</code> آمده.</p>
+
+<h3>resampling احتمال‌ها را جابه‌جا می‌کند، و راه برگرداندنش <span class="tag book">تکمیلی</span></h3>
+<p>وقتی train را undersample می‌کنی تا ۵۰/۵۰ شود (یا <code>class_weight="balanced"</code> می‌گذاری که اثرش مشابه است)، مدل یاد می‌گیرد که «لغو» یک رویداد ۵۰ درصدی است. رتبه‌بندی‌اش ممکن است خوب بماند، ولی احتمال‌هایش برای دنیای ۱۲ درصدی باد کرده‌اند. خوشبختانه این اعوجاج فرمول بسته دارد:</p>
+<div class="box proof"><div class="bt">اثبات · تصحیح جابه‌جایی پیشین (prior shift)</div>
+فرض کن resampling فقط نسبت کلاس‌ها را عوض کرده و توزیع ویژگی‌ها درون هر کلاس ($p(x\mid y)$) همان است. با قاعده‌ی بیز، نسبت شانس (odds) پسین = نسبت درست‌نمایی × odds پیشین. نسبت درست‌نمایی در هر دو دنیا یکی است، پس:
+$$\frac{p}{1-p}=\frac{p_s}{1-p_s}\cdot\frac{\pi/(1-\pi)}{\pi_s/(1-\pi_s)}
+\quad\Longleftrightarrow\quad
+p=\frac{p_s\,\frac{\pi}{\pi_s}}{p_s\,\frac{\pi}{\pi_s}+(1-p_s)\,\frac{1-\pi}{1-\pi_s}}$$
+که $\pi_s$ شیوع داده‌ی resample‌شده، $\pi$ شیوع واقعی و $p_s$ امتیاز مدل است. در فضای logit فقط یک جابه‌جایی ثابت است: $\text{logit}(p)=\text{logit}(p_s)+\text{logit}(\pi)-\text{logit}(\pi_s)$. مثال: با $\pi_s=0.5$ و $\pi=0.12$، امتیاز $0.5$ در واقع یعنی $0.12$. <span class="qed">∎</span>
+</div>
+<pre class="code">def prior_correct(p_s, pi, pi_s):
+    """Map scores learned under training prevalence pi_s back to real prevalence pi."""
+    a = p_s * pi / pi_s
+    b = (1 - p_s) * (1 - pi) / (1 - pi_s)
+    return a / (a + b)
+
+pc = prior_correct(pb, pi=ytr.mean(), pi_s=0.5)   # 'balanced' acts like a 50/50 training set
+report("balanced + prior correction", yv, pc)
+print("score 0.5 under 50/50 training -&gt;", round(prior_correct(0.5, 0.12, 0.5), 3))</pre>
+<div class="out">balanced + prior correction AP=0.362  ROC=0.788  Brier=0.0962  mean_p=0.123
+score 0.5 under 50/50 training -&gt; 0.12</div>
+<p>یک خط فرمول، Brier را از ۰٫۱۹۱ به ۰٫۰۹۶ برگرداند، یعنی همان کیفیت مدل ساده.</p>
+
+<div id="w-calib"></div>
+</section>
+
+<section id="imbalance">
+<h2><span class="num">۶</span> مدیریت عدم‌توازن بدون خراب کردن واقعیتِ ارزیابی <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۳۰: <b>«وزن‌دهی کلاس و نمونه‌گیری، انتخاب‌های مدل‌سازی‌اند، نه طراحی تقسیم.»</b> سه جا می‌شود با عدم‌توازن کنار آمد:</p>
+<div class="cards">
+  <div><b>سمت مدل · وزن کلاس</b>جریمه‌ی از دست دادن رویداد نادر را بالا ببر. با یک baseline بی‌وزن شروع کن و مقایسه کن.</div>
+  <div><b>سمت داده · resampling</b>کم‌نمونه‌گیری یا بیش‌نمونه‌گیری <b>فقط روی fold آموزش</b>. شیوع test را هرگز متوازن نکن.</div>
+  <div><b>سمت تصمیم · تنظیم آستانه</b>اغلب سریع‌ترین راه برای بازتاب ظرفیت و هزینه‌ی مورد انتظار، بدون دست زدن به برچسب‌ها.</div>
+</div>
+<p>و قاعده‌ی طلایی اسلاید: <b>«همیشه با توزیع کلاسِ طبیعی و مرتبط با استقرار ارزیابی کن.»</b></p>
+
+<h3>وزن کلاس در عمل <span class="tag book">تکمیلی</span></h3>
+<p>با <code>class_weight="balanced"</code> وزن هر کلاس $w_c=\frac{n}{k\cdot n_c}$ می‌شود ($k$ تعداد کلاس‌ها). یعنی در تابع زیان، هر لغو به اندازه‌ی چند سفر سالم حساب می‌شود و مجموع وزن دو کلاس برابر می‌شود. این از نظر ریاضی مثل آموزش روی داده‌ی ۵۰/۵۰ است، و برای همین در بخش ۵ دیدیم که احتمال‌ها را باد می‌کند.</p>
+<pre class="code">from sklearn.utils.class_weight import compute_class_weight
+w = compute_class_weight("balanced", classes=np.array([0, 1]), y=ytr)
+print("class weights [completed, cancelled]:", w.round(3), "| n =", len(ytr), "pos =", ytr.sum())
+
+rng = np.random.default_rng(0)                     # random undersampling - TRAIN fold only
+pos = np.flatnonzero(ytr.values == 1)
+neg = rng.choice(np.flatnonzero(ytr.values == 0), size=len(pos), replace=False)
+idx = np.r_[pos, neg]
+under = clone(model).fit(Xtr.iloc[idx], ytr.iloc[idx])
+pu = under.predict_proba(Xv)[:, 1]
+print(f"undersampled: n_train={len(idx)}  val AP={average_precision_score(yv, pu):.3f}  mean_p={pu.mean():.3f}")
+print(f"plain:        n_train={len(ytr)}  val AP={average_precision_score(yv, pv):.3f}  mean_p={pv.mean():.3f}")
+
+# WRONG: re-balance the validation set as well
+vpos = np.flatnonzero(yv.values == 1)
+vneg = rng.choice(np.flatnonzero(yv.values == 0), size=len(vpos), replace=False)
+vi = np.r_[vpos, vneg]
+print(f"WRONG 50/50 validation: AP={average_precision_score(yv.iloc[vi], pv[vi]):.3f}  "
+      f"ROC={roc_auc_score(yv.iloc[vi], pv[vi]):.3f}")</pre>
+<div class="out">class weights [completed, cancelled]: [0.57  4.087] | n = 6326 pos = 774
+undersampled: n_train=1548  val AP=0.363  mean_p=0.424
+plain:        n_train=6326  val AP=0.364  mean_p=0.123
+WRONG 50/50 validation: AP=0.775  ROC=0.788</div>
+<ul>
+  <li>وزن لغو ۴٫۰۸۷ و وزن سفر سالم ۰٫۵۷۰ است: $6326/(2\times774)$ و $6326/(2\times5552)$.</li>
+  <li>undersampling چهار پنجم داده‌ی train را دور ریخت و AP هیچ بهبودی نکرد (۰٫۳۶۳ در برابر ۰٫۳۶۴). فقط احتمال‌ها را از ۰٫۱۲ به ۰٫۴۲ باد کرد. برای مدل لجستیک با چند هزار نمونه، عدم‌توازن ۱ به ۷ اصلاً «مشکل» نیست. مشکل، معیار و آستانه‌ی غلط است.</li>
+  <li>متوازن کردن <b>validation</b> عدد AP را از ۰٫۳۶ به ۰٫۷۸ رساند، بی‌آنکه مدل ذره‌ای بهتر شده باشد. خط پایه از ۰٫۱۲۷ به ۰٫۵ پرید. این گزارش، دنیایی را توصیف می‌کند که در آن نصف سفرها لغو می‌شوند و وجود ندارد.</li>
+</ul>
+
+<h3>SMOTE و جای درستش <span class="tag book">تکمیلی</span></h3>
+<p>SMOTE برای هر نمونه‌ی مثبت چند همسایه‌ی نزدیک مثبت پیدا می‌کند و روی پاره‌خط بین آن‌ها نمونه‌ی مصنوعی می‌سازد. اگر قبل از تقسیم اجرا شود، نمونه‌های مصنوعی‌ای که از روی یک نمونه‌ی validation ساخته شده‌اند به train می‌روند: <b>نشت</b>. همین برای oversampling تصادفی هم صادق است: نسخه‌های تکراری یک نمونه در دو fold می‌افتند. جای درستش داخل یک pipeline از کتابخانه‌ی imbalanced-learn است که sampler را فقط هنگام <code>fit</code> اجرا می‌کند:</p>
+<pre class="code"># pip install imbalanced-learn
+from imblearn.pipeline import Pipeline as ImbPipeline    # NOT sklearn.pipeline.Pipeline
+from imblearn.over_sampling import SMOTENC                # SMOTE for mixed numeric + categorical
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+
+smote_model = ImbPipeline([
+    ("smote", SMOTENC(categorical_features=[0], random_state=0)),   # column 0 = city
+    ("prep", prep),
+    ("clf", LogisticRegression(max_iter=1000)),
+])
+# The sampler runs only inside fit(): each training fold is resampled,
+# each validation fold keeps its natural ~12% prevalence.
+scores = cross_val_score(smote_model, Xtr, ytr, cv=TimeSeriesSplit(4, gap=50),
+                         scoring="average_precision")</pre>
+
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>چه تغییری می‌دهد</th><th>مزیت</th><th>ریسک</th><th>کجا اعمال شود</th></tr>
+<tr><td>هیچ‌کار + آستانه</td><td>فقط تصمیم</td><td>ساده، احتمال کالیبره می‌ماند</td><td>اگر مثبت‌ها خیلی کم باشند مدل ممکن است الگو را یاد نگیرد</td><td>روی validation</td></tr>
+<tr><td><code>class_weight</code></td><td>تابع زیان</td><td>هیچ داده‌ای دور ریخته نمی‌شود</td><td>احتمال‌ها باد می‌کنند؛ کالیبراسیون لازم</td><td>داخل مدل</td></tr>
+<tr><td>Undersampling</td><td>داده‌ی train</td><td>آموزش سریع‌تر روی داده‌ی بزرگ</td><td>دور ریختن اطلاعات؛ احتمال‌ها جابه‌جا</td><td>فقط fold آموزش</td></tr>
+<tr><td>Oversampling / SMOTE</td><td>داده‌ی train</td><td>مثبت بیشتر برای مدل‌های پرظرفیت</td><td>نشت اگر قبل از split؛ نقاط مصنوعی غیرواقعی؛ احتمال‌ها جابه‌جا</td><td>فقط fold آموزش، داخل pipeline</td></tr>
+</table></div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+<code>X_res, y_res = SMOTE().fit_resample(X, y)</code> و <b>بعد</b> <code>train_test_split</code>. یا متوازن کردن test «برای اینکه منصفانه باشد». هر دو، عدد ارزیابی را از دنیای واقعی جدا می‌کنند. سؤال ۵ از شش سؤال red-team جلسه‌ی ۷ دقیقاً همین بود: «آیا متوازن‌سازی فقط روی foldهای آموزش انجام شد؟»
+</div>
+</section>
+
+<section id="slices">
+<h2><span class="num">۷</span> امتیاز کل، شکست زیرگروه‌ها را پنهان می‌کند <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۲۹: <b>«زمان، شهر، کاربران جدید و دیگر برش‌های مهم عملیاتی را بررسی کن.»</b> همان اخلاقی است که از جلسه‌ی ۴ می‌شناسیم: <i>میانگین‌ها بخش‌ها را پنهان می‌کنند</i>. نمودار اسلاید (اعداد تزئینی، نه خروجی واقعی مدل):</p>
+<figure class="fig">
+<svg viewBox="0 0 520 210" width="520" role="img" aria-label="AP بر حسب شهر">
+<g font-family="Vazirmatn,Tahoma" font-size="13">
+  <text x="70" y="22" fill="currentColor" text-anchor="end">Tehran</text>
+  <rect x="80" y="10" width="400" height="16" rx="8" fill="currentColor" opacity=".08"/><rect x="80" y="10" width="320" height="16" rx="8" fill="#2456a6"/>
+  <text x="490" y="23" fill="currentColor">0.40</text>
+  <text x="70" y="62" fill="currentColor" text-anchor="end">Shiraz</text>
+  <rect x="80" y="50" width="400" height="16" rx="8" fill="currentColor" opacity=".08"/><rect x="80" y="50" width="208" height="16" rx="8" fill="#2456a6"/>
+  <text x="490" y="63" fill="currentColor">0.26</text>
+  <text x="70" y="102" fill="currentColor" text-anchor="end">Isfahan</text>
+  <rect x="80" y="90" width="400" height="16" rx="8" fill="currentColor" opacity=".08"/><rect x="80" y="90" width="264" height="16" rx="8" fill="#2456a6"/>
+  <text x="490" y="103" fill="currentColor">0.33</text>
+  <text x="70" y="142" fill="currentColor" text-anchor="end">Tabriz</text>
+  <rect x="80" y="130" width="400" height="16" rx="8" fill="currentColor" opacity=".08"/><rect x="80" y="130" width="160" height="16" rx="8" fill="#c0392b"/>
+  <text x="490" y="143" fill="#c0392b" font-weight="700">0.20</text>
+  <text x="70" y="182" fill="currentColor" text-anchor="end">Mashhad</text>
+  <rect x="80" y="170" width="400" height="16" rx="8" fill="currentColor" opacity=".08"/><rect x="80" y="170" width="240" height="16" rx="8" fill="#2456a6"/>
+  <text x="490" y="183" fill="currentColor">0.30</text>
+  <text x="280" y="205" fill="currentColor" text-anchor="middle" font-size="11" opacity=".7">Average precision per city (illustrative)</text>
+</g>
+</svg>
+<figcaption>بازسازی اسلاید ۲۹. تبریز ضعیف‌ترین است، ولی قبل از نتیجه‌گیری باید پرسید: شیوع لغو در تبریز چقدر است و چند لغو در آن داریم؟</figcaption>
+</figure>
+
+<p>برش‌ها از دو جهت مهم‌اند: (۱) <b>انصاف و تجربه‌ی کاربر</b>: اگر مدل در یک شهر یا برای کاربران جدید بد کار کند، سیاست تخفیف برای آن گروه ناعادلانه یا بی‌اثر است. (۲) <b>رانش (drift)</b>: برش زمانی (هفته به هفته) زودتر از میانگین کل نشان می‌دهد مدل دارد کهنه می‌شود.</p>
+
+<h3>گزارش برش‌ها با groupby <span class="tag book">تکمیلی</span></h3>
+<pre class="code">t_star = 0.09                                       # chosen on May validation
+res = test.assign(score=pt, alert=pt &gt;= t_star)
+res["week"] = res.request_time.dt.isocalendar().week
+
+def slice_metrics(g):
+    y, s, a = g["cancelled"], g["score"], g["alert"]
+    return pd.Series({
+        "n": len(g), "cancels": int(y.sum()), "rate": round(y.mean(), 3),
+        "AP": round(average_precision_score(y, s), 3) if 0 &lt; y.sum() &lt; len(y) else np.nan,
+        "lift": round(average_precision_score(y, s) / y.mean(), 2) if 0 &lt; y.sum() &lt; len(y) else np.nan,
+        "recall": round((a &amp; (y == 1)).sum() / max(y.sum(), 1), 3),
+        "alert_rate": round(a.mean(), 3)}, dtype=object)
+
+for col in ["city", "is_new_user", "week"]:
+    print(res.groupby(col).apply(slice_metrics, include_groups=False).to_string(), "\n")</pre>
+<div class="out">           n  cancels   rate     AP  lift  recall  alert_rate
+city                                                         
+Isfahan  272       30  0.110  0.474  4.30   0.867       0.412
+Mashhad  320       41  0.128  0.468  3.65   0.805       0.456
+Shiraz   253       26  0.103  0.379  3.69   0.731       0.383
+Tabriz   151       13  0.086  0.260  3.02   0.615       0.225
+Tehran   638       87  0.136  0.347  2.55   0.782       0.494 
+
+                n  cancels   rate     AP  lift  recall  alert_rate
+is_new_user                                                       
+False        1338      127  0.095  0.330  3.47   0.677       0.364
+True          296       70  0.236  0.501  2.12   0.971       0.733 
+
+        n  cancels   rate     AP  lift  recall  alert_rate
+week                                                      
+23    359       51  0.142  0.436  3.07   0.745       0.446
+24    389       35  0.090  0.285  3.16   0.686       0.422
+25    418       60  0.144  0.398  2.77   0.783       0.433
+26    370       42  0.114  0.454  4.00   0.857       0.411
+27     98        9  0.092  0.484  5.27   1.000       0.480</div>
+<ul>
+  <li><b>تبریز</b> کمترین AP را دارد (۰٫۲۶)، ولی شیوع لغو آن هم کمترین است (۸٫۶٪). <b>lift</b> (یعنی AP تقسیم بر شیوع) تبریز ۳٫۰۲ است و از تهران (۲٫۵۵) <i>بهتر</i>. مقایسه‌ی خام AP بین برش‌ها همان خطای بخش ۳ است.</li>
+  <li>تبریز فقط <b>۱۳ لغو</b> در ژوئن دارد. با ۱۳ نمونه‌ی مثبت، هر عددی شکننده است (پایین‌تر bootstrap را ببین).</li>
+  <li><b>کاربران جدید</b>: نرخ هشدار ۷۳٪ است. با این آستانه تقریباً به هر کاربر جدیدی تخفیف می‌دهیم. این شاید از نظر هزینه درست باشد، ولی یک سؤال سیاستی است که باید با تیم محصول مطرح شود.</li>
+  <li><b>هفته‌ها</b>: AP بین ۰٫۲۹ و ۰٫۴۸ نوسان دارد. هفته‌ی ۲۷ فقط ۲ روز و ۹ لغو دارد؛ recall برابر ۱ آنجا معنایی ندارد.</li>
+</ul>
+
+<h3>بازه‌ی اطمینان bootstrap برای یک معیار <span class="tag book">تکمیلی</span></h3>
+<p>اسلاید ۱۷ (جلسه‌ی ۷) گفت «یک fold خوش‌شانس، سیستم مقاوم را اثبات نمی‌کند». همین درباره‌ی یک عدد test هم صادق است. <b>Bootstrap</b> می‌پرسد: اگر یک ماه ژوئن دیگر از همین دنیا داشتیم، عدد چقدر تکان می‌خورد؟</p>
+<ol class="steps">
+  <li>از $N$ ردیف test، $N$ ردیف <b>با جایگذاری</b> نمونه بگیر.</li>
+  <li>معیار (مثلاً AP) را روی این نمونه حساب کن.</li>
+  <li>این کار را $B$ بار (مثلاً ۲٬۰۰۰) تکرار کن.</li>
+  <li>صدک‌های ۲٫۵ و ۹۷٫۵ این $B$ عدد، بازه‌ی اطمینان ۹۵٪ تقریبی‌اند (روش صدکی).</li>
+</ol>
+<pre class="code">def bootstrap_ci(y, s, metric, B=2000, seed=0, alpha=0.05):
+    y, s = np.asarray(y), np.asarray(s)
+    rng, stats = np.random.default_rng(seed), []
+    for _ in range(B):
+        i = rng.integers(0, len(y), len(y))         # resample rows WITH replacement
+        if y[i].sum() == 0:                          # AP undefined without positives
+            continue
+        stats.append(metric(y[i], s[i]))
+    lo, hi = np.quantile(stats, [alpha / 2, 1 - alpha / 2])
+    return metric(y, s), lo, hi
+
+est, lo, hi = bootstrap_ci(yt, pt, average_precision_score)
+print(f"June AP      = {est:.3f}   95% CI [{lo:.3f}, {hi:.3f}]")
+tab = (test.city == "Tabriz").values
+est, lo, hi = bootstrap_ci(yt[tab], pt[tab], average_precision_score)
+print(f"Tabriz AP    = {est:.3f}   95% CI [{lo:.3f}, {hi:.3f}]   (only {yt[tab].sum()} cancellations)")
+recall_at = lambda y, s: ((s &gt;= t_star) &amp; (y == 1)).sum() / y.sum()
+est, lo, hi = bootstrap_ci(yt, pt, recall_at)
+print(f"June recall  = {est:.3f}   95% CI [{lo:.3f}, {hi:.3f}]")</pre>
+<div class="out">June AP      = 0.387   95% CI [0.323, 0.456]
+Tabriz AP    = 0.260   95% CI [0.115, 0.521]   (only 13 cancellations)
+June recall  = 0.782   95% CI [0.721, 0.834]</div>
+<p>AP کل ژوئن بین ۰٫۳۲ و ۰٫۴۶ است. بازه‌ی تبریز از ۰٫۱۲ تا ۰٫۵۲ کشیده شده و <b>عدد کل را هم در بر می‌گیرد</b>. پس با این داده نمی‌توانیم بگوییم مدل در تبریز بدتر است. گزارش درست: «AP تبریز ۰٫۲۶ (۹۵٪ CI: ۰٫۱۲ تا ۰٫۵۲، ۱۳ لغو)؛ داده برای نتیجه‌گیری کافی نیست؛ پایش ادامه دارد.»</p>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+Bootstrap ردیفی فرض می‌کند ردیف‌ها مستقل‌اند. سفرهای یک روز بارانی یا یک کاربر پرلغو به هم وابسته‌اند، و bootstrap ردیفی بازه را <b>باریک‌تر از واقع</b> نشان می‌دهد. برای داده‌ی زمانی یا گروهی، <b>block bootstrap</b> بزن: روزها (یا کاربرها) را با جایگذاری نمونه بگیر، نه ردیف‌ها را (تمرین ۱۰). در هر گزارش برش، کنار عدد، $n$ و <b>تعداد مثبت‌ها</b> را بنویس.
+</div>
+</section>
+
+<section id="experiment">
+<h2><span class="num">۸</span> آزمایش سرتاسری قابل‌اعتماد و آزمایشگاه ۱۲ خطی <span class="tag core">اسلاید</span></h2>
+<p>اسلاید ۳۱ فقط یک عنوان دارد، «Coding…»: کلاس اینجا وارد کدنویسی زنده می‌شود. اسلاید ۳۲ نقشه‌ی کل کار را می‌دهد: <b>«کل محاسبه را قابل‌حسابرسی (auditable)، تکرارپذیر (repeatable) و هم‌شکل با استقرار (deployment-shaped) کن.»</b></p>
+<div class="flow"><span>۰۱ Snapshot<br><small>زمان منبع و برچسب</small></span><i>←</i><span>۰۲ Contract<br><small>پیش‌بینی‌کننده‌های در دسترس</small></span><i>←</i><span>۰۳ Split<br><small>طرح زمانی/گروهی</small></span><i>←</i><span>۰۴ Fit<br><small>پیش‌پردازش + طبقه‌بند</small></span><i>←</i><span>۰۵ Select<br><small>CV + آستانه روی validation</small></span><i>←</i><span>۰۶ Audit<br><small>test قفل‌شده و برش‌ها</small></span></div>
+<p>جمله‌ی پایانی اسلاید: <b>«یک pipeline یادگیری ماشین هم کد اجرایی است و هم پروتکل علمی.»</b> اگر کسی شش ماه بعد بپرسد «این ۰٫۳۸۷ از کجا آمد؟»، باید بتوانی دقیقاً همان عدد را دوباره بسازی.</p>
+
+<p>اسلاید ۳۳ هسته‌ی تکرارپذیر آزمایش را در ۱۲ خط می‌دهد. عین کد اسلاید:</p>
+<pre class="code">df = pd.read_csv(DATA).sort_values('request_time')
+train, val, test = chronological_split(df)
+Xtr, ytr = train[valid_features], train['cancelled']
+Xv,  yv  = val[valid_features], val['cancelled']
+Xt,  yt  = test[valid_features], test['cancelled']
+
+pipeline = make_leakage_safe_pipeline()
+cv_scores = evaluate_rolling_time_windows(train, pipeline)
+pipeline.fit(Xtr, ytr)
+threshold = select_on_validation(yv, pipeline.predict_proba(Xv)[:,1])
+report = evaluate_once(yt, pipeline.predict_proba(Xt)[:,1], threshold)
+# Freeze: data, features, splits, threshold, software versions</pre>
+
+<div class="tablewrap"><table class="lab12">
+<tr><th>خط</th><th>چه می‌کند و چرا</th></tr>
+<tr><td>read_csv(...).sort_values('request_time')</td><td><b>Snapshot</b>. یک فایل ثابت و مرتب‌شده بر حسب زمان. مرتب‌سازی پیش‌نیاز تقسیم زمانی و <code>TimeSeriesSplit</code> است.</td></tr>
+<tr><td>chronological_split(df)</td><td><b>Split</b>. train = ژانویه تا آوریل، val = مه، test = ژوئن. تصادفی نیست، چون مدل باید آینده را پیش‌بینی کند.</td></tr>
+<tr><td>Xtr, ytr = train[valid_features], ...</td><td><b>Contract</b>. فقط ستون‌های مجاز در لحظه‌ی درخواست؛ refund و وضعیت نهایی اصلاً وارد نمی‌شوند.</td></tr>
+<tr><td>Xv, yv / Xt, yt</td><td>همان قرارداد برای مه و ژوئن. یک لیست ویژگی برای همه، تا شکل داده در استقرار هم همین باشد.</td></tr>
+<tr><td>make_leakage_safe_pipeline()</td><td><b>Fit</b>. imputer، scaler، one-hot و مدل همه در یک Pipeline؛ هیچ آماری بیرون از fold فیت نمی‌شود.</td></tr>
+<tr><td>evaluate_rolling_time_windows(train, pipeline)</td><td><b>Select (الف)</b>. اعتبارسنجی پنجره‌ی غلتان فقط درون train، با فاصله (gap) برای برچسب‌هایی که دیر نهایی می‌شوند. پراکندگی foldها را هم گزارش کن.</td></tr>
+<tr><td>pipeline.fit(Xtr, ytr)</td><td>مدل نهایی روی کل train.</td></tr>
+<tr><td>select_on_validation(yv, ...)</td><td><b>Select (ب)</b>. آستانه (و در صورت نیاز کالیبراسیون) روی مه انتخاب می‌شود، با تابع هزینه‌ی کسب‌وکار.</td></tr>
+<tr><td>evaluate_once(yt, ..., threshold)</td><td><b>Audit</b>. یک بار و فقط یک بار روی ژوئن. اسم تابع خودش یک قرارداد اخلاقی است.</td></tr>
+<tr><td># Freeze: ...</td><td>داده (hash)، ویژگی‌ها، مرز تقسیم‌ها، آستانه و نسخه‌ی کتابخانه‌ها را ثبت کن تا نتیجه بازتولیدپذیر باشد.</td></tr>
+</table></div>
+
+<p>اسلاید پیاده‌سازی توابع کمکی را نشان نمی‌دهد. این یک پیاده‌سازی کامل و قابل‌اجراست (روی همان داده‌ی مصنوعی بخش ۳؛ هر تابع با شماره‌ی مرحله‌اش در اسلاید ۳۲ علامت خورده):</p>
+<details><summary>پیاده‌سازی توابع کمکی (کلیک کن)</summary>
+<pre class="code">from sklearn.impute import SimpleImputer
+from sklearn.model_selection import TimeSeriesSplit
+
+make_rides().to_csv("rides.csv", index=False)       # the snapshot (step 01)
+DATA = "rides.csv"
+numeric_cols = ["hour", "eta_min", "distance_km", "quoted_fare", "is_new_user", "prior_cancel_rate"]
+categorical_cols = ["city"]
+valid_features = categorical_cols + numeric_cols     # the prediction-time contract (step 02)
+C_FP, C_FN = 20_000, 160_000                         # toman, agreed with the business team
+
+def chronological_split(df, val_start="2026-05-01", test_start="2026-06-01"):     # step 03
+    t = pd.to_datetime(df["request_time"])
+    return df[t &lt; val_start], df[(t &gt;= val_start) &amp; (t &lt; test_start)], df[t &gt;= test_start]
+
+def make_leakage_safe_pipeline():                                                  # step 04
+    num = Pipeline([("fill", SimpleImputer(strategy="median")), ("scale", StandardScaler())])
+    cat = Pipeline([("fill", SimpleImputer(strategy="most_frequent")),
+                    ("ohe", OneHotEncoder(handle_unknown="ignore"))])
+    prep = ColumnTransformer([("num", num, numeric_cols), ("cat", cat, categorical_cols)])
+    return Pipeline([("prep", prep), ("clf", LogisticRegression(max_iter=1000))])
+
+def evaluate_rolling_time_windows(train, pipeline, n_splits=4, gap=50):          # step 05a
+    X, y = train[valid_features], train["cancelled"]      # train is already time-sorted
+    scores = []
+    for tr, va in TimeSeriesSplit(n_splits=n_splits, gap=gap).split(X):
+        m = clone(pipeline).fit(X.iloc[tr], y.iloc[tr])   # fresh copy per window
+        scores.append(average_precision_score(y.iloc[va], m.predict_proba(X.iloc[va])[:, 1]))
+    return np.round(scores, 3)
+
+def select_on_validation(y, p, grid=np.arange(0.02, 0.80, 0.01)):                 # step 05b
+    y = np.asarray(y)
+    cost = [((p &gt;= t) &amp; (y == 0)).sum() * C_FP + ((p &lt; t) &amp; (y == 1)).sum() * C_FN for t in grid]
+    return round(float(grid[int(np.argmin(cost))]), 2)
+
+def evaluate_once(y, p, threshold):                                                # step 06
+    y, a = np.asarray(y), p &gt;= threshold
+    TP, FP, FN = (a &amp; (y == 1)).sum(), (a &amp; (y == 0)).sum(), (~a &amp; (y == 1)).sum()
+    return {"prevalence": round(float(y.mean()), 3),
+            "AP": round(average_precision_score(y, p), 3),
+            "ROC_AUC": round(roc_auc_score(y, p), 3),
+            "Brier": round(brier_score_loss(y, p), 4),
+            "threshold": threshold,
+            "precision": round(float(TP / (TP + FP)), 3),
+            "recall": round(float(TP / (TP + FN)), 3),
+            "cost_per_1000_requests": int((FP * C_FP + FN * C_FN) / len(y) * 1000)}</pre>
+</details>
+<p>بعد از اجرای همان ۱۲ خط:</p>
+<pre class="code">print("rolling-window AP:", cv_scores, "mean", cv_scores.mean().round(3), "std", cv_scores.std().round(3))
+print("threshold chosen on May:", threshold)
+for k, v in report.items():
+    print(f"  {k:&lt;24}{v}")</pre>
+<div class="out">rolling-window AP: [0.419 0.368 0.388 0.372] mean 0.387 std 0.02
+threshold chosen on May: 0.09
+  prevalence              0.121
+  AP                      0.387
+  ROC_AUC                 0.79
+  Brier                   0.0909
+  threshold               0.09
+  precision               0.219
+  recall                  0.782
+  cost_per_1000_requests  10942472</div>
+<p>میانگین AP در پنجره‌های غلتان (۰٫۳۸۷ با انحراف معیار ۰٫۰۲) با AP نهایی ژوئن (۰٫۳۸۷) هم‌خوان است. این هم‌خوانی یعنی CV ما شبیه‌سازی صادقانه‌ای از استقرار بوده. اگر CV می‌گفت ۰٫۶ و test می‌گفت ۰٫۳۹، باید دنبال نشت می‌گشتیم. هزینه‌ی مورد انتظار حدود ۱۰٫۹ میلیون تومان به ازای هر ۱٬۰۰۰ درخواست است.</p>
+<p>و خط آخر، Freeze:</p>
+<pre class="code">import json, hashlib, platform, sklearn
+freeze = {
+    "data_sha256": hashlib.sha256(open(DATA, "rb").read()).hexdigest()[:16],
+    "n_rows": len(df), "features": valid_features,
+    "splits": {"train": "&lt; 2026-05-01", "val": "2026-05", "test": "2026-06"},
+    "cv": "TimeSeriesSplit(4, gap=50)", "threshold": threshold,
+    "costs_toman": {"FP": C_FP, "FN": C_FN},
+    "versions": {"python": platform.python_version(), "sklearn": sklearn.__version__,
+                 "pandas": pd.__version__, "numpy": np.__version__},
+}
+json.dump(freeze, open("experiment_freeze.json", "w"), indent=2)
+print(json.dumps(freeze)[:120], "...")</pre>
+<div class="out">{"data_sha256": "f290238926bedfdc", "n_rows": 9600, "features": ["city", "hour", "eta_min", "distance_km", "quoted_fare" ...</div>
+
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+اگر بپرسند «کدام تصمیم‌ها کجا گرفته می‌شوند؟»: انتخاب ویژگی، ابعاد PCA، وزن کلاس و ابرپارامترها ← <b>CV روی train</b>. آستانه، کالیبراسیون و مقایسه‌ی هزینه‌ها ← <b>validation</b>. گزارش نهایی، عدم‌قطعیت، برش‌ها و محدودیت‌ها ← <b>test، یک بار</b>. (اسلاید ۱۶ + ۳۲)
+</div>
+</section>
+
+<section id="solved">
+<h2><span class="num">۹</span> مسئله‌ی حل‌شده (سبک تمرین شریف) <span class="tag exam">امتحانی</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله · کمپین ضدلغو در مشهد</div>
+اپ تاکسی اینترنتی در مشهد روزانه ۲۰٬۰۰۰ درخواست دارد و ۵٪ آن‌ها لغو می‌شوند. تیم داده مدلی ساخته که با آستانه‌ی فعلی $\text{TPR}=0.6$ و $\text{FPR}=0.08$ دارد. مداخله این است: به راننده‌ی نزدیک‌تر ۱۵٬۰۰۰ تومان پاداش داده می‌شود تا درخواست را بپذیرد (این هزینه در هر صورت پرداخت می‌شود). اگر درخواستی که قرار بوده لغو شود این مداخله را بگیرد، با احتمال ۴۰٪ نجات پیدا می‌کند. هر لغو برای شرکت ۹۰٬۰۰۰ تومان ضرر دارد.
+<ol>
+  <li>accuracy مدل احمق و مدل فعلی را حساب کن و بگو چرا مدیر از اولی راضی‌تر است.</li>
+  <li>precision، recall و F1 مدل را حساب کن.</li>
+  <li>سود یا زیان خالص روزانه‌ی کمپین با آستانه‌ی فعلی چقدر است؟</li>
+  <li>برای مدل کالیبره، آستانه‌ی بهینه $t^*$ را به دست بیاور. چه رابطه‌ای با precision سربه‌سر دارد؟</li>
+  <li>معلوم می‌شود مدل روی داده‌ی undersample‌شده‌ی ۵۰/۵۰ آموزش دیده. مدل برای یک درخواست ۰٫۶ می‌دهد. احتمال واقعی چقدر است و آیا اقدام کنیم؟ آستانه را در فضای امتیاز خام چقدر بگذاریم؟</li>
+  <li>این آستانه را با کدام داده تنظیم کنیم و چه چیزهایی را گزارش کنیم؟</li>
+</ol>
+</div>
+<details><summary>راه‌حل کامل</summary>
+<p><b>۱) accuracy.</b> ۱٬۰۰۰ لغو و ۱۹٬۰۰۰ سفر سالم داریم. مدل احمق («همیشه سالم»): $19000/20000=0.95$.
+مدل: $TP=0.6\times1000=600$، $FN=400$، $FP=0.08\times19000=1520$، $TN=17480$. پس $\text{Acc}=(600+17480)/20000=0.904$. مدیر عدد بزرگ‌تر را می‌بیند، ولی مدل احمق هیچ لغوی پیدا نمی‌کند. accuracy اینجا معیار تصمیم نیست.</p>
+<p><b>۲)</b> $\text{Precision}=600/2120\approx0.283$، $\text{Recall}=0.6$، $F_1=\frac{2(0.283)(0.6)}{0.883}\approx0.385$.</p>
+<p><b>۳) سود خالص.</b> مداخله روی یک لغو واقعی: سود مورد انتظار $0.4\times90{,}000-15{,}000=21{,}000$ تومان. مداخله روی سفر سالم: $-15{,}000$ تومان.
+سود از لغوهای نجات‌یافته: $600\times21{,}000=12.6$ میلیون تومان. هزینه‌ی هشدارهای بیهوده: $1520\times15{,}000=22.8$ میلیون تومان. خالص روزانه: $12.6-22.8=-10.2$ میلیون تومان.
+کمپین با این آستانه <b>روزی ۱۰٫۲ میلیون تومان ضرر</b> می‌دهد، با اینکه recall خوبی دارد.</p>
+<p><b>۴) آستانه‌ی بهینه.</b> برای درخواستی با احتمال $p$: اقدام سود مورد انتظار $p\cdot0.4\cdot90{,}000-15{,}000$ دارد. مثبت است اگر
+$$p&gt;t^*=\frac{15{,}000}{36{,}000}\approx0.417$$
+در زبان فرمول درس: $C_{FP}=15{,}000$ و «هزینه‌ی از دست دادن فرصت» $C_{FN}=36{,}000-15{,}000=21{,}000$؛ پس $t^*=\frac{15}{15+21}=0.417$. سود هر هشدار به‌طور متوسط $36{,}000\cdot\text{precision}-15{,}000$ است، پس کمپین فقط وقتی سربه‌سر می‌شود که <b>precision مجموعه‌ی هشدارها از ۰٫۴۱۷ بیشتر باشد</b>. precision فعلی ۰٫۲۸۳ است و این توضیح می‌دهد چرا ضرر می‌کنیم. آستانه باید بالاتر برود.</p>
+<p><b>۵) تصحیح شیوع.</b> با $\pi_s=0.5$ و $\pi=0.05$:
+$a=0.6\cdot\frac{0.05}{0.5}=0.06$ و $b=0.4\cdot\frac{0.95}{0.5}=0.76$، پس
+$$p=\frac{a}{a+b}=\frac{0.06}{0.82}\approx0.073$$
+پس احتمال واقعی حدود ۷٪ است، خیلی کمتر از ۰٫۴۱۷: <b>اقدام نکن</b>. آستانه در فضای امتیاز خام: odds هدف $0.417/0.583=15/21$ است و باید در $\frac{0.5/0.5}{0.05/0.95}=19$ ضرب شود: odds خام $=\frac{15}{21}\times19\approx13.57$، یعنی $s^*=\frac{13.57}{14.57}\approx0.931$. اگر کسی بی‌خبر از undersampling آستانه را ۰٫۴۱۷ روی امتیاز خام بگذارد، به شمار زیادی درخواست کم‌ریسک پاداش می‌دهد.</p>
+<p><b>۶) طراحی ارزیابی.</b> آستانه (و کالیبراسیون) روی یک دوره‌ی validation بعد از train انتخاب شود، نه روی test. روی test یک بار گزارش کن: precision، recall، سود خالص روزانه با بازه‌ی bootstrap (بهتر است block bootstrap روی روزها)، و برش‌ها (ساعت اوج، کاربر جدید، مناطق شهر)، هر کدام با تعداد لغو. همچنین فرض «۴۰٪ نجات» یک فرض علّی است و باید با آزمون A/B سنجیده شود، نه از داده‌ی مشاهده‌ای.</p>
+</details>
+</section>
+
+<section id="exercises">
+<h2><span class="num">۱۰</span> تمرین‌ها</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+در یک روز تهران ۲٬۰۰۰ درخواست و ۲۴۰ لغو داریم. مدل ۲۵۰ هشدار داده که ۱۳۰ تایش لغو شده‌اند. ماتریس درهم‌ریختگی، accuracy، precision، recall، FPR، F1، balanced accuracy و MCC را حساب کن و با مدل احمق مقایسه کن.
+<details><summary>راه‌حل</summary>
+<ul>
+<li>$TP=130$، $FP=120$، $FN=110$، $TN=1640$.</li>
+<li>Accuracy $=1770/2000=0.885$ (مدل احمق ۰٫۸۸).</li>
+<li>Precision $=130/250=0.52$ و Recall $=130/240\approx0.542$.</li>
+<li>FPR $=120/1760\approx0.068$ و Specificity ≈ ۰٫۹۳۲.</li>
+<li>$F_1\approx0.531$ و Balanced acc ≈ ۰٫۷۳۷.</li>
+<li>$$\text{MCC}=\frac{130\cdot1640-120\cdot110}{\sqrt{250\cdot240\cdot1760\cdot1750}}=\frac{200000}{429884}\approx0.465$$</li>
+</ul>
+accuracy فقط نیم درصد بهتر از مدل احمق است، ولی balanced accuracy (۰٫۷۴ در برابر ۰٫۵) و MCC (۰٫۴۷ در برابر ۰) فرق واقعی را نشان می‌دهند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">· 🟢 پایه</span></div>
+(الف) مدلی که امتیاز کاملاً تصادفی می‌دهد، روی داده‌ی ژوئن تبریز (شیوع ۸٫۶٪) چه AP و چه ROC-AUC‌ای می‌گیرد؟ (ب) گزارشی می‌گوید «AP مدل ما ۰٫۲۵ است، پس ضعیف است». چه سؤالی می‌پرسی؟
+<details><summary>راه‌حل</summary>
+(الف) AP ≈ ۰٫۰۸۶ (شیوع) و ROC-AUC ≈ ۰٫۵. (ب) «شیوع کلاس مثبت چند است؟» اگر شیوع ۲٪ باشد، AP=۰٫۲۵ یعنی ۱۲٫۵ برابر تصادف و احتمالاً عالی است. اگر شیوع ۲۰٪ باشد، فقط ۱٫۲۵ برابر است و ضعیف. همیشه AP را کنار خط پایه (و ترجیحاً با lift) گزارش کن.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l1">· 🟢 پایه</span></div>
+با جدول آستانه‌های اسلاید ۲۷ (۰٫۲۰ / ۰٫۴۰ / ۰٫۶۰) برای هر سناریو یکی را پیشنهاد بده و دلیل بیاور: (الف) مداخله یک پیامک رایگان است. (ب) مداخله تماس تلفنی یک اپراتور است و فقط ۳ اپراتور داریم. (ج) مداخله ۵۰٪ تخفیف است.
+<details><summary>راه‌حل</summary>
+(الف) ۰٫۲۰ (یا حتی کمتر): هشدار کاذب تقریباً مجانی است و recall مهم است. (ب) ۰٫۶۰ یا سیاست top-k: ظرفیت محدود است و باید precision بالا باشد تا وقت اپراتورها هدر نرود. (ج) ۰٫۴۰ یا بالاتر: هزینه‌ی هر هشدار کاذب زیاد است؛ با فرمول $t^*$ دقیقش کن. نکته‌ی اصلی: آستانه را هزینه و ظرفیت تعیین می‌کنند، نه مدل.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">· 🟡 مهارتی</span></div>
+مداخله یک پیامک با هزینه‌ی ۲٬۰۰۰ تومان است و هر لغو ۵۰٬۰۰۰ تومان ضرر دارد. (الف) اگر پیامک لغو را <i>همیشه</i> جلوگیری کند، $t^*$ چقدر است؟ (ب) اگر فقط در ۳۰٪ موارد جلوگیری کند چطور؟ (ج) چرا جواب (الف) غیرواقعی است؟
+<details><summary>راه‌حل</summary>
+(الف) $t^*=\frac{2000}{2000+50000}\approx0.038$. (ب) اقدام اگر $p\cdot0.3\cdot50000&gt;2000$، یعنی $p&gt;2000/15000\approx0.133$. (ج) چون اثر مداخله را ۱۰۰٪ فرض کرده. در عمل اثر مداخله را باید با آزمایش کنترل‌شده (A/B) اندازه گرفت. مدل پیش‌بینِ «چه کسی لغو می‌کند» را با مدل «چه کسی با مداخله نجات پیدا می‌کند» (uplift) یکی نگیر.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">· 🟡 مهارتی</span></div>
+مدلی روی train‌ای آموزش دیده که لغوها را تا ۲۵٪ بیش‌نمونه‌گیری کرده‌اند. شیوع واقعی ۱۲٪ است. مدل برای یک درخواست ۰٫۴ می‌دهد. احتمال تصحیح‌شده چقدر است؟ تابع پایتونی‌اش را بنویس.
+<details><summary>راه‌حل</summary>
+$a=0.4\cdot\frac{0.12}{0.25}=0.192$، $b=0.6\cdot\frac{0.88}{0.75}=0.704$، پس $p=\frac{0.192}{0.896}\approx0.214$. کد همان <code>prior_correct(0.4, pi=0.12, pi_s=0.25)</code> بخش ۵ است. نکته: این فقط وقتی دقیق است که resampling توزیع $x$ درون هر کلاس را عوض نکرده باشد. SMOTE نقاط جدید می‌سازد و این فرض را کمی می‌شکند، پس بعدش هم نمودار اطمینان را روی validation چک کن.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">· 🟡 مهارتی</span></div>
+تابع <code>slice_report(res, col, min_pos=30)</code> بنویس که برای هر مقدار <code>col</code>، تعداد، تعداد لغو، شیوع، AP و lift را بدهد و برش‌هایی را که کمتر از <code>min_pos</code> لغو دارند به‌جای AP با برچسب <code>"insufficient"</code> علامت بزند. خروجی را بر حسب lift مرتب کن.
+<details><summary>راه‌حل</summary>
+<pre class="code">def slice_report(res, col, min_pos=30):
+    rows = []
+    for key, g in res.groupby(col):
+        y, s = g["cancelled"], g["score"]
+        row = {col: key, "n": len(g), "cancels": int(y.sum()), "rate": round(y.mean(), 3)}
+        if y.sum() &lt; min_pos or y.sum() == len(y):
+            row.update(AP="insufficient", lift=np.nan)
+        else:
+            ap = average_precision_score(y, s)
+            row.update(AP=round(ap, 3), lift=round(ap / y.mean(), 2))
+        rows.append(row)
+    return pd.DataFrame(rows).sort_values("lift", na_position="last")
+
+slice_report(res, "city")</pre>
+با داده‌ی ژوئن، تبریز (۱۳ لغو) و شیراز (۲۶ لغو) برچسب insufficient می‌گیرند. این دقیقاً رفتاری است که می‌خواهیم: به‌جای عدد شکننده، صادقانه بگوییم داده کافی نیست.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">· 🔴 تحلیلی</span></div>
+مدل تشخیص سفر جعلی (تقلب راننده) روی ۱٬۰۰۰٬۰۰۰ سفر ماهانه با شیوع ۰٫۲٪ کار می‌کند. گزارش می‌گوید «ROC-AUC = ۰٫۹۷، و در نقطه‌ی کار $\text{TPR}=0.9$ و $\text{FPR}=0.01$». (الف) precision و تعداد هشدار ماهانه را حساب کن. (ب) تیم بازرسی ماهی ۲٬۰۰۰ پرونده را می‌تواند بررسی کند. چه پیشنهادی داری؟ (ج) چرا ROC گمراه‌کننده بود؟
+<details><summary>راه‌حل</summary>
+(الف) $P=2000$، $TP=1800$، $FP=0.01\times998000=9980$. هشدار ماهانه $=11780$ و precision $=1800/11780\approx0.153$. (ب) با ظرفیت ۲٬۰۰۰، نقطه‌ی کار فعلی شدنی نیست. باید آستانه را بالا برد تا هشدارها به حدود ۲٬۰۰۰ برسد (top-k) و precision@2000 و recall متناظر را از منحنی PR خواند. معیار انتخاب مدل هم باید precision@k یا AP باشد، نه ROC-AUC. (ج) FPR=۱٪ کوچک به نظر می‌رسد، ولی ۱٪ از ۹۹۸٬۰۰۰ یعنی تقریباً ۱۰٬۰۰۰ پرونده‌ی بی‌گناه. مخرج FPR تعداد عظیم منفی‌هاست.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">· 🔴 تحلیلی</span></div>
+در کد زیر همه‌ی خطاهای روش‌شناختی را پیدا کن و نسخه‌ی درست را بنویس:
+<pre class="code">X_res, y_res = SMOTE().fit_resample(X, y)
+X_res = StandardScaler().fit_transform(X_res)
+Xtr, Xte, ytr, yte = train_test_split(X_res, y_res, test_size=0.2)
+clf = LogisticRegression().fit(Xtr, ytr)
+p = clf.predict_proba(Xte)[:, 1]
+best_t = max(np.arange(0.1, 0.9, 0.05), key=lambda t: f1_score(yte, p &gt;= t))
+print("accuracy", accuracy_score(yte, p &gt;= best_t))</pre>
+<details><summary>راه‌حل</summary>
+<ol>
+<li>SMOTE قبل از تقسیم: نمونه‌های مصنوعی ساخته‌شده از نقاط test وارد train می‌شوند (نشت) و test هم مصنوعی و ۵۰/۵۰ است.</li>
+<li>Scaler روی کل داده فیت شده: نشت پیش‌پردازش (اسلاید ۲۰ جلسه‌ی ۷).</li>
+<li>تقسیم تصادفی برای داده‌ای که زمان دارد؛ باید زمانی باشد.</li>
+<li>آستانه روی test تنظیم شده؛ باید روی validation باشد.</li>
+<li>F1 به‌جای هزینه‌ی کسب‌وکار، و گزارش accuracy روی test متوازن‌شده که هیچ ربطی به دنیای واقعی ندارد.</li>
+<li>مدل روی داده‌ی متوازن آموزش دیده و احتمال‌هایش باد کرده‌اند، ولی هیچ کالیبراسیون یا تصحیحی انجام نشده.</li>
+</ol>
+نسخه‌ی درست همان ۱۲ خط بخش ۸ است. اگر SMOTE لازم باشد، داخل <code>imblearn.pipeline.Pipeline</code> می‌رود. سپس <code>select_on_validation</code> با تابع هزینه و <code>evaluate_once</code> با AP، Brier، precision و recall در شیوع طبیعی.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l3">· 🔴 تحلیلی</span></div>
+با جدول خروجی بخش ۴ (مه): مرکز تماس در کل ماه فقط ۱۴۰ تماس می‌تواند بگیرد. (الف) کدام آستانه؟ هزینه چقدر است؟ (ب) آستانه‌ی بهینه‌ی بدون قید ۰٫۰۹ با هزینه‌ی ۱۶٫۹۰ میلیون تومان و ۷۳۸ هشدار است. قید ظرفیت چقدر خرج دارد؟ (ج) اگر یک اپراتور دیگر ماهی ۱۴۰ تماس اضافه بگیرد، حداکثر چقدر حقوق ماهانه به او می‌ارزد؟
+<details><summary>راه‌حل</summary>
+(الف) $t=0.3$ با ۱۳۹ هشدار و هزینه‌ی ۲۶٫۳۴ میلیون. (ب) $26.34-16.90=9.44$ میلیون تومان در ماه. این «قیمت سایه‌ای» (shadow price) قید ظرفیت است. (ج) با دو اپراتور حدود ۲۸۰ تماس داریم، یعنی $t=0.2$ با ۲۷۸ هشدار و هزینه‌ی ۲۰٫۴۸ میلیون. صرفه‌جویی $26.34-20.48=5.86$ میلیون تومان در ماه است، پس اپراتور دوم تا حدود ۵٫۸ میلیون تومان در ماه می‌ارزد (با این اعداد فرضی و روی یک ماه validation، که خودش عدم‌قطعیت دارد). ارزش هر تماس اضافه کم‌کم کم می‌شود (بازده نزولی)، چون هشدارهای بعدی ریسک کمتری دارند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+لغوها در روزهای بارانی و تعطیلات خوشه‌ای‌اند، پس ردیف‌ها مستقل نیستند. (الف) توضیح بده چرا bootstrap ردیفی بازه را باریک‌تر از واقع نشان می‌دهد. (ب) تابع <code>block_bootstrap_ci(res, metric, block="day")</code> بنویس که روزها را با جایگذاری نمونه بگیرد. (ج) انتظار داری بازه‌ی AP ژوئن بازتر شود یا تنگ‌تر؟ چرا ممکن است با ۳۰ روز هم بازه‌ی block قابل‌اعتماد نباشد؟
+<details><summary>راه‌حل</summary>
+(الف) bootstrap ردیفی فرض می‌کند هر ردیف یک «اطلاع مستقل» است. وقتی سفرهای یک روز با هم همبسته‌اند، تعداد اطلاعات مستقل (اندازه‌ی مؤثر نمونه) کمتر از $N$ است و واریانس واقعی معیار بیشتر. نمونه‌گیری ردیفی این همبستگی را می‌شکند و نوسان روزبه‌روز را نمی‌بیند.
+<pre class="code">def block_bootstrap_ci(res, metric, block="day", B=2000, seed=0):
+    res = res.assign(day=res.request_time.dt.date)
+    groups = {k: g for k, g in res.groupby(block)}
+    keys = np.array(list(groups))
+    rng, stats = np.random.default_rng(seed), []
+    for _ in range(B):
+        pick = rng.choice(keys, size=len(keys), replace=True)     # resample DAYS
+        g = pd.concat([groups[k] for k in pick])
+        if 0 &lt; g.cancelled.sum() &lt; len(g):
+            stats.append(metric(g.cancelled, g.score))
+    return metric(res.cancelled, res.score), *np.quantile(stats, [0.025, 0.975])
+
+block_bootstrap_ci(res, average_precision_score)</pre>
+(ج) در داده‌ی واقعی با اثر روزانه، معمولاً بازتر. (در داده‌ی مصنوعی ما اثر روزانه وجود ندارد، پس تقریباً همان بازه را می‌دهد. این خودش آزمون خوبی برای کد است.) با فقط ۳۰ بلوک، توزیع bootstrap ناهموار است و صدک‌های دنباله ناپایدارند. همچنین اگر همبستگی بین روزها هم باشد (هفته به هفته)، بلوک‌های بزرگ‌تر (moving-block یا هفته) لازم است و تعداد بلوک باز هم کمتر می‌شود. گزارش صادقانه: «۳۰ روز داده برای بازه‌ی دقیق کم است».
+</details></div>
+</section>
+
+<section id="quiz">
+<h2><span class="num">۱۱</span> تست</h2>
+<p>۱۲ سؤال در سطح کوییزهای کلاس. گزینه‌ها هر بار جابه‌جا می‌شوند.</p>
+<div class="quiz"></div>
+</section>
+
+<section id="summary">
+<h2><span class="num">۱۲</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box thm"><div class="bt">۵ چیزی که باید یادت بماند</div>
+<ol>
+  <li><b>اول شیوع، بعد معیار.</b> مدل احمق در رویداد نادر accuracy برابر $1-\pi$ می‌گیرد. precision، recall، AP (کنار خط پایه‌ی $\pi$) و هزینه را گزارش کن.</li>
+  <li><b>ROC کیفیت رتبه‌بندی را می‌سنجد و PR کیفیت هشدارها را.</b> وقتی منفی‌ها خیلی زیادند، ROC خوش‌بین است. AP را فقط با شیوع خودش مقایسه کن.</li>
+  <li><b>امتیاز ≠ اقدام.</b> آستانه سیاست است: $t^*=\frac{C_{FP}}{C_{FP}+C_{FN}}$ برای مدل کالیبره، انتخاب‌شده روی validation. F1 بهینه، هزینه‌ی بهینه نیست.</li>
+  <li><b>رتبه‌بندی خوب ≠ احتمال درست.</b> با نمودار اطمینان و Brier بسنج، با Platt یا isotonic روی داده‌ی توسعه کالیبره کن و روی test حسابرسی کن. resampling و وزن کلاس احتمال‌ها را باد می‌کنند؛ تصحیح شیوع یا کالیبراسیون لازم است.</li>
+  <li><b>ارزیابی در دنیای واقعی، با عدم‌قطعیت و برش‌ها.</b> resampling فقط روی fold آموزش، test با شیوع طبیعی، برش‌ها با تعداد مثبت و بازه‌ی bootstrap، و همه‌چیز Freeze‌شده و تکرارپذیر.</li>
+</ol>
+</div>
+<div class="lf">
+  <div class="s"><h4>حتماً بلد باش</h4><ul>
+    <li>همه‌ی فرمول‌های ماتریس درهم‌ریختگی و $\text{Precision}=\frac{\pi\,\text{TPR}}{\pi\,\text{TPR}+(1-\pi)\,\text{FPR}}$.</li>
+    <li>اثبات $t^*$ و حالت کلی‌اش با $C_{TP}$ و $C_{TN}$.</li>
+    <li>فرمول تصحیح شیوع و Brier.</li>
+    <li>شش مرحله‌ی اسلاید ۳۲ و نقش هر خط آزمایش ۱۲ خطی.</li></ul></div>
+  <div class="p"><h4>مقایسه‌ها</h4><ul>
+    <li>ROC-AUC (پایه ۰٫۵، مستقل از شیوع) در برابر AP (پایه $\pi$).</li>
+    <li>Platt (دو پارامتر، داده‌ی کم) در برابر isotonic (انعطاف، داده‌ی زیاد).</li>
+    <li>وزن کلاس / resampling / آستانه: مدل، داده، تصمیم.</li></ul></div>
+  <div class="q"><h4>دام‌ها</h4><ul>
+    <li>تنظیم آستانه یا کالیبراسیون روی test.</li>
+    <li>متوازن کردن validation یا test.</li>
+    <li>SMOTE قبل از split.</li>
+    <li>مقایسه‌ی خام AP بین شهرها با شیوع متفاوت یا با ۱۳ مثبت.</li></ul></div>
+</div>
+
+<div class="box note"><div class="bt">➡ برای جلسه‌ی بعد</div>
+جلسه‌ی ۹ کارگاه pandas و مطالعه‌ی موردی فروشگاه است و با آزمون جامع بخش الف تمام می‌شود. قبلش آزمایش ۱۲ خطی بخش ۸ را در یک نوت‌بوک از صفر بنویس و اجرا کن، بعد یک تغییر بده (مثلاً <code>class_weight="balanced"</code>) و ببین کدام عدد گزارش عوض می‌شود و کدام نه. این تمرین تقریباً همه‌ی بخش الف را مرور می‌کند: لحظه‌ی پیش‌بینی، تقسیم، pipeline، معیار، آستانه و کالیبراسیون.
+</div>
+
+<h3>اصطلاح‌نامه</h3>
+<div class="gloss">
+  <div><b>prevalence / base rate</b>: شیوع؛ نرخ پایه‌ی کلاس مثبت ($\pi$)</div>
+  <div><b>confusion matrix</b>: ماتریس درهم‌ریختگی</div>
+  <div><b>precision (PPV)</b>: درستی هشدارها؛ کسر هشدارهای درست</div>
+  <div><b>recall / sensitivity / TPR</b>: بازیابی؛ کسر مثبت‌های کشف‌شده</div>
+  <div><b>false positive rate (FPR)</b>: نرخ هشدار کاذب در میان منفی‌ها</div>
+  <div><b>specificity (TNR)</b>: ویژگی؛ کسر منفی‌های درست‌تشخیص‌داده‌شده</div>
+  <div><b>balanced accuracy</b>: دقت متوازن؛ میانگین TPR و TNR</div>
+  <div><b>MCC</b>: ضریب همبستگی متیوز</div>
+  <div><b>PR curve / average precision</b>: منحنی دقت–بازیابی / میانگین precision</div>
+  <div><b>ROC-AUC</b>: مساحت زیر منحنی ROC؛ احتمال رتبه‌ی بالاتر مثبت</div>
+  <div><b>no-skill baseline</b>: خط پایه‌ی بی‌مهارت (تصادفی)</div>
+  <div><b>operating point / threshold</b>: نقطه‌ی کار / آستانه‌ی تصمیم</div>
+  <div><b>cost matrix</b>: ماتریس هزینه‌ی خطاها</div>
+  <div><b>calibration</b>: کالیبراسیون؛ هم‌خوانی احتمال پیش‌بینی با فراوانی واقعی</div>
+  <div><b>reliability diagram</b>: نمودار اطمینان</div>
+  <div><b>Brier score</b>: میانگین مربع خطای احتمال</div>
+  <div><b>Platt scaling / isotonic regression</b>: کالیبراسیون سیگموئیدی / رگرسیون یکنوا</div>
+  <div><b>prior shift correction</b>: تصحیح جابه‌جایی شیوع پیشین</div>
+  <div><b>class weighting / resampling</b>: وزن‌دهی کلاس / نمونه‌گیری مجدد</div>
+  <div><b>SMOTE</b>: بیش‌نمونه‌گیری مصنوعی با درون‌یابی همسایه‌ها</div>
+  <div><b>slice / cohort</b>: برش / زیرگروه</div>
+  <div><b>bootstrap CI</b>: بازه‌ی اطمینان بوت‌استرپ</div>
+  <div><b>lockbox test</b>: داده‌ی test قفل‌شده که فقط یک بار باز می‌شود</div>
+  <div><b>auditable / reproducible</b>: قابل‌حسابرسی / تکرارپذیر</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`شیوع لغو ۱۲٪ است و مدل جدید accuracy برابر ۸۶٪ دارد. کدام جمله درست‌تر است؟`,
+  o:[`مدل از مدل احمقِ «همیشه انجام می‌شود» بدتر است و بی‌فایده است`,`accuracy مدل از مدل احمق (۸۸٪) کمتر است، ولی ممکن است مدل مفید باشد؛ باید precision، recall و هزینه را دید`,`مدل عالی است چون accuracy بالای ۸۰٪ است`,`accuracy در داده‌ی نامتوازن همیشه با F1 برابر است`], a:1,
+  e:`مدل احمق ۸۸٪ می‌گیرد و هیچ لغوی پیدا نمی‌کند. مدلی با accuracy کمتر ممکن است نصف لغوها را با precision خوب پیدا کند، مثل مثال بخش ۲.`},
+ {q:`اگر توزیع امتیاز درون هر کلاس ثابت بماند و فقط شیوع عوض شود، کدام معیار (در آستانه‌ی ثابت) تغییر <b>نمی‌کند</b>؟`,
+  o:[`Precision`,`Recall (TPR)`,`Average precision`,`Accuracy`], a:1,
+  e:R`TPR و FPR فقط به توزیع درون کلاس بستگی دارند. $\text{Precision}=\frac{\pi\,\text{TPR}}{\pi\,\text{TPR}+(1-\pi)\,\text{FPR}}$ و accuracy و AP به $\pi$ وابسته‌اند.`},
+ {q:`مدل A روی داده‌ای با شیوع ۳٪، AP=۰٫۳۰ دارد و مدل B روی داده‌ای با شیوع ۲۵٪، AP=۰٫۴۰. چه می‌توان گفت؟`,
+  o:[`B بهتر است چون AP بیشتری دارد`,`این دو عدد مستقیم قابل مقایسه نیستند؛ A حدود ۱۰ برابر و B حدود ۱٫۶ برابر خط پایه‌ی خودش است`,`هر دو بی‌مهارت‌اند`,`A بهتر است چون شیوع کمتر همیشه AP را بالا می‌برد`], a:1,
+  e:`خط پایه‌ی AP شیوع است. AP را فقط کنار شیوع خودش (یا با lift) تفسیر کن. برای مقایسه‌ی منصفانه باید دو مدل روی یک داده سنجیده شوند.`},
+ {q:`مدل تقلب با شیوع ۰٫۱٪، ROC-AUC=۰٫۹۵ دارد. در نقطه‌ای با TPR=۰٫۸ و FPR=۰٫۰۵، precision تقریباً چقدر است؟`,
+  o:[`حدود ۹۵٪`,`حدود ۸۰٪`,`حدود ۵۰٪`,`حدود ۱٫۶٪`], a:3,
+  e:R`$\frac{0.001\times0.8}{0.001\times0.8+0.999\times0.05}\approx0.016$. FPR پنج درصدی روی انبوه منفی‌ها هزاران هشدار کاذب می‌سازد. ROC-AUC بالا این را پنهان می‌کند.`},
+ {q:R`مدل کالیبره است، هزینه‌ی هشدار کاذب ۱۰٬۰۰۰ تومان و هزینه‌ی لغو ازدست‌رفته ۹۰٬۰۰۰ تومان است (TP و TN بی‌هزینه). آستانه‌ی بهینه؟`,
+  o:[`۰٫۵`,`۰٫۱`,`۰٫۹`,`برابر شیوع لغو`], a:1,
+  e:R`$t^*=\frac{C_{FP}}{C_{FP}+C_{FN}}=\frac{10000}{100000}=0.1$. شیوع در خود $p$ نشسته و در فرمول نمی‌آید.`},
+ {q:`تقسیم زمانی: train = ژانویه تا آوریل، validation = مه، test = ژوئن. آستانه‌ی تصمیم را کجا انتخاب کنیم؟`,
+  o:[`روی ژوئن، چون نزدیک‌ترین داده به استقرار است`,`روی مه (validation)، و روی ژوئن فقط یک بار گزارش بدهیم`,`روی train، چون داده‌ی بیشتری دارد`,`همیشه ۰٫۵ بگذاریم تا سوگیری نداشته باشیم`], a:1,
+  e:`اسلاید ۲۷: نقطه‌ی کار را با validation انتخاب کن، نه با test نهایی. هر تصمیمی که با test گرفته شود، test را به validation تبدیل می‌کند. روی train هم امتیازها خوش‌بینانه‌اند.`},
+ {q:`بعد از گذاشتن <code>class_weight="balanced"</code>، AP تقریباً ثابت ماند ولی میانگین احتمال پیش‌بینی ۰٫۴۲ شد، در حالی که نرخ واقعی لغو ۰٫۱۲ است. بهترین تفسیر؟`,
+  o:[`مدل خراب شده و باید دور ریخته شود`,`رتبه‌بندی حفظ شده ولی احتمال‌ها باد کرده‌اند؛ با تصحیح شیوع یا کالیبراسیون روی validation درست می‌شود`,`نرخ واقعی لغو اشتباه اندازه‌گیری شده`,`AP ثابت مانده پس احتمال‌ها هم درست‌اند`], a:1,
+  e:`وزن متوازن مثل آموزش روی داده‌ی ۵۰/۵۰ است. ترتیب امتیازها تقریباً همان است (AP ثابت)، ولی سطح احتمال جابه‌جا شده. فرمول تصحیح شیوع یا Platt این را برمی‌گرداند.`},
+ {q:`Platt scaling (سیگموئید صعودی روی امتیاز) چه اثری روی ROC-AUC دارد؟`,
+  o:[`همیشه آن را بالا می‌برد`,`همیشه آن را پایین می‌آورد`,`آن را تغییر نمی‌دهد، چون ترتیب امتیازها حفظ می‌شود؛ ولی Brier می‌تواند بهتر شود`,`آن را دقیقاً برابر ۰٫۵ می‌کند`], a:2,
+  e:`AUC فقط به ترتیب بستگی دارد. تبدیل صعودی اکید ترتیب را عوض نمی‌کند. کالیبراسیون کیفیت احتمال را عوض می‌کند، نه رتبه‌بندی.`},
+ {q:R`Brier score مدلی که به همه‌ی درخواست‌ها عدد ثابت $\pi$ (شیوع) را بدهد چقدر است؟`,
+  o:[R`$\pi^2$`,R`$\pi(1-\pi)$`,R`$1-\pi$`,`صفر، چون کالیبره است`], a:1,
+  e:R`$\pi(1-\pi)^2+(1-\pi)\pi^2=\pi(1-\pi)$. این مدل کالیبره است ولی هیچ قدرت تفکیکی ندارد، پس Brier صفر نمی‌شود. این عدد مرجع Brier skill score است.`},
+ {q:`SMOTE را کجا باید اجرا کرد؟`,
+  o:[`روی کل داده قبل از تقسیم، تا همه‌ی foldها متوازن باشند`,`روی train و test، تا ارزیابی منصفانه باشد`,`داخل یک pipeline (مثلاً imblearn) تا فقط روی fold آموزش و هنگام fit اجرا شود`,`فقط روی test`], a:2,
+  e:`اسلاید ۳۰: resampling فقط روی fold آموزش. هرگز شیوع test را متوازن نکن. SMOTE قبل از split نقاط مصنوعی ساخته‌شده از روی داده‌ی ارزیابی را وارد train می‌کند.`},
+ {q:`AP تبریز ۰٫۲۶ و AP کل ۰٫۳۹ است. تبریز در ژوئن ۱۳ لغو دارد. قدم بعدی منطقی چیست؟`,
+  o:[`مدل جداگانه برای تبریز آموزش بدهیم`,`تبریز را از سرویس حذف کنیم`,`بازه‌ی اطمینان (bootstrap) و شیوع تبریز را ببینیم؛ با ۱۳ مثبت احتمالاً نمی‌توان نتیجه گرفت`,`آستانه‌ی تبریز را روی test تنظیم کنیم`], a:2,
+  e:`بازه‌ی bootstrap تبریز از ۰٫۱۲ تا ۰٫۵۲ است و عدد کل را در بر می‌گیرد. شیوع تبریز هم کمتر است و lift آن از تهران بیشتر است. اول عدم‌قطعیت، بعد اقدام.`},
+ {q:`کسی validation را ۵۰/۵۰ متوازن کرد و AP از ۰٫۳۶ به ۰٫۷۸ رسید. چه اتفاقی افتاده؟`,
+  o:[`مدل واقعاً بهتر شده`,`خط پایه‌ی AP از شیوع واقعی (~۰٫۱۲۷) به ۰٫۵ رفته؛ مدل همان است و عدد دنیای غیرواقعی را توصیف می‌کند`,`ROC-AUC هم باید دو برابر شده باشد`,`AP به شیوع ربطی ندارد، پس خطای محاسبه است`], a:1,
+  e:`ROC-AUC تقریباً ثابت ماند (۰٫۷۸۸) چون رتبه‌بندی همان است. AP بالا رفت چون precision به شیوع وابسته است. قاعده‌ی اسلاید ۳۰: همیشه با توزیع طبیعیِ استقرار ارزیابی کن.`},
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,css,alpha,fmt,fa,slider,onResize,Plot,L,shell}=ML;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function gauss(r){let u=0;while(u===0)u=r();const v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const sig=x=>1/(1+Math.exp(-x)), logit=p=>Math.log(p/(1-p));
+  const tm=x=>fa(Math.round(x).toLocaleString("en").replace(/,/g,"٬"));
+  const pct=x=>fa((100*x).toFixed(1))+"٪";
+  const f3=x=>fa(fmt(x,3));
+  const NW=x=>`<span style="white-space:nowrap">${x}</span>`;
+  function aucOf(s,y){ const idx=s.map((_,i)=>i).sort((a,b)=>s[a]-s[b]); let rs=0,P=0; idx.forEach((i,k)=>{ if(y[i]){rs+=k+1;P++;} }); const N=y.length-P; return (rs-P*(P+1)/2)/(P*N); }
+  function legend(items){ return h("div",{class:"legend"},items.map(([c,t,dash])=>`<span><i style="background:${c};${dash?"opacity:.6":""}"></i>${t}</span>`).join("")); }
+
+  /* ---------- Widget A: cost-based threshold picker ---------- */
+  (function(){
+    const el=document.getElementById("w-cost"); if(!el) return;
+    shell(el,"🔧 ابزار: انتخاب آستانه با هزینه‌ی واقعی (تومان)",
+      "۴٬۰۰۰ درخواست شبیه‌سازی‌شده با یک مدل <b>کالیبره</b>. هزینه‌ها، شیوع و کیفیت مدل را عوض کن. چپ: منحنی PR با نقطه‌ی کار فعلی. راست: هزینه‌ی مورد انتظار به ازای هر ۱٬۰۰۰ درخواست بر حسب آستانه. خط‌چین زرد $t^*=C_{FP}/(C_{FP}+C_{FN})$ است. ببین آیا کمینه‌ی تجربی روی آن می‌افتد.");
+    const N=4000, r=mulberry32(2026), Z=[], U=[];
+    for(let i=0;i<N;i++){ Z.push(gauss(r)); U.push(r()); }
+    let prev=0.12, q=1.4, cfp=20000, cfn=160000, th=0.3;
+    let P=[],Y=[],sorted=[],cumTP=[],nPos=0;
+    function gen(){
+      let lo=-15,hi=5;
+      for(let k=0;k<50;k++){ const mid=(lo+hi)/2; let m=0; for(let i=0;i<N;i++) m+=sig(mid+q*Z[i]); m/=N; if(m>prev) hi=mid; else lo=mid; }
+      const a=(lo+hi)/2;
+      P=Z.map(z=>sig(a+q*z)); Y=P.map((p,i)=>U[i]<p?1:0); nPos=Y.reduce((s,v)=>s+v,0);
+      sorted=P.map((_,i)=>i).sort((i,j)=>P[j]-P[i]);
+      cumTP=[0]; for(let k=0;k<N;k++) cumTP.push(cumTP[k]+Y[sorted[k]]);
+    }
+    function countAbove(t){ let lo=0,hi=N; while(lo<hi){ const m=(lo+hi)>>1; if(P[sorted[m]]>=t) lo=m+1; else hi=m; } return lo; }
+    function stats(t){ const k=countAbove(t), TP=cumTP[k], FP=k-TP, FN=nPos-TP, TN=N-nPos-FP;
+      const prec=k?TP/k:NaN, rec=nPos?TP/nPos:0, f1=(TP>0)?2*TP/(2*TP+FP+FN):0;
+      return {t,k,TP,FP,FN,TN,prec,rec,f1,cost:(FP*cfp+FN*cfn)/N*1000}; }
+    const cvs=h("div",{class:"canvases"}); const c1=h("canvas"), c2=h("canvas"); cvs.append(c1,c2); el.append(cvs);
+    el.append(legend([[css("--plot-c3"),"منحنی PR / هزینه"],[css("--plot-c2"),"نقطه‌ی کار فعلی"],[css("--good"),"کمینه‌ی هزینه"],[css("--plot-c4"),"بیشینه‌ی F1"],[css("--plot-diag"),"خط پایه (شیوع) / t* نظری"]]));
+    const ctr=h("div",{class:"controls"});
+    const sFP=slider("هزینه‌ی هشدار بیهوده C_FP",5000,100000,5000,cfp,v=>{cfp=v;draw();},v=>tm(v)+" تومان");
+    const sFN=slider("هزینه‌ی لغو ازدست‌رفته C_FN",20000,600000,10000,cfn,v=>{cfn=v;draw();},v=>tm(v)+" تومان");
+    const sPr=slider("شیوع لغو",0.01,0.4,0.01,prev,v=>{prev=v;gen();draw();},v=>pct(v));
+    const sQ=slider("کیفیت مدل",0.4,3,0.1,q,v=>{q=v;gen();draw();},v=>fa(v.toFixed(1)));
+    const sT=slider("آستانه",0.01,0.95,0.01,th,v=>{th=v;draw();},v=>fa(v.toFixed(2)));
+    const bOpt=h("button",{class:"btn",type:"button"},"برو به آستانه‌ی کمینه‌ی هزینه");
+    const bF1=h("button",{class:"btn ghost",type:"button"},"برو به آستانه‌ی بیشینه‌ی F1");
+    ctr.append(sFP,sFN,sPr,sQ,sT,bOpt,bF1); el.append(ctr);
+    const out=h("div",{class:"readout"}); el.append(out);
+    const setT=v=>{ const inp=sT.querySelector("input"); inp.value=v; inp.dispatchEvent(new Event("input")); };
+    let best={}, bestF1={};
+    bOpt.onclick=()=>setT(best.t); bF1.onclick=()=>setT(bestF1.t);
+    function draw(){
+      const grid=[]; for(let t=0.01;t<=0.951;t+=0.005) grid.push(stats(+t.toFixed(3)));
+      best=grid.reduce((a,b)=>b.cost<a.cost?b:a); bestF1=grid.reduce((a,b)=>b.f1>a.f1?b:a);
+      const cur=stats(th), tstar=cfp/(cfp+cfn);
+      // PR
+      const p1=new Plot(c1,[0,1],[0,1],{l:40,b:34});
+      p1.axes("Recall","Precision",{xstep:0.2,ystep:0.2});
+      const pts=[]; for(let k=5;k<=N;k+=5) pts.push([cumTP[k]/nPos,cumTP[k]/k]);
+      p1.hline(nPos/N,css("--plot-diag"),[5,4]);
+      p1.text(0.03,nPos/N,"شیوع",css("--plot-diag"),"left",-5);
+      p1.line(pts,css("--plot-c3"),2);
+      p1.dot(bestF1.rec,bestF1.prec,css("--plot-c4"),5);
+      p1.dot(best.rec,best.prec,css("--good"),6);
+      if(isFinite(cur.prec)) p1.dot(cur.rec,cur.prec,css("--plot-c2"),5);
+      // cost
+      const ymax=Math.max(...grid.map(g=>g.cost))*1.08;
+      const p2=new Plot(c2,[0,1],[0,ymax/1e6],{l:44,b:34});
+      p2.axes("آستانه","هزینه (میلیون تومان)",{xstep:0.2,yfmt:v=>fmt(v,1)});
+      p2.line(grid.map(g=>[g.t,g.cost/1e6]),css("--plot-c3"),2);
+      p2.vline(tstar,css("--plot-diag"),[5,4]);
+      p2.vline(th,css("--plot-c2"),[2,3]);
+      p2.dot(best.t,best.cost/1e6,css("--good"),6);
+      p2.dot(bestF1.t,bestF1.cost/1e6,css("--plot-c4"),5);
+      p2.dot(th,cur.cost/1e6,css("--plot-c2"),4);
+      const never=nPos*cfn/N*1000, always=(N-nPos)*cfp/N*1000;
+      out.innerHTML=
+        `آستانه‌ی فعلی ${fa(th.toFixed(2))}: ${fa(cur.k)} هشدار · ${NW(L("TP="+cur.TP+"  FP="+cur.FP+"  FN="+cur.FN))} · precision ${isFinite(cur.prec)?f3(cur.prec):"—"} · recall ${f3(cur.rec)} · F1 ${f3(cur.f1)}\n`+
+        `هزینه‌ی مورد انتظار: <b>${tm(cur.cost)}</b> تومان به ازای هر ۱٬۰۰۰ درخواست\n`+
+        `t* نظری = ${f3(tstar)} · کمینه‌ی تجربی در ${fa(best.t.toFixed(3))} با ${tm(best.cost)} تومان · بیشینه‌ی F1 در ${fa(bestF1.t.toFixed(3))} با ${tm(bestF1.cost)} تومان (${tm(bestF1.cost-best.cost)} تومان گران‌تر)\n`+
+        `مقایسه: «هیچ‌وقت اقدام نکن» ${tm(never)} · «همیشه اقدام کن» ${tm(always)} تومان`;
+    }
+    gen(); onResize(c1,draw); draw();
+  })();
+
+  /* ---------- Widget B: calibration explorer ---------- */
+  (function(){
+    const el=document.getElementById("w-calib"); if(!el) return;
+    shell(el,"🔧 ابزار: کاوشگر کالیبراسیون (نمودار اطمینان، Brier و Platt)",
+      R`احتمال واقعی لغو هر درخواست معلوم است (شبیه‌سازی، شیوع حدود ۱۵٪). «مدل» همان اطلاعات را دارد ولی logitش را با <b>دما</b> $T$ تقسیم و با <b>جابه‌جایی</b> $b$ جمع می‌کند: $\hat p=\sigma(\text{logit}(p)/T+b)$. $T&lt;1$ یعنی بیش‌اطمینان، $T&gt;1$ کم‌اطمینان، $b&gt;0$ یعنی بیش‌برآورد (مثل آموزش روی داده‌ی متوازن‌شده). Platt را روی یک مجموعه‌ی کالیبراسیون جدا فیت می‌کنیم و روی مجموعه‌ی ارزیابی می‌سنجیم. حواست به ROC-AUC باشد.`);
+    const NE=6000, NC=3000, r=mulberry32(808);
+    const mk=n=>{ const z=[],u=[]; for(let i=0;i<n;i++){ z.push(gauss(r)); u.push(r()); } return {z,u}; };
+    const E=mk(NE), C=mk(NC);
+    let lo=-10,hi=5; for(let k=0;k<50;k++){ const mid=(lo+hi)/2; let m=0; for(const z of E.z) m+=sig(mid+1.5*z); m/=NE; if(m>0.15) hi=mid; else lo=mid; }
+    const a0=(lo+hi)/2;
+    const pE=E.z.map(z=>sig(a0+1.5*z)), yE=pE.map((p,i)=>E.u[i]<p?1:0);
+    const pC=C.z.map(z=>sig(a0+1.5*z)), yC=pC.map((p,i)=>C.u[i]<p?1:0);
+    const prevE=yE.reduce((s,v)=>s+v,0)/NE;
+    let T=1, b=0, bins=10, platt=false;
+    const cv=h("canvas",{class:"wide"}); el.append(cv);
+    el.append(legend([[css("--plot-diag"),"کالیبراسیون کامل (قطر)"],[css("--plot-c3"),"مدل: نرخ مشاهده‌شده در هر سطل"],[alpha(css("--plot-c1"),.5),"تعداد نمونه در سطل (هیستوگرام)"]]));
+    const ctr=h("div",{class:"controls"});
+    const sT=slider("دما T",0.3,3,0.05,T,v=>{T=v;draw();},v=>fa(v.toFixed(2)));
+    const sB=slider("جابه‌جایی b",-2.5,2.5,0.05,b,v=>{b=v;draw();},v=>fa(v.toFixed(2)));
+    const sN=slider("تعداد سطل",5,20,1,bins,v=>{bins=v;draw();},v=>fa(v));
+    const pl=h("label"); const cb=h("input",{type:"checkbox"}); pl.append(cb," اعمال Platt scaling"); cb.onchange=()=>{platt=cb.checked;draw();};
+    const bU=h("button",{class:"btn ghost",type:"button"},"شبیه‌سازی undersampling به ۵۰/۵۰");
+    const bR=h("button",{class:"btn ghost",type:"button"},"بازنشانی");
+    const setS=(lab,v)=>{ const inp=lab.querySelector("input"); inp.value=v; inp.dispatchEvent(new Event("input")); };
+    bU.onclick=()=>{ setS(sT,1); setS(sB,+Math.log((1-prevE)/prevE).toFixed(2)); };
+    bR.onclick=()=>{ setS(sT,1); setS(sB,0); };
+    ctr.append(sT,sB,sN,pl,bU,bR); el.append(ctr);
+    const out=h("div",{class:"readout"}); el.append(out);
+    function fitPlatt(m,y){ // logistic regression y ~ sig(A m + B) by Newton
+      let A=1,B=0;
+      for(let it=0;it<30;it++){ let g0=0,g1=0,h00=0,h01=0,h11=0;
+        for(let i=0;i<m.length;i++){ const p=sig(A*m[i]+B), w=p*(1-p), e=p-y[i]; g0+=e*m[i]; g1+=e; h00+=w*m[i]*m[i]; h01+=w*m[i]; h11+=w; }
+        h00+=1e-9; h11+=1e-9; const det=h00*h11-h01*h01; const dA=(h11*g0-h01*g1)/det, dB=(h00*g1-h01*g0)/det; A-=dA; B-=dB; if(Math.abs(dA)+Math.abs(dB)<1e-9) break; }
+      return [A,B];
+    }
+    function draw(){
+      const mE=pE.map(p=>logit(p)/T+b), mC=pC.map(p=>logit(p)/T+b);
+      let s=mE.map(sig), AB=null;
+      if(platt){ AB=fitPlatt(mC,yC); s=mE.map(m=>sig(AB[0]*m+AB[1])); }
+      const cnt=Array(bins).fill(0), sp=Array(bins).fill(0), sy=Array(bins).fill(0);
+      let brier=0, ll=0, bk=0, by=0;
+      for(let i=0;i<NE;i++){ const k=Math.min(bins-1,Math.floor(s[i]*bins)); cnt[k]++; sp[k]+=s[i]; sy[k]+=yE[i];
+        brier+=(s[i]-yE[i])**2; const pc=Math.min(1-1e-12,Math.max(1e-12,s[i])); ll-=yE[i]?Math.log(pc):Math.log(1-pc);
+        if(s[i]>=0.25&&s[i]<0.35){bk++;by+=yE[i];} }
+      brier/=NE; ll/=NE;
+      let ece=0; for(let k=0;k<bins;k++) if(cnt[k]) ece+=cnt[k]/NE*Math.abs(sy[k]/cnt[k]-sp[k]/cnt[k]);
+      const auc=aucOf(s,yE), meanP=s.reduce((x,v)=>x+v,0)/NE;
+      const p=new Plot(cv,[0,1],[0,1],{l:44,b:34});
+      p.axes("ریسک پیش‌بینی‌شده (میانگین سطل)","نرخ واقعی لغو در سطل",{xstep:0.1,ystep:0.2});
+      const mx=Math.max(...cnt);
+      for(let k=0;k<bins;k++) if(cnt[k]) p.bar((k+0.5)/bins,0.8/bins,0,0.18*cnt[k]/mx,alpha(css("--plot-c1"),.35));
+      p.line([[0,0],[1,1]],css("--plot-diag"),1.5,[5,4]);
+      const pts=[]; for(let k=0;k<bins;k++) if(cnt[k]) pts.push([sp[k]/cnt[k],sy[k]/cnt[k],cnt[k]]);
+      p.line(pts.map(q=>[q[0],q[1]]),css("--plot-c3"),2);
+      pts.forEach(q=>p.dot(q[0],q[1],css("--plot-c3"),2.5+4*Math.sqrt(q[2]/mx)));
+      p.text(0.02,0.94,"بالای قطر: کم‌برآورد ریسک",css("--ink-2"),"left");
+      p.text(0.98,0.04,"زیر قطر: بیش‌برآورد ریسک",css("--ink-2"),"right",-24);
+      const refB=prevE*(1-prevE);
+      let diag = T<0.9?"مدل <b>بیش‌اطمینان</b> است: امتیازها به ۰ و ۱ چسبیده‌اند و منحنی از قطر خوابیده‌تر است.":T>1.15?"مدل <b>کم‌اطمینان</b> است: امتیازها به وسط جمع شده‌اند و منحنی از قطر شیب‌دارتر است.":"";
+      if(b>0.3) diag+=(diag?" ":"")+"جابه‌جایی مثبت: ریسک را <b>بیش‌برآورد</b> می‌کند (منحنی زیر قطر)، مثل مدلی که روی داده‌ی متوازن‌شده آموزش دیده."; else if(b<-0.3) diag+=(diag?" ":"")+"جابه‌جایی منفی: ریسک را <b>کم‌برآورد</b> می‌کند (منحنی بالای قطر).";
+      if(platt) diag="Platt روی مجموعه‌ی کالیبراسیون جدا فیت شد: "+L(`A=${fmt(AB[0],2)}, B=${fmt(AB[1],2)}`)+". منحنی به قطر برگشت، ولی ROC-AUC تکان نخورد.";
+      out.innerHTML=
+        `${NW(L("Brier = "+fmt(brier,4)))} (مرجع «فقط شیوع» = ${NW(L(fmt(refB,4)))}) · ${NW(L("ECE = "+fmt(ece,3)))} · ${NW(L("log loss = "+fmt(ll,3)))} · <b>${NW(L("ROC-AUC = "+fmt(auc,3)))}</b>\n`+
+        `میانگین ریسک پیش‌بینی‌شده ${pct(meanP)} در برابر نرخ واقعی ${pct(prevE)} · سطل «۳۰٪» (۰٫۲۵ تا ۰٫۳۵): ${fa(bk)} درخواست، ${bk?pct(by/bk)+" واقعاً لغو شدند":"خالی"}\n`+
+        (diag||"مدل تقریباً کالیبره است. حالا T را کم کن یا دکمه‌ی undersampling را بزن.");
+    }
+    onResize(cv,draw); draw();
+  })();
+};
+</script>
+</body></html>

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>تحلیل داده‌ها · فهرست جلسه‌ها</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:12px 0 20px}
+.cards>div.card{padding:12px 16px}
+.card{display:block;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 16px;position:relative;box-shadow:var(--shadow);transition:border-color .15s, transform .1s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card .n{font-weight:900;color:var(--accent);font-size:1.3em}
+.card .t{font-weight:700;line-height:1.6;margin-top:4px}
+.card .s{font-size:.82em;color:var(--ink-3);margin-top:6px}
+.card.locked{opacity:.55;box-shadow:none;cursor:default;transform:none}
+.card.done{border-color:var(--good)}
+.card .badge{position:absolute;top:12px;left:14px;font-size:.75em;font-weight:700;border-radius:999px;padding:1px 8px}
+.card.done .badge{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.card.locked .badge{background:var(--proof-bg);color:var(--ink-3)}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:8px 0}
+.bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.plan td:first-child{white-space:nowrap;font-weight:700}
+.cheat td:first-child{white-space:nowrap;font-weight:700}
+</style>
+</head>
+<body data-session="0">
+<main>
+<section class="hero">
+  <div class="kicker">درس تحلیل داده‌ها · sharif-da2026 · دکتر محمد خلوئی · دانشگاه صنعتی شریف · پاییز ۱۴۰۵</div>
+  <h1>دوره‌ی کامل تحلیل داده‌ها در ۲۰ جلسه</h1>
+  <p class="lead">هر جلسه یک صفحه‌ی کامل است: شهود، تعریف دقیق، فرمول، مثال عددی، کد پایتون با خروجی، مسئله‌ی حل‌شده به سبک تمرین‌های شریف، ابزار تعاملی، تمرین در چهار سطح با راه‌حل، تست و اصطلاح‌نامه. <b>جلسه‌های ۱ تا ۹ همه‌ی چیزهایی است که تا الان در کلاس گفته شده</b> (اسلایدهای ۰۱ تا ۰۶ و نوت‌بوک فارسی درس). بقیه هم‌پای کلاس ساخته می‌شوند.</p>
+  <div id="prog"></div>
+</section>
+
+<section id="how">
+<h2><span class="num">◆</span> روش استفاده</h2>
+<ol>
+  <li><b>کادر صورتی «قبل از خواندن فکر کن»</b> را جدی بگیر. سبک استاد «اول مسئله» است؛ اگر قبل از دیدن جواب خودت فکر کنی، منطق تحلیل در ذهنت می‌ماند.</li>
+  <li>متن را بخوان و کدها را در Colab یا Jupyter اجرا کن (دکمه‌ی «کپی» کنار هر کد هست). کادرهای <b>«نکته‌ی امتحانی»</b> و <b>«اشتباه رایج»</b> را دو بار بخوان؛ تله‌های این درس (نشت داده، سیمپسون، همبستگی و علیت، دقت گمراه‌کننده) از همین‌جاها می‌آیند.</li>
+  <li><b>مسئله‌ی حل‌شده</b> را اول خودت روی کاغذ حل کن، بعد راه‌حل را باز کن.</li>
+  <li>با <b>ابزار تعاملی</b> بازی کن تا شهودت شکل بگیرد.</li>
+  <li><b>تمرین‌ها</b> را بدون نگاه به راه‌حل حل کن: 🟢 پایه، 🟡 مهارتی، 🔴 تحلیلی، 🔵 پژوهشگر. آخر کار <b>تست</b> را بزن؛ بهترین نمره‌ات در همین مرورگر ذخیره می‌شود و این‌جا دیده می‌شود.</li>
+</ol>
+<div class="box note"><div class="bt">📚 منبع هر جلسه</div>
+<div class="tablewrap"><table>
+<tr><th>جلسه</th><th>منبع کلاس</th></tr>
+<tr><td>۱</td><td><span class="ltr">lecture01.pdf</span>: Problem Understanding &amp; Strategic Thinking + بخش ۱ نوت‌بوک</td></tr>
+<tr><td>۲ و ۳</td><td><span class="ltr">slide02.pdf</span>: Data Types, Cleaning, Encoding &amp; Visualization + بخش‌های ۲ تا ۶ نوت‌بوک</td></tr>
+<tr><td>۴</td><td><span class="ltr">slides03.pdf</span>: EDA &amp; Feature Engineering (intro) + بخش ۷ نوت‌بوک</td></tr>
+<tr><td>۵</td><td><span class="ltr">slides04.pdf</span>: Feature Engineering (Part 1)</td></tr>
+<tr><td>۶</td><td><span class="ltr">slides05.pdf</span>: Feature Engineering (Part 2): Curse of Dimensionality, PCA, t-SNE, UMAP</td></tr>
+<tr><td>۷ و ۸</td><td><span class="ltr">slide06.pdf</span>: Preparing Data for Machine Learning</td></tr>
+<tr><td>۹</td><td><span class="ltr">data_analytics_course_fa.ipynb</span> (جعبه‌ابزار pandas و مطالعه‌ی موردی فروشگاه) + آزمون جامع</td></tr>
+</table></div>
+کتاب‌های معرفی‌شده در سایت درس: McKinney (Python for Data Analysis)، ISLR، Géron (Hands-On ML)، Bruce &amp; Bruce (Practical Statistics for Data Scientists). مطالبی که از این کتاب‌ها و فراتر از اسلاید آمده با برچسب «تکمیلی» مشخص شده‌اند.
+</div>
+<div class="box warn"><div class="bt">⚠ اسلاید جدید آمد؟</div>
+سایت درس فقط سرفصل‌ها را دارد و اسلایدها در گروه درس پخش می‌شوند. هر اسلاید یا تمرین تازه‌ای (اسلاید ۰۷ به بعد، صورت تمرین‌ها) را در پوشه‌ی «تحلیل داده‌ها» بگذار تا جلسه‌ی بعدی از روی خودش ساخته شود.
+</div>
+</section>
+
+<section id="sessions">
+<h2><span class="num">◆</span> جلسه‌ها</h2>
+<div id="cards"></div>
+</section>
+
+<section id="plan">
+<h2><span class="num">◆</span> برنامه‌ی پیشنهادی جبران تا قبل از میان‌ترم</h2>
+<p>طبق سایت درس، <b>میان‌ترم در هفته‌ی ۸</b> است (حدود اواخر آبان؛ تاریخ دقیق را از گروه درس چک کن) و ۲۰٪ نمره دارد. با روزی یک جلسه، بخش الف در ۸ روز تمام می‌شود:</p>
+<div class="tablewrap"><table class="plan">
+<tr><th>روز</th><th>جلسه</th><th>زمان تقریبی</th></tr>
+<tr><td>روز ۱</td><td><b>جلسه‌ی ۱:</b> مسئله‌محوری، چهار نوع تحلیل، پرسش SMART، فرضیه‌های افت ۱۲٪ سفرها</td><td>~۱٫۵ ساعت</td></tr>
+<tr><td>روز ۲</td><td><b>جلسه‌ی ۲:</b> داده‌ی کثیف و پاک‌سازی (گم‌شده، تکراری، پرت، ناممکن)</td><td>~۲ ساعت</td></tr>
+<tr><td>روز ۳</td><td><b>جلسه‌ی ۳:</b> کدگذاری دسته‌ای‌ها، انتخاب نمودار، متن به عدد</td><td>~۲ ساعت</td></tr>
+<tr><td>روز ۴</td><td><b>جلسه‌ی ۴:</b> EDA، همبستگی، سیمپسون، بخش‌بندی</td><td>~۲ ساعت</td></tr>
+<tr><td>روز ۵</td><td><b>جلسه‌ی ۵:</b> مقیاس‌بندی، چولگی، ویژگی‌های زمانی</td><td>~۱٫۵ ساعت</td></tr>
+<tr><td>روز ۶</td><td><b>جلسه‌ی ۶:</b> نفرین ابعاد، PCA، t-SNE و UMAP</td><td>~۲ ساعت</td></tr>
+<tr><td>روز ۷</td><td><b>جلسه‌ی ۷ و ۸:</b> تقسیم داده، نشت، پایپ‌لاین؛ معیارهای رویداد نادر، آستانه، کالیبراسیون</td><td>~۳ ساعت</td></tr>
+<tr><td>روز ۸</td><td><b>جلسه‌ی ۹:</b> کارگاه pandas، مطالعه‌ی موردی، آزمون جامع</td><td>~۲٫۵ ساعت</td></tr>
+</table></div>
+</section>
+
+<section id="exam">
+<h2><span class="num">◆</span> سؤال‌های این درس چه سبکی دارند؟</h2>
+<p>از روی اسلایدها و نوت‌بوک، سؤال‌های دکتر خلوئی بیشتر سه نوع‌اند:</p>
+<div class="tablewrap"><table>
+<tr><th>نوع سؤال</th><th>نمونه</th><th>چطور جواب بدهی</th></tr>
+<tr><td><b>صورت‌بندی و تصمیم</b></td><td>تبدیل سؤال مبهم مدیر به پرسش SMART و فرضیه؛ حذف یا جایگزینی گم‌شده‌ها؛ انتخاب کدگذاری؛ ارزیابی کد تخفیف با حاشیه‌ی سود</td><td>اول هدف و قیدها را بنویس، بعد گزینه‌ها را مقایسه کن و پیامد هر کدام را به زبان کسب‌وکار بگو.</td></tr>
+<tr><td><b>محاسبه و استدلال آماری</b></td><td>z-score و IQR؛ واریانس تبیین‌شده در PCA؛ آزمون $\chi^2$؛ ضریب جینی؛ precision و recall</td><td>فرمول، محاسبه‌ی دقیق، و مهم‌تر از همه <b>تفسیر</b> عدد.</td></tr>
+<tr><td><b>شکار خطای آزمایش</b></td><td>نشت ویژگی (مثل ستون refund)؛ تقسیم تصادفی برای داده‌ی زمانی؛ انتخاب ویژگی روی کل داده؛ دقت ۹۵٪ روی داده‌ی نامتوازن</td><td>لحظه‌ی پیش‌بینی را پیدا کن و بپرس: «این اطلاعات آن لحظه در دسترس بود؟ چیزی قبل از تقسیم fit شده؟»</td></tr>
+</table></div>
+</section>
+
+<section id="cheat">
+<h2><span class="num">◆</span> برگه‌ی خلاصه‌ی بخش الف</h2>
+<div class="tablewrap"><table class="cheat">
+<tr><th>مبحث</th><th>آنچه باید دقیق بدانی</th></tr>
+<tr><td>چهار نوع تحلیل (ج۱)</td><td><b>توصیفی:</b> چه شد؟ · <b>تشخیصی:</b> چرا شد؟ · <b>پیش‌بین:</b> چه خواهد شد؟ · <b>تجویزی:</b> چه کنیم؟</td></tr>
+<tr><td>پرسش SMART (ج۱)</td><td>Specific، Measurable، Actionable (نتیجه بتواند تصمیمی را عوض کند)، Relevant، Time-bound.</td></tr>
+<tr><td>کیفیت داده (ج۲)</td><td>شش بُعد: کامل‌بودن، اعتبار، سازگاری، یکتایی، دقت، به‌روزبودن. «پاک‌سازی یعنی تصمیم صریح، نه حذف.» اول بررسی، بعد تبدیل، حذف آخر.</td></tr>
+<tr><td>گم‌شده‌ها (ج۲)</td><td>حذف (وقتی کم و تصادفی است)، جایگزینی (میانه برای چوله، مد برای دسته‌ای)، پرچم <code>is_missing</code> (وقتی نبودنِ داده خودش پیام است)، یا پرسیدن از منبع.</td></tr>
+<tr><td>کدگذاری (ج۳)</td><td>اسمی ← One-Hot؛ ترتیبی ← نگاشت ترتیبی؛ Label Encoding روی اسمی ترتیب جعلی می‌سازد. «کدگذاری یک تصمیم مدل‌سازی است.»</td></tr>
+<tr><td>EDA (ج۴)</td><td>میانگین به پرت حساس است، میانه و IQR مقاوم‌اند. همبستگی فقط رابطه‌ی خطی را می‌سنجد و علیت نیست. میانگین کل بخش‌ها را پنهان می‌کند (سیمپسون). زمان اغلب متغیر پنهان است.</td></tr>
+<tr><td>مقیاس‌بندی (ج۵)</td><td>z-score: $\frac{x-\mu}{\sigma}$ · Min-Max: $\frac{x-\min}{\max-\min}$ · Robust: $\frac{x-\text{med}}{\text{IQR}}$. مقیاس‌بندی چولگی را درست نمی‌کند (برای آن log). مدل‌های فاصله‌محور به مقیاس حساس‌اند، درخت‌ها نه. ساعت را با sin/cos کد کن.</td></tr>
+<tr><td>کاهش بعد (ج۶)</td><td>PCA جهت‌های با بیشترین واریانس = بردارهای ویژه‌ی کوواریانس. قبلش استانداردسازی. t-SNE و UMAP فقط همسایگی را حفظ می‌کنند، فاصله‌ی سراسری را نه. fit فقط روی train.</td></tr>
+<tr><td>تقسیم و نشت (ج۷)</td><td>تقسیم = شبیه‌سازی استقرار. داده‌ی زمانی ← تقسیم زمانی با فاصله؛ کاربر تکراری ← GroupKFold. انتخاب مدل روی validation، test فقط یک بار. هر چیزی که یاد می‌گیرد داخل Pipeline.</td></tr>
+<tr><td>رویداد نادر (ج۸)</td><td>دقت ۹۵٪ می‌تواند صفر تشخیص باشد. precision–recall و AP را با نرخ پایه مقایسه کن. آستانه یک تصمیم سیاستی است. امتیاز رتبه‌بندی با احتمال کالیبره فرق دارد. برش‌ها (شهر، کاربر جدید) را جدا بسنج.</td></tr>
+<tr><td>تحلیل آماری (ج۹)</td><td>t-test برای تفاوت میانگین‌ها، $\chi^2=\sum\frac{(O-E)^2}{E}$ برای استقلال دو متغیر دسته‌ای، منحنی لورنز و ضریب جینی برای تمرکز درآمد. اندازه‌ی اثر را کنار p-value گزارش کن.</td></tr>
+</table></div>
+</section>
+</main>
+
+<script>
+window.PAGE_INIT = function(ML){
+  const {SESSIONS,PARTS,fa,fileOf,loadProg} = ML;
+  const prog = loadProg();
+  const host = document.getElementById("cards");
+  let built=0, done=0;
+  Object.keys(PARTS).forEach(p=>{
+    const list = SESSIONS.filter(s=>s.part===p);
+    const h3 = document.createElement("h3"); h3.textContent = PARTS[p]; host.appendChild(h3);
+    const grid = document.createElement("div"); grid.className="cards";
+    list.forEach(s=>{
+      const st = prog[s.n]||{};
+      if(s.built) built++; if(st.done) done++;
+      const a = document.createElement(s.built?"a":"div");
+      a.className = "card"+(s.built?"":" locked")+(st.done?" done":"");
+      if(s.built) a.href = fileOf(s.n);
+      const quiz = st.quiz ? `بهترین نمره‌ی تست: ${fa(st.quiz[0])} از ${fa(st.quiz[1])}` : (s.built?"هنوز تست نزده‌ای":"هم‌پای برنامه ساخته می‌شود");
+      a.innerHTML = `<span class="badge">${st.done?"✓ تمام":(s.built?"آماده مطالعه":"به‌زودی")}</span><div class="n">${fa(s.n)}</div><div class="t">${s.title}</div><div class="s">${quiz}</div>`;
+      grid.appendChild(a);
+    });
+    host.appendChild(grid);
+  });
+  document.getElementById("prog").innerHTML = `<div class="bar"><i style="width:${100*done/SESSIONS.length}%"></i></div><div style="font-size:.9em;color:var(--ink-3)">${fa(done)} جلسه از ${fa(SESSIONS.length)} تمام شده · ${fa(built)} جلسه ساخته شده</div>`;
+};
+</script>
+</body>
+</html>

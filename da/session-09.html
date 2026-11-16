@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۹ · کارگاه pandas و آزمون جامع بخش الف</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.gbp .tablewrap{margin:6px 0}
+.gbp table{font-size:.82em;direction:ltr}
+.gbp td,.gbp th{padding:3px 8px;text-align:center}
+.gbp .codeline{direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em;background:var(--proof-bg);border-radius:8px;padding:6px 10px;margin:6px 0;overflow-x:auto;white-space:pre}
+.gbp .grp{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;direction:ltr}
+.gbp .grp span{border-radius:8px;padding:2px 8px;font-size:.82em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.gbp h4{margin:10px 0 2px;font-size:.92em}
+.lz .terms{direction:ltr;text-align:left;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8em}
+table.rev td:nth-child(3){text-align:center;white-space:nowrap}
+</style>
+</head>
+<body data-session="9">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۹ از ۲۰ · بخش الف: از مسئله تا داده‌ی آماده‌ی مدل</div>
+  <h1>کارگاه pandas و مطالعه‌ی موردی فروشگاه + آزمون جامع بخش الف</h1>
+  <p class="lead">این جلسه درس تازه نیست؛ جای وصل‌کردن تکه‌هاست. نوت‌بوک فارسی درس (فروشگاه آنلاین و کمپین کد تخفیف) را قدم‌به‌قدم مرور می‌کنیم، جعبه‌ابزار pandas را در یک برگه‌ی فشرده جمع می‌کنیم، استدلال آماری پشت هر پاسخ را باز می‌کنیم و آخر کار با یک آزمون جامع به سبک شریف، خودت را برای میان‌ترم محک می‌زنی.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۳ تا ۴ ساعت (بهتر است در دو نشست)</span><span>📚 منبع: نوت‌بوک درس (۲۰۶ سلول، به‌خصوص سلول‌های ۱۲۲ تا ۲۰۲) + مرور lecture01 تا slide06 · تکمیلی: McKinney فصل‌های ۵ تا ۱۱، Bruce &amp; Bruce فصل‌های ۲ و ۳</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>هر پرسش جدولی را به یک زنجیره‌ی کوتاه pandas (فیلتر، <code>groupby</code>، <code>pivot_table</code>، <code>merge</code>، <code>resample</code>) ترجمه کنی و خروجی را پیش از اجرا حدس بزنی.</li>
+    <li>مسیر پ۱ تا پ۴ نوت‌بوک را از «پرسش مبهم مدیر» تا «گزارش یک‌صفحه‌ای» توضیح بدهی.</li>
+    <li>آزمون t ولش، بازه‌ی بوت‌استرپ، اندازه‌ی اثر و آزمون خی‌دو را روی عددهای واقعی نوت‌بوک دستی حساب و تفسیر کنی.</li>
+    <li>منحنی لورنز و ضریب جینی را با فرمول ذوزنقه‌ای حساب کنی و «۲۰٪ بالا» را بخوانی.</li>
+    <li>شش اشتباه رایج pandas را در کد دیگران پیدا و درست کنی.</li>
+    <li>یک مسئله‌ی ترکیبی از کل بخش الف (قاب‌بندی، کیفیت داده، کدگذاری، EDA، مقیاس، PCA، نشت، آستانه) را در زمان امتحان حل کنی.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+مدیر فروشگاه می‌گوید: «پارسال کد تخفیف دادیم. میانگین سفارش‌های با کد ۲۴۵ یورو شد و بدون کد ۲۵۴ یورو. پس کد تخفیف مشتری‌ها را خسیس کرد؛ تعطیلش کنید.» سه دلیل بنویس که این نتیجه‌گیری عجولانه است و برای هر دلیل بگو چه عدد یا جدولی لازم داری. آخر بخش ۴ فهرستت را با «گام C» مقایسه کن.
+</div>
+
+<!-- ============================================================ 1 -->
+<section id="howto">
+<h2><span class="num">۱</span> این جلسه را چطور بخوانی <span class="tag core">نوت‌بوک</span></h2>
+<p>نوت‌بوک درس یک پروژه‌ی کامل است: فروشگاهی اینترنتی در آلمان، ۱۰۳۰ ردیف سفارش خام در سال ۲۰۲۴، و مدیری که می‌پرسد «کمپین تخفیف جواب داد؟ پول ما از کجا می‌آید؟». همان چرخه‌ای که در جلسه‌ی ۱ دیدی (پرسش ← فرضیه ← داده ← تحلیل ← بینش ← اقدام) اینجا در ۱۳ گام اجرا می‌شود:</p>
+<div class="flow"><span>پرسش</span><i>←</i><span>جمع‌آوری</span><i>←</i><span>نگاه اول</span><i>←</i><span>۸ نوع کثیف</span><i>←</i><span>پاک‌سازی</span><i>←</i><span>اعتبارسنجی</span><i>←</i><span>EDA</span><i>←</i><span>جعبه‌ابزار</span><i>←</i><span>تحلیل پ۱–پ۴</span><i>←</i><span>مشتری</span><i>←</i><span>پیش‌بینی و «اگر»</span><i>←</i><span>روایت</span></div>
+
+<div class="tablewrap"><table>
+<tr><th>گام نوت‌بوک</th><th>سلول‌ها</th><th>جلسه‌ی مرتبط</th><th>کجای این صفحه</th></tr>
+<tr><td>۱ پرسیدن (SMART، H0 و H1)</td><td>۴–۶</td><td>۱</td><td>بخش ۳</td></tr>
+<tr><td>۲–۳ جمع‌آوری و نگاه اول</td><td>۷–۲۱</td><td>۲</td><td>بخش ۲ و ۳</td></tr>
+<tr><td>۴–۶ کثیف، پاک‌سازی، اعتبارسنجی</td><td>۲۲–۹۴</td><td>۲ و ۳</td><td>بخش ۳ (خلاصه)، بخش ۵</td></tr>
+<tr><td>۷ کاوش (EDA)</td><td>۹۵–۱۲۱</td><td>۴</td><td>بخش ۳</td></tr>
+<tr><td>۸ جعبه‌ابزار pandas</td><td>۱۲۲–۱۴۷</td><td>همین جلسه</td><td>بخش ۲</td></tr>
+<tr><td>۹ تحلیل پ۱ تا پ۴</td><td>۱۴۸–۱۷۸</td><td>۴ + همین جلسه</td><td>بخش ۳ و ۴</td></tr>
+<tr><td>۱۰ مشتری: RFM، پارتو، جینی</td><td>۱۷۹–۱۸۵</td><td>۴ (بخش‌بندی)</td><td>بخش ۵</td></tr>
+<tr><td>۱۱–۱۲ پیش‌بینی، سناریو، داشبورد</td><td>۱۸۶–۱۹۷</td><td>۳ و ۵</td><td>بخش ۵</td></tr>
+<tr><td>۱۳ تمرین، پاسخ‌نامه، برگه‌ی نکات</td><td>۱۹۸–۲۰۲</td><td>همین جلسه</td><td>بخش‌های ۲، ۶ و ۷</td></tr>
+</table></div>
+
+<ol class="steps">
+<li>نوت‌بوک را کنار این صفحه باز کن و سلول ۸ را اجرا کن. داده را خود نوت‌بوک با تابع <code>make_raw_orders(n=1000, seed=42)</code> می‌سازد، پس عددهای تو با عددهای این صفحه یکی خواهد بود.</li>
+<li>پیش از اجرای هر سلول، خروجی را حدس بزن. این همان «حرکت آموزشی» اسلاید ۲ است: <i>let students predict the output before executing</i>.</li>
+<li>برگه‌ی pandas (بخش ۲) را با جدول کوچک ۱۲ سفارشی و ابزار تعاملی تمرین کن تا دستت بیاید.</li>
+<li>بخش‌های ۳ تا ۵ را با تمرکز روی «چرا» بخوان، نه «چه کدی».</li>
+<li>آزمون جامع (بخش ۷) را با زمان‌سنج ۱۰۰ دقیقه حل کن و بعد راه‌حل‌ها را باز کن.</li>
+<li>شب امتحان فقط «برگه‌ی مرور میان‌ترم» (بخش ۹) را بخوان.</li>
+</ol>
+
+<div class="box note"><div class="bt">📌 درباره‌ی عددهای این صفحه</div>
+همه‌ی عددها را با اجرای خود کد نوت‌بوک و همان مراحل پاک‌سازی بازتولید کرده‌ایم و با خروجی نوت‌بوک یکی است (۱۰۳۰ ردیف خام ← ۹۹۱ سفارش تمیز). کدها با pandas 3.0 اجرا شده‌اند ولی نوت‌بوک با pandas 2.2.3 اجرا شده است. هرجا رفتار این دو نسخه فرق دارد (به‌خصوص در بخش ۶) گفته‌ایم.
+</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="pandas">
+<h2><span class="num">۲</span> برگه‌ی تقلب pandas، مرتب‌شده بر اساس «کاری که می‌خواهی بکنی» <span class="tag core">نوت‌بوک · گام ۸</span></h2>
+<p>برای اینکه خروجی‌ها کوتاه و قابل‌دنبال‌کردن باشد، همه‌ی مثال‌های این بخش روی یک جدول ۱۲ سفارشی هم‌ساختار با داده‌ی نوت‌بوک اجرا شده‌اند. ستون‌ها همان ستون‌های داده‌ی تمیز نوت‌بوک‌اند و <code>revenue</code> هم با همان فرمول ساخته شده است: تعداد × قیمت × (۱ − تخفیف).</p>
+<pre class="code">import numpy as np, pandas as pd
+toy = pd.DataFrame({
+    "order_id": range(1, 13),
+    "order_date": pd.to_datetime(["2024-10-03","2024-10-11","2024-10-19","2024-10-27",
+                                  "2024-11-04","2024-11-12","2024-11-20","2024-11-28",
+                                  "2024-12-06","2024-12-14","2024-12-20","2024-12-28"]),
+    "city": ["Berlin","Munich","Berlin","Hamburg","Munich","Berlin",
+             "Hamburg","Munich","Berlin","Hamburg","Munich","Berlin"],
+    "category": ["Electronics","Books","Clothing","Home","Electronics","Books",
+                 "Clothing","Home","Clothing","Electronics","Clothing","Home"],
+    "promo": ["No","Yes","No","Yes","Yes","No","No","Yes","Yes","No","No","No"],
+    "quantity": [1,3,2,1,1,2,3,2,2,1,1,1],
+    "unit_price": [420.0,20,60,120,380,18,55,130,65,450,70,110],
+    "discount_pct": [0,10,0,20,15,0,0,10,15,0,0,0],
+})
+toy["revenue"] = (toy["quantity"] * toy["unit_price"] * (1 - toy["discount_pct"] / 100)).round(1)</pre>
+<div class="tablewrap"><table class="data">
+<tr><th></th><th>order_id</th><th>order_date</th><th>city</th><th>category</th><th>promo</th><th>quantity</th><th>unit_price</th><th>discount_pct</th><th>revenue</th></tr>
+<tr><td>0</td><td>1</td><td>2024-10-03</td><td>Berlin</td><td>Electronics</td><td>No</td><td>1</td><td>420.0</td><td>0</td><td>420.0</td></tr>
+<tr><td>1</td><td>2</td><td>2024-10-11</td><td>Munich</td><td>Books</td><td>Yes</td><td>3</td><td>20.0</td><td>10</td><td>54.0</td></tr>
+<tr><td>2</td><td>3</td><td>2024-10-19</td><td>Berlin</td><td>Clothing</td><td>No</td><td>2</td><td>60.0</td><td>0</td><td>120.0</td></tr>
+<tr><td>3</td><td>4</td><td>2024-10-27</td><td>Hamburg</td><td>Home</td><td>Yes</td><td>1</td><td>120.0</td><td>20</td><td>96.0</td></tr>
+<tr><td>4</td><td>5</td><td>2024-11-04</td><td>Munich</td><td>Electronics</td><td>Yes</td><td>1</td><td>380.0</td><td>15</td><td>323.0</td></tr>
+<tr><td>5</td><td>6</td><td>2024-11-12</td><td>Berlin</td><td>Books</td><td>No</td><td>2</td><td>18.0</td><td>0</td><td>36.0</td></tr>
+<tr><td>6</td><td>7</td><td>2024-11-20</td><td>Hamburg</td><td>Clothing</td><td>No</td><td>3</td><td>55.0</td><td>0</td><td>165.0</td></tr>
+<tr><td>7</td><td>8</td><td>2024-11-28</td><td>Munich</td><td>Home</td><td>Yes</td><td>2</td><td>130.0</td><td>10</td><td>234.0</td></tr>
+<tr><td>8</td><td>9</td><td>2024-12-06</td><td>Berlin</td><td>Clothing</td><td>Yes</td><td>2</td><td>65.0</td><td>15</td><td>110.5</td></tr>
+<tr><td>9</td><td>10</td><td>2024-12-14</td><td>Hamburg</td><td>Electronics</td><td>No</td><td>1</td><td>450.0</td><td>0</td><td>450.0</td></tr>
+<tr><td>10</td><td>11</td><td>2024-12-20</td><td>Munich</td><td>Clothing</td><td>No</td><td>1</td><td>70.0</td><td>0</td><td>70.0</td></tr>
+<tr><td>11</td><td>12</td><td>2024-12-28</td><td>Berlin</td><td>Home</td><td>No</td><td>1</td><td>110.0</td><td>0</td><td>110.0</td></tr>
+</table></div>
+
+<div class="tablewrap"><table>
+<tr><th>می‌خواهم…</th><th>ابزار</th><th>یادت بماند</th></tr>
+<tr><td>ردیف یا ستون را انتخاب کنم</td><td><code>[]</code>، <code>loc</code>، <code>iloc</code>، <code>query</code>، <code>isin</code>، <code>between</code></td><td><code>loc</code> با برچسب (انتهای بازه شامل)، <code>iloc</code> با شماره (انتها شامل نیست)</td></tr>
+<tr><td>مرتب یا رتبه‌بندی کنم</td><td><code>sort_values</code>، <code>nlargest</code>، <code>rank(pct=True)</code>، <code>idxmax</code></td><td><code>idxmax</code> برچسب سطر را می‌دهد، نه شماره‌ی جایگاه</td></tr>
+<tr><td>ستون جدید بسازم</td><td><code>np.where</code>، <code>np.select</code>، <code>map</code>، <code>cut</code>/<code>qcut</code>، <code>assign</code></td><td>برداری بنویس؛ <code>apply(axis=1)</code> آخرین راه است</td></tr>
+<tr><td>خلاصه‌ی گروهی بگیرم</td><td><code>groupby().agg</code>، <code>transform</code>، <code>filter</code></td><td><code>agg</code> یک سطر برای هر گروه؛ <code>transform</code> هم‌اندازه‌ی جدول</td></tr>
+<tr><td>جدول دوبعدی بسازم</td><td><code>pivot_table</code>، <code>crosstab</code>، <code>melt</code>، <code>unstack</code></td><td>فرم «بلند» برای نمودار و groupby بهتر است</td></tr>
+<tr><td>دو جدول را به هم بچسبانم</td><td><code>merge</code>، <code>concat</code></td><td>همیشه <code>validate</code> و تعداد سطر پیش و پس</td></tr>
+<tr><td>روی زمان کار کنم</td><td><code>resample</code>، <code>rolling</code>، <code>shift</code>، <code>pct_change</code>، <code>cumsum</code></td><td>ایندکس باید <code>datetime</code> باشد</td></tr>
+<tr><td>متن کثیف را درست کنم</td><td><code>.str.strip/lower/title/replace/extract/split</code></td><td>regex را روی نمونه‌های بد امتحان کن</td></tr>
+</table></div>
+
+<h3>۲.۱ انتخاب و فیلتر</h3>
+<pre class="code">print(toy.loc[toy["city"] == "Berlin", ["order_id", "category", "revenue"]].head(3))
+print(toy.iloc[0:2, 0:3])
+m1 = toy[(toy["category"] == "Clothing") &amp; (toy["promo"] == "No")]
+m2 = toy.query("category == 'Clothing' and promo == 'No'")
+print(len(m1), len(m2), m1.equals(m2))
+print(toy["city"].isin(["Berlin", "Hamburg"]).sum(),
+      toy["unit_price"].between(50, 150).sum(),
+      toy["category"].str.contains("ec", case=False).sum())</pre>
+<div class="out">   order_id     category  revenue
+0         1  Electronics    420.0
+2         3     Clothing    120.0
+5         6        Books     36.0
+   order_id order_date    city
+0         1 2024-10-03  Berlin
+1         2 2024-10-11  Munich
+3 3 True
+8 7 3</div>
+<p>دقت کن: داخل ماسک باید <code>&amp;</code> و <code>|</code> را با <b>پرانتز</b> بنویسی، ولی داخل <code>query</code> کلمه‌ی <code>and</code> درست است. <code>between(50, 150)</code> بازه‌ی بسته است (۷ قیمت). <code>str.contains("ec", case=False)</code> هر رشته‌ای را که «ec» در آن باشد می‌گیرد؛ اینجا فقط سه سفارش Electronics. روی متن واقعی همیشه چک کن الگو چیز ناخواسته‌ای را نگیرد.</p>
+
+<h3>۲.۲ مرتب‌سازی و رتبه</h3>
+<pre class="code">print(toy.sort_values(["city", "revenue"], ascending=[True, False])[["city", "revenue"]].head(4))
+print(toy.nlargest(3, "revenue")[["order_id", "category", "revenue"]])
+toy["rev_rank_pct"] = toy["revenue"].rank(pct=True).round(2)
+print(toy["revenue"].idxmax(), toy.loc[toy["revenue"].idxmax(), "order_id"])</pre>
+<div class="out">      city  revenue
+0   Berlin    420.0
+2   Berlin    120.0
+8   Berlin    110.5
+11  Berlin    110.0
+   order_id     category  revenue
+9        10  Electronics    450.0
+0         1  Electronics    420.0
+4         5  Electronics    323.0
+9 10</div>
+
+<h3>۲.۳ ساختن ستون جدید</h3>
+<pre class="code">toy["is_big"] = np.where(toy["revenue"] > 300, "big", "small")
+toy["size"] = np.select([toy["revenue"] &lt; 100, toy["revenue"] &lt; 300],
+                        ["S", "M"], default="L")
+toy["city_fa"] = toy["city"].map({"Berlin": "برلین", "Munich": "مونیخ"})   # Hamburg → NaN
+toy["price_band"] = pd.cut(toy["unit_price"], bins=[0, 50, 150, 1000],
+                           labels=["low", "mid", "high"])
+print(toy[["revenue", "is_big", "size", "city_fa", "price_band"]].head(5))</pre>
+<div class="out">   revenue is_big size city_fa price_band
+0    420.0    big    L   برلین       high
+1     54.0  small    S   مونیخ        low
+2    120.0  small    M   برلین        mid
+3     96.0  small    S     NaN        mid
+4    323.0    big    L   مونیخ       high</div>
+<div class="box tip"><div class="bt">💡 map یا replace؟</div>
+<code>map</code> مقدارهایی را که در دیکشنری نیست <b>NaN</b> می‌کند (هامبورگ بالا)؛ <code>replace</code> فقط کلیدهای موجود را عوض می‌کند و بقیه را دست نمی‌زند. برای «چند نام ← یک نام» (München ← Munich، CC ← Credit Card) نوت‌بوک <code>replace</code> زده و برای ترجمه‌ی کامل <code>map</code>. در <code>np.select</code> شرط‌ها به ترتیب بررسی می‌شوند و اولین شرط درست برنده است؛ برای همین شرط دوم فقط «کمتر از ۳۰۰» است، نه «بین ۱۰۰ و ۳۰۰».
+</div>
+
+<h3>۲.۴ گروه‌بندی: تقسیم ← اعمال ← ترکیب</h3>
+<figure class="fig">
+<svg viewBox="0 0 540 200" width="540" role="img" aria-label="تقسیم، اعمال، ترکیب">
+<g font-family="Vazirmatn,Tahoma" font-size="12" text-anchor="middle">
+<text x="80" y="18" fill="currentColor" font-weight="700">۱) جدول اصلی</text>
+<text x="275" y="18" fill="currentColor" font-weight="700">۲) تقسیم + اعمال sum</text>
+<text x="460" y="18" fill="currentColor" font-weight="700">۳) ترکیب</text>
+<g font-family="monospace" font-size="11" style="direction:ltr;unicode-bidi:embed">
+<rect x="20" y="30" width="120" height="16" fill="#0f6e6a" opacity=".25"/><text x="80" y="42" fill="currentColor">Berlin 420.0</text>
+<rect x="20" y="48" width="120" height="16" fill="#c0392b" opacity=".22"/><text x="80" y="60" fill="currentColor">Munich 54.0</text>
+<rect x="20" y="66" width="120" height="16" fill="#0f6e6a" opacity=".25"/><text x="80" y="78" fill="currentColor">Berlin 120.0</text>
+<rect x="20" y="84" width="120" height="16" fill="#2456a6" opacity=".22"/><text x="80" y="96" fill="currentColor">Hamburg 96.0</text>
+<rect x="20" y="102" width="120" height="16" fill="#c0392b" opacity=".22"/><text x="80" y="114" fill="currentColor">Munich 323.0</text>
+<text x="80" y="134" fill="currentColor">⋮ 12 rows</text>
+<rect x="190" y="34" width="170" height="40" rx="8" fill="#0f6e6a" opacity=".2"/><text x="275" y="50" fill="currentColor">Berlin: 420, 120, 36,</text><text x="275" y="66" fill="currentColor">110.5, 110 → 796.5</text>
+<rect x="190" y="84" width="170" height="40" rx="8" fill="#2456a6" opacity=".2"/><text x="275" y="100" fill="currentColor">Hamburg: 96, 165, 450</text><text x="275" y="116" fill="currentColor">→ 711.0</text>
+<rect x="190" y="134" width="170" height="40" rx="8" fill="#c0392b" opacity=".2"/><text x="275" y="150" fill="currentColor">Munich: 54, 323, 234, 70</text><text x="275" y="166" fill="currentColor">→ 681.0</text>
+<rect x="410" y="70" width="110" height="66" rx="8" fill="none" stroke="currentColor" opacity=".5"/>
+<text x="465" y="90" fill="currentColor">Berlin   796.5</text><text x="465" y="108" fill="currentColor">Hamburg  711.0</text><text x="465" y="126" fill="currentColor">Munich   681.0</text>
+</g>
+<g stroke="currentColor" opacity=".5" fill="none"><path d="M145 70 L185 70"/><path d="M365 104 L405 104"/></g>
+<text x="270" y="194" fill="currentColor" font-size="11">کلید گروه به ایندکس نتیجه تبدیل می‌شود (برای ستون ماندنش بخش ۶ را ببین)</text>
+</g></svg>
+<figcaption>همان تصویر سلول ۱۳۴ نوت‌بوک، روی جدول ۱۲ سفارشی.</figcaption>
+</figure>
+<pre class="code">g = toy.groupby("city")
+print(g["revenue"].agg(["count", "sum", "mean"]).round(1))
+print(g.agg(orders=("order_id", "count"), total=("revenue", "sum"),
+            promo_share=("promo", lambda s: (s == "Yes").mean())).round(2))
+toy["share_in_city"] = (toy["revenue"] / g["revenue"].transform("sum")).round(3)
+print(toy.groupby("city")["share_in_city"].sum())
+print(g.filter(lambda d: len(d) >= 4)["city"].unique().tolist())</pre>
+<div class="out">         count    sum   mean
+city
+Berlin       5  796.5  159.3
+Hamburg      3  711.0  237.0
+Munich       4  681.0  170.2
+         orders  total  promo_share
+city
+Berlin        5  796.5         0.20
+Hamburg       3  711.0         0.33
+Munich        4  681.0         0.75
+city
+Berlin     1.0
+Hamburg    1.0
+Munich     1.0
+Name: share_in_city, dtype: float64
+['Berlin', 'Munich']</div>
+<div class="tablewrap"><table>
+<tr><th>متد</th><th>شکل خروجی</th><th>کاربرد نمونه در نوت‌بوک</th></tr>
+<tr><td><code>agg</code></td><td>یک سطر برای هر گروه</td><td>درآمد کل و میانگین ارزش سفارش هر دسته (پ۱)</td></tr>
+<tr><td><code>transform</code></td><td>هم‌اندازه‌ی جدول اصلی</td><td>سهم هر سفارش از درآمد شهرش؛ میانه‌ی قیمت هر دسته برای پرت‌یابی</td></tr>
+<tr><td><code>filter</code></td><td>سطرهای گروه‌هایی که شرط را دارند</td><td>فقط شهرهای با بیش از ۲۰۰ سفارش (برلین و مونیخ)</td></tr>
+<tr><td><code>size()</code> در برابر <code>count()</code></td><td><code>size</code> همه‌ی سطرها؛ <code>count</code> فقط غیرخالی‌ها</td><td>شمردن امتیاز (<code>rating</code> با ۱۵۰ خالی) این دو را متفاوت می‌کند</td></tr>
+</table></div>
+
+<div id="w-groupby"></div>
+
+<h3>۲.۵ جدول محوری و تغییر شکل</h3>
+<pre class="code">pv = toy.pivot_table(index="city", columns="promo", values="revenue",
+                     aggfunc="sum", fill_value=0, margins=True)
+print(pv)
+print(pd.crosstab(toy["city"], toy["promo"], normalize="index").round(2))
+wide = pv.drop(index="All", columns="All").reset_index()
+long = wide.melt(id_vars="city", var_name="promo", value_name="revenue")
+print(long.head(4))</pre>
+<div class="out">promo        No    Yes     All
+city
+Berlin    686.0  110.5   796.5
+Hamburg   615.0   96.0   711.0
+Munich     70.0  611.0   681.0
+All      1371.0  817.5  2188.5
+promo      No   Yes
+city
+Berlin   0.80  0.20
+Hamburg  0.67  0.33
+Munich   0.25  0.75
+      city promo  revenue
+0   Berlin    No    686.0
+1  Hamburg    No    615.0
+2   Munich    No     70.0
+3   Berlin   Yes    110.5</div>
+<p><code>crosstab</code> می‌شمارد (یا با <code>normalize</code> نسبت می‌دهد)، <code>pivot_table</code> هر تابعی را روی یک ستون مقدار اجرا می‌کند. <code>normalize="index"</code> یعنی هر <b>سطر</b> جمعش ۱ شود: «از سفارش‌های مونیخ، ۷۵٪ کد داشتند». با داده‌ی واقعی نوت‌بوک اگر ستون از نوع <code>category</code> است، <code>observed=True</code> را فراموش نکن.</p>
+
+<h3>۲.۶ ترکیب جدول‌ها</h3>
+<pre class="code">city_info = pd.DataFrame({"city": ["Berlin", "Munich", "Dresden"],
+                          "population_k": [3700, 1500, 560]})
+m = toy.merge(city_info, on="city", how="left", validate="m:1", indicator=True)
+print(m["_merge"].value_counts())
+print(len(toy), len(m))
+both = pd.concat([toy.head(2), toy.tail(2)], ignore_index=True)
+print(both[["order_id", "city"]])</pre>
+<div class="out">_merge
+both          9
+left_only     3
+right_only    0
+Name: count, dtype: int64
+12 12
+   order_id    city
+0         1  Berlin
+1         2  Munich
+2        11  Munich
+3        12  Berlin</div>
+<p>سه سطر «left_only» سفارش‌های هامبورگ‌اند که در <code>city_info</code> نیستند؛ در نوت‌بوک همین نقش را ۵۰ سفارش «Unknown» داشتند. <code>how="left"</code> تعداد سطرهای جدول چپ را حفظ می‌کند <b>به شرط اینکه</b> کلید در جدول راست یکتا باشد؛ <code>validate="m:1"</code> همین شرط را تضمین می‌کند (بخش ۶ ببین اگر نباشد چه می‌شود).</p>
+
+<h3>۲.۷ سری زمانی</h3>
+<pre class="code">ts = toy.set_index("order_date")["revenue"]
+monthly = ts.resample("MS").sum()
+print(monthly)
+print(monthly.pct_change().round(3))
+print(monthly.shift(1))
+print(ts.rolling(3).mean().round(1).head(4))</pre>
+<div class="out">order_date
+2024-10-01    690.0
+2024-11-01    758.0
+2024-12-01    740.5
+Freq: MS, Name: revenue, dtype: float64
+order_date
+2024-10-01      NaN
+2024-11-01    0.099
+2024-12-01   -0.023
+Freq: MS, Name: revenue, dtype: float64
+order_date
+2024-10-01      NaN
+2024-11-01    690.0
+2024-12-01    758.0
+Freq: MS, Name: revenue, dtype: float64
+order_date
+2024-10-03      NaN
+2024-10-11      NaN
+2024-10-19    198.0
+2024-10-27     90.0
+Name: revenue, dtype: float64</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: rolling(3) یعنی «۳ سطر»، نه «۳ روز»</div>
+روی سفارش‌های نامنظم، <code>rolling(3)</code> میانگین ۳ <b>سفارش</b> آخر است. برای پنجره‌ی زمانی بنویس <code>rolling("7D")</code> یا اول <code>resample("D").sum()</code> بزن (کاری که نوت‌بوک در سلول ۱۴۲ کرد). <code>shift(1)</code> مقدار دوره‌ی قبل را به سطر فعلی می‌آورد؛ همین ابزار پایه‌ی ویژگی‌های «فقط از گذشته» در جلسه‌ی ۷ است. اگر <code>shift(-1)</code> بزنی، آینده را به حال آورده‌ای: نشت.
+</div>
+
+<h3>۲.۸ متن و regex</h3>
+<pre class="code">s = pd.Series(["$329.73", "20.5", " $1,200.00", "N/A"])
+num = (s.str.strip()
+        .str.replace(r"[$,]", "", regex=True)
+        .pipe(pd.to_numeric, errors="coerce"))
+print(num.tolist())
+print(s.str.extract(r"(\d+\.?\d*)")[0].tolist())</pre>
+<div class="out">[329.73, 20.5, 1200.0, nan]
+['329.73', '20.5', '1', nan]</div>
+<p>خط دوم یک دام واقعی است: الگوی <code>\d+\.?\d*</code> در «1,200.00» به ویرگول می‌رسد و فقط «1» را برمی‌گرداند. الگوی نوت‌بوک (سلول ۱۴۴) روی داده‌ی خودش درست کار کرد چون قیمت‌ها ویرگول نداشتند. درس: regex را همیشه روی <b>بدترین</b> نمونه‌ها امتحان کن و بعد از تبدیل، با <code>isna().sum()</code> بشمار چند مقدار خراب شد.</p>
+
+<h3>۲.۹ زنجیره‌ی متدها</h3>
+<pre class="code">def add_share(d, col):
+    return d.assign(share=(d[col] / d[col].sum() * 100).round(1))
+
+result = (toy
+          .query("order_date >= '2024-11-01'")
+          .groupby("category", as_index=False)
+          .agg(orders=("order_id", "count"), revenue=("revenue", "sum"))
+          .sort_values("revenue", ascending=False)
+          .pipe(add_share, col="revenue"))
+print(result)</pre>
+<div class="out">      category  orders  revenue  share
+2  Electronics       2    773.0   51.6
+1     Clothing       3    345.5   23.1
+3         Home       2    344.0   23.0
+0        Books       1     36.0    2.4</div>
+<p>زنجیره را مثل یک جمله بخوان: «سفارش‌های از آبان (نوامبر) به بعد را بگیر، بر اساس دسته گروه کن، تعداد و جمع درآمد را حساب کن، نزولی مرتب کن و سهم را اضافه کن». <code>assign</code> و <code>pipe</code> جدول جدید برمی‌گردانند و جدول اصلی را دست نمی‌زنند؛ به همین دلیل با زنجیره جور درمی‌آیند و <code>inplace=True</code> جور درنمی‌آید.</p>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">· 🟢 پایه</span></div>
+روی <code>df</code> تمیز نوت‌بوک: چند درصد مشتریان امتیاز ۴ یا ۵ داده‌اند؟ (تمرین ۷ نوت‌بوک.) دو کد زیر دو عدد متفاوت می‌دهند. کدام درست است و چرا؟
+<pre class="code">a = df["rating"].value_counts(normalize=True).loc[[4.0, 5.0]].sum()
+b = df["rating"].isin([4, 5]).mean()</pre>
+<details><summary>راه‌حل</summary>
+<code>a = 0.703</code> و <code>b = 0.596</code>. فرق در <b>مخرج</b> است. <code>value_counts</code> به‌طور پیش‌فرض خالی‌ها را کنار می‌گذارد، پس سهم را از ۸۴۱ سفارشی که امتیاز دارند حساب می‌کند: $591/841=70.3\%$. ولی <code>isin</code> برای خالی‌ها <code>False</code> می‌دهد و <code>mean</code> بر ۹۹۱ تقسیم می‌کند: $591/991=59.6\%$. پرسش «از مشتریانی که امتیاز داده‌اند» جوابش ۷۰٫۳٪ است. عدد دوم یعنی «۱۵۰ نفری که امتیاز نداده‌اند ناراضی بوده‌اند» که فرضی پنهان و احتمالاً غلط است. پس قبل از هر درصد بپرس: مخرج کیست؟
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l2">· 🟡 مهارتی</span></div>
+(تمرین ۱۱ نوت‌بوک) کدام شهر بیشترین <b>سهم سفارش با کد تخفیف</b> را دارد؟ کد یک‌خطی بنویس. بعد بگو آیا می‌شود به مدیر گفت «درسدنی‌ها به کد تخفیف علاقه‌ی بیشتری دارند»؟
+<details><summary>راه‌حل</summary>
+<pre class="code">(df["promo_used"] == "Yes").groupby(df["city"], observed=True).mean().sort_values(ascending=False)</pre>
+میانگین یک ستون بولی همان نسبت <code>True</code>هاست. نتیجه: درسدن ۴۳٫۲٪، لایپزیگ ۴۰٫۷٪، برلین ۳۹٫۵٪، مونیخ ۳۸٫۴٪، هامبورگ ۳۵٫۹٪، Unknown ۳۴٫۰٪. ولی درسدن فقط ۸۸ سفارش دارد. خطای معیار نسبت $\sqrt{0.432\times0.568/88}\approx0.053$ است، پس بازه‌ی ۹۵٪ حدود $43\%\pm10\%$ است و همه‌ی شهرها را می‌پوشاند. آزمون خی‌دو روی جدول «شهر × کد» هم $p=0.83$ می‌دهد. پس جمله‌ی مدیر پشتوانه ندارد. این همان هشدار سلول ۱۱۸ نوت‌بوک است: تفاوت کوچک در گروه کوچک ممکن است فقط نوسان تصادفی باشد.
+</details></div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="case">
+<h2><span class="num">۳</span> مطالعه‌ی موردی: از پرسش مبهم تا پ۱، پ۲ و پ۳ <span class="tag core">نوت‌بوک · گام ۱ تا ۹</span></h2>
+<h3>۳.۱ قاب‌بندی: پرسش مبهم ← پرسش‌های SMART ← فرضیه</h3>
+<p>«کمپین تخفیف جواب داد؟» مبهم است: «جواب داد» یعنی درآمد بیشتر؟ سود بیشتر؟ مشتری تازه؟ نوت‌بوک آن را به شش پرسش قابل اندازه‌گیری می‌شکند و برای هرکدام نوع تحلیل را مشخص می‌کند (همان چهار نوع تحلیل جلسه‌ی ۱):</p>
+<div class="tablewrap"><table>
+<tr><th>پرسش</th><th>نوع تحلیل</th><th>ابزار اصلی</th></tr>
+<tr><td>پ۱: کدام دسته در ۲۰۲۴ بیشترین درآمد را آورد؟</td><td>توصیفی</td><td><code>groupby</code> + پارتو</td></tr>
+<tr><td>پ۲: درآمد در طول ماه‌ها چطور تغییر می‌کند؟</td><td>توصیفی</td><td><code>resample</code>، شاخص فصلی</td></tr>
+<tr><td>پ۳: کدام شهرها بهترین بازارند؟</td><td>توصیفی (با <code>merge</code>)</td><td>درآمد به‌ازای جمعیت</td></tr>
+<tr><td>پ۴ (اصلی): آیا سفارش‌های با کد، میانگین ارزش بیشتری دارند؟</td><td>تشخیصی</td><td>آزمون t، بوت‌استرپ، آبشار</td></tr>
+<tr><td>پ۵: مشتریان ارزشمند کیستند؟</td><td>توصیفی ← تجویزی</td><td>RFM، لورنز</td></tr>
+<tr><td>پ۶: اگر درصد تخفیف عوض شود سود چه می‌شود؟</td><td>پیش‌بینانه و تجویزی</td><td>سناریو و نقطه‌ی سربه‌سر</td></tr>
+</table></div>
+<p>فرضیه‌ی اصلی به زبان آزمون: $H_0$: کد تخفیف میانگین ارزش سفارش (AOV) را تغییر نمی‌دهد؛ $H_1$: تغییر می‌دهد. این فرضیه <b>دوطرفه</b> است، چون مدیر از قبل نمی‌داند اثر مثبت است یا منفی. هر پرسش هم به ستون‌های لازمش وصل شده: زمان (<code>order_date</code>)، چه چیزی (<code>category</code>، <code>quantity</code>، <code>unit_price</code>)، تخفیف (<code>promo_used</code>، <code>discount_pct</code>)، کجا، چه کسی و رضایت.</p>
+
+<h3>۳.۲ پاک‌سازی در یک نگاه: ۸ نوع کثیف، ۱۰ گام، ۴ تصمیم کلیدی</h3>
+<div class="tablewrap"><table>
+<tr><th>نوع کثیف</th><th>نمونه در داده‌ی خام</th><th>تشخیص</th><th>تصمیم نوت‌بوک</th></tr>
+<tr><td>۱ تکراری</td><td>۳۰ ردیف کاملاً تکراری</td><td><code>duplicated().sum()</code></td><td>حذف؛ بعد <code>order_id.is_unique</code></td></tr>
+<tr><td>۲ گمشده</td><td>rating ۱۴٫۸٪، age ۷٫۷٪، city ۵٫۱٪</td><td><code>isna().mean()</code></td><td>هر ستون جدا (پایین)</td></tr>
+<tr><td>۳ نوع اشتباه</td><td>قیمت متنی با علامت دلار</td><td><code>dtypes</code>، <code>str.fullmatch</code></td><td>حذف علامت و <code>astype(float)</code></td></tr>
+<tr><td>۴ متن ناهمسان</td><td>Berlin، berlin، « Berlin»: ۲۶ مقدار شهر</td><td><code>value_counts</code>، <code>nunique</code></td><td><code>str.strip().str.title()</code></td></tr>
+<tr><td>۵ چند نام برای یک چیز</td><td>München و Munich؛ CC و Credit Card</td><td><code>value_counts</code></td><td><code>replace({...})</code></td></tr>
+<tr><td>۶ قالب ناهمسان</td><td>۲۶۸ تاریخ با «/» (روز/ماه/سال)</td><td><code>str.contains("/")</code></td><td>دو <code>to_datetime</code> با <code>format</code> و <code>fillna</code></td></tr>
+<tr><td>۷ ناممکن</td><td>سن ۲۵۰ و ۹۹۹ و −۵؛ تعداد ۰ و −۲</td><td>قانون کسب‌وکار، <code>between</code></td><td>سن ← NaN؛ ردیف تعداد نامعتبر ← حذف</td></tr>
+<tr><td>۸ پرت</td><td>قیمت ۹۹٬۹۹۹ و ۱۲۰٬۰۰۰</td><td>سه روش (پایین)</td><td>بیش از ۳ برابر میانه‌ی دسته ← حذف (۴ ردیف)</td></tr>
+</table></div>
+<ol class="steps">
+<li><b>سن غلط ولی سفارش درست:</b> فقط سن را NaN کن و ردیف را نگه دار. <b>تعداد غلط:</b> خود فروش معتبر نیست، پس ردیف حذف می‌شود. این همان «investigate first, transform second, delete last» اسلاید ۲ است.</li>
+<li><b>پرت‌یابی وابسته به ساختار داده است.</b> روی قیمت تمیز، Z-score سراسری ۴ پرت، IQR سراسری <b>۱۶۹</b> پرت و «بیش از ۳ برابر میانه‌ی همان دسته» ۴ پرت پیدا می‌کند. IQR سراسری تقریباً همه‌ی کالاهای الکترونیکی را پرت می‌داند، چون ذاتاً گران‌اند. روش درست مقایسه‌ی هر قیمت با <b>گروه خودش</b> است: <code>groupby("category")["unit_price"].transform("median")</code>.</li>
+<li><b>گمشده‌ها:</b> سن با میانه (۳۵) پر شد چون فقط حدود ۸٪ است. شهر با «Unknown» پر شد چون حدس‌زدن شهر یعنی ساختن داده. <code>rating</code> عمداً خالی ماند چون «امتیاز نداد» خودش اطلاعات است و پرکردنش نظر جعل می‌کند. <code>customer_id</code> هم خالی ماند.</li>
+<li><b>اعتبارسنجی خودکار:</b> ۱۱ دستور <code>assert</code> (یکتایی <code>order_id</code>، سن بین ۱۶ و ۱۰۰، ۵ دسته، ۳ روش پرداخت، درآمد مثبت، سال ۲۰۲۴ و…). اگر یکی رد شود کد می‌ایستد، که از گزارش غلط خیلی بهتر است.</li>
+</ol>
+<p>قیف ردیف‌ها: ۱۰۳۰ خام ← ۱۰۰۰ (حذف تکراری) ← ۹۹۵ (حذف تعداد نامعتبر) ← <b>۹۹۱</b> (حذف ۴ پرت افراطی). یعنی فقط ۳٫۸٪ ردیف‌ها حذف شد و بقیه‌ی مشکل‌ها با <b>اصلاح</b> حل شد. «Cleaning is not deleting».</p>
+
+<h3>۳.۳ پ۱: پول از کدام دسته می‌آید؟</h3>
+<div class="tablewrap"><table>
+<tr><th>دسته</th><th>تعداد سفارش</th><th>درآمد کل (یورو)</th><th>میانگین ارزش سفارش</th><th>سهم</th><th>سهم تجمعی</th></tr>
+<tr><td>الکترونیک</td><td>۱۶۵</td><td>۱۳۴٬۰۸۹</td><td>۸۱۲٫۷</td><td>۵۴٫۱٪</td><td>۵۴٫۱٪</td></tr>
+<tr><td>خانه</td><td>۱۹۷</td><td>۴۸٬۹۸۸</td><td>۲۴۸٫۷</td><td>۱۹٫۸٪</td><td>۷۳٫۹٪</td></tr>
+<tr><td>پوشاک</td><td>۲۸۲</td><td>۳۴٬۱۴۰</td><td>۱۲۱٫۱</td><td>۱۳٫۸٪</td><td>۸۷٫۷٪</td></tr>
+<tr><td>ورزش</td><td>۱۴۹</td><td>۲۳٬۲۵۵</td><td>۱۵۶٫۱</td><td>۹٫۴٪</td><td>۹۷٫۱٪</td></tr>
+<tr><td>کتاب</td><td>۱۹۸</td><td>۷٬۴۹۲</td><td>۳۷٫۸</td><td>۳٫۰٪</td><td>۱۰۰٪</td></tr>
+</table></div>
+<p>الکترونیک با ۱۶٫۷٪ سفارش‌ها ۵۴٪ درآمد را می‌سازد و پوشاک با بیشترین تعداد سفارش (۲۸۲) فقط ۱۴٪. «تعداد» و «پول» دو پرسش جدا هستند. نمودار پارتو (میله‌ی سهم + خط سهم تجمعی) نشان می‌دهد دو دسته‌ی اول ۷۴٪ درآمد را می‌سازند. سهم تجمعی در نوت‌بوک ۱۰۰٫۱٪ چاپ شده که خطای گردکردن است، نه باگ.</p>
+
+<h3>۳.۴ پ۲: روند یا فصل؟</h3>
+<p>درآمد ماهانه (یورو، گرد شده) و <b>شاخص فصلی</b> = درآمد ماه ÷ میانگین ماه‌ها × ۱۰۰:</p>
+<div class="tablewrap"><table class="data">
+<tr><th>month</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th></tr>
+<tr><td>revenue</td><td>16225</td><td>14585</td><td>16330</td><td>18293</td><td>26803</td><td>11657</td><td>18239</td><td>21794</td><td>15249</td><td>21355</td><td>30270</td><td>37165</td></tr>
+<tr><td>index</td><td>79</td><td>71</td><td>79</td><td>89</td><td>130</td><td>56</td><td>88</td><td>105</td><td>74</td><td>103</td><td>146</td><td>180</td></tr>
+</table></div>
+<p>نوامبر و دسامبر با هم ۲۷٪ درآمد سال را دارند (اگر ماه‌ها برابر بودند ۱۷٪ می‌شد): فصلی‌بودن بلک‌فرایدی و کریسمس. نوت‌بوک یک خط روند هم برازش می‌کند: شیب <b>+۱۳۳۹ یورو در ماه</b>. ولی اگر همان خط را بدون نوامبر و دسامبر برازش کنی، شیب به <b>+۳۸۱</b> می‌افتد. یعنی بیشتر «روند» در واقع همان دو ماه فصلی است که در انتهای سال نشسته‌اند (بخش ۵ را ببین).</p>
+
+<h3>۳.۵ پ۳: بزرگ‌ترین بازار یا بهترین بازار؟</h3>
+<div class="tablewrap"><table>
+<tr><th>شهر</th><th>سفارش</th><th>درآمد کل (یورو)</th><th>جمعیت تقریبی (هزار)</th><th>درآمد به‌ازای هر هزار نفر</th></tr>
+<tr><td>برلین</td><td>۲۷۱</td><td>۶۸٬۴۱۶</td><td>۳۷۰۰</td><td>۱۸٫۵</td></tr>
+<tr><td>مونیخ</td><td>۲۵۵</td><td>۶۲٬۶۱۸</td><td>۱۵۰۰</td><td>۴۱٫۷</td></tr>
+<tr><td>هامبورگ</td><td>۱۹۲</td><td>۴۴٬۸۰۵</td><td>۱۹۰۰</td><td>۲۳٫۶</td></tr>
+<tr><td>لایپزیگ</td><td>۱۳۵</td><td>۳۷٬۴۲۴</td><td>۶۲۰</td><td><b>۶۰٫۴</b></td></tr>
+<tr><td>درسدن</td><td>۸۸</td><td>۲۱٬۴۲۷</td><td>۵۶۰</td><td>۳۸٫۳</td></tr>
+</table></div>
+<p>یک <code>merge</code> ساده رتبه را برعکس کرد: برلین در درآمد کل اول است و در نفوذ بازار آخر. لایپزیگ سه برابر برلین به‌ازای هر نفر درآمد دارد. کدام «بهتر» است به تصمیم بستگی دارد: برای «کجا انبار بزنیم» درآمد کل مهم است و برای «کجا هنوز جای رشد هست» نفوذ. جمعیت‌ها تقریبی‌اند و نوت‌بوک هم صریحاً این را گفته است.</p>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="promo">
+<h2><span class="num">۴</span> پ۴: آیا کد تخفیف ارزش سفارش را بالا برد؟ استدلال آماری قدم‌به‌قدم <span class="tag core">نوت‌بوک · سلول ۱۵۹ تا ۱۷۵</span> <span class="tag book">تکمیلی</span></h2>
+
+<h3>گام A: توصیف</h3>
+<div class="tablewrap"><table>
+<tr><th>گروه</th><th>n</th><th>میانگین</th><th>میانه</th><th>انحراف معیار</th></tr>
+<tr><td>بدون کد</td><td>۶۰۷</td><td>۲۵۳٫۷۱</td><td>۱۳۸٫۷۲</td><td>۳۰۳٫۵۰</td></tr>
+<tr><td>با کد</td><td>۳۸۴</td><td>۲۴۴٫۷۰</td><td>۱۴۶٫۳۳</td><td>۲۸۵٫۶۶</td></tr>
+</table></div>
+<p>میانگین با کد ۹ یورو <b>کمتر</b> است ولی میانه‌اش ۸ یورو <b>بیشتر</b>. وقتی دو شاخص مرکزی جهت مخالف دارند، تفاوت احتمالاً کوچک و شکننده است. توزیع درآمد چوله به راست است (چولگی ۲٫۱، میانگین تقریباً دو برابر میانه)، پس انحراف معیار بزرگ است و میانگین زیر نفوذ چند سفارش الکترونیکی بزرگ.</p>
+
+<h3>گام B: تفاوت واقعی است یا شانس؟ آزمون t ولش</h3>
+<div class="box def"><div class="bt">تعریف · p-value</div>
+احتمال دیدن تفاوتی به این بزرگی (یا بزرگ‌تر) <b>اگر $H_0$ درست باشد</b>. اگر $p&lt;\alpha$ (معمولاً ۰٫۰۵)، $H_0$ را رد می‌کنیم. p-value احتمال درست بودن $H_0$ نیست و چیزی درباره‌ی <b>بزرگی</b> اثر نمی‌گوید.
+</div>
+<div class="box thm"><div class="bt">آماره‌ی t ولش (Welch) برای تفاوت دو میانگین</div>
+$$t=\frac{\bar x_1-\bar x_2}{SE},\qquad SE=\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}},\qquad \nu\approx\frac{\left(\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}\right)^2}{\frac{(s_1^2/n_1)^2}{n_1-1}+\frac{(s_2^2/n_2)^2}{n_2-1}}$$
+ولش برخلاف t کلاسیک فرض «واریانس برابر» را لازم ندارد؛ برای همین پیش‌فرض امن‌تری است (<code>equal_var=False</code>).
+</div>
+<div class="box ex"><div class="bt">محاسبه‌ی دستی روی عددهای نوت‌بوک</div>
+$SE=\sqrt{285.66^2/384+303.50^2/607}=\sqrt{212.5+151.8}=\sqrt{364.3}=19.09$ یورو.<br>
+$t=(244.70-253.71)/19.09=-9.01/19.09=-0.472$. درجه‌ی آزادی ولش $\nu\approx851$ و مقدار بحرانی دوطرفه حدود $1.96$ است. $|t|=0.47$ خیلی کمتر از آن است، پس $p=0.637$: اگر کد هیچ اثری نداشت، در ۶۴٪ نمونه‌گیری‌ها تفاوتی به همین بزرگی می‌دیدیم.
+</div>
+<pre class="code">from scipy import stats
+promo = df.loc[df["promo_used"] == "Yes", "revenue"]
+no    = df.loc[df["promo_used"] == "No",  "revenue"]
+se = np.sqrt(promo.var() / len(promo) + no.var() / len(no))
+t  = (promo.mean() - no.mean()) / se
+res = stats.ttest_ind(promo, no, equal_var=False)
+print(f"diff={promo.mean() - no.mean():.2f}  se={se:.2f}  t={t:.3f}")
+print(f"scipy: t={res.statistic:.3f}  df={res.df:.0f}  p={res.pvalue:.3f}")</pre>
+<div class="out">diff=-9.01  se=19.09  t=-0.472
+scipy: t=-0.472  df=851  p=0.637</div>
+
+<div class="vs">
+<div><h4>فرض‌های آزمون t و وضعیتشان اینجا</h4><ul>
+<li><b>استقلال مشاهده‌ها:</b> نسبتاً نقض شده. ۳۵۸ مشتری به‌طور میانگین حدود ۲٫۸ سفارش دارند و سفارش‌های یک نفر به هم شبیه‌اند، پس SE واقعی کمی بزرگ‌تر از ۱۹ است.</li>
+<li><b>نرمال بودن «میانگین نمونه»</b> (نه خود داده): با $n$ چندصدتایی و چولگی ۲ قضیه‌ی حد مرکزی کار را درمی‌آورد.</li>
+<li><b>واریانس برابر:</b> لازم نیست، چون ولش زدیم.</li>
+<li><b>تخصیص تصادفی:</b> نقض شده. مشتری خودش تصمیم گرفته کد بزند، پس حتی تفاوت معنادار هم «اثر علّی» نبود.</li>
+</ul></div>
+<div><h4>بررسی استحکام (همه یک جهت)</h4><ul>
+<li>من-ویتنی (رتبه‌ها، بدون فرض نرمال): $p=0.814$</li>
+<li>t روی $\log$ درآمد (میانگین هندسی): $p=0.813$</li>
+<li>بوت‌استرپ ۵۰۰۰ تکراری، بازه‌ی ۹۵٪ تفاوت: $[-47.1,\ +29.2]$ یورو، که صفر را در بر دارد</li>
+<li>بازه‌ی تقریب نرمال $-9.01\pm1.96\times19.09=[-46.4,\ +28.4]$، تقریباً همان</li>
+</ul></div>
+</div>
+
+<h3>اندازه‌ی اثر در برابر p-value</h3>
+<p><b>Cohen's d</b> تفاوت را بر حسب انحراف معیار ادغام‌شده می‌سنجد: $d=(\bar x_1-\bar x_2)/s_p$ با $s_p=\sqrt{\frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2}}=296.7$، پس $d=-9.01/296.7=-0.03$ که «ناچیز» است (قرارداد رایج: ۰٫۲ کوچک، ۰٫۵ متوسط، ۰٫۸ بزرگ).</p>
+<div class="box ex"><div class="bt">آزمایش ذهنی: اگر ۱۰۰ برابر داده داشتیم</div>
+فرض کن هر گروه ۱۰۰ برابر بزرگ‌تر بود و میانگین و انحراف معیار همین می‌ماند. $SE$ با $1/\sqrt n$ کوچک می‌شود، پس ۱۰ برابر کوچک‌تر: $SE=1.91$ و $t=-4.72$ و $p\approx2\times10^{-6}$. «بسیار معنادار»! ولی $d$ همان $-0.03$ است و ۹ یورو روی سفارش ۲۵۰ یورویی هنوز برای کسب‌وکار تقریباً بی‌اهمیت است. <b>معنادار ≠ مهم</b>: p-value را حجم نمونه می‌سازد، اندازه‌ی اثر را خود پدیده.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: «معنادار نیست» ≠ «اثری ندارد»</div>
+با این حجم نمونه، کوچک‌ترین تفاوتی که آزمون با توان ۸۰٪ (و $\alpha=0.05$) پیدا می‌کند تقریباً $2.8\times SE\approx53$ یورو است، یعنی حدود ۲۱٪ میانگین. پس اگر کد اثر واقعی ۵٪ (۱۲ یورو) داشت، این داده آن را تقریباً هیچ‌وقت نمی‌دید. جمله‌ی درست برای گزارش: «شواهدی برای تفاوت پیدا نکردیم و بازه‌ی ۹۵٪ از ۴۷− تا ۲۹+ یورو است»، نه «ثابت شد کد بی‌اثر است». ضریب ۲٫۸ از $1.96+0.84$ می‌آید (چندک‌های ۹۷٫۵٪ و ۸۰٪ نرمال).
+</div>
+
+<h3>گام C: مثل تحلیل‌گر فکر کن، نه ماشین‌حساب</h3>
+<div class="tablewrap"><table>
+<tr><th>گروه</th><th>تعداد کالا</th><th>قیمت واحد</th><th>درصد تخفیف</th><th>ارزش پیش از تخفیف</th><th>درآمد</th></tr>
+<tr><td>بدون کد</td><td>۱٫۹۷</td><td>۱۲۴٫۸</td><td>۰</td><td>۲۵۳٫۷</td><td>۲۵۳٫۷</td></tr>
+<tr><td>با کد</td><td><b>۲٫۴۲</b></td><td>۱۲۱٫۸</td><td>۱۵٫۲</td><td><b>۲۸۸٫۹</b></td><td>۲۴۴٫۷</td></tr>
+</table></div>
+<figure class="fig">
+<svg viewBox="0 0 460 250" width="460" role="img" aria-label="نمودار آبشاری">
+<g font-family="Vazirmatn,Tahoma" font-size="12" text-anchor="middle">
+<line x1="30" y1="220" x2="440" y2="220" stroke="currentColor" opacity=".5"/>
+<rect x="45" y="55" width="70" height="165" fill="#2456a6" opacity=".75"/><text x="80" y="48" fill="currentColor" font-weight="700">253.7</text>
+<rect x="150" y="32" width="70" height="23" fill="#1f8a4c" opacity=".8"/><text x="185" y="26" fill="currentColor" font-weight="700" style="direction:ltr;unicode-bidi:embed">+35.2</text>
+<rect x="255" y="32" width="70" height="29" fill="#c0392b" opacity=".8"/><text x="290" y="26" fill="currentColor" font-weight="700" style="direction:ltr;unicode-bidi:embed">−44.2</text>
+<rect x="360" y="61" width="70" height="159" fill="#2456a6" opacity=".75"/><text x="395" y="54" fill="currentColor" font-weight="700">244.7</text>
+<g stroke="currentColor" stroke-dasharray="3 3" opacity=".5"><line x1="115" y1="55" x2="150" y2="55"/><line x1="220" y1="32" x2="255" y2="32"/><line x1="325" y1="61" x2="360" y2="61"/></g>
+<text x="80" y="238" fill="currentColor">میانگین بدون کد</text><text x="185" y="238" fill="currentColor">خرید بیشتر</text><text x="290" y="238" fill="currentColor">هزینه‌ی تخفیف</text><text x="395" y="238" fill="currentColor">میانگین با کد</text>
+</g></svg>
+<figcaption>آبشار سلول ۱۶۸ (یورو): کد تخفیف <b>رفتار</b> را عوض کرد (۲۳٪ کالای بیشتر، ۳۵ یورو ارزش بیشتر پیش از تخفیف) ولی تخفیف متوسط ۴۴ یورویی بیش از آن را پس گرفت.</figcaption>
+</figure>
+<p>جواب «فکر کن» قبل از خواندن: (۱) تفاوت ۹ یورویی از نظر آماری از نوسان تصادفی قابل تشخیص نیست ($p=0.64$)؛ (۲) کد <b>رفتار</b> را عوض کرد ولی تخفیف اثرش را خنثی کرد، پس «خسیس شدن» تفسیر غلط است؛ (۳) مشتری‌ها خودشان کد را انتخاب کرده‌اند (سوگیری انتخاب)، پس برای قضاوت علّی آزمایش A/B لازم است؛ (۴) معیار درست برای «تعطیل کنیم یا نه» <b>سود</b> است، نه درآمد (گام E). «نه» هم یک نتیجه است.</p>
+
+<h3>گام D: چه کسانی کد می‌زنند؟ آزمون خی‌دوی استقلال</h3>
+<p>حالا دو متغیر <b>طبقه‌ای</b> داریم: گروه سنی و استفاده از کد. $H_0$: این دو مستقل‌اند. اگر مستقل باشند، فراوانی مورد انتظار هر خانه از حاصل‌ضرب حاشیه‌ها به دست می‌آید:</p>
+$$E_{ij}=\frac{(\text{جمع سطر } i)\times(\text{جمع ستون } j)}{N},\qquad \chi^2=\sum_{i,j}\frac{(O_{ij}-E_{ij})^2}{E_{ij}},\qquad \text{df}=(r-1)(c-1)$$
+<div class="tablewrap"><table>
+<tr><th>گروه سنی</th><th>بدون کد: O (E)</th><th>با کد: O (E)</th><th>جمع سطر</th><th>سهم هر خانه در خی‌دو</th></tr>
+<tr><td>۱۶–۲۵</td><td>۱۰۲ (۱۰۴٫۱)</td><td>۶۸ (۶۵٫۹)</td><td>۱۷۰</td><td>۰٫۰۴ + ۰٫۰۷</td></tr>
+<tr><td>۲۶–۳۵</td><td>۲۳۹ (۲۳۲٫۱)</td><td>۱۴۰ (۱۴۶٫۹)</td><td>۳۷۹</td><td>۰٫۲۰ + ۰٫۳۲</td></tr>
+<tr><td>۳۶–۴۵</td><td>۱۶۶ (۱۷۸٫۲)</td><td>۱۲۵ (۱۱۲٫۸)</td><td>۲۹۱</td><td>۰٫۸۴ + ۱٫۳۳</td></tr>
+<tr><td>۴۶ به بالا</td><td>۱۰۰ (۹۲٫۵)</td><td>۵۱ (۵۸٫۵)</td><td>۱۵۱</td><td>۰٫۶۱ + ۰٫۹۶</td></tr>
+<tr><td>جمع ستون</td><td>۶۰۷</td><td>۳۸۴</td><td>۹۹۱</td><td>$\chi^2=4.38$</td></tr>
+</table></div>
+<p>نمونه‌ی یک خانه: $E_{11}=170\times607/991=104.1$. با $\text{df}=(4-1)(2-1)=3$ مقدار بحرانی در سطح ۵٪ برابر $7.81$ است. $4.38&lt;7.81$ و $p=0.22$، پس شواهدی برای وابستگی سن و استفاده از کد نداریم. بیشترین سهم را گروه ۳۶–۴۵ دارد (۴۳٪ کد زده‌اند در برابر میانگین ۳۹٪) ولی همین هم از نوسان تصادفی جدا نیست. برای اندازه‌ی اثر از <b>Cramér's V</b> استفاده کن: $V=\sqrt{\chi^2/(N\cdot(\min(r,c)-1))}=\sqrt{4.38/991}=0.066$، یعنی رابطه تقریباً صفر.</p>
+<pre class="code">ct = pd.crosstab(df["age_group"], df["promo_used"])
+chi2, p, dof, expected = stats.chi2_contingency(ct)
+print(ct.assign(E_No=expected[:, 0].round(1), E_Yes=expected[:, 1].round(1)))
+print(f"chi2={chi2:.2f}  dof={dof}  p={p:.3f}")</pre>
+<div class="out">promo_used   No  Yes   E_No  E_Yes
+age_group
+16-25       102   68  104.1   65.9
+26-35       239  140  232.1  146.9
+36-45       166  125  178.2  112.8
+46+         100   51   92.5   58.5
+chi2=4.38  dof=3  p=0.223</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: خی‌دو روی «تعداد» کار می‌کند، نه درصد</div>
+اگر جدول <code>normalize="index"</code> (درصدها) را به <code>chi2_contingency</code> بدهی، آماره بی‌معنا می‌شود چون حجم نمونه از بین رفته است. شرط تقریبی آزمون هم این است که فراوانی مورد انتظار همه‌ی خانه‌ها حدود ۵ یا بیشتر باشد؛ اینجا کمترینش ۵۸٫۵ است. برای جدول ۲×۲ کوچک از آزمون دقیق فیشر استفاده کن. یادت باشد <code>chi2_contingency</code> روی جدول ۲×۲ به‌طور پیش‌فرض تصحیح پیوستگی Yates را اعمال می‌کند.
+</div>
+
+<h3>گام E: «اگر حاشیه‌ی سود را می‌دانستیم…»</h3>
+<p>نوت‌بوک با حاشیه‌های <b>فرضی</b> (الکترونیک ۱۵٪، پوشاک ۵۰٪، خانه ۳۵٪، کتاب ۳۰٪، ورزش ۴۰٪) هزینه را <code>gross × (1 − margin)</code> و سود را <code>revenue − cost</code> می‌گیرد. میانگین سود هر سفارش: بدون کد <b>۶۷٫۱</b> و با کد <b>۳۳٫۰</b> یورو ($p\approx10^{-36}$). در الکترونیک با کد، سود متوسط <b>۳٫۱− یورو</b> است: تخفیف ۱۰ تا ۲۰ درصدی روی کالایی با حاشیه‌ی ۱۵٪ یعنی فروش با ضرر. قاعده: <b>اگر تخفیف از حاشیه بیشتر باشد، هر فروش با کد زیان است، حتی اگر درآمد بالا برود.</b> این نتیجه کاملاً به فرض‌ها وابسته است و باید شفاف نوشته شود.</p>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="customers">
+<h2><span class="num">۵</span> مشتری‌ها، قانون ۸۰/۲۰، پیش‌بینی ساده و داشبورد <span class="tag core">نوت‌بوک · گام ۱۰ تا ۱۲</span></h2>
+<h3>۵.۱ RFM در یک جدول</h3>
+<p>به هر مشتری سه نمره‌ی ۱ تا ۴ (چارک با <code>qcut</code>) برای تازگی (R)، تکرار (F) و پول (M) داده می‌شود و با قاعده‌های ساده به پنج گروه تقسیم می‌شوند. چون خیلی‌ها فقط ۱ یا ۲ سفارش دارند و <code>qcut</code> روی مقدارهای تکراری مرز چارک نمی‌سازد، اول <code>rank(method="first")</code> می‌زنیم.</p>
+<div class="tablewrap"><table>
+<tr><th>گروه</th><th>سهم از مشتری‌ها</th><th>سهم از درآمد</th><th>میانگین روز از خرید آخر</th><th>اقدام</th></tr>
+<tr><td>قهرمان</td><td>۱۹٫۸٪</td><td>۳۶٫۰٪</td><td>۲۵</td><td>جایزه، عضویت ویژه</td></tr>
+<tr><td>در خطر ریزش</td><td>۲۱٫۲٪</td><td>۲۷٫۸٪</td><td>۱۲۵</td><td>یادآوری شخصی، پیشنهاد بازگشت</td></tr>
+<tr><td>معمولی</td><td>۳۱٫۰٪</td><td>۱۸٫۷٪</td><td>۵۸</td><td>حفظ ارتباط</td></tr>
+<tr><td>ازدست‌رفته</td><td>۱۷٫۹٪</td><td>۹٫۴٪</td><td>۲۵۴</td><td>کمپین ارزان یا رها کردن</td></tr>
+<tr><td>تازه‌وارد</td><td>۱۰٫۱٪</td><td>۸٫۱٪</td><td>۱۴</td><td>خوش‌آمد، پیشنهاد خرید دوم</td></tr>
+</table></div>
+
+<h3>۵.۲ منحنی لورنز و ضریب جینی</h3>
+<div class="box def"><div class="bt">تعریف · منحنی لورنز (Lorenz curve)</div>
+مشتری‌ها را از کم‌خرج به پرخرج مرتب کن. روی محور افقی $X_k=k/n$ (سهم تجمعی مشتری‌ها) و روی محور عمودی $Y_k=\sum_{i\le k}x_{(i)}/\sum x$ (سهم تجمعی درآمد). اگر همه مساوی خرج کنند منحنی روی قطر ۴۵ درجه می‌افتد. هرچه بیشتر زیر قطر خم شود، نابرابری بیشتر است.
+</div>
+<div class="box thm"><div class="bt">ضریب جینی با فرمول ذوزنقه‌ای</div>
+جینی = (مساحت بین قطر و منحنی) ÷ (مساحت زیر قطر) $=1-2B$ که $B$ مساحت زیر منحنی لورنز است. اگر $B$ را با ذوزنقه‌ها بین نقطه‌های $(X_{k-1},Y_{k-1})$ و $(X_k,Y_k)$ حساب کنیم:
+$$G=1-\sum_{k=1}^{n}(X_k-X_{k-1})(Y_k+Y_{k-1}),\qquad X_0=Y_0=0$$
+$G=0$ یعنی برابری کامل. برای $n$ نفر، حداکثر $G=(n-1)/n$ است (یک نفر همه را خرج کرده).
+</div>
+<div class="box ex"><div class="bt">مثال دستی: ۵ مشتری با خرج ۵، ۱۰، ۱۵، ۲۰ و ۵۰ (جمع ۱۰۰)</div>
+$Y$ تجمعی: $0.05,\ 0.15,\ 0.30,\ 0.50,\ 1.00$ و هر گام $X_k-X_{k-1}=0.2$.<br>
+$\sum=0.2\big[(0.05+0)+(0.15+0.05)+(0.30+0.15)+(0.50+0.30)+(1.00+0.50)\big]=0.2\times3.0=0.6$، پس $G=1-0.6=0.4$.<br>
+فرمول دیگری که نوت‌بوک (سلول ۱۸۴) استفاده می‌کند همان جواب را می‌دهد: $G=\frac{2\sum_i i\,x_{(i)}}{n\sum x}-\frac{n+1}{n}=\frac{2(5+20+45+80+250)}{5\times100}-1.2=1.6-1.2=0.4$.<br>
+«۲۰٪ بالا» اینجا یعنی ۱ نفر از ۵ که ۵۰٪ درآمد را دارد. حداکثر جینی ممکن با ۵ نفر ۰٫۸ است، پس ۰٫۴ «نصف حداکثر» است.
+</div>
+<pre class="code">x = np.sort(np.array([5, 10, 15, 20, 50], dtype=float))
+X = np.r_[0, np.arange(1, len(x) + 1) / len(x)]
+Y = np.r_[0, np.cumsum(x) / x.sum()]
+G = 1 - np.sum((X[1:] - X[:-1]) * (Y[1:] + Y[:-1]))
+print(Y.round(2), round(G, 3))</pre>
+<div class="out">[0.   0.05 0.15 0.3  0.5  1.  ] 0.4</div>
+<p>روی ۳۵۸ مشتری نوت‌بوک: $G=0.46$، ۲۰٪ پرخرج‌ترین‌ها <b>۴۸٫۵٪</b> درآمد را ساخته‌اند و ۵۰٪ کم‌خرج‌تر فقط ۱۷٫۳٪. پس قانون ۸۰/۲۰ اینجا در واقع «۲۰/۴۹» است: تمرکز هست ولی نه به شدت شعار پارتو. ۷۹٪ مشتری‌ها بیش از یک بار خرید کرده‌اند. ابزار زیر را با «داده‌ی نوت‌بوک» شروع کن، بعد σ را تغییر بده.</p>
+<div id="w-lorenz"></div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: جینی را روی «سفارش‌ها» حساب کردن وقتی پرسش درباره‌ی «مشتری‌ها»ست</div>
+اول باید با <code>groupby("customer_id")["revenue"].sum()</code> به سطح مشتری بروی. جینی روی تک‌سفارش‌ها نابرابری <b>اندازه‌ی سفارش</b> را می‌سنجد (الکترونیک در برابر کتاب)، نه نابرابری مشتری‌ها. سفارش‌های بدون <code>customer_id</code> را هم باید کنار بگذاری؛ نوت‌بوک همین کار را با <code>dropna(subset=["customer_id"])</code> کرده است.
+</div>
+
+<h3>۵.۳ پیش‌بینی با خط روند و سناریوی «اگر…»</h3>
+<p>نوت‌بوک روی ۱۲ درآمد ماهانه خط $\hat y=11{,}959+1{,}339\cdot\text{month}$ برازش می‌کند و برای سه ماه بعد ۲۹٬۳۶۹، ۳۰٬۷۰۸ و ۳۲٬۰۴۷ یورو با محدوده‌ی ±۱۱٬۵۱۱ پیش‌بینی می‌دهد ($\pm1.96\times$ انحراف معیار باقیمانده‌ها).</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی: خط روند روی داده‌ی فصلی جهت را هم ممکن است اشتباه بگوید</div>
+شیب مثبت عمدتاً از نوامبر و دسامبر می‌آید که در انتهای محور نشسته‌اند (بدون آن‌ها شیب ۳۸۱+). ماه بعد ژانویه است که شاخص فصلی‌اش ۷۹ است. یک پیش‌بینی «فصلی ساده» (ژانویه‌ی امسال ≈ ژانویه‌ی پارسال، حدود ۱۶ هزار) احتمالاً خیلی نزدیک‌تر از ۲۹ هزار است. خود نوت‌بوک هم هشدار داده: با ۱۲ نقطه نمی‌شود روند و فصل را از هم جدا کرد. این همان «Time is often the hidden variable» اسلاید ۳ است.
+</div>
+<p><b>سناریوی تخفیف.</b> اگر $G_n$ و $G_p$ میانگین ارزش پیش از تخفیف سفارش بدون کد و با کد باشند، $m$ حاشیه‌ی سود و $d$ درصد تخفیف، آن‌وقت سود هر سفارش با کد $G_p(m-d)$ و بدون کد $G_n m$ است. نقطه‌ی سربه‌سر وقتی است که این دو برابر شوند:</p>
+$$G_p(m-d^*)=G_n m\ \Longrightarrow\ d^*=m\left(1-\frac{G_n}{G_p}\right)$$
+<p>با $m=26.6\%$ (حاشیه‌ی وزنی کل)، $G_n=253.7$ و $G_p=288.9$: $d^*=0.266\times(1-0.878)=3.2\%$. تخفیف فعلی ۱۵٫۲٪ است، پس طبق این مدل سود هر سفارش از ۶۷٫۴ به ۳۳٫۰ یورو می‌رسد. با $m=0.5$ (تمرین ۱۱ نوت‌بوک) $d^*=6.1\%$ می‌شود. فرض پنهان مدل این است که «افزایش خرید ۱۴٪ پیش از تخفیف» به اندازه‌ی تخفیف بستگی ندارد؛ در واقعیت تخفیف کمتر احتمالاً خرید اضافه‌ی کمتری می‌آورد.</p>
+
+<h3>۵.۴ روایت: نمودار با «عنوانِ پیام» و داشبورد یک‌صفحه‌ای</h3>
+<div class="two">
+<div class="box note"><div class="bt">قاعده‌های نمودار (سلول ۱۹۱ تا ۱۹۳)</div><ul>
+<li>عنوان، <b>پیام</b> را بگوید: «الکترونیک نیمی از درآمد را می‌سازد»، نه «درآمد دسته‌ها».</li>
+<li>میله‌ها از <b>صفر</b>. نوت‌بوک نشان داد اگر محور از ۲۴۰ شروع شود، تفاوت ۲۴۵ و ۲۵۴ «بزرگ» دیده می‌شود.</li>
+<li>پای فقط برای ۲ یا ۳ تکه؛ برای ۶ شهر میله‌ی مرتب‌شده.</li>
+<li>بدون سه‌بعدی، بدون رنگ رنگین‌کمانی، با واحد روی محور.</li>
+</ul></div>
+<div class="box note"><div class="bt">قالب گزارش ۵ بخشی</div><ol>
+<li>پرسش: چه می‌خواستیم بدانیم</li>
+<li>داده: منبع، بازه، اندازه، تصمیم‌های پاک‌سازی</li>
+<li>یافته‌ها: ۳ تا ۶ واقعیت با عدد</li>
+<li>پیشنهاد: کسب‌وکار چه <i>بکند</i></li>
+<li>محدودیت‌ها: حاشیه‌ی فرضی، سوگیری انتخاب، فقط یک سال داده</li>
+</ol></div>
+</div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="mistakes">
+<h2><span class="num">۶</span> شش اشتباه رایج pandas و درمانشان <span class="tag core">نوت‌بوک · سلول ۲۰۲</span> <span class="tag book">pandas 3</span></h2>
+<p>این‌ها خطای «کدنویسی» به نظر می‌رسند ولی نتیجه‌شان خطای «تحلیل» است: عددی که در گزارش می‌رود غلط است و هیچ پیغام خطایی هم نمی‌بینی. همه روی جدول <code>toy</code> بخش ۲ اجرا شده‌اند.</p>
+
+<div class="box mistake"><div class="bt">❌ ۱. SettingWithCopy: تغییر روی «زیرجدول»</div>
+<pre class="code">sub = toy[toy["promo"] == "Yes"]
+sub["revenue"] = 0
+print(toy["revenue"].sum(), sub["revenue"].sum())</pre>
+<div class="out">2188.5 0</div>
+در pandas 2.x این خط <code>SettingWithCopyWarning</code> می‌دهد چون معلوم نیست <code>sub</code> نما (view) است یا کپی. در pandas 3 با Copy-on-Write هشداری نیست و رفتار قطعی است: <code>sub</code> عوض می‌شود و <code>toy</code> نه. <b>درمان:</b> نیتت را صریح کن. اگر زیرجدول مستقل می‌خواهی <code>sub = toy[mask].copy()</code> (نوت‌بوک بعد از حذف پرت‌ها همین کار را کرد)؛ اگر می‌خواهی جدول اصلی عوض شود، مستقیم روی آن با <code>loc</code> بنویس.
+</div>
+
+<div class="box mistake"><div class="bt">❌ ۲. انتساب زنجیره‌ای (chained assignment)</div>
+<pre class="code">toy[toy["promo"] == "Yes"]["revenue"] = 0     # ❌ هیچ اثری روی toy ندارد
+toy.loc[toy["promo"] == "Yes", "revenue"] = 0  # ✅ یک قدم، روی خود toy</pre>
+دو کروشه‌ی پشت هم یعنی دو عمل جدا: اولی یک جدول موقت می‌سازد و دومی روی همان موقتی می‌نویسد. در pandas 3 هشدار <code>ChainedAssignmentError</code> می‌گیری و جمع درآمد ۲۱۸۸٫۵ می‌ماند. با <code>loc</code> جمع به ۱۳۷۱ (فقط سفارش‌های بدون کد) می‌رسد.
+</div>
+
+<div class="box mistake"><div class="bt">❌ ۳. inplace=True و انتساب نتیجه‌اش</div>
+<pre class="code">toy = toy.sort_values("revenue", inplace=True)   # ❌ toy حالا None است
+toy["discount_pct"].fillna(0, inplace=True)       # ❌ در pandas 3 روی toy اثر ندارد
+toy = toy.sort_values("revenue")                  # ✅
+toy["discount_pct"] = toy["discount_pct"].fillna(0)  # ✅</pre>
+متدهای inplace مقدار <code>None</code> برمی‌گردانند، پس انتساب نتیجه‌شان جدول را نابود می‌کند. نسخه‌ی دوم هم شکل inplace روی ستونِ زنجیره‌ای است و در pandas 3 هشدار <code>ChainedAssignmentError</code> می‌دهد و ستون خالی می‌ماند. inplace معمولاً سریع‌تر هم نیست. نوت‌بوک هم توصیه کرده: «نتیجه را به یک متغیر بدهید».
+</div>
+
+<div class="box mistake"><div class="bt">❌ ۴. ستون عددی که در واقع متن است (dtype object یا str)</div>
+<pre class="code">p = pd.Series(["100", "20", "9", "12.5"])
+print(p.sum())                  # الحاق رشته‌ها، نه جمع
+print(p.sort_values().tolist())  # ترتیب الفبایی
+print(pd.to_numeric(p).sum())</pre>
+<div class="out">10020912.5
+['100', '12.5', '20', '9']
+141.5</div>
+<code>p.mean()</code> هم <code>TypeError</code> می‌دهد. در داده‌ی نوت‌بوک یک علامت دلار کافی بود تا کل ستون <code>Unit_Price</code> متن شود. در pandas 2 نوع ستون <code>object</code> نشان داده می‌شود و در pandas 3 <code>str</code>. <b>درمان:</b> همیشه <code>dtypes</code> را نگاه کن و با <code>pd.to_numeric(..., errors="coerce")</code> تبدیل کن، بعد تعداد NaNهای تازه را بشمار.
+</div>
+
+<div class="box mistake"><div class="bt">❌ ۵. groupby بدون reset_index: کلید گم می‌شود</div>
+<pre class="code">res = toy.groupby("city")["revenue"].sum()
+res["city"]                      # KeyError: 'city'  ← city حالا ایندکس است
+res2 = toy.groupby(["city", "promo"])["revenue"].sum()   # MultiIndex دوسطحی
+ok = toy.groupby("city", as_index=False)["revenue"].sum()   # ✅ city ستون می‌ماند</pre>
+نتیجه‌ی <code>groupby</code> یک <code>Series</code> با کلید در ایندکس است. اگر بخواهی آن را <code>merge</code> کنی، روی محور نمودار بگذاری یا با نام ستون صدایش کنی، خطا یا رفتار عجیب می‌بینی. با دو کلید هم MultiIndex می‌گیری؛ یا <code>unstack()</code> کن (کاری که نوت‌بوک برای «دسته × کد» کرد) یا <code>reset_index()</code>.
+</div>
+
+<div class="box mistake"><div class="bt">❌ ۶. انفجار سطرها در merge</div>
+<pre class="code">city_info = pd.DataFrame({"city": ["Berlin", "Berlin", "Munich", "Hamburg"],
+                          "year": [2023, 2024, 2024, 2024],
+                          "population_k": [3650, 3700, 1500, 1900]})
+m = toy.merge(city_info, on="city", how="left")
+print(len(toy), len(m), m["revenue"].sum(), toy["revenue"].sum())</pre>
+<div class="out">12 17 2985.0 2188.5</div>
+برلین دو سطر در جدول راست دارد، پس هر ۵ سفارش برلین دو بار تکرار شد: ۱۲ سطر ← ۱۷ سطر و درآمد کل ۷۹۶٫۵ یورو (درآمد برلین) بیشتر از واقع. هیچ خطایی هم نمی‌بینی. <b>درمان:</b> <code>validate="m:1"</code> که اینجا <code>MergeError: Merge keys are not unique in right dataset</code> می‌دهد، و همیشه چاپ <code>len</code> پیش و پس از merge.
+</div>
+
+<div class="tablewrap"><table>
+<tr><th>اشتباه دیگر</th><th>مشکل</th><th>راه درست</th></tr>
+<tr><td><code>a &gt; 1 and b &lt; 2</code> روی ستون‌ها</td><td><code>ValueError</code> (ابهام درستی یک Series)</td><td><code>(a &gt; 1) &amp; (b &lt; 2)</code> با پرانتز</td></tr>
+<tr><td><code>df["x"] == np.nan</code></td><td>همیشه False</td><td><code>df["x"].isna()</code></td></tr>
+<tr><td>groupby روی ستون <code>category</code> بدون <code>observed=True</code></td><td>گروه‌های خالی هم ظاهر می‌شوند</td><td><code>groupby(..., observed=True)</code></td></tr>
+<tr><td><code>apply(axis=1)</code> برای حساب ساده</td><td>بسیار کند</td><td>عملیات برداری روی کل ستون</td></tr>
+<tr><td><code>to_datetime</code> بدون <code>format</code></td><td>«03/04/2024» هم ۳ آوریل است هم ۴ مارس</td><td>قالب را با صاحب داده تأیید و <code>format=</code> بده</td></tr>
+</table></div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="exam">
+<h2><span class="num">۷</span> آزمون جامع بخش الف: هشت مسئله به سبک میان‌ترم <span class="tag exam">امتحانی</span></h2>
+<p>هر مسئله یک سناریو، یک تصمیم و یک محاسبه‌ی کوچک دارد، مثل سؤال‌های تشریحی شریف. اول بدون نگاه به راه‌حل حل کن (پیشنهاد: ۱۰۰ دقیقه برای هر هشت مسئله) و بعد با راه‌حل کامل مقایسه کن. شماره‌ی جلسه‌ی مرتبط کنار هر مسئله آمده است.</p>
+
+<!-- P1 -->
+<div class="exercise"><div class="et">مسئله‌ی ۱ · قاب‌بندی مسئله و فرضیه (جلسه‌ی ۱ و ۴)<span class="lvl l2">· 🟡 مهارتی</span></div>
+مدیر محصول یک اپ اسنپ‌مانند: «سفرهای تکمیل‌شده‌ی شهریور ۱۲٪ افت کرده. فوراً کمپین تخفیف بزنید.» داده‌ی اسلاید ۳:
+<div class="tablewrap"><table>
+<tr><th>شاخص</th><th>مرداد</th><th>شهریور</th></tr>
+<tr><td>درخواست سفر</td><td>۶۲۵٬۰۰۰</td><td>۶۰۰٬۰۰۰</td></tr>
+<tr><td>سفر تکمیل‌شده</td><td>۵۰۰٬۰۰۰</td><td>۴۴۰٬۰۰۰</td></tr>
+<tr><td>سفر لغوشده</td><td>۷۵٬۰۰۰</td><td>۱۰۵٬۰۰۰</td></tr>
+<tr><td>درخواست بدون راننده</td><td>۵۰٬۰۰۰</td><td>۵۵٬۰۰۰</td></tr>
+<tr><td>میانگین کرایه (هزار تومان)</td><td>۱۲۰</td><td>۱۳۸</td></tr>
+<tr><td>میانگین زمان انتظار (دقیقه)</td><td>۵٫۲</td><td>۷٫۸</td></tr>
+<tr><td>رانندگان فعال</td><td>۱۸٬۰۰۰</td><td>۱۶٬۵۰۰</td></tr>
+</table></div>
+(الف) KPI اصلی و یک KPI محافظ (guardrail) پیشنهاد کن و پرسش را SMART بنویس. (ب) افت ۶۰ هزار سفر را به «اثر تقاضا» و «اثر نرخ تکمیل» تجزیه کن. (ج) سه فرضیه‌ی رقیب بنویس و برای هر کدام داده‌ی لازم برای رد یا تأیید را بگو. (د) چرا «فوراً تخفیف» تصمیم عجولانه است؟
+<details><summary>راه‌حل</summary>
+<b>(الف)</b> سفر تکمیل‌شده = درخواست × نرخ تکمیل. پس KPI اصلی <b>نرخ تکمیل</b> (تکمیل‌شده ÷ درخواست) است و تعداد درخواست شاخص تقاضاست. KPI محافظ: زمان انتظار یا سهم لغو، تا راه‌حلی که تکمیل را بالا می‌برد تجربه‌ی مشتری را خراب نکند. پرسش SMART: «چه بخشی از افت ۱۲٪ سفرهای تکمیل‌شده‌ی شهریور نسبت به مرداد ناشی از کاهش درخواست و چه بخشی ناشی از کاهش نرخ تکمیل بوده، و این افت در کدام شهرها و ساعت‌ها متمرکز است؟»<br>
+<b>(ب)</b> نرخ تکمیل: مرداد $500/625=80\%$، شهریور $440/600=73.3\%$.
+اثر تقاضا (با نرخ قدیم): $(600-625)\times0.80=-20$ هزار. اثر نرخ (با تقاضای جدید): $600\times(0.733-0.800)=-40$ هزار. جمع: $-60$ هزار. پس <b>دوسوم افت از تبدیل درخواست به سفر است</b> و فقط یک‌سوم از تقاضا. نرخ لغو از ۱۲٪ به ۱۷٫۵٪ رسیده (۳۰ هزار لغو بیشتر) و «بدون راننده» از ۸٪ به ۹٫۲٪.<br>
+<b>(ج)</b> ۱) <i>کمبود عرضه:</i> رانندگان ۸٫۳٪ کم شده‌اند، درخواست به‌ازای هر راننده از ۳۴٫۷ به ۳۶٫۴ رسیده و انتظار ۵۰٪ بیشتر شده. داده: رانندگان فعال و ساعت آنلاین به تفکیک شهر و ساعت، و رابطه‌ی زمان انتظار با لغو. ۲) <i>قیمت:</i> کرایه ۱۵٪ بالا رفته، پس مسافر بعد از دیدن قیمت لغو می‌کند. داده: لغو به تفکیک «چه کسی لغو کرد» (مسافر یا راننده) و «چه زمانی» (قبل یا بعد از تخصیص)، و کشش نسبت به تغییر قیمت. ۳) <i>مشکل فنی یا رویداد بیرونی:</i> مثلاً نسخه‌ی تازه‌ی اپ یا یک رویداد شهری. داده: لغو به تفکیک نسخه‌ی اپ و شهر و روز، و تقویم رویدادها. یک چک اولیه هم لازم است: هر دو ماه ۳۱ روزه‌اند، پس تعداد روز توضیح نیست، ولی ترکیب روزهای هفته و تعطیلات را باید چک کرد.<br>
+<b>(د)</b> تخفیف به تقاضا حمله می‌کند در حالی که بیشتر افت از سمت تبدیل و احتمالاً عرضه است. اگر مشکل کمبود راننده باشد، تخفیف تقاضا را بالا می‌برد، انتظار را بیشتر و لغو را بیشتر می‌کند. اول باید بخش‌بندی کرد (شهر، ساعت، نوع کاربر)، بعد اقدام را با آزمایش و شاخص موفقیت تعریف کرد. «There is rarely a single reason».
+</details></div>
+
+<!-- P2 -->
+<div class="exercise"><div class="et">مسئله‌ی ۲ · تشخیص کیفیت داده (جلسه‌ی ۲)<span class="lvl l1">· 🟢 پایه</span></div>
+این بخش از خروجی سامانه‌ی سفر را تحویل گرفته‌ای:
+<div class="tablewrap"><table class="data">
+<tr><th>ride_id</th><th>request_time</th><th>city</th><th>fare_toman</th><th>wait_min</th><th>status</th><th>rating</th></tr>
+<tr><td>R101</td><td>2026-09-02 08:15</td><td>Tehran</td><td>120000</td><td>4.5</td><td>completed</td><td>5</td></tr>
+<tr><td>R102</td><td>2026-09-02 08:17</td><td class="bad">tehran</td><td class="bad">"135,000"</td><td>6.0</td><td>completed</td><td class="bad">NaN</td></tr>
+<tr><td>R103</td><td class="bad">02/09/2026 08:20</td><td class="bad">TEHRAN</td><td>98000</td><td class="bad">-3</td><td>completed</td><td>4</td></tr>
+<tr><td>R104</td><td>2026-09-02 08:21</td><td>Shiraz</td><td>0</td><td>7.5</td><td>cancelled</td><td>NaN</td></tr>
+<tr><td class="bad">R102</td><td>2026-09-02 08:17</td><td>tehran</td><td>"135,000"</td><td>6.0</td><td>completed</td><td>NaN</td></tr>
+<tr><td>R105</td><td>2026-09-02 08:30</td><td class="bad">"Shiraz "</td><td class="bad">2400000</td><td>5.0</td><td>completed</td><td>5</td></tr>
+<tr><td>R106</td><td>2026-09-02 08:31</td><td>Isfahan</td><td>110000</td><td class="bad">95</td><td>cancelled</td><td>NaN</td></tr>
+<tr><td>R107</td><td>2026-09-02 08:40</td><td class="bad">اصفهان</td><td>105000</td><td>8.0</td><td>completed</td><td>3</td></tr>
+</table></div>
+(الف) هر مشکل را نام ببر و بگو کدام بعد کیفیت (completeness، validity، consistency، uniqueness، accuracy، timeliness) را نقض می‌کند. (ب) برای هر کدام تصمیم بگیر: اصلاح، NaN، پرچم، حذف یا پرسیدن از صاحب داده. (ج) بعد از تصمیم‌هایت میانگین و میانه‌ی زمان انتظار سفرهای <b>تکمیل‌شده</b> را حساب کن و با نسخه‌ی «پاک‌نشده» مقایسه کن. (د) دو خانه‌ی سالم را که شاید به‌اشتباه کثیف بدانی پیدا کن.
+<details><summary>راه‌حل</summary>
+<b>(الف و ب)</b>
+<ul>
+<li>R102 تکراری (uniqueness): حذف نسخه‌ی دوم با <code>drop_duplicates()</code> و بعد چک <code>ride_id.is_unique</code>.</li>
+<li>شهر ناهمسان: tehran، TEHRAN، «Shiraz » با فاصله و «اصفهان» فارسی (consistency). <code>str.strip().str.title()</code> و یک دیکشنری مترادف <code>{"اصفهان": "Isfahan"}</code>.</li>
+<li>کرایه‌ی متنی با ویرگول (validity، نوع اشتباه): حذف ویرگول و <code>pd.to_numeric(errors="coerce")</code>.</li>
+<li>تاریخ با دو قالب (consistency): «02/09/2026» هم ۲ سپتامبر است هم ۹ فوریه. چون بقیه‌ی ردیف‌ها ۲ سپتامبرند احتمالاً روز/ماه/سال است، ولی باید از صاحب داده پرسید و بعد با <code>format=</code> دو بار تبدیل کرد (مثل نوت‌بوک).</li>
+<li>انتظار ۳− دقیقه (validity، ناممکن): NaN و ستون پرچم <code>wait_invalid</code>؛ ردیف را حذف نکن چون بقیه‌ی اطلاعات سفر درست است.</li>
+<li>کرایه‌ی ۲٬۴۰۰٬۰۰۰ (احتمالاً accuracy): پرت است ولی شاید یک صفر اضافه (۲۴۰ هزار) یا سفر بین‌شهری با ضریب افزایشی باشد. با مسافت و کرایه‌ی میانه‌ی همان مسیر مقایسه کن، پرچم بزن و بپرس. «Investigate first».</li>
+<li>انتظار ۹۵ دقیقه در سفر لغوشده: پرت ولی ممکن، و شاید جالب‌ترین مشاهده (مسافری که خیلی منتظر ماند و لغو کرد). نگه دار و پرچم بزن.</li>
+<li>rating خالی برای R102 که تکمیل شده: گمشده‌ی واقعی (completeness). خالی بماند یا پرچم <code>no_rating</code>؛ با میانگین پر نکن.</li>
+</ul>
+<b>(ج)</b> سفرهای تکمیل‌شده‌ی یکتا: R101 (۴٫۵)، R102 (۶٫۰)، R103 (NaN)، R105 (۵٫۰)، R107 (۸٫۰). میانگین $=(4.5+6+5+8)/4=5.875$ و میانه $=(5+6)/2=5.5$. نسخه‌ی پاک‌نشده (با تکراری و ۳−): $\{4.5,6,-3,6,5,8\}$، میانگین $26.5/6=4.42$ و میانه $5.5$. میانگین ۲۵٪ اشتباه شد ولی میانه نه: میانه در برابر خطای تک‌مقداری مقاوم است.<br>
+<b>(د)</b> کرایه‌ی ۰ برای R104 و rating خالی برای سفرهای لغوشده هر دو <b>ساختاری</b> و درست‌اند: سفر لغوشده کرایه و امتیاز ندارد. پرکردن rating آن‌ها با میانگین، نظری جعل می‌کند که اصلاً معنا ندارد. «Missing values may carry information».
+</details></div>
+
+<!-- P3 -->
+<div class="exercise"><div class="et">مسئله‌ی ۳ · انتخاب کدگذاری (جلسه‌ی ۳ و ۵)<span class="lvl l2">· 🟡 مهارتی</span></div>
+برای پیش‌بینی «لغو خواهد شد؟» در لحظه‌ی درخواست، این ستون‌ها را داری: <code>city</code> (تهران، مشهد، اصفهان، شیراز، تبریز)، <code>service</code> (اکو &lt; پلاس &lt; ویژه)، <code>driver_id</code> (۸٬۰۰۰ راننده)، <code>request_hour</code> (۰ تا ۲۳)، <code>payment</code> (نقد یا کیف پول). دو مدل: رگرسیون لجستیک و جنگل تصادفی.
+(الف) برای هر ستون کدگذاری مناسب هر مدل را بگو. (ب) هم‌کار تو city را با <code>LabelEncoder</code> به ۰ تا ۴ تبدیل کرده. برای لجستیک چه فرض پنهانی ساخته؟ (ج) فاصله‌ی ساعت ۲۳ و ۱ را در کدگذاری خام و در کدگذاری سینوسی-کسینوسی حساب کن. (د) target encoding برای <code>driver_id</code> چه خطری دارد و چطور امنش می‌کنی؟
+<details><summary>راه‌حل</summary>
+<b>(الف)</b>
+<div class="tablewrap"><table>
+<tr><th>ستون</th><th>لجستیک</th><th>جنگل تصادفی</th></tr>
+<tr><td>city (اسمی)</td><td>one-hot؛ بدون منظم‌سازی ۴ ستون با <code>drop_first</code> (تله‌ی متغیر مجازی)</td><td>one-hot یا کد عددی (درخت آسیب کمتری می‌بیند ولی ترتیب هنوز ساختگی است)</td></tr>
+<tr><td>service (ترتیبی)</td><td>نگاشت ۰، ۱، ۲ فقط اگر اثر یکنوا باشد؛ وگرنه one-hot</td><td>نگاشت ترتیبی</td></tr>
+<tr><td>driver_id (۸۰۰۰ سطح)</td><td>one-hot نه (۸۰۰۰ ستون پراکنده). به‌جایش ویژگی رفتاری راننده تا <b>لحظه‌ی درخواست</b>: نرخ لغو گذشته، تعداد سفر گذشته</td><td>همان</td></tr>
+<tr><td>request_hour (چرخه‌ای)</td><td>$\sin(2\pi h/24)$ و $\cos(2\pi h/24)$</td><td>عدد خام هم کار می‌کند (درخت مرز ۲۳/۰ را با دو برش می‌گیرد)</td></tr>
+<tr><td>payment (دودویی)</td><td>۰ و ۱</td><td>۰ و ۱</td></tr>
+</table></div>
+<b>(ب)</b> فرض می‌کند تبریز (۴) «چهار واحد بیشتر» از تهران (۰) است و اثر شهر روی log-odds لغو خطی و به همین ترتیب الفبایی است. یعنی ترتیب و فاصله‌ی ساختگی. «Encoding is a modeling decision».<br>
+<b>(ج)</b> خام: $|23-1|=22$، در حالی که این دو ساعت دو ساعت از هم فاصله دارند. سینوسی: فاصله‌ی اقلیدسی دو نقطه روی دایره‌ی واحد $2\sin(\pi\Delta/24)$ است؛ با $\Delta=2$ می‌شود $2\sin(\pi/12)=0.518$، دقیقاً همان فاصله‌ی ساعت ۱۱ و ۱۳. مقدارها: ساعت ۲۳: $(\sin,\cos)=(-0.259,\ 0.966)$؛ ساعت ۱: $(0.259,\ 0.966)$.<br>
+<b>(د)</b> اگر میانگین لغو هر راننده را روی کل داده حساب کنی، برچسب همان سفر (و سفرهای آینده) داخل ویژگی می‌رود: نشت هدف. امن‌سازی: فقط روی داده‌ی آموزش و به‌صورت out-of-fold (برای هر fold از foldهای دیگر)، با هموارسازی به سمت میانگین کل برای راننده‌های کم‌سفر، و در مسئله‌ی زمانی فقط از سفرهای <b>قبل</b> از لحظه‌ی درخواست (<code>shift</code> و پنجره‌ی گذشته).
+</details></div>
+
+<!-- P4 -->
+<div class="exercise"><div class="et">مسئله‌ی ۴ · EDA و دام سیمپسون (جلسه‌ی ۴)<span class="lvl l3">· 🔴 تحلیلی</span></div>
+نسخه‌ی جدید اپ (B) در دو شهر منتشر شده. نرخ تکمیل:
+<div class="tablewrap"><table>
+<tr><th>شهر</th><th>نسخه‌ی A: تکمیل / درخواست</th><th>نسخه‌ی B: تکمیل / درخواست</th></tr>
+<tr><td>تهران</td><td>۳۰۰ / ۵۰۰</td><td>۱٬۹۵۰ / ۳٬۰۰۰</td></tr>
+<tr><td>شیراز</td><td>۱٬۸۰۰ / ۲٬۰۰۰</td><td>۴۷۰ / ۵۰۰</td></tr>
+</table></div>
+مدیر فنی: «B نرخ تکمیل کل را از ۸۴٪ به ۶۹٪ رسانده؛ برش گردانیم.» (الف) نرخ کل و نرخ هر شهر را حساب کن. (ب) تناقض را توضیح بده. (ج) یک مقایسه‌ی منصفانه با وزن‌های مشترک بساز. (د) هنوز چه چیزی نمی‌دانیم؟
+<details><summary>راه‌حل</summary>
+<b>(الف)</b> کل: A $=2100/2500=84\%$، B $=2420/3500=69.1\%$. تهران: A ۶۰٪، B ۶۵٪. شیراز: A ۹۰٪، B ۹۴٪. B در <b>هر دو</b> شهر بهتر است ولی در کل بدتر: پارادوکس سیمپسون.<br>
+<b>(ب)</b> متغیر مخدوش‌کننده «شهر» است. تهران ذاتاً نرخ تکمیل پایین‌تری دارد (ترافیک، کمبود راننده) و ۸۶٪ درخواست‌های B از تهران آمده‌اند ($3000/3500$)، در حالی که ۸۰٪ درخواست‌های A از شیراز. میانگین کل B را ترکیب شهرها پایین کشیده، نه خود نسخه. «Averages hide segments».<br>
+<b>(ج)</b> استانداردسازی با وزن مشترک (کل درخواست هر شهر: تهران ۳۵۰۰، شیراز ۲۵۰۰، جمع ۶۰۰۰):
+A $=(0.60\times3500+0.90\times2500)/6000=72.5\%$ و B $=(0.65\times3500+0.94\times2500)/6000=77.1\%$. با ترکیب یکسان، B حدود ۴٫۶ واحد درصد بهتر است.<br>
+<b>(د)</b> چرا B بیشتر در تهران منتشر شد؟ اگر مثلاً اول به کاربران پرمشکل داده شده، باز هم مقایسه آلوده است. داده مشاهده‌ای است و همبستگی ≠ علیت. راه قطعی آزمایش A/B تصادفی در هر شهر است، به علاوه‌ی بررسی بخش‌های ریزتر (ساعت، نوع کاربر) و حجم نمونه.
+</details></div>
+
+<!-- P5 -->
+<div class="exercise"><div class="et">مسئله‌ی ۵ · انتخاب مقیاس برای هر مدل (جلسه‌ی ۵)<span class="lvl l2">· 🟡 مهارتی</span></div>
+ویژگی‌ها: <code>distance_km</code> (میانگین ۱۰، انحراف معیار ۴، تقریباً متقارن)، <code>fare_toman</code> (میانه ۱۲۰٬۰۰۰، $Q_1=80{,}000$، $Q_3=180{,}000$، میانگین ۱۵۰٬۰۰۰، انحراف معیار ۴۰٬۰۰۰ برای سفرهای عادی ولی با دم سنگین تا ۲٬۰۰۰٬۰۰۰ در ساعت‌های اوج)، <code>rating</code> (۱ تا ۵).
+(الف) سه سفر داریم: A = (۵ کیلومتر، ۹۰ هزار)، B = (۲۵ کیلومتر، ۹۵ هزار)، C = (۶ کیلومتر، ۱۴۰ هزار). در فضای خام و در فضای استانداردشده (با σ بالا) نزدیک‌ترین همسایه‌ی A کیست؟ (ب) برای سفری با کرایه‌ی ۲ میلیون، Z-score و Robust score را حساب کن. (ج) برای kNN، K-means، جنگل تصادفی، لجستیک با منظم‌سازی L2 و PCA بگو مقیاس لازم است یا نه و کدام. (د) scaler را روی کدام داده fit می‌کنی؟
+<details><summary>راه‌حل</summary>
+<b>(الف)</b> خام (تومان): $d(A,B)=\sqrt{20^2+5000^2}\approx5000$ و $d(A,C)=\sqrt{1^2+50000^2}\approx50000$. پس B نزدیک‌تر است، فقط چون کرایه به تومان است و کیلومتر عملاً اثری ندارد. استانداردشده: $d(A,B)=\sqrt{(20/4)^2+(5000/40000)^2}=5.00$ و $d(A,C)=\sqrt{(1/4)^2+(50000/40000)^2}=1.27$. حالا C (سفر کوتاه شهری مشابه) نزدیک‌ترین است. واحد اندازه‌گیری تصمیم مدل را عوض کرده بود.<br>
+<b>(ب)</b> $z=(2{,}000{,}000-150{,}000)/40{,}000=46.3$ و Robust $=(2{,}000{,}000-120{,}000)/(180{,}000-80{,}000)=18.8$. در StandardScaler خود این دم سنگین میانگین و σ را بزرگ می‌کند و بقیه‌ی سفرها در یک بازه‌ی باریک فشرده می‌شوند. RobustScaler با میانه و IQR این مشکل را ندارد. گزینه‌ی دیگر $\log(1+\text{fare})$ پیش از استانداردسازی است.<br>
+<b>(ج)</b> kNN و K-means: حتماً (مبتنی بر فاصله)؛ Robust برای کرایه یا لگاریتم + Standard. جنگل تصادفی: لازم نیست (برش‌ها به تبدیل یکنوا حساس نیستند). لجستیک L2: لازم است، چون جریمه روی اندازه‌ی ضریب است و ضریبِ ویژگیِ با واحد بزرگ ناعادلانه کوچک می‌شود. PCA: وقتی واحدها فرق دارند حتماً استاندارد (مسئله‌ی ۶).<br>
+<b>(د)</b> فقط روی داده‌ی آموزش، و در اعتبارسنجی متقاطع داخل هر fold. یعنی داخل <code>Pipeline</code> تا <code>cross_val_score</code> در هر fold از نو fit کند. fit روی کل داده یعنی میانگین و σ داده‌ی آزمون به آموزش نشت کرده است.
+</details></div>
+
+<!-- P6 -->
+<div class="exercise"><div class="et">مسئله‌ی ۶ · PCA روی کوواریانس ۲×۲ (جلسه‌ی ۶)<span class="lvl l3">· 🔴 تحلیلی</span></div>
+دو ویژگی مرکزشده با ماتریس کوواریانس $\Sigma=\begin{pmatrix}5&amp;2\\2&amp;2\end{pmatrix}$.
+(الف) مقدارهای ویژه و جهت مؤلفه‌ی اول را پیدا کن. (ب) نسبت واریانس تبیین‌شده‌ی PC1 چقدر است و با قاعده‌ی «۸۵٪» چند مؤلفه نگه می‌داری؟ (ج) نقطه‌ی مرکزشده‌ی $x=(1,2)$ را روی PC1 تصویر کن، بازسازی کن و خطای بازسازی را حساب کن. (د) اگر ویژگی اول را در ۱۰ ضرب کنیم (تغییر واحد)، PC1 چه می‌شود؟ PCA روی ماتریس همبستگی چه جوابی می‌دهد؟
+<details><summary>راه‌حل</summary>
+<b>(الف)</b> $\det(\Sigma-\lambda I)=(5-\lambda)(2-\lambda)-4=\lambda^2-7\lambda+6=0$، پس $\lambda_1=6$ و $\lambda_2=1$ (جمعشان ۷ برابر trace است). بردار ویژه‌ی $\lambda_1$: $(5-6)v_1+2v_2=0\Rightarrow v_2=v_1/2$، پس $u_1=(2,1)/\sqrt5=(0.894,\ 0.447)$ و $u_2=(-1,2)/\sqrt5$ (عمود بر آن).<br>
+<b>(ب)</b> $6/7=85.7\%$. با قاعده‌ی ۸۵٪ یک مؤلفه کافی است، هرچند در مرز است. اسلاید ۵ هم می‌پرسد: آیا جهت کم‌واریانس همیشه برای پیش‌بینی بی‌اهمیت است؟ نه؛ PCA برچسب را نمی‌بیند.<br>
+<b>(ج)</b> $z_1=x\cdot u_1=(2+2)/\sqrt5=1.789$. بازسازی: $\hat x=z_1u_1=1.789\times(0.894,0.447)=(1.6,\ 0.8)$. خطا: $x-\hat x=(-0.6,\ 1.2)$ و $\|x-\hat x\|^2=0.36+1.44=1.8$، که دقیقاً $z_2^2=(3/\sqrt5)^2=1.8$ است: اطلاعات ازدست‌رفته همان مؤلفه‌ی دورریخته است.<br>
+<b>(د)</b> $\Sigma'=\begin{pmatrix}500&amp;20\\20&amp;2\end{pmatrix}$ با مقدارهای ویژه‌ی تقریبی $500.8$ و $1.2$. PC1 تقریباً خود ویژگی اول است ($u_1\approx(0.999,\ 0.040)$) و ۹۹٫۸٪ واریانس را «توضیح» می‌دهد، فقط به خاطر واحد. همبستگی دو ویژگی $r=2/\sqrt{5\times2}=0.632$ است و ماتریس همبستگی مقدارهای ویژه‌ی $1\pm r=1.632$ و $0.368$ دارد: PC1 حالا ۸۱٫۶٪ را توضیح می‌دهد و در جهت $(1,1)/\sqrt2$ است. واحد نباید جواب را عوض کند، پس وقتی واحدها فرق دارند استاندارد کن، آن هم fit روی train.
+</details></div>
+
+<!-- P7 -->
+<div class="exercise"><div class="et">مسئله‌ی ۷ · بازبینی نشت (red-team) یک پایپ‌لاین (جلسه‌ی ۷ و ۸)<span class="lvl l3">· 🔴 تحلیلی</span></div>
+هم‌تیمی‌ات برای «آیا این سفر لغو می‌شود؟» (لحظه‌ی پیش‌بینی: وقتی مسافر درخواست می‌دهد؛ شیوع لغو حدود ۱۲٪) این کد را نوشته و گزارش داده «accuracy برابر ۰٫۹۷، آماده‌ی استقرار». حداقل شش مشکل پیدا کن، هر کدام را به یکی از شش پرسش red-team اسلاید ۶ وصل کن و طراحی درست را بنویس.
+<pre class="code">rides = pd.read_csv("rides_2025.csv")                      # همه‌ی سفرهای ۲۰۲۵
+rides["user_cancel_rate"] = rides.groupby("user_id")["cancelled"].transform("mean")
+X = rides[["distance_km", "eta_min", "fare", "user_cancel_rate",
+           "refund_status", "driver_rating_after_trip", "city"]]
+y = rides["cancelled"]
+X = pd.get_dummies(X)
+X = X.fillna(X.median())
+X = StandardScaler().fit_transform(X)
+X, y = SMOTE().fit_resample(X, y)
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=0)
+for params in grid:                                        # ۳۰ ترکیب
+    model = LogisticRegression(**params).fit(X_tr, y_tr)
+    print(params, accuracy_score(y_te, model.predict(X_te)))</pre>
+<details><summary>راه‌حل</summary>
+<ol>
+<li><b>ویژگی‌های بعد از لحظه‌ی پیش‌بینی</b> (پرسش ۱: هر ویژگی در لحظه‌ی پیش‌بینی در دسترس بود؟): <code>refund_status</code> بعد از لغو ساخته می‌شود و <code>driver_rating_after_trip</code> بعد از سفر. «Time travel».</li>
+<li><b>نشت هدف در <code>user_cancel_rate</code></b> (پرسش ۱ و ۳): میانگین <code>cancelled</code> روی کل سال، شامل همین سفر و سفرهای آینده‌ی کاربر. درستش: نرخ لغو گذشته تا <b>قبل</b> از این درخواست (مثلاً <code>shift</code> + میانگین تجمعی روی سفرهای مرتب‌شده بر اساس زمان).</li>
+<li><b>برچسب نهایی</b> (پرسش ۲): سفرهای انتهای بازه که هنوز وضعیت نهایی ندارند، یا لغوهایی که بعداً اصلاح می‌شوند، باید با یک snapshot زمانی کنار گذاشته شوند.</li>
+<li><b>تقسیم تصادفی سطری</b> (پرسش ۳): یک کاربر هم در train است هم در test (حفظ‌کردن هویت) و آینده در train است. درست: تقسیم <b>زمانی</b> با فاصله (gap) و در صورت نیاز گروهی بر اساس <code>user_id</code> (<code>GroupKFold</code>).</li>
+<li><b>پیش‌پردازش روی کل داده</b> (پرسش ۴): <code>fillna(median)</code> و <code>StandardScaler</code> قبل از تقسیم fit شده‌اند. درست: همه داخل <code>Pipeline</code>/<code>ColumnTransformer</code> و fit فقط روی train.</li>
+<li><b>SMOTE قبل از تقسیم</b> (پرسش ۵): نمونه‌های مصنوعی ساخته‌شده از سفرهای test وارد train شده‌اند و مهم‌تر از آن، test حالا شیوع ۵۰٪ دارد و واقعیت استقرار (۱۲٪) را نشان نمی‌دهد. درست: متعادل‌سازی فقط روی foldهای آموزش، یا <code>class_weight="balanced"</code>؛ test با توزیع طبیعی.</li>
+<li><b>انتخاب از بین ۳۰ ترکیب با test</b> (پرسش ۶): test در تصمیم‌گیری دخالت کرده، پس دیگر برآورد بی‌طرف نیست. درست: انتخاب با CV یا validation و test «قفل‌شده» (lockbox) فقط برای گزارش نهایی.</li>
+<li><b>معیار:</b> روی داده‌ی طبیعی، مدل «همیشه بگو لغو نمی‌شود» accuracy ۸۸٪ و recall صفر دارد. باید PR-AUC (خط پایه‌ی آن ≈ شیوع ۰٫۱۲)، precision و recall در آستانه‌ی انتخابی و هزینه‌ی کسب‌وکار گزارش شود، همراه با پراکندگی بین foldها و برش‌ها (شهر، کاربر جدید).</li>
+</ol>
+اسکلت درست:
+<pre class="code">rides = rides.sort_values("request_time")
+rides["user_past_cancel_rate"] = (rides.groupby("user_id")["cancelled"]
+                                   .transform(lambda s: s.shift(1).expanding().mean()))
+features = ["distance_km", "eta_min", "fare", "user_past_cancel_rate", "city"]
+train = rides[rides["request_time"] &lt; "2025-10-01"]
+test  = rides[rides["request_time"] &gt;= "2025-10-15"]          # gap دوهفته‌ای
+pre = ColumnTransformer([
+    ("num", Pipeline([("imp", SimpleImputer(strategy="median")),
+                      ("sc", StandardScaler())]), ["distance_km", "eta_min", "fare", "user_past_cancel_rate"]),
+    ("cat", OneHotEncoder(handle_unknown="ignore"), ["city"])])
+pipe = Pipeline([("pre", pre), ("clf", LogisticRegression(class_weight="balanced", max_iter=1000))])
+search = GridSearchCV(pipe, grid, cv=TimeSeriesSplit(5), scoring="average_precision")
+search.fit(train[features], train["cancelled"])                 # test دست‌نخورده می‌ماند</pre>
+</details></div>
+
+<!-- P8 -->
+<div class="exercise"><div class="et">مسئله‌ی ۸ · آستانه و precision–recall (جلسه‌ی ۸)<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+روی ۲۰ درخواست اعتبارسنجی، مدل این امتیازها را داده است (۱ = واقعاً لغو شد):
+<div class="tablewrap"><table class="data">
+<tr><th>score</th><td>.92</td><td>.81</td><td>.74</td><td>.66</td><td>.58</td><td>.52</td><td>.47</td><td>.44</td><td>.38</td><td>.35</td><td>.31</td><td>.27</td><td>.24</td><td>.22</td><td>.18</td><td>.15</td><td>.12</td><td>.09</td><td>.06</td><td>.03</td></tr>
+<tr><th>y</th><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+</table></div>
+هزینه‌ها (مثال اسلاید ۶): هشدار اشتباه ۱ واحد، لغوِ ازدست‌رفته ۸ واحد.
+(الف) شیوع و خط پایه‌ی منحنی PR چقدر است؟ (ب) در آستانه‌های ۰٫۲، ۰٫۴ و ۰٫۶ (با قاعده‌ی score ≥ t) precision، recall، F1 و هزینه را حساب کن. (ج) با معیار F1 و با معیار هزینه کدام آستانه را انتخاب می‌کنی؟ (د) اگر امتیازها کالیبره باشند، آستانه‌ی بهینه‌ی نظری چیست؟ (هـ) تیم عملیات فقط ظرفیت تماس با ۴ درخواست از هر ۲۰ را دارد. چه می‌کنی؟ (و) چرا آستانه را روی test نهایی انتخاب نمی‌کنیم؟
+<details><summary>راه‌حل</summary>
+<b>(الف)</b> ۶ لغو از ۲۰: شیوع ۳۰٪. مدلِ بی‌مهارت در PR روی خط افقی precision = ۰٫۳ است و Average Precision را باید با این عدد مقایسه کرد، نه با ۰٫۵.<br>
+<b>(ب)</b>
+<div class="tablewrap"><table>
+<tr><th>آستانه</th><th>هشدار</th><th>TP</th><th>FP</th><th>FN</th><th>Precision</th><th>Recall</th><th>F1</th><th>هزینه = FP + 8·FN</th></tr>
+<tr><td>۰٫۲</td><td>۱۴</td><td>۶</td><td>۸</td><td>۰</td><td>۰٫۴۲۹</td><td>۱٫۰۰۰</td><td>۰٫۶۰۰</td><td><b>۸</b></td></tr>
+<tr><td>۰٫۴</td><td>۸</td><td>۴</td><td>۴</td><td>۲</td><td>۰٫۵۰۰</td><td>۰٫۶۶۷</td><td>۰٫۵۷۱</td><td>۲۰</td></tr>
+<tr><td>۰٫۶</td><td>۴</td><td>۳</td><td>۱</td><td>۳</td><td>۰٫۷۵۰</td><td>۰٫۵۰۰</td><td>۰٫۶۰۰</td><td>۲۵</td></tr>
+</table></div>
+<b>(ج)</b> F1 بین ۰٫۲ و ۰٫۶ <b>مساوی</b> است (هر دو ۰٫۶) و تصمیم نمی‌گیرد. هزینه به‌وضوح ۰٫۲ را انتخاب می‌کند (۸ در برابر ۲۵)، چون از دست دادن لغو ۸ برابر گران‌تر است. «Optimizing F1 and minimizing business cost are not the same».<br>
+<b>(د)</b> برای احتمال کالیبره‌ی $p$: هشدار بده اگر هزینه‌ی مورد انتظار نزدن بیشتر باشد: $8p&gt;1\cdot(1-p)\Rightarrow p&gt;1/9\approx0.11$. یعنی آستانه‌ای حتی پایین‌تر از ۰٫۲ (البته اگر امتیازها کالیبره باشند؛ اسلاید ۶: «آیا ۳۰٪ ریسک یعنی ۳۰ لغو از ۱۰۰؟»).<br>
+<b>(هـ)</b> با سقف ۴ هشدار، آستانه را جایی بگذار که ۴ امتیاز بالا را بگیرد (اینجا ۰٫۶): precision ۰٫۷۵ و recall ۰٫۵. سیاست «top-k» با ظرفیت، و گزارش اینکه با ظرفیت بیشتر چقدر هزینه کم می‌شود (از ۲۵ به ۸)، برای مدیر تصمیم‌ساز است. «The threshold is a policy decision».<br>
+<b>(و)</b> اگر آستانه را روی test تنظیم کنی، test بخشی از آموزش شده و عددی که گزارش می‌دهی خوش‌بینانه است. آستانه روی validation انتخاب می‌شود و test فقط یک بار برای گزارش نهایی و بررسی برش‌ها و کالیبراسیون استفاده می‌شود.
+</details></div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="quiz"><h2><span class="num">۸</span> تست: ۱۵ پرسش از کل بخش الف</h2>
+<p>هر توضیح می‌گوید پرسش مربوط به کدام جلسه است. اگر غلط زدی، همان جلسه را دوباره ببین.</p>
+<div class="quiz"></div></section>
+
+<!-- ============================================================ 9 -->
+<section id="review">
+<h2><span class="num">۹</span> برگه‌ی مرور میان‌ترم <span class="tag exam">امتحانی</span></h2>
+<p>یک خط برای هر مفهوم. اگر جایی از ستون وسط برایت مبهم بود، به جلسه‌ی ستون آخر برگرد.</p>
+<div class="tablewrap"><table class="rev">
+<tr><th>مفهوم</th><th>قاعده‌ی یک‌خطی</th><th>جلسه</th></tr>
+<tr><td>مسئله‌محوری</td><td>«من مسئله دارم» نه «من داده دارم»: پرسش ← فرضیه ← داده ← تحلیل ← بینش ← اقدام</td><td><a href="session-01.html">۱</a></td></tr>
+<tr><td>پرسش SMART</td><td>مشخص، قابل اندازه‌گیری، قابل اقدام، مرتبط، زمان‌دار؛ «کمپین خوب بود؟» هیچ‌کدام نیست</td><td><a href="session-01.html">۱</a></td></tr>
+<tr><td>چهار نوع تحلیل</td><td>توصیفی (چه شد)، تشخیصی (چرا)، پیش‌بینانه (چه می‌شود)، تجویزی (چه کنیم)</td><td><a href="session-01.html">۱</a></td></tr>
+<tr><td>تجزیه‌ی KPI</td><td>تکمیل‌شده = درخواست × نرخ تکمیل؛ افت را به اثر تقاضا و اثر نرخ بشکن</td><td><a href="session-01.html">۱</a> و <a href="session-04.html">۴</a></td></tr>
+<tr><td>داده‌ی کثیف</td><td>گمشده، تکراری، ناهمسان، نوع اشتباه، ناممکن، پرت؛ ابعاد کیفیت: completeness تا timeliness</td><td><a href="session-02.html">۲</a></td></tr>
+<tr><td>اصل پاک‌سازی</td><td>Cleaning is not deleting؛ investigate first, transform second, delete last؛ هر تصمیم را ثبت کن</td><td><a href="session-02.html">۲</a></td></tr>
+<tr><td>گمشده</td><td>Drop، Impute، Flag، Ask؛ اول بپرس «چرا خالی است؟»؛ خالیِ ساختاری را پر نکن</td><td><a href="session-02.html">۲</a></td></tr>
+<tr><td>ناممکن در برابر پرت</td><td>ناممکن (سن ۲۵۰) ← NaN یا اصلاح با قاعده؛ پرت ← بررسی نسبت به گروه خودش</td><td><a href="session-02.html">۲</a></td></tr>
+<tr><td>کدگذاری</td><td>اسمی ← one-hot؛ ترتیبی ← نگاشت؛ label encoding ترتیب ساختگی می‌سازد؛ Encoding is a modeling decision</td><td><a href="session-03.html">۳</a></td></tr>
+<tr><td>نمودار</td><td>A chart is a visual answer to a question؛ عنوانِ پیام، واحد، میله از صفر، پای فقط ۲–۳ تکه</td><td><a href="session-03.html">۳</a></td></tr>
+<tr><td>آمار توصیفی</td><td>میانگین ≫ میانه یعنی چوله به راست؛ برای «معمولی» میانه، برای پراکندگی IQR</td><td><a href="session-04.html">۴</a></td></tr>
+<tr><td>بخش‌بندی و سیمپسون</td><td>Averages hide segments؛ قبل از مقایسه‌ی کل، ترکیب گروه‌ها را چک کن</td><td><a href="session-04.html">۴</a></td></tr>
+<tr><td>همبستگی</td><td>پیرسون خطی و حساس به پرت؛ اسپیرمن رتبه‌ای؛ همبستگی ≠ علیت</td><td><a href="session-04.html">۴</a></td></tr>
+<tr><td>آزمون نشت</td><td>«در لحظه‌ی پیش‌بینی این مقدار را می‌دانستیم؟» اگر نه، ویژگی نشت دارد</td><td><a href="session-04.html">۴</a> و <a href="session-07.html">۷</a></td></tr>
+<tr><td>مقیاس‌بندی</td><td>Z برای تقریباً نرمال، MinMax برای بازه‌ی ثابت، Robust برای دم سنگین؛ درخت‌ها لازم ندارند</td><td><a href="session-05.html">۵</a></td></tr>
+<tr><td>تبدیل و ویژگی زمانی</td><td>log برای چوله به راست؛ ساعت و ماه با sin و cos؛ ویژگی رفتاری فقط از گذشته</td><td><a href="session-05.html">۵</a></td></tr>
+<tr><td>مرز fit/transform</td><td>هر چیزی که «یاد می‌گیرد» (imputer، scaler، encoder، PCA) فقط روی train fit شود</td><td><a href="session-05.html">۵</a> و <a href="session-07.html">۷</a></td></tr>
+<tr><td>نفرین ابعاد</td><td>با بعد بیشتر، داده پراکنده و فاصله‌ها کم‌معنا می‌شوند؛ انتخاب یا کاهش ویژگی</td><td><a href="session-06.html">۶</a></td></tr>
+<tr><td>PCA</td><td>مرکز کن ← کوواریانس ← بردار ویژه؛ $\lambda_k/\sum\lambda$ = سهم واریانس؛ با واحدهای مختلف استاندارد کن؛ برچسب را نمی‌بیند</td><td><a href="session-06.html">۶</a></td></tr>
+<tr><td>تقسیم داده</td><td>تصادفی فقط برای IID؛ Stratified برای نامتوازن؛ Group برای کاربر تکراری؛ زمانی با gap</td><td><a href="session-07.html">۷</a></td></tr>
+<tr><td>شش پرسش red-team</td><td>ویژگی در لحظه، برچسب نهایی، گروه مشترک، fit داخل fold، متعادل‌سازی فقط train، test دست‌نخورده</td><td><a href="session-07.html">۷</a></td></tr>
+<tr><td>رویداد نادر</td><td>accuracy گمراه می‌کند؛ precision، recall، PR-AUC؛ خط پایه‌ی PR = شیوع</td><td><a href="session-08.html">۸</a></td></tr>
+<tr><td>آستانه</td><td>سیاست است نه ثابت ۰٫۵؛ با هزینه روی validation؛ برای احتمال کالیبره $t^*=C_{FP}/(C_{FP}+C_{FN})$</td><td><a href="session-08.html">۸</a></td></tr>
+<tr><td>کالیبراسیون و عدم‌توازن</td><td>«۳۰٪ ریسک» یعنی ۳۰ از ۱۰۰؟ وزن کلاس یا نمونه‌گیری فقط روی train؛ test با شیوع طبیعی</td><td><a href="session-08.html">۸</a></td></tr>
+<tr><td>آزمون فرضیه</td><td>p-value احتمال داده به شرط $H_0$ است؛ معنادار ≠ مهم؛ همیشه اندازه‌ی اثر و بازه‌ی اطمینان</td><td>۹</td></tr>
+<tr><td>خی‌دو</td><td>استقلال دو متغیر طبقه‌ای؛ روی تعداد؛ $E=$ سطر×ستون/کل؛ $\text{df}=(r-1)(c-1)$</td><td>۹</td></tr>
+<tr><td>لورنز و جینی</td><td>$G=1-\sum(X_k-X_{k-1})(Y_k+Y_{k-1})$؛ ۰ برابر، $(n-1)/n$ حداکثر</td><td>۹</td></tr>
+<tr><td>قاعده‌های طلایی pandas</td><td>تغییر با <code>loc</code>، برداری بنویس، <code>validate</code> در merge، <code>len</code> پیش و پس، <code>dtypes</code> را نگاه کن</td><td>۹</td></tr>
+</table></div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="summary">
+<h2><span class="num">۱۰</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box thm"><div class="bt">۵ چیزی که باید یادت بماند</div><ol>
+<li><b>پرسش مبهم را بشکن.</b> «کمپین جواب داد؟» شش پرسش SMART شد و هرکدام ابزار خودش را داشت. افت ۱۲٪ هم به اثر تقاضا و اثر نرخ شکسته شد.</li>
+<li><b>«نه» هم نتیجه است و «معنادار نیست» یعنی «شواهد کافی نداریم».</b> p = ۰٫۶۴، بازه‌ی ۴۷− تا ۲۹+، d = ۰٫۰۳، و آبشار گفت چرا: خرید بیشتر منهای تخفیف.</li>
+<li><b>درآمد ≠ سود، تعداد ≠ پول، بزرگ ≠ بهتر.</b> الکترونیک ۱۷٪ سفارش و ۵۴٪ درآمد؛ لایپزیگ در نفوذ اول و برلین آخر؛ تخفیفِ بیشتر از حاشیه یعنی ضرر.</li>
+<li><b>خطاهای pandas بی‌صدا هستند.</b> انتساب زنجیره‌ای، inplace، ستون متنی و merge با کلید تکراری همه بدون خطا عدد غلط می‌دهند. <code>loc</code>، <code>validate</code> و <code>len</code> پیش و پس.</li>
+<li><b>کل بخش الف یک ایده است: احترام به لحظه‌ی تصمیم.</b> از پاک‌سازی تا مقیاس، PCA، تقسیم و آستانه، هر چیزی که یاد می‌گیرد فقط از داده‌ای یاد بگیرد که در آن لحظه در دسترس بوده.</li>
+</ol></div>
+<div class="box note"><div class="bt">⏭ برای جلسه‌ی بعد</div>
+جلسه‌ی ۱۰ بخش ب را با «کشف الگو و یادگیری بدون ناظر» شروع می‌کند. RFM و بخش‌بندی دستی همین جلسه، نسخه‌ی قاعده‌محورِ خوشه‌بندی است؛ آنجا می‌بینی K-Means همین کار را بدون قاعده‌ی دستی می‌کند و چرا مقیاس‌بندی جلسه‌ی ۵ برایش حیاتی است. پیش از آن، تمرین ۱۲ نوت‌بوک را با یک داده‌ی واقعی شروع کن.
+</div>
+<div class="gloss">
+<div><b>split-apply-combine</b>: تقسیم ← اعمال ← ترکیب؛ منطق groupby</div>
+<div><b>pivot table</b>: جدول محوری؛ سطر × ستون × تابع تجمیع</div>
+<div><b>long / wide format</b>: قالب بلند و عریض جدول</div>
+<div><b>method chaining</b>: زنجیره‌ی متدها</div>
+<div><b>chained assignment</b>: انتساب زنجیره‌ای؛ نوشتن روی کپی موقت</div>
+<div><b>Copy-on-Write</b>: کپی هنگام نوشتن؛ رفتار پیش‌فرض pandas 3</div>
+<div><b>effect size</b>: اندازه‌ی اثر (مثل Cohen's d)</div>
+<div><b>confidence interval</b>: بازه‌ی اطمینان</div>
+<div><b>bootstrap</b>: بازنمونه‌گیری با جایگذاری برای تخمین عدم‌قطعیت</div>
+<div><b>Welch's t-test</b>: آزمون t بدون فرض واریانس برابر</div>
+<div><b>contingency table</b>: جدول توافقی (فراوانی دوبعدی)</div>
+<div><b>chi-square test of independence</b>: آزمون خی‌دوی استقلال</div>
+<div><b>expected frequency</b>: فراوانی مورد انتظار زیر $H_0$</div>
+<div><b>Lorenz curve</b>: منحنی لورنز؛ سهم تجمعی درآمد در برابر سهم تجمعی مشتری</div>
+<div><b>Gini coefficient</b>: ضریب جینی؛ شاخص نابرابری بین ۰ و ۱</div>
+<div><b>Pareto principle</b>: قاعده‌ی ۸۰/۲۰</div>
+<div><b>RFM</b>: تازگی، تکرار، پول؛ بخش‌بندی مشتری</div>
+<div><b>seasonality index</b>: شاخص فصلی؛ ۱۰۰ = میانگین سال</div>
+<div><b>break-even</b>: نقطه‌ی سربه‌سر</div>
+<div><b>minimum detectable effect</b>: کوچک‌ترین اثر قابل تشخیص با توان معین</div>
+<div><b>selection bias</b>: سوگیری انتخاب</div>
+<div><b>Simpson's paradox</b>: پارادوکس سیمپسون؛ برعکس شدن نتیجه با تجمیع</div>
+<div><b>red-team review</b>: بازبینی تهاجمی برای یافتن نشت</div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`مدیر می‌گوید «سفرهای تکمیل‌شده ۱۲٪ افت کرده». طبق رویکرد درس، اولین کار تحلیل‌گر چیست؟`, o:[`ساختن یک مدل پیش‌بینی لغو`,`کشیدن داشبوردی با همه‌ی شاخص‌ها`,`تبدیل مسئله به پرسش قابل اندازه‌گیری و چند فرضیه‌ی رقیب، و بعد تعیین داده‌ی لازم`,`درخواست داده‌ی بیشتر از همه‌ی تیم‌ها`], a:2, e:`جلسه‌ی ۱: مسئله‌محوری. «Don't ask for data before you know what you are looking for». مدل و داشبورد بعد از قاب‌بندی می‌آیند.`},
+ {q:`پرسش «بهترین درصد تخفیف برای بیشینه کردن سود چیست؟» از کدام نوع تحلیل است؟`, o:[`توصیفی`,`تشخیصی`,`پیش‌بینانه`,`تجویزی`], a:3, e:`جلسه‌ی ۱ و نقشه‌ی ایده‌های نوت‌بوک: «چه کنیم؟» تجویزی است. سناریوی سربه‌سر نوت‌بوک (بخش ۵) ابزار همین پرسش است.`},
+ {q:`ستون rating برای ۱۵٪ سفارش‌ها خالی است چون مشتری امتیاز نداده. بهترین کار؟`, o:[`پر کردن با میانگین امتیاز`,`حذف همه‌ی ردیف‌های بدون امتیاز`,`خالی نگه داشتن یا ساختن پرچم «امتیاز نداد» و گزارش این تصمیم`,`پر کردن با ۵ چون مشتری شکایتی نکرده`], a:2, e:`جلسه‌ی ۲ و نوت‌بوک: خالی بودن معنا دارد؛ پر کردن «نظر می‌سازد» و حذف ردیف، اطلاعات درآمد را دور می‌ریزد.`},
+ {q:`در داده‌ی نوت‌بوک سن ۲۵۰ و قیمت ۹۹٬۹۹۹ یورویی برای یک کتاب داریم. رفتار درست؟`, o:[`هر دو را حذف کن`,`سن را NaN کن (ناممکن)؛ قیمت را با میانه‌ی همان دسته مقایسه کن و اگر خطای ورود است حذف کن`,`هر دو را با میانه پر کن`,`هر دو را نگه دار چون شاید درست باشند`], a:1, e:`جلسه‌ی ۲: ناممکن در برابر پرت. سن غلط بقیه‌ی سفارش را باطل نمی‌کند؛ پرت را نسبت به گروه خودش بررسی کن.`},
+ {q:`برای رگرسیون لجستیک، ستون city با ۵ شهر را چطور کد می‌کنی؟`, o:[`LabelEncoder به ۰ تا ۴`,`one-hot (با drop_first اگر منظم‌سازی نداری)`,`طول نام شهر`,`میانگین برچسب هر شهر روی کل داده`], a:1, e:`جلسه‌ی ۳: label encoding ترتیب و فاصله‌ی ساختگی می‌سازد. گزینه‌ی آخر بدون out-of-fold نشت هدف است.`},
+ {q:`می‌خواهی سهم درآمد ۶ شهر را به مدیر نشان بدهی. کدام نمودار؟`, o:[`پای ۶ تکه`,`میله‌ی افقی مرتب‌شده با عنوانی که پیام را می‌گوید`,`نمودار سه‌بعدی`,`نمودار خطی`], a:1, e:`جلسه‌ی ۳ و سلول ۱۹۲ نوت‌بوک: پای فقط برای ۲ یا ۳ تکه؛ چشم طول را بهتر از زاویه مقایسه می‌کند.`},
+ {q:`درآمد سفارش: میانگین ۲۵۰ و میانه ۱۴۰ یورو. کدام جمله درست است؟`, o:[`توزیع چوله به چپ است`,`توزیع چوله به راست است و برای سفارش «معمولی» میانه نماینده‌ی بهتری است`,`داده حتماً خطا دارد`,`توزیع نرمال است`], a:1, e:`جلسه‌ی ۴: چند سفارش بزرگ (الکترونیک) میانگین را بالا می‌کشند. چولگی درآمد در نوت‌بوک حدود ۲٫۱ است.`},
+ {q:`نسخه‌ی B در تهران و شیراز هر دو نرخ تکمیل بهتری دارد ولی نرخ کلش بدتر است. محتمل‌ترین توضیح؟`, o:[`خطای محاسبه`,`B بیشتر در شهری منتشر شده که ذاتاً نرخ تکمیل پایین‌تری دارد (پارادوکس سیمپسون)`,`B واقعاً بدتر است`,`حجم نمونه کم است`], a:1, e:`جلسه‌ی ۴: Averages hide segments. با وزن‌دهی مشترک (مسئله‌ی ۴) B حدود ۴٫۶ واحد درصد بهتر است.`},
+ {q:`کدام مدل کمترین حساسیت را به مقیاس ویژگی‌ها دارد؟`, o:[`kNN`,`K-means`,`جنگل تصادفی`,`لجستیک با منظم‌سازی L2`], a:2, e:`جلسه‌ی ۵ (slides04): درخت‌ها با برش‌های آستانه‌ای کار می‌کنند و به تبدیل یکنوا حساس نیستند. بقیه به فاصله یا اندازه‌ی ضریب وابسته‌اند.`},
+ {q:`StandardScaler را کجا fit می‌کنی؟`, o:[`روی کل داده تا میانگین دقیق‌تر شود`,`روی test`,`فقط روی train؛ در CV داخل Pipeline تا در هر fold از نو fit شود`,`لازم نیست fit شود`], a:2, e:`جلسه‌ی ۵ و ۷: The fit/transform boundary is more important than the estimator choice.`},
+ {q:R`ماتریس کوواریانس $\begin{pmatrix}5&2\\2&2\end{pmatrix}$ است. PC1 چند درصد واریانس را توضیح می‌دهد؟`, o:[`۷۱٫۴٪`,`۸۵٫۷٪`,`۵۰٪`,`۹۵٪`], a:1, e:R`جلسه‌ی ۶: $\lambda^2-7\lambda+6=0\Rightarrow\lambda=6,1$ و $6/7=85.7\%$.`},
+ {q:`داده‌ی سفرها را تصادفی سطری به train و test تقسیم کرده‌ای و هر کاربر ده‌ها سفر دارد. خطر اصلی؟`, o:[`test خیلی کوچک می‌شود`,`مدل الگوی هویت کاربر را حفظ می‌کند و عملکرد روی کاربر تازه را بیش از واقع نشان می‌دهد`,`کلاس‌ها نامتوازن می‌شوند`,`هیچ خطری ندارد`], a:1, e:`جلسه‌ی ۷: نشت از راه حفظ‌کردن (memorization). GroupKFold بر اساس user_id و در مسئله‌ی زمانی تقسیم زمانی.`},
+ {q:`احتمال‌های مدل کالیبره‌اند. هزینه‌ی هشدار اشتباه ۱ و لغوِ ازدست‌رفته ۸ است. آستانه‌ی بهینه؟`, o:[`۰٫۵`,R`$1/9\approx0.11$`,R`$8/9\approx0.89$`,`آستانه‌ای که F1 را بیشینه کند`], a:1, e:R`جلسه‌ی ۸: هشدار بده اگر $8p>1-p$، یعنی $p>1/9$. F1 هزینه‌ها را نمی‌بیند.`},
+ {q:`نتیجه‌ی پ۴: تفاوت میانگین ۹− یورو، p = ۰٫۶۴، بازه‌ی ۹۵٪ از ۴۷− تا ۲۹+. بهترین جمع‌بندی؟`, o:[`ثابت شد کد تخفیف بی‌اثر است`,`کد تخفیف ارزش سفارش را ۹ یورو کم کرد`,`شواهد کافی برای تفاوت نداریم؛ اثرهای تا حدود ۵۰ یورو در هر جهت با داده سازگارند و برای قضاوت علّی آزمایش A/B لازم است`,`باید α را ۰٫۷ بگذاریم تا معنادار شود`], a:2, e:`جلسه‌ی ۹ (همین جلسه): معنادار نبودن ≠ اثبات نبود اثر. حداقل اثر قابل تشخیص حدود ۵۳ یورو است و گروه‌ها تصادفی تخصیص نیافته‌اند.`},
+ {q:`سفارش‌ها (۱۲ سطر) را با جدول شهرها merge(how="left") کرده‌ای و حالا ۱۷ سطر داری. علت و درمان؟`, o:[`باگ pandas؛ دوباره اجرا کن`,`کلید city در جدول راست تکراری است؛ با validate="m:1" جلویش را بگیر و len را پیش و پس چک کن`,`باید how="inner" می‌زدی`,`باید concat می‌زدی`], a:1, e:`جلسه‌ی ۹، بخش ۶: انفجار سطرها. درآمد برلین دو بار شمرده شد و جمع درآمد ۷۹۶٫۵ یورو بیشتر از واقع شد، بدون هیچ خطایی.`}
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,css,alpha,fa,fmt,L}=ML;
+  const F=x=>fa(x).replace(".","٫");
+
+  /* ---------- widget 1: groupby / pivot playground ---------- */
+  (function(){
+    const el=document.getElementById("w-groupby"); if(!el) return;
+    ML.shell(el,"🧪 زمین بازی groupby و pivot_table روی جدول ۱۲ سفارشی","کلید گروه، تابع تجمیع و ستون مقدار را انتخاب کن. اگر «ستون‌ها» را هم انتخاب کنی، نتیجه یک pivot_table می‌شود. رنگ سطرها نشان می‌دهد هر سفارش به کدام گروه رفته (تقسیم).");
+    el.classList.add("gbp");
+    const T=[[1,"2024-10","Berlin","Electronics","No",1,420],[2,"2024-10","Munich","Books","Yes",3,54],[3,"2024-10","Berlin","Clothing","No",2,120],[4,"2024-10","Hamburg","Home","Yes",1,96],[5,"2024-11","Munich","Electronics","Yes",1,323],[6,"2024-11","Berlin","Books","No",2,36],[7,"2024-11","Hamburg","Clothing","No",3,165],[8,"2024-11","Munich","Home","Yes",2,234],[9,"2024-12","Berlin","Clothing","Yes",2,110.5],[10,"2024-12","Hamburg","Electronics","No",1,450],[11,"2024-12","Munich","Clothing","No",1,70],[12,"2024-12","Berlin","Home","No",1,110]]
+      .map(r=>({order_id:r[0],month:r[1],city:r[2],category:r[3],promo:r[4],quantity:r[5],revenue:r[6]}));
+    const ctr=h("div",{class:"controls"});
+    const mk=(lab,opts,val)=>{const l=h("label"); l.append(lab+" "); const s=h("select"); opts.forEach(o=>{const op=h("option",{value:o[0]},o[1]); if(o[0]===val) op.selected=true; s.appendChild(op);}); l.appendChild(s); ctr.appendChild(l); return s;};
+    const keys=[["city","city"],["category","category"],["promo","promo"],["month","month"]];
+    const sKey=mk("گروه (index):",keys,"city");
+    const sCol=mk("ستون‌ها:",[["","— هیچ (groupby) —"],...keys],"");
+    const sVal=mk("مقدار:",[["revenue","revenue"],["quantity","quantity"],["order_id","order_id"]],"revenue");
+    const sAgg=mk("تابع:",[["sum","sum"],["mean","mean"],["median","median"],["count","count"],["max","max"],["min","min"]],"sum");
+    el.appendChild(ctr);
+    const codeEl=h("div",{class:"codeline"}); el.appendChild(codeEl);
+    const splitEl=h("div"); el.appendChild(splitEl);
+    const resEl=h("div"); el.appendChild(resEl);
+    const srcEl=h("details"); srcEl.innerHTML="<summary>جدول اصلی با رنگ گروه‌ها</summary>"; const srcBox=h("div"); srcEl.appendChild(srcBox); el.appendChild(srcEl);
+    const ro=h("div",{class:"readout"}); el.appendChild(ro);
+    const AGG={sum:a=>a.reduce((s,x)=>s+x,0),mean:a=>a.reduce((s,x)=>s+x,0)/a.length,median:a=>{const b=[...a].sort((x,y)=>x-y),n=b.length;return n%2?b[(n-1)/2]:(b[n/2-1]+b[n/2])/2;},count:a=>a.length,max:a=>Math.max(...a),min:a=>Math.min(...a)};
+    const num=v=>{ if(v===null||v===undefined||Number.isNaN(v)) return "NaN"; const r=Math.round(v*100)/100; const intLike = sAgg.value==="count" || (sVal.value!=="revenue" && !["mean","median"].includes(sAgg.value)); return Number.isInteger(r)? (intLike? String(r): r.toFixed(1)) : String(r); };
+    function draw(){
+      const k=sKey.value, c=sCol.value===k?"":sCol.value, v=sVal.value, ag=sAgg.value;
+      const cols=["--plot-c1","--plot-c3","--plot-c2","--plot-c4"].map(x=>css(x));
+      const gk=[...new Set(T.map(r=>r[k]))].sort();
+      const color={}; gk.forEach((g,i)=>color[g]=cols[i%4]);
+      if(!c){
+        codeEl.textContent=`toy.groupby("${k}")["${v}"].${ag}()`;
+        splitEl.innerHTML="<h4>۱) تقسیم و ۲) اعمال</h4>";
+        const gr=h("div",{class:"grp"});
+        gk.forEach(g=>{ const vals=T.filter(r=>r[k]===g).map(r=>r[v]); const sp=h("span"); sp.style.background=alpha(color[g],.2); sp.style.border="1px solid "+alpha(color[g],.6); sp.textContent=`${g}: [${vals.join(", ")}] → ${ag} = ${num(AGG[ag](vals))}`; gr.appendChild(sp); });
+        splitEl.appendChild(gr);
+        let t=`<h4>۳) ترکیب (خروجی یک Series با ایندکس ${k})</h4><div class="tablewrap"><table><tr><th>${k}</th><th>${v}</th></tr>`;
+        gk.forEach(g=>{ const vals=T.filter(r=>r[k]===g).map(r=>r[v]); t+=`<tr><td style="background:${alpha(color[g],.15)}">${g}</td><td>${num(AGG[ag](vals))}</td></tr>`; });
+        resEl.innerHTML=t+"</table></div>";
+        const tot=AGG[ag](T.map(r=>r[v]));
+        ro.textContent = ag==="sum"||ag==="count" ? `جمع گروه‌ها = ${num(gk.reduce((s,g)=>s+AGG[ag](T.filter(r=>r[k]===g).map(r=>r[v])),0))} که با ${ag} کل جدول (${num(tot)}) برابر است: هر سطر دقیقاً در یک گروه است.` :
+          `${ag} کل جدول = ${num(tot)}. دقت کن ${ag} کل با میانگینِ ${ag}های گروه‌ها برابر نیست${ag==="mean"?"، مگر اینکه گروه‌ها هم‌اندازه باشند (میانگین وزنی است).":"."}`;
+      } else {
+        codeEl.textContent=`toy.pivot_table(index="${k}", columns="${c}", values="${v}", aggfunc="${ag}")`;
+        const ck=[...new Set(T.map(r=>r[c]))].sort();
+        splitEl.innerHTML=`<h4>هر خانه = ${ag} روی سطرهایی که هم ${k} و هم ${c} آن را دارند</h4>`;
+        let t=`<div class="tablewrap"><table><tr><th>${k} \\ ${c}</th>${ck.map(x=>`<th>${x}</th>`).join("")}</tr>`; let empty=0;
+        gk.forEach(g=>{ t+=`<tr><td style="background:${alpha(color[g],.15)}">${g}</td>`; ck.forEach(x=>{ const vals=T.filter(r=>r[k]===g&&r[c]===x).map(r=>r[v]); if(!vals.length) empty++; t+=`<td>${vals.length?num(AGG[ag](vals)):"NaN"}</td>`; }); t+="</tr>"; });
+        resEl.innerHTML=t+"</table></div>";
+        ro.textContent = empty? `${fa(empty)} خانه هیچ سفارشی ندارد و NaN شده. اگر برای آن‌ها صفر معنا دارد (مثلاً sum یا count)، fill_value=0 بده؛ برای mean صفر گذاشتن غلط است.` : `همه‌ی خانه‌ها حداقل یک سفارش دارند. برای جمع سطر و ستون margins=True بده.`;
+      }
+      let s=`<div class="tablewrap"><table><tr><th>order_id</th><th>month</th><th>city</th><th>category</th><th>promo</th><th>quantity</th><th>revenue</th></tr>`;
+      T.forEach(r=>{ s+=`<tr style="background:${alpha(color[r[k]],.14)}"><td>${r.order_id}</td><td>${r.month}</td><td>${r.city}</td><td>${r.category}</td><td>${r.promo}</td><td>${r.quantity}</td><td>${r.revenue}</td></tr>`; });
+      srcBox.innerHTML=s+"</table></div>";
+    }
+    [sKey,sCol,sVal,sAgg].forEach(s=>s.onchange=draw);
+    draw();
+    const mo=new MutationObserver(draw); mo.observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+  })();
+
+  /* ---------- widget 2: Lorenz & Gini explorer ---------- */
+  (function(){
+    const el=document.getElementById("w-lorenz"); if(!el) return;
+    ML.shell(el,"📈 کاوشگر منحنی لورنز و ضریب جینی","منبع داده را انتخاب کن: ۳۵۸ مشتری واقعی نوت‌بوک، یک جامعه‌ی مصنوعی لگ‌نرمال با پراکندگی σ، یا فهرست دلخواه خودت. جینی با همان فرمول ذوزنقه‌ای متن حساب می‌شود.");
+    el.classList.add("lz");
+    const NB=[468,638,517,234,120,816,656,673,822,402,1339,287,433,916,301,977,111,532,684,88,52,162,251,511,1488,213,1302,342,184,626,279,1020,325,1274,832,782,1271,512,1014,554,836,244,671,1644,714,1971,334,236,233,737,132,505,1089,1078,535,1860,540,118,177,1304,1081,271,209,676,210,184,598,107,141,31,794,597,494,148,949,578,134,479,572,176,444,57,798,66,596,270,40,283,101,621,429,974,1471,510,782,321,1208,827,1094,92,283,403,16,48,609,1490,769,53,64,163,169,906,47,669,664,545,1363,1512,761,85,199,157,999,1122,1826,276,1253,1406,530,1785,1226,54,513,666,189,714,608,383,1253,175,796,1470,536,1652,1384,1680,1132,933,1088,425,98,621,342,238,221,154,1954,1350,407,543,122,363,272,393,834,137,178,2376,1629,518,169,64,1681,333,340,1518,143,1894,73,101,1697,97,429,129,517,1249,3004,274,2083,260,1185,824,1416,359,2022,137,3143,125,266,162,242,983,546,1029,68,146,1225,357,487,87,870,390,40,180,1121,905,505,3086,419,1603,903,752,1705,78,538,296,206,555,188,805,211,1451,673,429,1016,509,86,1541,476,1018,1731,884,379,171,218,171,204,315,429,126,47,191,363,1222,960,524,708,299,1118,116,2704,165,620,1855,302,328,381,385,199,1580,82,445,663,338,1746,868,135,35,354,260,963,419,236,873,1086,409,1371,939,273,265,928,1681,1390,252,1028,138,59,1274,477,561,449,1988,878,1258,171,208,2321,416,795,225,210,69,1590,391,725,688,1650,778,1094,24,149,1934,1759,495,419,709,84,402,1147,374,20,1364,413,2068,394,40,270,191,32,740,1188,1274,2934,448,460,1656,970,375,76,1540,333,633,201,403,177,81,131,603];
+    function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+    const rnd=mulberry32(2026), Z=[];
+    for(let i=0;i<400;i++){ const u=Math.max(1e-12,rnd()), v=rnd(); Z.push(Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)); }
+    let mode="nb", sigma=1.0;
+    const ctr=h("div",{class:"controls"});
+    const lab=h("label"); lab.append("منبع: "); const sel=h("select");
+    [["nb","مشتریان نوت‌بوک (۳۵۸)"],["ln","لگ‌نرمال مصنوعی (۴۰۰)"],["man","فهرست دستی"]].forEach(o=>sel.appendChild(h("option",{value:o[0]},o[1])));
+    lab.appendChild(sel); ctr.appendChild(lab);
+    const sl=ML.slider("σ (پراکندگی):",0,2.5,0.05,sigma,v=>{sigma=v;draw();},v=>v.toFixed(2));
+    ctr.appendChild(sl);
+    const ml=h("label"); ml.append("خرج هر مشتری: "); const inp=h("input",{type:"text",value:"5, 10, 15, 20, 50",size:"22"}); ml.appendChild(inp); ctr.appendChild(ml);
+    el.appendChild(ctr);
+    const cv=h("canvas",{class:"wide"}); el.appendChild(cv);
+    const ro=h("div",{class:"readout"}); el.appendChild(ro);
+    const terms=h("div",{class:"readout terms"}); el.appendChild(terms);
+    sel.onchange=()=>{mode=sel.value;draw();};
+    inp.oninput=()=>{ if(mode==="man") draw(); };
+    function data(){
+      if(mode==="nb") return NB.slice();
+      if(mode==="ln") return Z.map(z=>Math.exp(sigma*z));
+      return inp.value.split(/[,،\s]+/).map(Number).filter(x=>isFinite(x)&&x>=0);
+    }
+    function draw(){
+      sl.style.opacity = mode==="ln"?1:.4; sl.querySelector("input").disabled = mode!=="ln";
+      ml.style.display = mode==="man"?"":"none";
+      let x=data().sort((a,b)=>a-b); const n=x.length, tot=x.reduce((s,v)=>s+v,0);
+      const p=new ML.Plot(cv,[0,100],[0,100],{l:40,r:12,t:12,b:34});
+      p.axes("سهم تجمعی مشتریان، از کم‌خرج به پرخرج","سهم تجمعی درآمد",{xstep:20,ystep:20,xfmt:v=>fa(v),yfmt:v=>fa(v)});
+      if(n<1||tot<=0){ ro.textContent="حداقل یک عدد مثبت وارد کن."; terms.textContent=""; return; }
+      const X=[0],Y=[0]; let c=0; for(let i=0;i<n;i++){ c+=x[i]; X.push((i+1)/n); Y.push(c/tot); }
+      let S=0; const tl=[]; for(let k=1;k<=n;k++){ const t=(X[k]-X[k-1])*(Y[k]+Y[k-1]); S+=t; if(n<=10) tl.push(`(${X[k].toFixed(2)}-${X[k-1].toFixed(2)})(${Y[k].toFixed(2)}+${Y[k-1].toFixed(2)})=${t.toFixed(3)}`); }
+      const G=1-S;
+      const c1=css("--plot-c1"), c2=css("--plot-c2"), dg=css("--plot-diag"), ink=css("--ink-2");
+      const pts=X.map((v,i)=>[v*100,Y[i]*100]);
+      const ctx=p.ctx; ctx.fillStyle=alpha(c1,.16); ctx.beginPath(); ctx.moveTo(p.X(0),p.Y(0)); pts.forEach(([a,b])=>ctx.lineTo(p.X(a),p.Y(b))); ctx.lineTo(p.X(100),p.Y(100)); ctx.closePath(); ctx.fill();
+      p.line([[0,0],[100,100]],dg,1.5,[6,4]);
+      p.line(pts,c1,2.5);
+      if(n<=12) pts.forEach(([a,b])=>p.dot(a,b,c1,3.5));
+      const kTop=Math.max(1,Math.floor(n*0.2)), top=x.slice(n-kTop).reduce((s,v)=>s+v,0)/tot;
+      const bot=x.slice(0,Math.floor(n/2)).reduce((s,v)=>s+v,0)/tot;
+      const yAt=(1-top)*100, xAt=(n-kTop)/n*100;
+      p.line([[xAt,0],[xAt,yAt]],c2,1.2,[3,3]); p.line([[xAt,yAt],[100,yAt]],c2,1.2,[3,3]); p.dot(xAt,yAt,c2,4.5);
+      p.text(Math.max(xAt-2,30),Math.min(yAt+7,96),`top 20% (${kTop}) → ${(top*100).toFixed(1)}%`,c2,"right");
+      p.text(60,8,`G = ${G.toFixed(3)}`,ink,"left");
+      let msg=`تعداد مشتری: ${F(n)} · ضریب جینی (ذوزنقه‌ای): ${F(G.toFixed(3))} · بیشینه‌ی ممکن با این تعداد: ${F(((n-1)/n).toFixed(3))}\n`+
+              `سهم ${F(kTop)} نفر پرخرج (۲۰٪ بالا): ${F((top*100).toFixed(1))}٪ · سهم نیمه‌ی کم‌خرج: ${F((bot*100).toFixed(1))}٪`;
+      if(mode==="ln"){ const Gt=2*ML.Phi(sigma/Math.SQRT2)-1; msg+=`\nجینی نظری لگ‌نرمال ${L("2Φ(σ/√2) − 1")}: ${F(Gt.toFixed(3))}؛ فاصله‌اش با عدد بالا خطای نمونه‌ی ۴۰۰تایی است.`; }
+      if(mode==="nb") msg+=`\nقانون ۸۰/۲۰ اینجا در واقع «۲۰/${fa(Math.round(top*100))}» است. σ لگ‌نرمالی که همین جینی را بدهد حدود ۰٫۸۷ است.`;
+      ro.textContent=msg;
+      terms.style.display = tl.length? "" : "none";
+      terms.textContent = tl.length? "Σ terms:\n"+tl.join("\n")+`\nΣ = ${S.toFixed(3)}  →  G = 1 − Σ = ${G.toFixed(3)}` : "";
+    }
+    ML.onResize(cv,draw); draw();
+  })();
+};
+</script>
+</body></html>
