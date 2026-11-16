@@ -75,7 +75,7 @@ $$\boxed{\,x_{n+1}=1-ax_n^2+b\,x_{n-1}\,}$$
 <tbody>
 <tr><td>$H(x,y)=(1-ax^2+y,\ bx)$<br><small>فرم این جلسه و شبیه‌ساز کلاس</small></td><td>$x_{n+1}=1-ax_n^2+bx_{n-1}$</td><td>—</td><td>—</td></tr>
 <tr><td>$G(u,v)=(a-u^2+bv,\ u)$<br><small>فرم «ضریب ۱ برای $u^2$»</small></td><td>$u_{n+1}=a-u_n^2+bu_{n-1}$</td><td>$\psi(x,y)=\bigl(ax,\ \tfrac ab\,y\bigr)$</td><td>$\psi\circ H=G\circ\psi$، همان $a,b$</td></tr>
-<tr><td>$T(x,y)=(Ax^2+1-By,\ x)$<br><small>فرم Knill</small></td><td>$x_{n+1}=Ax_n^2+1-Bx_{n-1}$</td><td>$\chi(x,y)=\bigl(x,\ \tfrac yb\bigr)$</td><td>$\chi\circ H=T\circ\chi$ با $A=-a,\ B=-b$</td></tr>
+<tr><td>$T(x,y)=(Ax^2+1-By,\ x)$<br><small>فرم Knill</small></td><td>$x_{n+1}=Ax_n^2+1-Bx_{n-1}$</td><td>$\chi(x,y)=\bigl(x,\ \tfrac yb\bigr)$</td><td>$A=-a$، $B=-b$<br>$\chi\circ H=T\circ\chi$</td></tr>
 </tbody></table></div>
 
 <div class="box proof"><div class="bt">بررسی دو تبدیل</div>
@@ -424,14 +424,14 @@ $$p(-1)=1+\tau+\Delta=(1-b)-2ax_\pm=(1-b)-\bigl[(b-1)\pm S\bigr]=2(1-b)\mp S.$$
 <div class="box thm"><div class="bt">قضیه ۱۵ (خطی‌سازی: اشترنبرگ–گروبمن–هارتمن)</div>
   اگر $H$ هموار باشد و $P$ یک نقطه‌ی ثابت <b>هذلولوی</b> ($|\lambda_i|\ne1$ برای همه‌ی مقادیر ویژه) باشد، آن‌گاه دیسک کوچکی $D$ حول $P$ و هومئومورفیسمی $\Phi$ از همسایگی $P$ به همسایگی $0$ وجود دارد با
   $$\Phi\circ H=DH(P)\circ\Phi\qquad\text{روی }D.$$
-  یعنی موضعاً دینامیک $H$ «همان» دینامیک ماتریس خطی $DH(P)$ است، فقط با برچسب‌گذاری کج‌وکوله. (اثبات را در کلاس نمی‌دهیم؛ در جزوه‌ی Knill با قضیه‌ی نقطه‌ی ثابت باناخ آمده.)
+  یعنی موضعاً دینامیک $H$ «همان» دینامیک ماتریس خطی $DH(P)$ است، فقط با برچسب‌گذاری کج‌وکوله. (همان قضیه‌ی هارتمن–گروبمنِ <b>جلسه‌ی ۱۴</b>؛ اثبات را در کلاس نمی‌دهیم — در جزوه‌ی Knill با قضیه‌ی نقطه‌ی ثابت باناخ آمده.)
 </div>
 
 <div class="box def"><div class="bt">تعریف ۱۶ (خمینه‌ی پایدار و ناپایدار)</div>
   برای نقطه‌ی ثابت هذلولوی $P$ با $|\lambda_s|<1<|\lambda_u|$ تعریف می‌کنیم
   $$W^s(P)=\{z\in\mathbb R^2:\ H^n(z)\to P\ \text{وقتی } n\to+\infty\},\qquad
   W^u(P)=\{z\in\mathbb R^2:\ H^{-n}(z)\to P\ \text{وقتی } n\to+\infty\}.$$
-  قضیه‌ی خمینه‌های ناوردا (Hasselblatt–Katok، قضیه‌ی ۱۰.۱.۶) می‌گوید این دو مجموعه، موضعاً، دو منحنی هموارِ ناوردا هستند که در $P$ به‌ترتیب بر $E^s$ و $E^u$ (فضاهای ویژه) مماس‌اند، و نسخه‌های سراسری‌شان با
+  قضیه‌ی خمینه‌های ناوردا (هادامار–پرون؛ <b>جلسه‌ی ۱۴</b>، و Hasselblatt–Katok قضیه‌ی ۱۰.۱.۶) می‌گوید این دو مجموعه، موضعاً، دو منحنی هموارِ ناوردا هستند که در $P$ به‌ترتیب بر $E^s$ و $E^u$ (فضاهای ویژه) مماس‌اند، و نسخه‌های سراسری‌شان با
   $$W^s(P)=\bigcup_{n\ge0}H^{-n}\bigl(W^s_{\mathrm{loc}}\bigr),\qquad W^u(P)=\bigcup_{n\ge0}H^{n}\bigl(W^u_{\mathrm{loc}}\bigr)$$
   ساخته می‌شوند — منحنی‌های <b>تزریق‌شده</b> ولی نه لزوماً بسته؛ می‌توانند خودشان را بی‌نهایت بار دور بزنند.
 </div>

@@ -183,11 +183,11 @@ $$\operatorname{tr}A^{-1}=\frac{\tau}{\delta},\qquad \det A^{-1}=\frac1\delta,$$
 .td-bd{stroke:var(--ink-2);stroke-width:1.7;fill:none}
 .td-par{stroke:var(--thm);stroke-width:2.4;fill:none;stroke-dasharray:7 5}
 .td-a{stroke:var(--warn);stroke-width:2;fill:none;stroke-dasharray:2 4}
-.td-L{font-family:Vazirmatn,sans-serif;font-size:16px;font-weight:600;fill:var(--ink);direction:rtl}
-.td-S{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:500;fill:var(--ink-2);direction:rtl}
-.td-M{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:500;fill:var(--ink-2);direction:ltr}
+.td-L{font-family:Vazirmatn,sans-serif;font-size:16px;font-weight:600;fill:var(--ink);direction:rtl;paint-order:stroke;stroke:var(--plot-bg);stroke-width:3.4px;stroke-linejoin:round}
+.td-S{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:500;fill:var(--ink-2);direction:rtl;paint-order:stroke;stroke:var(--plot-bg);stroke-width:3.4px;stroke-linejoin:round}
+.td-M{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:500;fill:var(--ink-2);direction:ltr;paint-order:stroke;stroke:var(--plot-bg);stroke-width:3.4px;stroke-linejoin:round}
 .td-T{font-family:ui-monospace,monospace;font-size:12px;fill:var(--ink-3)}
-.td-N{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:700;fill:var(--ink)}
+.td-N{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:700;fill:var(--ink);paint-order:stroke;stroke:var(--plot-bg);stroke-width:3.4px;stroke-linejoin:round}
 </style>
 <rect x="44" y="34" width="580" height="398" fill="var(--plot-bg)" stroke="var(--line)" rx="6"/>
 <g opacity="0.55">
@@ -240,14 +240,13 @@ $$\operatorname{tr}A^{-1}=\frac{\tau}{\delta},\qquad \det A^{-1}=\frac1\delta,$$
 <text class="td-S" x="529.4" y="334.9" style="text-anchor:middle">هذلولوی</text>
 <text class="td-S" x="138.6" y="334.9" style="text-anchor:middle">هذلولوی</text>
 <text class="td-L" x="334.0" y="85.7" style="text-anchor:middle">مارپیچ دافع</text>
-<text class="td-S" x="119.7" y="57.9" style="text-anchor:middle">گره دافع</text>
 <text class="td-S" x="334.0" y="409.7" style="text-anchor:middle">دافع</text>
 <text class="td-M" x="53.5" y="117.6" style="text-anchor:start">δ = τ²/4 → مقدار ویژه‌ی مضاعف</text>
 <text class="td-M" x="53.5" y="91.3" style="text-anchor:start">بالای سهمی: مقادیر ویژه‌ی مختلط</text>
 <text class="td-M" x="53.5" y="187.2" style="text-anchor:start">δ = 1</text>
 <text class="td-M" x="53.5" y="346.4" style="text-anchor:start">δ = −1</text>
-<text class="td-N" x="617.0" y="264.8" style="text-anchor:end">τ</text>
-<text class="td-N" x="342.0" y="50.0" style="text-anchor:start">δ</text>
+<text class="td-M" x="617.0" y="263.8" style="text-anchor:end;font-weight:700">τ = اثر</text>
+<text class="td-M" x="343.0" y="50.0" style="text-anchor:start;font-weight:700">δ = دترمینان</text>
 <circle cx="384.4" cy="260.9" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
 <text class="td-N" x="384.4" y="249.9" style="text-anchor:middle">A1</text>
 <circle cx="420.9" cy="208.3" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
@@ -269,7 +268,7 @@ $$\operatorname{tr}A^{-1}=\frac{\tau}{\delta},\qquad \det A^{-1}=\frac1\delta,$$
 <circle cx="586.2" cy="34.0" r="4.6" fill="var(--accent)" stroke="var(--plot-bg)" stroke-width="1.6"/>
 <text class="td-N" x="568.2" y="49.0" style="text-anchor:middle">A10</text>
 </svg>
-<figcaption>صفحه‌ی trace–det. مثلث سبز = ناحیه‌ی پایداری (جاذب). خط‌چین بنفش = سهمی $\delta=\tau^2/4$؛ بالایش مقادیر ویژه مختلط. خط‌چین نارنجی = خط‌های $\delta=\pm1$، یعنی نگاشت‌های حافظ مساحت. نقطه‌های $A_1\dots A_{10}$ مثال‌های جدول پایین‌اند. (مقیاس دو محور یکسان نیست.)</figcaption>
+<figcaption>صفحه‌ی trace–det. مثلث سبز = ناحیه‌ی پایداری (جاذب). ناحیه‌ی باریکِ بین سهمی و خط مرزی در بالا، «گره دافع» است (دو مقدار ویژه‌ی حقیقی که هر دو قدرمطلقشان بزرگ‌تر از ۱ است)؛ بقیه‌ی ناحیه‌ی آبی «مارپیچ دافع». خط‌چین بنفش = سهمی $\delta=\tau^2/4$؛ بالایش مقادیر ویژه مختلط. خط‌چین نارنجی = خط‌های $\delta=\pm1$، یعنی نگاشت‌های حافظ مساحت. نقطه‌های $A_1\dots A_{10}$ مثال‌های جدول پایین‌اند. (مقیاس دو محور یکسان نیست.)</figcaption>
 </figure>
 <div class="regkey">
 <span><i style="background:var(--ex-bg);border-color:var(--ex)"></i>جاذب (مثلث پایداری)</span>
@@ -544,27 +543,27 @@ m_s=\lambda_--2=-\frac{1+\sqrt5}{2}=-\varphi\approx-1.618034 .$$
 .cm-b{stroke:var(--ink-2);stroke-width:1.4;fill:none}
 .cm-p{stroke:var(--plot-bg);stroke-width:1;stroke-linejoin:round}
 .cm-L{font-family:Vazirmatn,sans-serif;font-size:13.5px;font-weight:600;fill:var(--ink);direction:rtl;text-anchor:middle}
-.cm-M{font-family:ui-monospace,monospace;font-size:11.5px;fill:var(--ink-3);text-anchor:middle}
+.cm-M{font-family:ui-monospace,monospace;font-size:11.5px;fill:var(--ink-3);text-anchor:middle;direction:ltr;unicode-bidi:isolate}
 .cm-e{stroke-width:1.8;fill:none}
-.cm-n{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;text-anchor:middle}
+.cm-n{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;text-anchor:middle;direction:ltr;unicode-bidi:isolate}
 </style>
-<polygon class="cm-p" points="422.0,170.0 488.0,170.0 422.0,38.0" fill="var(--plot-c1)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="356.0,38.0 422.0,38.0 290.0,-94.0" fill="var(--plot-c2)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="554.0,302.0 488.0,170.0 422.0,170.0" fill="var(--plot-c3)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="422.0,170.0 422.0,38.0 356.0,38.0" fill="var(--plot-c4)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="422.0,170.0 488.0,170.0 422.0,38.0" fill="var(--plot-c1)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="488.0,170.0 554.0,170.0 422.0,38.0" fill="var(--plot-c2)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="554.0,170.0 488.0,38.0 422.0,38.0" fill="var(--plot-c3)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="554.0,170.0 554.0,38.0 488.0,38.0" fill="var(--plot-c4)" fill-opacity="0.62"/>
 <rect x="422.0" y="38.0" width="132" height="132" class="cm-b"/>
 <line class="cm-e" x1="422.0" y1="144.8" x2="554.0" y2="63.2" stroke="var(--plot-c1)"/>
 <text class="cm-n" x="563.0" y="75.2" fill="var(--plot-c1)">Eu</text>
 <line class="cm-e" x1="528.8" y1="170.0" x2="447.2" y2="38.0" stroke="var(--plot-c2)"/>
 <text class="cm-n" x="438.2" y="50.0" fill="var(--plot-c2)">Es</text>
 <text class="cm-L" x="488.0" y="25.0">مربع واحد، بریده به ۴ تکه</text>
-<text class="cm-M" x="488.0" y="187.0">[0,1)x[0,1)</text>
+<text class="cm-M" x="488.0" y="187.0">[0,1) x [0,1)</text>
 <text class="cm-M" x="402.0" y="108.0" style="font-size:19px">&#8592;</text>
 <text class="cm-M" x="402.0" y="126.0">A</text>
-<polygon class="cm-p" points="238.0,134.0 286.0,110.0 286.0,86.0" fill="var(--plot-c1)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="286.0,110.0 334.0,86.0 286.0,86.0" fill="var(--plot-c2)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="334.0,86.0 334.0,62.0 286.0,86.0" fill="var(--plot-c3)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="334.0,86.0 382.0,38.0 334.0,62.0" fill="var(--plot-c4)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="238.0,134.0 286.0,110.0 286.0,86.0" fill="var(--plot-c1)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="286.0,110.0 334.0,86.0 286.0,86.0" fill="var(--plot-c2)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="334.0,86.0 334.0,62.0 286.0,86.0" fill="var(--plot-c3)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="334.0,86.0 382.0,38.0 334.0,62.0" fill="var(--plot-c4)" fill-opacity="0.62"/>
 <line class="cm-g" x1="238.0" y1="134.0" x2="238.0" y2="38.0"/>
 <line class="cm-g" x1="286.0" y1="134.0" x2="286.0" y2="38.0"/>
 <line class="cm-g" x1="334.0" y1="134.0" x2="334.0" y2="38.0"/>
@@ -574,18 +573,18 @@ m_s=\lambda_--2=-\frac{1+\sqrt5}{2}=-\varphi\approx-1.618034 .$$
 <line class="cm-g" x1="238.0" y1="38.0" x2="382.0" y2="38.0"/>
 <polygon class="cm-b" points="238.0,134.0 334.0,86.0 382.0,38.0 286.0,86.0"/>
 <text class="cm-L" x="310.0" y="25.0">متوازی‌الاضلاع، مساحت ۱</text>
-<text class="cm-M" x="310.0" y="151.0">A([0,1)x[0,1))</text>
+<text class="cm-M" x="310.0" y="151.0">A( [0,1) x [0,1) )</text>
 <text class="cm-M" x="216.0" y="108.0" style="font-size:19px">&#8592;</text>
 <text class="cm-M" x="216.0" y="126.0">mod 1</text>
-<polygon class="cm-p" points="62.0,170.0 194.0,104.0 194.0,38.0" fill="var(--plot-c1)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="62.0,104.0 194.0,38.0 62.0,38.0" fill="var(--plot-c2)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="194.0,170.0 194.0,104.0 62.0,170.0" fill="var(--plot-c3)" fill-opacity="0.5"/>
-<polygon class="cm-p" points="62.0,170.0 194.0,38.0 62.0,104.0" fill="var(--plot-c4)" fill-opacity="0.5"/>
+<polygon class="cm-p" points="62.0,170.0 194.0,104.0 194.0,38.0" fill="var(--plot-c1)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="62.0,104.0 194.0,38.0 62.0,38.0" fill="var(--plot-c2)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="194.0,170.0 194.0,104.0 62.0,170.0" fill="var(--plot-c3)" fill-opacity="0.62"/>
+<polygon class="cm-p" points="62.0,170.0 194.0,38.0 62.0,104.0" fill="var(--plot-c4)" fill-opacity="0.62"/>
 <rect x="62.0" y="38.0" width="132" height="132" class="cm-b"/>
 <text class="cm-L" x="128.0" y="25.0">چیده‌شده روی چنبره</text>
 <text class="cm-M" x="128.0" y="187.0">F(x,y) = A(x,y) mod 1</text>
 </svg>
-<figcaption>کشیدن و تا کردن. راست: مربع واحد با جهت‌های ویژه $E^u$ و $E^s$، بریده به چهار تکه. وسط: تصویر $A([0,1)^2)$ یک متوازی‌الاضلاع با مساحت $|\det A|=1$ که از ۶ خانه‌ی مشبکه عبور می‌کند و از آن‌ها ۴ تکه می‌برد. چپ: هر تکه با انتقال صحیح به مربع واحد برمی‌گردد و دوباره <b>دقیقاً</b> مربع را می‌پوشاند — این «mod 1» گرفتن است. کشیده شدن در جهت $E^u$ با ضریب $\lambda_+\approx2.62$ و فشرده شدن در جهت $E^s$ با ضریب $\lambda_-\approx0.38$ انجام می‌شود؛ حاصل‌ضربشان ۱ است، پس مساحت می‌ماند.</figcaption>
+<figcaption>کشیدن و تا کردن. راست: مربع واحد با جهت‌های ویژه $E^u$ و $E^s$، بریده به چهار تکه. وسط: تصویر $A([0,1)^2)$ یک متوازی‌الاضلاع با مساحت $|\det A|=1$ که از چهار خانه‌ی مشبکه عبور می‌کند و به چهار مثلث بریده می‌شود (هر کدام به مساحت $\tfrac14$). چپ: هر تکه با انتقال صحیح به مربع واحد برمی‌گردد و دوباره <b>دقیقاً</b> مربع را می‌پوشاند — این «mod 1» گرفتن است. کشیده شدن در جهت $E^u$ با ضریب $\lambda_+\approx2.62$ و فشرده شدن در جهت $E^s$ با ضریب $\lambda_-\approx0.38$ انجام می‌شود؛ حاصل‌ضربشان ۱ است، پس مساحت می‌ماند.</figcaption>
 </figure>
 
 <h3>۶.۳ شمارش نقاط تناوبی</h3>
@@ -955,7 +954,7 @@ window.QUIZ=[
 </script>
 <script>
 window.PAGE_INIT=function(DS){
-const {Plot,css,h,slider,select,onResize}=DS;
+const {Plot,css,h,slider,select,onResize,fa}=DS;
 
 /* ===================== ابزار ۱: صفحه‌ی trace–det ===================== */
 (function(){
@@ -965,13 +964,14 @@ const {Plot,css,h,slider,select,onResize}=DS;
 <div class="canvases"><canvas class="td"></canvas><canvas class="ph"></canvas></div>
 <div class="controls c1"></div><div class="controls c2"></div>
 <div class="legend"><span><i style="background:var(--plot-c1)"></i>$E^s$ / مقدار ویژه‌ی کوچک‌تر</span><span><i style="background:var(--plot-c2)"></i>$E^u$ / مقدار ویژه‌ی بزرگ‌تر</span><span><i style="background:var(--ink-3)"></i>مربع واحد</span><span><i style="background:var(--accent)"></i>تصویرش زیر $A$ (مساحت $=|\\delta|$)</span></div>
+<div class="rclass" style="margin-top:10px;font-weight:700;color:var(--accent);line-height:1.8"></div>
 <div class="readout"></div>`;
   let T=3, D=1, showSq=true;
   const cTD=el.querySelector(".td"), cPH=el.querySelector(".ph");
   const pTD=new Plot(cTD,{xmin:-4,xmax:4,ymin:-3.5,ymax:4.5});
   const pPH=new Plot(cPH,{xmin:-3,xmax:3,ymin:-3,ymax:3});
   pPH.pad={l:26,r:26,t:26,b:26};
-  const c1=el.querySelector(".c1"), c2=el.querySelector(".c2"), ro=el.querySelector(".readout");
+  const c1=el.querySelector(".c1"), c2=el.querySelector(".c2"), ro=el.querySelector(".readout"), rc=el.querySelector(".rclass");
 
   function cls(t,d){
     const Dl=t*t-4*d, e=1e-7, o={Delta:Dl};
@@ -1016,10 +1016,11 @@ const {Plot,css,h,slider,select,onResize}=DS;
     const g=pTD.ctx; g.save(); pTD.clip();
     try{ g.direction="rtl"; }catch(e){}
     g.font="600 12px Vazirmatn, Tahoma, sans-serif"; g.fillStyle=css("--ink"); g.textAlign="center";
-    const lab=(t,d,s)=>g.fillText(s,pTD.X(t),pTD.Y(d));
+    g.strokeStyle=css("--plot-bg"); g.lineWidth=3.4; g.lineJoin="round";
+    const lab=(t,d,s)=>{ g.strokeText(s,pTD.X(t),pTD.Y(d)); g.fillText(s,pTD.X(t),pTD.Y(d)); };
     lab(0,0.55,"مارپیچ جاذب"); lab(0,-0.35,"گره جاذب");
-    lab(2.7,-1.0,"زینی"); lab(-2.7,-1.0,"زینی");
-    lab(0,3.15,"مارپیچ دافع"); lab(3.3,2.6,"گره دافع"); lab(-3.3,2.6,"گره دافع");
+    lab(2.7,-0.45,"زینی"); lab(-2.7,-0.45,"زینی");
+    lab(0,3.15,"مارپیچ دافع");
     lab(0,-2.4,"دافع");
     pTD.unclip(); g.restore();
     pTD.dot(T,D,5.5,css("--accent"),css("--plot-bg"));
@@ -1061,7 +1062,7 @@ const {Plot,css,h,slider,select,onResize}=DS;
     for(let k=0;k<20;k++){
       const a=2*Math.PI*k/20;
       drawOrbit(2.6*Math.cos(a),2.6*Math.sin(a),A,22,col1);
-      if(Ai) drawOrbit(2.6*Math.cos(a),2.6*Math.sin(a),Ai,22,col2);
+      if(Ai) drawOrbit(2.6*Math.cos(a),2.6*Math.sin(a),Ai,15,col2);
     }
     for(let k=0;k<8;k++){
       const a=2*Math.PI*k/8+0.2;
@@ -1072,14 +1073,15 @@ const {Plot,css,h,slider,select,onResize}=DS;
   function readout(){
     const o=cls(T,D);
     let s="";
-    s+="τ = "+T.toFixed(2)+"    δ = "+D.toFixed(2)+"    Δ = τ²−4δ = "+(T*T-4*D).toFixed(3)+"\n";
-    if(o.real&&!o.dbl) s+="λ₁ = "+o.l1.toFixed(4)+" ,  λ₂ = "+o.l2.toFixed(4)+"   (حقیقی و متمایز)\n";
-    else if(o.dbl)      s+="λ = "+o.l1.toFixed(4)+"   (مقدار ویژه‌ی مضاعف)\n";
-    else                s+="λ = ρ·exp(±iθ) ,  ρ = "+o.rho.toFixed(4)+" ,  θ = "+(o.th*180/Math.PI).toFixed(1)+"°   (مختلط مزدوج)\n";
-    s+="رده: "+nameOf(o,D)+"\n";
-    s+="(1+δ)² − τ² = "+o.g.toFixed(3)+"   →   "+(o.kind==="nonhyp"?"روی مرز (غیرهذلولوی)":(o.kind==="saddle"?"زینی":(o.kind==="sink"?"درون مثلث پایداری":"دافع")))+"\n";
-    s+="ضریب تغییر مساحت |δ| = "+Math.abs(D).toFixed(3)+(Math.abs(Math.abs(D)-1)<5e-3?"   → حافظ مساحت":"");
+    s+="τ = "+T.toFixed(2)+"    δ = "+D.toFixed(2)+"    Δ = τ^2 − 4δ = "+(T*T-4*D).toFixed(3)+"\n";
+    if(o.real&&!o.dbl) s+="λ1 = "+o.l1.toFixed(4)+"     λ2 = "+o.l2.toFixed(4)+"\n";
+    else if(o.dbl)      s+="λ = "+o.l1.toFixed(4)+"   (×2)\n";
+    else                s+="λ = ρ·exp(±iθ)     ρ = "+o.rho.toFixed(4)+"     θ = "+(o.th*180/Math.PI).toFixed(1)+"°\n";
+    s+="(1+δ)^2 − τ^2 = "+o.g.toFixed(3)+"        |δ| = "+Math.abs(D).toFixed(3);
     ro.textContent=s;
+    const typeFa=(o.real&&!o.dbl)?"حقیقی و متمایز":(o.dbl?"مضاعف":"مختلط مزدوج");
+    const regFa=o.kind==="nonhyp"?"روی مرز (غیرهذلولوی)":(o.kind==="saddle"?"ناحیه‌ی زینی":(o.kind==="sink"?"درون مثلث پایداری":"ناحیه‌ی دافع"));
+    rc.textContent="مقادیر ویژه: "+typeFa+" · رده: "+nameOf(o,D)+" · "+regFa+(Math.abs(Math.abs(D)-1)<5e-3?" · حافظ مساحت":"");
   }
   function draw(){ pTD.resize(); pPH.resize(); drawTD(); drawPH(); readout(); }
 
@@ -1116,12 +1118,13 @@ const {Plot,css,h,slider,select,onResize}=DS;
 <div class="wd">تصویر $N\\times N$ زیر $(i,j)\\mapsto(2i+j,\\,i+j)\\bmod N$ جابه‌جا می‌شود. این یک <b>جایگشت</b> است، پس تصویر پس از $\\Pi(N)$ گام عیناً برمی‌گردد. نمودار، نسبت پیکسل‌های جابه‌جاشده را در هر گام نشان می‌دهد.</div>
 <div class="canvases"><canvas class="img"></canvas><canvas class="chart"></canvas></div>
 <div class="controls c1"></div><div class="controls c2"></div>
+<div class="rclass" style="margin-top:10px;font-weight:700;color:var(--accent);line-height:1.8"></div>
 <div class="readout"></div>`;
   const NS=[8,12,16,24,32,36,40,48,55,64,72,80,96,100,120,128,144,160];
   let N=72, n=0, P=1, idx=null, base=null, frac=null, timer=null;
   const cIm=el.querySelector(".img"), cCh=el.querySelector(".chart");
   const pCh=new Plot(cCh,{xmin:0,xmax:1,ymin:0,ymax:1});
-  const c1=el.querySelector(".c1"), c2=el.querySelector(".c2"), ro=el.querySelector(".readout");
+  const c1=el.querySelector(".c1"), c2=el.querySelector(".c2"), ro=el.querySelector(".readout"), rc=el.querySelector(".rclass");
   const lam=(3+Math.sqrt(5))/2;
 
   function order(N){
@@ -1221,19 +1224,21 @@ const {Plot,css,h,slider,select,onResize}=DS;
     pCh.line(n,-0.05,n,1.05,css("--plot-c2"),1.6);
     if(n<=Q) pCh.dot(n,frac[n],4.5,css("--plot-c2"),css("--plot-bg"));
     const gg=pCh.ctx; gg.save(); try{gg.direction="rtl";}catch(e){}
-    gg.font="600 12px Vazirmatn, Tahoma, sans-serif"; gg.fillStyle=css("--ink-3"); gg.textAlign="start";
-    gg.fillText("نسبت پیکسل‌های جابه‌جاشده", pCh.pad.l+6, pCh.pad.t+14);
+    gg.font="600 12px Vazirmatn, Tahoma, sans-serif"; gg.fillStyle=css("--ink-3"); gg.textAlign="right";
+    gg.fillText("نسبت پیکسل‌های جابه‌جاشده", pCh.w-pCh.pad.r-6, pCh.pad.t+15);
     gg.restore();
   }
   function readout(){
     let fx=0; for(let k=0;k<N*N;k++) if(idx[k]===k) fx++;
     const fixT=Math.round(Math.pow(lam,n)+Math.pow(lam,-n)-2);
     let s="";
-    s+="N = "+N+"    گام n = "+n+"    دوره‌ی بازگشت Π("+N+") = "+P+"\n";
-    s+="پیکسل‌های سر جای خود: "+fx+" از "+(N*N)+"   ("+(100*fx/(N*N)).toFixed(2)+"%)\n";
-    s+="نقاط ثابت F^n روی کل چنبره: |det(A^n − I)| = λ₊^n + λ₊^(−n) − 2 = "+(n===0?"— (همه)":fixT)+"\n";
-    s+="λ₊ = (3+√5)/2 = "+lam.toFixed(6)+"    log λ₊ = "+Math.log(lam).toFixed(4);
+    s+="N = "+N+"      n = "+n+"      Pi(N) = "+P+"\n";
+    s+="|det(A^n − I)| = L(2n) − 2 = "+(n===0?"—":fixT)+"\n";
+    s+="lam+ = (3+sqrt5)/2 = "+lam.toFixed(6)+"      log lam+ = "+Math.log(lam).toFixed(4);
     ro.textContent=s;
+    rc.textContent="شبکه‌ی "+fa(N)+"×"+fa(N)+" · گام "+fa(n)+" · دوره‌ی بازگشت "+fa(P)
+      +" · پیکسل‌های سر جای خود: "+fa(fx)+" از "+fa(N*N)
+      +" · نقاط ثابت F^n روی کل چنبره: "+(n===0?"همه":fa(fixT));
   }
   function all(){ render(); chart(); readout(); }
   function reset(){ build(); all(); }

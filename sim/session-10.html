@@ -252,7 +252,7 @@ $F(0)=0.1353$، $F(1)=0.4060$، $F(2)=0.6767$، $F(3)=0.8571$.<br>
 <div class="dcard">
 <div class="dh"><b>توزیع یکنواخت</b><span class="en">Uniform(a, b)</span><span class="cvq">cv = (b−a)/(√3 (a+b))</span></div>
 <div class="row"><div class="k">pdf</div><div class="v">$$f(x)=\begin{cases}\dfrac{1}{b-a},& a\le x\le b\\[4pt] 0,&\text{در غیر این صورت}\end{cases}$$</div></div>
-<div class="row"><div class="k">CDF</div><div class="v">$$F(x)=\begin{cases}0,& x<a\\[2pt] \dfrac{x-a}{b-a},& a\le x<b\\[4pt] 1,& x\ge b\end{cases}$$</div></div>
+<div class="row"><div class="k">CDF</div><div class="v">$$F(x)=\begin{cases}0,& x&lt;a\\[2pt] \dfrac{x-a}{b-a},& a\le x&lt;b\\[4pt] 1,& x\ge b\end{cases}$$</div></div>
 <div class="row"><div class="k">میانگین</div><div class="v">$E(X)=\dfrac{a+b}{2}$ &nbsp;(= میانه؛ توزیع متقارن است)</div></div>
 <div class="row"><div class="k">واریانس</div><div class="v">$V(X)=\dfrac{(b-a)^2}{12}$</div></div>
 <div class="row"><div class="k">ضریب تغییرات</div><div class="v">$cv=\dfrac{(b-a)/\sqrt{12}}{(a+b)/2}=\dfrac{b-a}{\sqrt3\,(a+b)}$ — حداکثرش (وقتی $a=0$) برابر $1/\sqrt3=0.577$ است. پس یکنواخت <b>هیچ‌وقت</b> نمی‌تواند $cv\ge0.578$ بسازد.</div></div>
@@ -260,7 +260,7 @@ $F(0)=0.1353$، $F(1)=0.4060$، $F(2)=0.6767$، $F(3)=0.8571$.<br>
 <p><b>۱. $U(0,1)$ به‌عنوان ماده‌ی خام.</b> هر مولد عدد تصادفی $U(0,1)$ تولید می‌کند و همه‌ی متغیرهای دیگر از آن ساخته می‌شوند.</p>
 <p><b>۲. $U(a,b)$ به‌عنوان مدل ورودی «بیشینه بی‌اطلاعی».</b> وقتی فقط می‌دانی مقدار بین $a$ و $b$ است و هیچ داده‌ی دیگری نداری. این یک انتخاب <i>محافظه‌کارانه در شکل</i> است، نه در پراکندگی: یکنواخت همه‌ی مقادیر میانی را به یک اندازه محتمل می‌داند، که معمولاً با واقعیت نمی‌خواند.</p></div></div>
 <div class="row"><div class="k">مثال عددی</div><div class="v">$U(2,8)$: &nbsp;$E=5$، $V=36/12=3$، $\sigma=1.732$، $cv=0.346$، میانه $=5$، مد وجود ندارد (همه‌ی نقاط هم‌چگالی‌اند).<br>
-$P(3<X<5)=F(5)-F(3)=\dfrac{5-2}{6}-\dfrac{3-2}{6}=\dfrac{2}{6}=\mathbf{0.3333}$ — یعنی احتمال، <b>متناسب با طول بازه</b> است و به محل آن بستگی ندارد: $P(3<X<5)=P(6<X<8)$.</div></div>
+$P(3&lt;X<5)=F(5)-F(3)=\dfrac{5-2}{6}-\dfrac{3-2}{6}=\dfrac{2}{6}=\mathbf{0.3333}$ — یعنی احتمال، <b>متناسب با طول بازه</b> است و به محل آن بستگی ندارد: $P(3&lt;X<5)=P(6&lt;X<8)$.</div></div>
 </div>
 <div class="box warn"><div class="bt">تله‌ی رایج: «نمی‌دانم، پس یکنواخت»</div>
 اگر فقط کمینه و بیشینه‌ی مشاهده‌شده را داری و $U(\min,\max)$ می‌گذاری، دو خطا می‌کنی: (۱) هیچ مقداری بیرون از بازه تولید نمی‌شود، پس دُم‌های واقعی حذف می‌شوند؛ (۲) $\min$ و $\max$ نمونه‌ای، خودشان پرنوسان‌ترین آماره‌های ممکن‌اند و با بزرگ‌شدن نمونه مدام گسترده‌تر می‌شوند. اگر داده داری، مثلث یا بتا را هم امتحان کن؛ اگر داده نداری، یکنواخت را به‌عنوان یک سناریوی تحلیل حساسیت به کار ببر نه به‌عنوان «مدل».
@@ -437,7 +437,7 @@ $$P(X>s+t\mid X>s)=P(X>t)\qquad\text{برای هر }s,t\ge0$$
 <div class="dcard">
 <div class="dh"><b>توزیع وایبول</b><span class="en">Weibull(ν, α, β)</span><span class="cvq">cv = g(β) · ν = 0</span></div>
 <div class="row"><div class="k">pdf</div><div class="v">$$f(x)=\begin{cases}\dfrac{\beta}{\alpha}\Big(\dfrac{x-\nu}{\alpha}\Big)^{\beta-1}\exp\!\left[-\Big(\dfrac{x-\nu}{\alpha}\Big)^{\beta}\right],& x\ge\nu\\[8pt] 0,&\text{در غیر این صورت}\end{cases}$$</div></div>
-<div class="row"><div class="k">CDF</div><div class="v">$$F(x)=\begin{cases}1-\exp\!\left[-\Big(\dfrac{x-\nu}{\alpha}\Big)^{\beta}\right],& x\ge\nu\\[6pt] 0,& x<\nu\end{cases}$$ فرم بسته دارد ⟹ تولید متغیر با تبدیل معکوس آسان است: $X=\nu+\alpha(-\ln U)^{1/\beta}$.</div></div>
+<div class="row"><div class="k">CDF</div><div class="v">$$F(x)=\begin{cases}1-\exp\!\left[-\Big(\dfrac{x-\nu}{\alpha}\Big)^{\beta}\right],& x\ge\nu\\[6pt] 0,& x&lt;\nu\end{cases}$$ فرم بسته دارد ⟹ تولید متغیر با تبدیل معکوس آسان است: $X=\nu+\alpha(-\ln U)^{1/\beta}$.</div></div>
 <div class="row"><div class="k">میانگین</div><div class="v">$E(X)=\nu+\alpha\,\Gamma\!\big(\tfrac{1}{\beta}+1\big)$ &nbsp;<span class="tag book">کتاب</span> &nbsp;(در اسلایدها نیامده)</div></div>
 <div class="row"><div class="k">واریانس</div><div class="v">$V(X)=\alpha^{2}\Big[\Gamma\!\big(\tfrac{2}{\beta}+1\big)-\Gamma\!\big(\tfrac{1}{\beta}+1\big)^{2}\Big]$ &nbsp;<span class="tag book">کتاب</span><br><small>$\nu$ در واریانس اثری ندارد؛ فقط میانگین را جابه‌جا می‌کند.</small></div></div>
 <div class="row"><div class="k">ضریب تغییرات</div><div class="v">برای $\nu=0$:&nbsp; $cv=\sqrt{\dfrac{\Gamma(2/\beta+1)}{\Gamma(1/\beta+1)^{2}}-1}$ — مستقل از $\alpha$! پس $\beta$ را می‌توانی مستقیماً از $cv$ مشاهده‌شده انتخاب کنی.</div></div>
@@ -536,7 +536,7 @@ $$h(x)=\frac{f(x)}{1-F(x)}=\frac{\beta}{\alpha}\Big(\frac{x}{\alpha}\Big)^{\beta
 
 <div class="dcard">
 <div class="dh"><b>توزیع نرمال</b><span class="en">Normal N(μ, σ²)</span><span class="cvq">cv = σ/μ</span></div>
-<div class="row"><div class="k">pdf</div><div class="v">$$f(x)=\frac{1}{\sigma\sqrt{2\pi}}\;e^{-\frac12\left(\frac{x-\mu}{\sigma}\right)^{2}},\qquad -\infty<x<\infty$$ با $-\infty<\mu<\infty$ و $\sigma^2>0$. می‌نویسیم $X\sim N(\mu,\sigma^2)$.</div></div>
+<div class="row"><div class="k">pdf</div><div class="v">$$f(x)=\frac{1}{\sigma\sqrt{2\pi}}\;e^{-\frac12\left(\frac{x-\mu}{\sigma}\right)^{2}},\qquad -\infty&lt;x&lt;\infty$$ با $-\infty&lt;\mu&lt;\infty$ و $\sigma^2>0$. می‌نویسیم $X\sim N(\mu,\sigma^2)$.</div></div>
 <div class="row"><div class="k">CDF</div><div class="v"><b>فرم بسته ندارد.</b> با استانداردسازی $Z=\dfrac{X-\mu}{\sigma}$:
 $$F(x)=P\!\left(Z\le\frac{x-\mu}{\sigma}\right)=\Phi\!\left(\frac{x-\mu}{\sigma}\right),\qquad \Phi(z)=\int_{-\infty}^{z}\frac{1}{\sqrt{2\pi}}e^{-t^2/2}\,dt$$
 یک جدول برای $\Phi$ کافی است، چون $\mu$ و $\sigma$ از انتگرال بیرون کشیده شده‌اند.</div></div>
@@ -546,7 +546,7 @@ $$F(x)=P\!\left(Z\le\frac{x-\mu}{\sigma}\right)=\Phi\!\left(\frac{x-\mu}{\sigma}
 <div class="row"><div class="k">کجا به کار می‌آید</div><div class="v">هر چیزی که <b>جمع</b> تعداد زیادی اثر کوچک مستقل است: خطای اندازه‌گیری، تقاضای کل یک ماه (جمع تقاضای روزها)، <b>میانگین خروجی‌های شبیه‌سازی</b> (قضیه‌ی حد مرکزی، جلسه‌ی ۹) — و این آخری مهم‌ترین کاربرد نرمال در این درس است، چون پایه‌ی همه‌ی بازه‌های اطمینان ماست.</div></div>
 <div class="row"><div class="k">مثال عددی</div><div class="v"><b>(جزوه ص ۴۸)</b> زمان پردازش یک بسته‌ی IP ~ $N(12,4)$، یعنی $\mu=12$، $\sigma=2$ میکروثانیه.<br>
 $F(10)=\Phi\!\big(\tfrac{10-12}{2}\big)=\Phi(-1)=1-\Phi(1)=\mathbf{0.1587}$.<br>
-$P(10<X<14)=\Phi(1)-\Phi(-1)=2\Phi(1)-1=\mathbf{0.6827}$ — همان قاعده‌ی «۶۸٪ درون یک انحراف معیار».</div></div>
+$P(10&lt;X<14)=\Phi(1)-\Phi(-1)=2\Phi(1)-1=\mathbf{0.6827}$ — همان قاعده‌ی «۶۸٪ درون یک انحراف معیار».</div></div>
 </div>
 
 <h3>سه خاصیت که جزوه نام می‌برد</h3>
@@ -612,7 +612,7 @@ $$V(X)=E(X^2)-E(X)^2=e^{2\mu+2\sigma^{2}}-e^{2\mu+\sigma^{2}}=e^{2\mu+\sigma^{2}
 <p>در عمل میانگین و انحراف معیار <b>مشاهده‌شده</b> را داری، نه پارامترهای $\mu$ و $\sigma$. تبدیل:</p>
 $$\sigma^{2}=\ln\!\left(1+\frac{\sigma_L^{2}}{\mu_L^{2}}\right)=\ln(1+cv^{2}),\qquad \mu=\ln\mu_L-\frac{\sigma^{2}}{2}$$
 <p>و در جهت عکس، سه مکان‌نما همیشه این ترتیب را دارند:</p>
-$$\underbrace{e^{\mu-\sigma^{2}}}_{\text{مد}}\;<\;\underbrace{e^{\mu}}_{\text{میانه}}\;<\;\underbrace{e^{\mu+\sigma^{2}/2}}_{\text{میانگین}}$$
+$$\underbrace{e^{\mu-\sigma^{2}}}_{\text{مد}}\;&lt;\;\underbrace{e^{\mu}}_{\text{میانه}}\;&lt;\;\underbrace{e^{\mu+\sigma^{2}/2}}_{\text{میانگین}}$$
 <p>چولگی به راست، به‌صورت جبری. هرچه $\sigma$ بزرگ‌تر، فاصله‌ها بیشتر.</p>
 
 <div class="fig">
@@ -1047,8 +1047,8 @@ window.QUIZ=[
  o:[`تکیه‌گاهش فقط اعداد مثبت است، چوله به راست است و دُم راست سنگین‌تری دارد`,`چون پارامتر کمتری دارد`,`چون واریانسش همیشه کوچک‌تر است`,`چون CDF فرم بسته دارد ولی نرمال ندارد`],a:0,
  e:R`هر سه ویژگی با داده‌ی مدت تعمیر می‌خواند. تعداد پارامتر هر دو ۲ است، و CDF هر دو با همان $\Phi$ حساب می‌شود؛ پس گزینه‌های دیگر بی‌ربط‌اند.`},
 {q:R`در توزیع لگ‌نرمال، ترتیب درست مد، میانه و میانگین کدام است؟`,
- o:[R`$e^{\mu-\sigma^2}<e^{\mu}<e^{\mu+\sigma^2/2}$`,R`$e^{\mu+\sigma^2/2}<e^{\mu}<e^{\mu-\sigma^2}$`,`هر سه برابرند`,R`میانه از میانگین بزرگ‌تر است`],a:0,
- e:R`مد < میانه < میانگین، امضای جبری چولگی به راست. در نرمال هر سه برابر $\mu$اند و در نمایی $0<\ln2/\lambda<1/\lambda$.`},
+ o:[R`$e^{\mu-\sigma^2}&lt;e^{\mu}&lt;e^{\mu+\sigma^2/2}$`,R`$e^{\mu+\sigma^2/2}&lt;e^{\mu}&lt;e^{\mu-\sigma^2}$`,`هر سه برابرند`,R`میانه از میانگین بزرگ‌تر است`],a:0,
+ e:R`مد < میانه < میانگین، امضای جبری چولگی به راست. در نرمال هر سه برابر $\mu$اند و در نمایی $0&lt;\ln2/\lambda<1/\lambda$.`},
 {q:R`نرخ خرابی یک دستگاه پواسون با میانگین ۳ در هر شیفت ۸ ساعته است. احتمال این‌که بیش از ۴ ساعت بین دو خرابی فاصله بیفتد:`,
  o:[R`$e^{-1.5}=0.223$`,R`$e^{-3}=0.050$`,R`$e^{-4}=0.018$`,R`$1-e^{-1.5}=0.777$`],a:0,
  e:R`$\lambda=3/8=0.375$ در ساعت، پس $P(T>4)=e^{-0.375\times4}=e^{-1.5}$. همین عدد برابر $P(N(4)=0)$ است — دو بیان از یک رویداد.`},
