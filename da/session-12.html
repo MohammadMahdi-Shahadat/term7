@@ -14,6 +14,7 @@
 .treefig text{font-family:Vazirmatn,Tahoma,sans-serif;font-size:11px;fill:var(--ink)}
 .treefig .eg{stroke:var(--ink-3);stroke-width:1.1;fill:none}
 .treefig .el{font-size:10px;fill:var(--ink-3)}
+.treefig text.lt{direction:ltr;unicode-bidi:bidi-override;font-family:ui-monospace,Consolas,monospace;font-size:10.5px}
 table.num{font-variant-numeric:tabular-nums}
 table.num td,table.num th{text-align:center;white-space:nowrap}
 table.num td:first-child,table.num th:first-child{text-align:start}
@@ -69,21 +70,21 @@ table.num td.alt{background:var(--think-bg)}
 </div>
 
 <figure class="fig treefig">
-<svg viewBox="0 0 620 230" role="img" aria-label="یک درخت تصمیم با عمق ۲ روی داده‌ی گل">
+<svg viewBox="0 0 620 190" role="img" aria-label="یک درخت تصمیم با عمق دو روی داده‌ی گل">
 <g text-anchor="middle">
-<rect class="nd" x="235" y="8" width="150" height="26" rx="7"/><text x="310" y="25">طول گلبرگ ≤ ۲٫۵؟</text>
-<path class="eg" d="M290 34 L150 70"/><path class="eg" d="M330 34 L470 70"/>
-<text class="el" x="205" y="48">بله</text><text class="el" x="415" y="48">خیر</text>
-<rect class="lf0" x="90" y="70" width="120" height="26" rx="7"/><text x="150" y="87">Setosa</text>
-<rect class="nd" x="395" y="70" width="150" height="26" rx="7"/><text x="470" y="87">عرض گلبرگ ≤ ۱٫۷۵؟</text>
-<path class="eg" d="M440 96 L370 136"/><path class="eg" d="M500 96 L560 136"/>
-<text class="el" x="392" y="114">بله</text><text class="el" x="540" y="114">خیر</text>
-<rect class="lf1" x="300" y="136" width="130" height="26" rx="7"/><text x="365" y="153">Versicolor</text>
-<rect class="lf2" x="490" y="136" width="120" height="26" rx="7"/><text x="550" y="153">Virginica</text>
-<text x="310" y="192" font-size="11.5">هر مسیر یک قاعده‌ی IF–THEN است:</text>
-<text x="310" y="210" font-size="11.5">اگر طول گلبرگ &gt; ۲٫۵ و عرض گلبرگ ≤ ۱٫۷۵ آنگاه Versicolor</text>
+<rect class="nd" x="230" y="8" width="160" height="36" rx="8"/>
+<text x="310" y="23">طول گلبرگ</text><text class="lt" x="310" y="37">&#8804; 2.5 ?</text>
+<path class="eg" d="M285 44 L150 80"/><path class="eg" d="M335 44 L470 80"/>
+<text class="el" x="203" y="58">بله</text><text class="el" x="417" y="58">خیر</text>
+<rect class="lf0" x="90" y="80" width="120" height="26" rx="8"/><text x="150" y="97">Setosa</text>
+<rect class="nd" x="390" y="80" width="160" height="36" rx="8"/>
+<text x="470" y="95">عرض گلبرگ</text><text class="lt" x="470" y="109">&#8804; 1.75 ?</text>
+<path class="eg" d="M435 116 L370 152"/><path class="eg" d="M505 116 L560 152"/>
+<text class="el" x="390" y="133">بله</text><text class="el" x="543" y="133">خیر</text>
+<rect class="lf1" x="300" y="152" width="130" height="26" rx="8"/><text x="365" y="169">Versicolor</text>
+<rect class="lf2" x="490" y="152" width="120" height="26" rx="8"/><text x="550" y="169">Virginica</text>
 </g></svg>
-<figcaption>شکل اسلاید ۳۲، بازکشیده. دقت کن که این شکل «شکل درخت» را نشان می‌دهد، نه الزاماً عددهایی که خودت از آموزش روی فایل ۱۲۰ سطری به دست می‌آوری.</figcaption>
+<figcaption>شکل اسلاید ۳۲، بازکشیده. هر مسیر یک قاعده‌ی IF–THEN است؛ مثلاً مسیر وسط یعنی: اگر طول گلبرگ بیشتر از ۲٫۵ و عرض گلبرگ کمتر یا مساوی ۱٫۷۵ باشد، آنگاه <span class="ltr">Versicolor</span>. دقت کن این شکل «شکل درخت» را نشان می‌دهد، نه الزاماً عددهایی که خودت از آموزش روی فایل ۱۲۰ سطری به دست می‌آوری.</figcaption>
 </figure>
 
 <h3>۱.۱ درخت، فضای ویژگی را به مستطیل تقسیم می‌کند</h3>
@@ -851,14 +852,15 @@ print(confusion_matrix(y_test, final.predict(X_test)))
 rf = RandomForestClassifier(n_estimators=300, random_state=0).fit(X_train, y_train)
 print("forest test:", round(rf.score(X_test, y_test), 3))
 print(dict(zip(X.columns, rf.feature_importances_.round(3))))</pre>
-<div class="out">forest test: 0.967
-{'sepal length (cm)': 0.115, 'sepal width (cm)': 0.024,
- 'petal length (cm)': 0.443, 'petal width (cm)': 0.419}
-confusion matrix (forest):
+<div class="out">{'svc__C': 1, 'svc__gamma': 0.1} 0.975
+test accuracy: 0.967
 [[10  0  0]
  [ 0  9  1]
- [ 0  0 10]]</div>
-<p>دو چیز را از این خروجی بردار: (۱) تنها خطای مدل، یک گل <span class="ltr">versicolor</span> است که <span class="ltr">virginica</span> پیش‌بینی شده — همان جفتی که در نمودار اسلاید ۵۵ همپوشانی داشتند و هیچ مدلی این جلسه نتوانست کاملاً جدایشان کند. (۲) دو ویژگی گلبرگ روی هم ۸۶٪ اهمیت را دارند و عرض کاسبرگ تقریباً بی‌اثر است. همین با چشم هم در نمودار پراکندگی دیده می‌شد.</p>
+ [ 0  0 10]]
+forest test: 0.967
+{'sepal length (cm)': 0.115, 'sepal width (cm)': 0.024,
+ 'petal length (cm)': 0.443, 'petal width (cm)': 0.419}</div>
+<p>سه چیز را از این خروجی بردار: (۰) بهترین ابرپارامترها $C=1$ و $\gamma=0.1$ است با CV برابر ۰٫۹۷۵ — و دقت آزمونش ۰٫۹۶۷ شد، یعنی کمی <b>پایین‌تر</b> از CV، که طبیعی است: CV روی بهترینِ ۱۶ ترکیب انتخاب شده و کمی خوش‌بین است. (۱) تنها خطای مدل، یک گل <span class="ltr">versicolor</span> است که <span class="ltr">virginica</span> پیش‌بینی شده — همان جفتی که در نمودار اسلاید ۵۵ همپوشانی داشتند و هیچ مدلی این جلسه نتوانست کاملاً جدایشان کند. (۲) دو ویژگی گلبرگ روی هم ۸۶٪ اهمیت را دارند و عرض کاسبرگ تقریباً بی‌اثر است. همین با چشم هم در نمودار پراکندگی دیده می‌شد.</p>
 
 <h3>۱۱.۶ شاخه‌ی خوشه‌بندی در پایتون</h3>
 <pre class="code">from sklearn.cluster import KMeans
@@ -960,20 +962,24 @@ $$G_{\text{child}}=\tfrac{4}{12}(0)+\tfrac{8}{12}(0.5)=0.3333,\qquad \Delta G=0.
 
 <p><b>گام ۶ — درخت نهایی و برچسب برگ‌ها.</b> عمق بیشینه ۲ است، پس می‌ایستیم:</p>
 <figure class="fig treefig">
-<svg viewBox="0 0 600 200" role="img" aria-label="درخت نهایی مثال قطعه‌های تولیدی">
+<svg viewBox="0 0 620 215" role="img" aria-label="درخت نهایی مثال قطعه‌های تولیدی">
 <g text-anchor="middle">
-<rect class="nd" x="225" y="8" width="150" height="26" rx="7"/><text x="300" y="25">T ≤ ۲۶؟  (G=۰٫۶۶۶۷)</text>
-<path class="eg" d="M280 34 L150 68"/><path class="eg" d="M320 34 L450 68"/>
-<text class="el" x="200" y="46">بله</text><text class="el" x="400" y="46">خیر</text>
-<rect class="lf0" x="70" y="68" width="160" height="26" rx="7"/><text x="150" y="85">برگ: درجه ۱ · n=۴ · G=۰</text>
-<rect class="nd" x="370" y="68" width="160" height="26" rx="7"/><text x="450" y="85">M ≤ ۸٫۵؟  (G=۰٫۵)</text>
-<path class="eg" d="M420 94 L330 130"/><path class="eg" d="M490 94 L530 130"/>
-<text class="el" x="358" y="110">بله</text><text class="el" x="520" y="110">خیر</text>
-<rect class="lf1" x="245" y="130" width="160" height="26" rx="7"/><text x="325" y="147">برگ: درجه ۲ · n=۳ · G=۰</text>
-<rect class="lf2" x="425" y="130" width="170" height="26" rx="7"/><text x="510" y="147">برگ: درجه ۳ · n=۵ · G=۰٫۳۲</text>
-<text x="300" y="186" font-size="11">دقت آموزش: ۱۱ از ۱۲ — نمونه‌ی شماره‌ی ۸ (درجه ۲ با زمان ۱۳) در برگ سوم افتاده</text>
+<rect class="nd" x="230" y="6" width="160" height="36" rx="8"/>
+<text class="lt" x="310" y="21">T &#8804; 26 ?</text><text class="lt" x="310" y="35">G = 0.6667</text>
+<path class="eg" d="M285 42 L150 78"/><path class="eg" d="M335 42 L470 78"/>
+<text class="el" x="203" y="56">بله</text><text class="el" x="417" y="56">خیر</text>
+<rect class="lf0" x="75" y="78" width="150" height="36" rx="8"/>
+<text x="150" y="93">برگ: درجه ۱</text><text class="lt" x="150" y="107">n = 4 &#183; G = 0.00</text>
+<rect class="nd" x="390" y="78" width="160" height="36" rx="8"/>
+<text class="lt" x="470" y="93">M &#8804; 8.5 ?</text><text class="lt" x="470" y="107">G = 0.50</text>
+<path class="eg" d="M435 114 L345 152"/><path class="eg" d="M505 114 L545 152"/>
+<text class="el" x="378" y="132">بله</text><text class="el" x="536" y="132">خیر</text>
+<rect class="lf1" x="270" y="152" width="150" height="36" rx="8"/>
+<text x="345" y="167">برگ: درجه ۲</text><text class="lt" x="345" y="181">n = 3 &#183; G = 0.00</text>
+<rect class="lf2" x="455" y="152" width="155" height="36" rx="8"/>
+<text x="532" y="167">برگ: درجه ۳</text><text class="lt" x="532" y="181">n = 5 &#183; G = 0.32</text>
 </g></svg>
-<figcaption>برگ سوم ناخالص است: چهار قطعه‌ی درجه ۳ و یک قطعه‌ی درجه ۲. اکثریت می‌گوید «درجه ۳» و $\hat P(\text{درجه }3)=4/5=0.8$.</figcaption>
+<figcaption>دقت آموزش ۱۱ از ۱۲ است: نمونه‌ی شماره‌ی ۸ (درجه ۲ با زمان ۱۳ دقیقه) در برگ سوم افتاده. برگ سوم ناخالص است — چهار قطعه‌ی درجه ۳ و یک قطعه‌ی درجه ۲ — پس اکثریت «درجه ۳» را می‌گوید و $\hat P(\text{درجه }3)=4/5=0.8$.</figcaption>
 </figure>
 
 <p><b>بند ۵ تکلیف — ردگیری یک نمونه.</b> قطعه‌ی شماره‌ی ۱۰ را بردار: $T=35$، $M=12$.</p>
@@ -985,9 +991,9 @@ $$G_{\text{child}}=\tfrac{4}{12}(0)+\tfrac{8}{12}(0.5)=0.3333,\qquad \Delta G=0.
 <tr><th>بند تکلیف</th><th>چه چیزی روی کاغذ باشد</th><th>اشتباه رایجی که نمره می‌برد</th></tr>
 <tr><td>۱ · بررسی داده</td><td>چهار ویژگی عددی با واحد، برچسب سه‌کلاسه، تعداد نمونه‌ی هر کلاس</td><td>ننوشتن تعداد هر کلاس — بدون آن نمی‌شود ناخالصی ریشه را چک کرد</td></tr>
 <tr><td>۲ · آموزش عمق ۲</td><td>معیاری که انتخاب کردی را صریح بنویس (جینی یا آنتروپی)</td><td>نوشتن نتیجه‌ی ابزار بدون اینکه بگویی با کدام معیار و کدام نسخه‌ی داده</td></tr>
-<tr><td>۳ · رسم درخت</td><td>در هر گره داخلی: نام ویژگی + علامت ≤ + عدد آستانه. در هر برگ: کلاس، تعداد نمونه، ناخالصی</td><td>نوشتن «ویژگی ۳» به‌جای نام ویژگی؛ یا فراموش کردن جهت نامساوی</td></tr>
+<tr><td>۳ · رسم درخت</td><td>در هر گره داخلی: نام ویژگی + علامت <span class="ltr">&#8804;</span> + عدد آستانه. در هر برگ: کلاس، تعداد نمونه، ناخالصی</td><td>نوشتن «ویژگی ۳» به‌جای نام ویژگی؛ یا فراموش کردن جهت نامساوی</td></tr>
 <tr><td>۴ · ناخالصی قبل و بعد</td><td>$I(S)$، $I(S_L)$، $I(S_R)$، میانگین <b>وزنی</b>، و $\Delta$؛ با نشان دادن کسرها</td><td>میانگین ساده به‌جای وزنی؛ یا فقط نوشتن عدد نهایی بدون مراحل</td></tr>
-<tr><td>۵ · ردگیری نمونه</td><td>مقدار ویژگی‌های آن نمونه، جواب هر پرسش، برگ نهایی، کلاس پیش‌بینی‌شده</td><td>انتخاب نمونه‌ای که دقیقاً روی آستانه است، بدون توضیح اینکه ≤ کدام طرف می‌رود</td></tr>
+<tr><td>۵ · ردگیری نمونه</td><td>مقدار ویژگی‌های آن نمونه، جواب هر پرسش، برگ نهایی، کلاس پیش‌بینی‌شده</td><td>انتخاب نمونه‌ای که دقیقاً روی آستانه است، بدون توضیح اینکه <span class="ltr">&#8804;</span> کدام طرف می‌رود</td></tr>
 <tr><td>سؤال عمق</td><td>چند جمله با استدلال اریبی–واریانس و یک پیشنهاد عملی</td><td>جواب تک‌کلمه‌ای «خیر»</td></tr>
 </table></div>
 
@@ -1429,7 +1435,7 @@ window.PAGE_INIT=function(ML){
     const centers=[[-2.4,2.0],[2.6,1.6],[0.4,-2.4]];
     for(let i=0;i<96;i++){ const c=centers[i%3]; PTS.push([c[0]+0.95*gauss(r0), c[1]+0.95*gauss(r0)]); }
 
-    let k=3, mu=[], asg=new Array(PTS.length).fill(-1), step="assign", iter=0, seed=5;
+    let k=3, mu=[], asg=new Array(PTS.length).fill(-1), step="assign", iter=0, seed=5, done=false;
     const dist2=(p,q)=>(p[0]-q[0])**2+(p[1]-q[1])**2;
 
     function initCenters(k,sd){                     // k-means++ style
@@ -1470,14 +1476,14 @@ window.PAGE_INIT=function(ML){
       CURVE[kk]={J:best.J, sil:silhouette(best.a,kk)};
     }
 
-    function reset(newSeed){ if(newSeed) seed=(seed*13+7)%9941; mu=initCenters(k,seed); asg=new Array(PTS.length).fill(-1); step="assign"; iter=0; draw(); }
+    function reset(newSeed){ if(newSeed) seed=(seed*13+7)%9941; mu=initCenters(k,seed); asg=new Array(PTS.length).fill(-1); step="assign"; iter=0; done=false; draw(); }
 
     const ctr=h("div",{class:"controls"});
     ctr.append(slider("تعداد خوشه k:",1,6,1,k,v=>{k=v;reset(false);},v=>fa(v)));
     const bStep=h("button",{class:"btn",type:"button"},"گام بعدی");
-    bStep.onclick=()=>{ if(step==="assign"){ asg=assign(mu); step="update"; } else { mu=update(mu,asg); step="assign"; iter++; } draw(); };
+    bStep.onclick=()=>{ if(step==="assign"){ const na=assign(mu); if(iter>0&&na.every((v,i)=>v===asg[i])) done=true; asg=na; step="update"; } else { mu=update(mu,asg); step="assign"; iter++; } draw(); };
     const bRun=h("button",{class:"btn ghost",type:"button"},"تا همگرایی");
-    bRun.onclick=()=>{ const r=runFull(k,seed); mu=r.C; asg=r.a; step="assign"; iter=99; draw(); };
+    bRun.onclick=()=>{ const r=runFull(k,seed); mu=r.C; asg=r.a; step="assign"; iter=99; done=true; draw(); };
     const bNew=h("button",{class:"btn ghost",type:"button"},"مراکز تصادفی تازه");
     bNew.onclick=()=>reset(true);
     ctr.append(bStep,bRun,bNew); el.appendChild(ctr);
@@ -1512,12 +1518,12 @@ window.PAGE_INIT=function(ML){
 
       const J=asg[0]>=0?inertia(mu,asg):NaN;
       const sil=asg[0]>=0?silhouette(asg,k):NaN;
-      let msg=`گام بعدی: ${step==="assign"?"تخصیص نقاط به نزدیک‌ترین مرکز":"جابه‌جایی هر مرکز به میانگین خوشه‌اش"} · تکرارهای کامل‌شده: ${F(iter>=99?"همگرا":iter)}\n`;
+      let msg=`${done?"✓ همگرا شد — تخصیص‌ها دیگر عوض نمی‌شوند.":"گام بعدی: "+(step==="assign"?"تخصیص نقاط به نزدیک‌ترین مرکز":"جابه‌جایی هر مرکز به میانگین خوشه‌اش")} · تکرارهای کامل‌شده: ${F(iter>=99?"همگرا":iter)}\n`;
       msg+=`اینرسی فعلی: ${isFinite(J)?F(J.toFixed(2)):"—"} · بهترین اینرسی ممکن با همین k: ${F(CURVE[k].J.toFixed(2))}\n`;
       msg+=`سیلوئت فعلی: ${isFinite(sil)?F(sil.toFixed(3)):"—"} · سیلوئت بهترین اجرا: ${isFinite(CURVE[k].sil)?F(CURVE[k].sil.toFixed(3)):"برای k=۱ تعریف نشده"}\n`;
       let bk=2; for(let kk=3;kk<=8;kk++) if(CURVE[kk].sil>CURVE[bk].sil) bk=kk;
       msg+=`سیلوئت بیشینه در k = ${F(bk)} است. داده از سه توده ساخته شده — ببین آیا معیار همان را پیدا می‌کند.`;
-      if(isFinite(J)&&J>CURVE[k].J*1.12) msg+=`\n⚠ اینرسی فعلی ${F((100*(J/CURVE[k].J-1)).toFixed(0))}٪ بدتر از بهترین اجراست: در یک کمینه‌ی موضعی گیر کرده‌ای. «مراکز تصادفی تازه» را بزن.`;
+      if(done&&isFinite(J)&&J>CURVE[k].J*1.02) msg+=`\n⚠ همگرا شد ولی اینرسی ${F((100*(J/CURVE[k].J-1)).toFixed(0))}٪ بدتر از بهترین اجراست: در یک کمینه‌ی موضعی گیر کرده. «مراکز تصادفی تازه» را بزن — همین دلیل وجود n_init در scikit-learn است.`; else if(!done&&isFinite(J)) msg+="\nهنوز همگرا نشده: «گام بعدی» را بزن تا تخصیص‌ها ثابت شوند.";
       ro.textContent=msg;
     }
     onResize(cvA,draw); onResize(cvB,draw); reset(false);
