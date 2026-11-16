@@ -1,0 +1,1497 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۱۰ · مبانی ریاضی یادگیری ماشین: رگرسیون خطی، MSE، OLS و گرادیان کاهشی</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+table.num{direction:ltr;font-size:.92em}
+table.num td,table.num th{text-align:center;white-space:nowrap}
+table.num td.lbl,table.num th.lbl{direction:rtl;text-align:start;white-space:normal}
+table.num tr.hi td{background:var(--accent-soft)}
+.fig svg text{font-family:"Vazirmatn",Tahoma,sans-serif}
+.gl{display:flex;gap:14px;flex-wrap:wrap;font-size:.82em;color:var(--ink-3);margin-top:6px}
+.gl i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-inline-end:5px}
+.gl i.dot{width:8px;height:8px;border-radius:50%}
+.steps2{counter-reset:dv;list-style:none;padding:0;margin:8px 0}
+.steps2>li{counter-increment:dv;position:relative;padding:2px 34px 2px 0;margin:10px 0}
+.steps2>li::before{content:"(" counter(dv) ")";position:absolute;right:0;top:2px;color:var(--accent);font-weight:800;font-size:.9em}
+.wgd .controls label{min-width:0}
+.wgd .readout,.wls .readout,.wrd .readout{font-size:.84em}
+.mini{font-size:.86em;color:var(--ink-3);margin-top:-4px}
+</style>
+</head>
+<body data-session="10">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۱۰ از ۲۰ · بخش ب</div>
+  <h1>مبانی ریاضی یادگیری ماشین: رگرسیون خطی، MSE، OLS و گرادیان کاهشی</h1>
+  <p class="lead">تا اینجا داده را تمیز کردیم، ویژگی ساختیم و یاد گرفتیم چطور بدون نشت ارزیابی کنیم. حالا بالاخره یک مدل «یاد می‌گیرد». این جلسه جواب یک پرسش است: وقتی می‌گوییم مدل پارامترهایش را یاد گرفت، دقیقاً چه چیزی بهینه شد و با چه الگوریتمی؟ ساده‌ترین مدل ممکن (یک خط) را برمی‌داریم، تابع هزینه‌اش را تعریف می‌کنیم، جوابش را دو بار به‌دست می‌آوریم — یک‌بار با حل دقیق دستگاه معادلات نرمال و یک‌بار با گرادیان کاهشی — و بعد می‌بینیم چرا همان مسئله‌ی ساده، وقتی ستون‌ها هم‌خط یا بدمقیاس باشند، می‌تواند بترکد.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۳ تا ۴ ساعت</span><span>📚 منبع: اسلاید ۷ «Mathematical Foundations of Machine Learning» (۳۵ صفحه)</span><span>🎯 میان‌ترم ۱۰ آذر</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b><ul>
+    <li>یک مدل خطی را به‌شکل $\hat y=f(x;\theta)$ بنویسی و فرق «پیش‌بینی»، «باقی‌مانده»، «تابع هزینه» و «الگوریتم بهینه‌سازی» را دقیق بگویی.</li>
+    <li>بگویی چرا جمع ساده‌ی باقی‌مانده‌ها تابع هزینه‌ی بدی است و چرا مربع را به قدرمطلق ترجیح می‌دهیم (و کجا نباید ترجیح بدهیم).</li>
+    <li>فرم بسته‌ی یک‌بعدی OLS را از صفر مشتق بگیری و دستگاه معادلات نرمال را حل کنی.</li>
+    <li>فرم ماتریسی $\hat\beta=(X^\top X)^{-1}X^\top y$ را اثبات کنی، بگویی کِی $X^\top X$ تکین می‌شود و چرا ریج آن را درمان می‌کند.</li>
+    <li>گرادیان MSE را بنویسی، شرط همگرایی $\alpha&lt;2/\lambda_{\max}(H)$ را به‌دست بیاوری و واگرایی با نرخ یادگیری بزرگ را تشخیص بدهی.</li>
+    <li>با عدد شرطی ماتریس توضیح بدهی چرا مقیاس‌بندی ویژگی، گرادیان کاهشی را ده‌ها برابر سریع‌تر می‌کند.</li>
+    <li>MAE، RMSE و $R^2$ را حساب کنی و بگویی هرکدام کجا گمراه می‌کند.</li>
+    <li>یک پایپ‌لاین امن در برابر نشت با <code>StandardScaler</code> و <code>Ridge</code> بنویسی و بگویی چرا scaler باید داخل pipeline باشد.</li>
+  </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+سه نقطه داریم: $(1,2)$، $(2,3)$ و $(3,5)$. خط $\hat y=1+x$ از دو نقطه‌ی اول دقیق می‌گذرد و فقط در نقطه‌ی سوم یک واحد خطا دارد. آیا این «بهترین» خط است؟ اگر نه، چه تعریفی از «بهترین» داری و خط بهتر چیست؟ جوابت را بنویس؛ در بخش ۴ همین داده را دقیقاً حل می‌کنیم و احتمالاً غافلگیر می‌شوی.
+</div>
+
+<!-- ============================================================ 1 -->
+<section id="map">
+<h2><span class="num">۱</span> کجای درس ایستاده‌ایم <span class="tag core">اسلاید ۳ و ۴</span></h2>
+<p>اسلاید با یک نقشه شروع می‌شود که همان چرخه‌ی آشنای درس است، ولی این‌بار به ایستگاه آخر رسیده‌ایم:</p>
+<div class="flow"><span>مسئله</span><i>←</i><span>آماده‌سازی</span><i>←</i><span>کاوش</span><i>←</i><span>ارزیابی</span><i>←</i><b style="color:var(--accent)">یادگیری</b></div>
+<p>جمله‌ی خود اسلاید: «<span class="ltr">Last session: Can we trust the score? Today: How does a model learn its parameters?</span>» تا جلسه‌ی ۹ هرجا کلمه‌ی «مدل» آمد، مثل جعبه‌ی سیاه با آن رفتار کردیم. از این جلسه در جعبه را باز می‌کنیم.</p>
+
+<div class="box note"><div class="bt">📌 چهار چیزی که همیشه با هم اشتباه گرفته می‌شوند</div>
+این چهارتا در کل بخش ب تکرار می‌شوند و در امتحان هم جداگانه پرسیده می‌شوند:
+<ol>
+<li><b>مدل (model)</b> — خانواده‌ی توابع؛ مثلاً «همه‌ی خط‌های $\hat y=w_0+w_1x$». انتخاب مدل یعنی انتخاب این خانواده.</li>
+<li><b>پارامتر (parameter)</b> — عددهایی که کدام عضو خانواده را مشخص می‌کنند؛ اینجا $w_0$ و $w_1$.</li>
+<li><b>تابع هزینه (loss / objective)</b> — معیاری که می‌گوید کدام عضو خانواده بهتر است؛ اینجا MSE.</li>
+<li><b>الگوریتم بهینه‌سازی (optimizer)</b> — روشی که کمینه‌ی تابع هزینه را پیدا می‌کند؛ اینجا فرم بسته یا گرادیان کاهشی.</li>
+</ol>
+جمله‌ی کلیدی اسلاید ۱۲: «<span class="ltr">Loss function + optimization method = a defined learning problem</span>». عوض‌کردن هرکدام از این چهارتا، یک الگوریتم یادگیری متفاوت می‌سازد: همین خانواده‌ی خطی با تابع هزینه‌ی دیگر می‌شود رگرسیون تاب‌آور، و با تابع هزینه‌ی لگ‌لایکلیهود می‌شود رگرسیون لجستیک (جلسه‌ی ۱۱).
+</div>
+
+<div class="box tip"><div class="bt">💡 این صفحه را چطور بخوان</div>
+<ol class="steps">
+<li>بخش‌های ۲ تا ۴ را سریع بخوان؛ چیز سختی ندارند ولی واژگان را تثبیت می‌کنند.</li>
+<li>بخش‌های ۵ و ۶ (اشتقاق فرم بسته و فرم ماتریسی) را <b>با قلم و کاغذ</b> بخوان و خودت دوباره مشتق بگیر. این‌ها محتمل‌ترین سؤال‌های تشریحی میان‌ترم‌اند.</li>
+<li>در بخش ۷ اول با «کارگاه گرادیان کاهشی» بازی کن، بعد متن ریاضی‌اش را بخوان. اول شهود، بعد اثبات.</li>
+<li>بخش ۸ (مقیاس‌بندی و عدد شرطی) تنها جایی است که جبر خطی جلسه‌ی ۶ (مقدار ویژه) مستقیم به کار می‌آید.</li>
+<li>بخش ۱۲ به بعد تمرین و تست است؛ برای شب امتحان، بخش ۱۶ (جمع‌بندی) کافی است.</li>
+</ol>
+</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="model">
+<h2><span class="num">۲</span> مدل چیست و چرا با یک خط شروع می‌کنیم <span class="tag core">اسلاید ۵ تا ۸</span></h2>
+<p>پرسش جاری اسلاید ساده است: آیا ساعت مطالعه می‌تواند نمره‌ی امتحان را پیش‌بینی کند؟ ورودی $x$ ساعت مطالعه، خروجی $y$ نمره، و هدف «یاد گرفتن قاعده‌ای که برای داده‌ی دیده‌نشده هم کار کند».</p>
+
+<div class="box def"><div class="bt">تعریف · مدل (model)</div>
+مدل یک تابع پارامتری از ورودی به پیش‌بینی است:
+$$\hat y=f(x;\theta)$$
+که در آن $x$ اندازه‌گیری‌های معلوم است و $\theta$ عددهایی که از داده‌ی آموزش یاد گرفته می‌شوند. جمله‌ی اسلاید: «<span class="ltr">Prediction is a computation; learning chooses parameters.</span>» یعنی پیش‌بینی فقط یک محاسبه است؛ کار سخت، انتخاب $\theta$ است.
+</div>
+
+<div class="box def"><div class="bt">تعریف · ساده‌ترین مدل: یک خط</div>
+$$\hat y=w_0+w_1x$$
+<ul>
+<li>$w_0$ — <b>عرض از مبدأ (intercept)</b>: پیش‌بینی وقتی $x=0$.</li>
+<li>$w_1$ — <b>شیب (slope)</b>: تغییر پیش‌بینی به‌ازای یک واحد افزایش $x$.</li>
+</ul>
+مثال خود اسلاید: $\hat y=35+6x$ یعنی «نمره‌ی پایه ۳۵، و هر ساعت مطالعه ۶ نمره».
+</div>
+
+<p>چرا از خط شروع می‌کنیم؟ سه دلیل که اسلاید به‌صراحت نمی‌گوید ولی پشت کل جلسه است:</p>
+<div class="cards">
+<div><b>۱. تفسیرپذیری</b>هر ضریب یک جمله‌ی فارسی دارد: «هر ساعت مطالعه ۶ نمره». مدل‌های پیچیده‌تر این را ندارند.</div>
+<div><b>۲. جواب بسته</b>کمینه‌ی تابع هزینه را می‌شود با جبر خطی دقیق نوشت. تقریباً هیچ مدل دیگری این ویژگی را ندارد.</div>
+<div><b>۳. خط پایه</b>اگر مدل پیچیده‌ات از یک خط بهتر نیست، پیچیدگی‌اش هزینه‌ی بی‌فایده است.</div>
+</div>
+
+<div class="box warn"><div class="bt">⚠ «خطی» یعنی خطی در پارامترها، نه در $x$</div>
+این نکته در اسلاید ۱۸ یک جمله است («<span class="ltr">Multiple regression remains linear in its parameters, even with engineered features</span>») ولی سوءتفاهم رایجی است. مدل
+$$\hat y=w_0+w_1x+w_2x^2+w_3\log x+w_4\sin x$$
+<b>کاملاً</b> یک مدل خطی است و با همان فرمول OLS حل می‌شود، چون نسبت به $w$ها خطی است. منحنی بودن نمودارش ربطی به خطی‌بودن مدل ندارد. در مقابل $\hat y=w_0 e^{w_1x}$ خطی <b>نیست</b>، چون $w_1$ داخل نما آمده است. این همان دری است که در بخش ۹ برای «وقتی خط کافی نیست» باز می‌شود.
+</div>
+
+<div class="box def"><div class="bt">تعریف · خط با داده یکی نیست (اسلاید ۹)</div>
+مدل یک <b>روند مورد انتظار</b> را پیش‌بینی می‌کند، نه مقدار دقیق هر فرد را. اسلاید چهار دلیل برای فاصله‌ی نقطه‌ها تا خط می‌شمارد:
+<ul>
+<li><b>نویز اندازه‌گیری</b> — همان نمره با شرایط دیگر کمی فرق می‌کرد.</li>
+<li><b>تفاوت پس‌زمینه‌ی دانشجوها</b> — دو نفر با ساعت مطالعه‌ی برابر، توان متفاوت.</li>
+<li><b>متغیرهای مشاهده‌نشده</b> — خواب، کیفیت مطالعه، سختی سؤال‌ها.</li>
+<li><b>بدمشخص‌بودن مدل (misspecification)</b> — شاید رابطه اصلاً خط نیست.</li>
+</ul>
+جمله‌ی مهم اسلاید: «<span class="ltr">Training does not require every point to lie exactly on the line.</span>» اگر مدلی همه‌ی نقطه‌ها را دقیق بگیرد، معمولاً خبر خوبی نیست — بیش‌برازش است (جلسه‌ی ۱۲).
+</div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="error">
+<h2><span class="num">۳</span> از پیش‌بینی تا خطا: باقی‌مانده، و چرا مربع؟ <span class="tag core">اسلاید ۱۰ تا ۱۲</span></h2>
+
+<div class="box def"><div class="bt">تعریف · باقی‌مانده (residual)</div>
+برای هر نمونه، فاصله‌ی عمودی مقدار واقعی تا پیش‌بینی:
+$$e_i=y_i-\hat y_i$$
+<ul>
+<li>$e_i&gt;0$ (باقی‌مانده‌ی مثبت): واقعیت از پیش‌بینی بیشتر است؛ نقطه <b>بالای</b> خط.</li>
+<li>$e_i&lt;0$ (باقی‌مانده‌ی منفی): پیش‌بینی از واقعیت بیشتر است؛ نقطه <b>زیر</b> خط.</li>
+</ul>
+دقت کن که باقی‌مانده فاصله‌ی <b>عمودی</b> است، نه فاصله‌ی عمود بر خط. این انتخاب تصادفی نیست: ما $y$ را از روی $x$ پیش‌بینی می‌کنیم، پس فقط خطای $y$ برایمان مهم است. (اگر فاصله‌ی عمود بر خط را کمینه کنیم، به مسئله‌ی دیگری می‌رسیم: <span class="ltr">total least squares</span>، که همان PC1 جلسه‌ی ۶ است. <span class="tag extra">تکمیلی</span>)
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 520 230" width="520" role="img" aria-label="باقی‌مانده‌ها به‌صورت پاره‌خط عمودی بین نقطه‌ها و خط برازش">
+<g font-size="11" text-anchor="middle">
+<line x1="50" y1="195" x2="490" y2="195" stroke="currentColor" opacity=".55"/>
+<line x1="50" y1="195" x2="50" y2="20" stroke="currentColor" opacity=".55"/>
+<line x1="60" y1="175" x2="480" y2="45" stroke="#c0392b" stroke-width="2.5"/>
+<g stroke="#a5600b" stroke-width="1.6" stroke-dasharray="5 3">
+<line x1="120" y1="157" x2="120" y2="120"/><line x1="200" y1="132" x2="200" y2="160"/>
+<line x1="290" y1="104" x2="290" y2="72"/><line x1="370" y1="79" x2="370" y2="108"/>
+<line x1="440" y1="57" x2="440" y2="36"/>
+</g>
+<g fill="#2456a6">
+<circle cx="120" cy="120" r="5"/><circle cx="200" cy="160" r="5"/><circle cx="290" cy="72" r="5"/>
+<circle cx="370" cy="108" r="5"/><circle cx="440" cy="36" r="5"/>
+</g>
+<text x="140" y="138" fill="#a5600b" text-anchor="start">e&gt;0</text>
+<text x="212" y="152" fill="#a5600b" text-anchor="start">e&lt;0</text>
+<text x="270" y="212" fill="currentColor">ساعت مطالعه (x)</text>
+<text x="20" y="100" fill="currentColor" transform="rotate(-90 20 100)">نمره (y)</text>
+<text x="470" y="30" fill="#c0392b" text-anchor="end">خط برازش</text>
+</g></svg>
+<figcaption>همان شکل اسلاید ۱۱: نقطه‌های آبی مشاهده، خط قرمز پیش‌بینی، پاره‌خط‌های نارنجی باقی‌مانده‌ها. تابع هزینه این پاره‌خط‌ها را به <b>یک عدد</b> خلاصه می‌کند.</figcaption>
+</figure>
+
+<h3>۳.۱ چرا جمع ساده‌ی باقی‌مانده‌ها تابع هزینه‌ی بدی است</h3>
+<p>اسلاید ۱۲ می‌نویسد $\sum_i(y_i-\hat y_i)\approx 0$ و همین را دلیل رد کردن این معیار می‌گیرد: خطاهای مثبت و منفی همدیگر را خنثی می‌کنند. ولی مسئله از این بدتر است و ارزش دارد دقیق بگوییم:</p>
+
+<div class="box mistake"><div class="bt">❌ تصحیح اسلاید: آن $\approx$ در واقع $=$ است</div>
+برای <b>هر</b> خطی که از نقطه‌ی میانگین $(\bar x,\bar y)$ بگذرد، جمع باقی‌مانده‌ها <b>دقیقاً</b> صفر است، نه تقریباً. اثباتش یک خط است: اگر $\hat y_i=\bar y+w_1(x_i-\bar x)$ باشد، آن‌گاه
+$$\sum_i e_i=\sum_i\big(y_i-\bar y-w_1(x_i-\bar x)\big)=\underbrace{\textstyle\sum_i(y_i-\bar y)}_{=0}-w_1\underbrace{\textstyle\sum_i(x_i-\bar x)}_{=0}=0$$
+و این برای هر $w_1$ درست است — حتی برای $w_1=0$ که یعنی خط افقیِ $\hat y=\bar y$. پس «جمع باقی‌مانده‌ها صفر شد» هیچ خبری از خوب‌بودن خط نمی‌دهد؛ یک خانواده‌ی بی‌نهایت‌عضوی از خط‌های خوب و بد همگی این شرط را دارند. معیاری که برای بی‌نهایت جواب مقدار یکسان می‌دهد، اصلاً تابع هزینه نیست.
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: دو خط با جمع باقی‌مانده‌ی صفر، یکی فاجعه</div>
+داده: $x=(1,2,3,4,5)$ و $y=(3,4,6,7,10)$ (همان داده‌ای که در کل این صفحه استفاده می‌کنیم؛ $\bar x=3$، $\bar y=6$).
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">خط</th><th>e₁</th><th>e₂</th><th>e₃</th><th>e₄</th><th>e₅</th><th>Σe</th><th>Σ|e|</th><th>Σe²</th></tr>
+<tr><td class="lbl">خط افقی $\hat y=6$</td><td>−3</td><td>−2</td><td>0</td><td>+1</td><td>+4</td><td><b>0</b></td><td>10</td><td>30</td></tr>
+<tr class="hi"><td class="lbl">خط OLS $\hat y=0.9+1.7x$</td><td>+0.4</td><td>−0.3</td><td>0</td><td>−0.7</td><td>+0.6</td><td><b>0</b></td><td>2.0</td><td>1.1</td></tr>
+</table></div>
+هر دو $\sum e_i=0$ دارند ولی یکی ۲۷ برابر دیگری خطای مربعی دارد. پس معیار درست باید خطاها را <b>بدون علامت</b> جمع کند.
+</div>
+
+<h3>۳.۲ قدرمطلق یا مربع؟</h3>
+<p>اسلاید دو گزینه را کنار هم می‌گذارد: $|e_i|$ («همه‌ی انحراف‌ها مثبت شمرده می‌شوند») و $e_i^2$ («انحراف‌های بزرگ وزن بیشتری می‌گیرند»). انتخاب بین این دو یک تصمیم مدل‌سازی است، نه یک قاعده‌ی طبیعت. چهار تفاوت واقعی:</p>
+
+<div class="tablewrap"><table>
+<tr><th>معیار</th><th>$L_2$: مربع خطا (MSE/SSE)</th><th>$L_1$: قدرمطلق خطا (MAE)</th></tr>
+<tr><td>مشتق‌پذیری</td><td>همه‌جا مشتق‌پذیر و دوبار مشتق‌پذیر؛ گرادیان یک تابع خطی ساده است</td><td>در $e=0$ مشتق ندارد؛ باید از زیرگرادیان یا برنامه‌ریزی خطی استفاده کرد</td></tr>
+<tr><td>جواب بسته</td><td>دارد: $\hat\beta=(X^\top X)^{-1}X^\top y$</td><td>ندارد؛ باید عددی حل شود</td></tr>
+<tr><td>یکتایی</td><td>اگر $X$ رتبه‌ی ستونی کامل داشته باشد، جواب <b>یکتا</b> است (تابع اکیداً محدب)</td><td>ممکن است بی‌نهایت جواب بهینه داشته باشد (مثلاً با دو نقطه‌ی داده)</td></tr>
+<tr><td>حساسیت به داده‌ی پرت</td><td><b>زیاد</b>: خطای ۱۰ برابر، ۱۰۰ برابر جریمه می‌شود</td><td><b>کم</b>: خطای ۱۰ برابر، ۱۰ برابر جریمه می‌شود (تاب‌آور)</td></tr>
+<tr><td>چه چیزی را تخمین می‌زند</td><td><b>میانگین</b> شرطی $\mathbb{E}[y\mid x]$</td><td><b>میانه‌ی</b> شرطی</td></tr>
+</table></div>
+
+<div class="box thm"><div class="bt">چرا «میانگین در برابر میانه»؟ یک حالت خاص که همه‌چیز را روشن می‌کند <span class="tag extra">تکمیلی</span></div>
+مدل را به ساده‌ترین حالت ببر: بدون $x$، فقط یک عدد ثابت $c$ به‌عنوان پیش‌بینی.
+<ul>
+<li>کمینه‌کردن $\sum(y_i-c)^2$: مشتق $-2\sum(y_i-c)=0$ می‌دهد $c=\bar y$ یعنی <b>میانگین</b>.</li>
+<li>کمینه‌کردن $\sum|y_i-c|$: مشتق (هرجا تعریف شود) تعداد نقطه‌های بالای $c$ منهای تعداد زیر آن است؛ صفر شدنش یعنی $c$ = <b>میانه</b>.</li>
+</ul>
+و چون می‌دانی میانگین به داده‌ی پرت حساس است و میانه نیست (جلسه‌ی ۴)، تمام داستان حساسیت OLS به پرت‌ها از همین‌جا می‌آید. اسلاید در صفحه‌ی ۲۶ هم دقیقاً همین را به‌عنوان یکی از دلایل «وقتی رگرسیون خطی کافی نیست» می‌آورد.
+</div>
+
+<div class="box tip"><div class="bt">💡 پس چرا همه MSE را انتخاب می‌کنند؟</div>
+سه دلیل، به‌ترتیب اهمیت: (۱) <b>ریاضیِ راحت</b> — مشتق‌پذیر، محدب، جواب بسته، گرادیان ارزان؛ (۲) <b>توجیه آماری</b> — اگر نویز نرمال با واریانس ثابت باشد، کمینه‌کردن MSE همان برآورد درست‌نمایی بیشینه (MLE) است؛ (۳) <b>سنت و ابزار</b> — تقریباً همه‌ی کتابخانه‌ها حول همین ساخته شده‌اند. دلیل اول از همه مهم‌تر است: در سال ۱۸۰۵ که گاوس و لژاندر این را ساختند، کامپیوتری نبود و «جواب بسته» یعنی «قابل محاسبه».
+</div>
+
+<div id="w-loss"></div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «MSE چون واحدش مربع است بی‌معنی است، پس همیشه RMSE بده»</div>
+برای <b>گزارش به آدم</b> بله، RMSE بهتر است چون هم‌واحدِ $y$ است. ولی برای <b>بهینه‌سازی</b> MSE را کمینه کن نه RMSE: چون $\sqrt{\cdot}$ تابعی اکیداً صعودی است، هر دو کمینه‌ساز یکسانی دارند، ولی گرادیان RMSE یک مخرج اضافه دارد که نزدیک کمینه ناپایدار می‌شود. همین‌طور اسلاید ۱۳ درست می‌گوید MSE و SSE هم کمینه‌ساز یکسان دارند، چون $1/n$ ثابت است.
+</div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="mse">
+<h2><span class="num">۴</span> MSE، OLS و مثال عددی کامل <span class="tag core">اسلاید ۱۳ تا ۱۶</span></h2>
+
+<div class="box def"><div class="bt">تعریف · میانگین مربعات خطا (Mean Squared Error)</div>
+$$\mathrm{MSE}(w_0,w_1)=\frac{1}{n}\sum_{i=1}^{n}\big(y_i-w_0-w_1x_i\big)^2$$
+<ul>
+<li>$n$ تعداد نمونه‌های آموزش است.</li>
+<li>بهترین پارامترها آن‌هایی‌اند که این عدد را کمینه کنند.</li>
+<li>مربع‌کردن باعث می‌شود باقی‌مانده‌های بزرگ تأثیر به‌مراتب بیشتری داشته باشند.</li>
+</ul>
+دقت کن MSE تابعی از <b>پارامترها</b>ست، نه از داده: داده ثابت است و ما روی $(w_0,w_1)$ می‌گردیم.
+</div>
+
+<div class="box def"><div class="bt">تعریف · کمترین مربعات معمولی (Ordinary Least Squares)</div>
+$$(w_0^\ast,w_1^\ast)=\operatorname*{arg\,min}_{w_0,w_1}\ \sum_{i=1}^{n}\big(y_i-w_0-w_1x_i\big)^2$$
+چهار گام اسلاید ۱۴: <b>مدل</b> (انتخاب تابع) ← <b>باقی‌مانده</b> (مقایسه با هدف) ← <b>هزینه</b> (مربع و جمع) ← <b>بهینه‌سازی</b> (انتخاب بهترین وزن‌ها). کلمه‌ی «معمولی» در OLS یعنی همه‌ی نمونه‌ها وزن یکسان دارند؛ اگر وزن بدهی می‌شود WLS و اگر به‌جای مربع از تابع دیگری استفاده کنی می‌شود M-estimator.
+</div>
+
+<h3>۴.۱ مثال عددی اسلاید، سطر به سطر</h3>
+<p>اسلاید ۱۵ سه دانشجو را می‌آورد و خط <b>نامزد</b> $\hat y=1+x$ را روی آن امتحان می‌کند. جدول را دقیقاً بازسازی می‌کنیم:</p>
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">ساعت مطالعه $x$</th><th>1</th><th>2</th><th>3</th><th class="lbl">جمع</th></tr>
+<tr><td class="lbl">نمره‌ی واقعی $y$</td><td>2</td><td>3</td><td>5</td><td>10</td></tr>
+<tr><td class="lbl">پیش‌بینی $\hat y=1+x$</td><td>2</td><td>3</td><td>4</td><td>9</td></tr>
+<tr><td class="lbl">باقی‌مانده $e=y-\hat y$</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td class="lbl">مربع باقی‌مانده $e^2$</td><td>0</td><td>0</td><td>1</td><td><b>SSE = 1</b></td></tr>
+</table></div>
+<p>و چون $n=3$، داریم $\mathrm{MSE}=1/3\approx0.333$. تا اینجا همان چیزی است که در اسلاید نوشته شده.</p>
+
+<div class="box mistake"><div class="bt">❌ تله‌ی اسلاید ۱۵: این خط <b>بهترین</b> خط نیست</div>
+اسلاید می‌گوید «<span class="ltr">for the candidate line</span>» — یعنی یک خط <b>نامزد</b>، نه جواب OLS. خیلی‌ها این صفحه را می‌بینند و فکر می‌کنند $\mathrm{SSE}=1$ کمینه است. بیایید جواب واقعی را حساب کنیم: $\bar x=2$، $\bar y=10/3$،
+$$S_{xy}=\sum(x_i-\bar x)(y_i-\bar y)=(-1)\Big(2-\tfrac{10}{3}\Big)+0+(1)\Big(5-\tfrac{10}{3}\Big)=\tfrac{4}{3}+\tfrac{5}{3}=3,\qquad S_{xx}=1+0+1=2$$
+$$w_1^\ast=\frac{S_{xy}}{S_{xx}}=\frac{3}{2}=1.5,\qquad w_0^\ast=\bar y-w_1^\ast\bar x=\tfrac{10}{3}-3=\tfrac{1}{3}$$
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl"></th><th>x=1</th><th>x=2</th><th>x=3</th><th class="lbl">SSE</th><th class="lbl">MSE</th></tr>
+<tr><td class="lbl">خط نامزد $1+x$</td><td>2</td><td>3</td><td>4</td><td>1</td><td>0.3333</td></tr>
+<tr class="hi"><td class="lbl">خط OLS $\tfrac13+\tfrac32x$</td><td>1.8333</td><td>3.3333</td><td>4.8333</td><td><b>1/6 ≈ 0.1667</b></td><td><b>1/18 ≈ 0.0556</b></td></tr>
+<tr><td class="lbl">باقی‌مانده‌های OLS</td><td>+0.1667</td><td>−0.3333</td><td>+0.1667</td><td colspan="2" class="lbl">جمعشان دقیقاً صفر است ✓</td></tr>
+</table></div>
+خط OLS SSE را <b>شش برابر</b> کم‌تر می‌کند، با اینکه از هیچ نقطه‌ای دقیق نمی‌گذرد! این دقیقاً جواب آن سؤالی است که اول صفحه پرسیدیم: «دقیق گذشتن از چند نقطه» هدف نیست؛ کمینه‌کردن مجموع مربعات هدف است.
+</div>
+
+<h3>۴.۲ مثال عددی دوم (با عددهای دیگر، برای تمرین دست)</h3>
+<p>این داده را در تمام ادامه‌ی صفحه — فرم بسته، فرم ماتریسی، گرادیان کاهشی، عدد شرطی و ارزیابی — دوباره می‌بینی، پس یک‌بار کامل حسابش کن:</p>
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">i</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th class="lbl">جمع</th></tr>
+<tr><td class="lbl">$x_i$ (ساعت)</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>15</td></tr>
+<tr><td class="lbl">$y_i$ (نمره)</td><td>3</td><td>4</td><td>6</td><td>7</td><td>10</td><td>30</td></tr>
+<tr><td class="lbl">$x_i-\bar x$</td><td>−2</td><td>−1</td><td>0</td><td>1</td><td>2</td><td>0</td></tr>
+<tr><td class="lbl">$y_i-\bar y$</td><td>−3</td><td>−2</td><td>0</td><td>1</td><td>4</td><td>0</td></tr>
+<tr><td class="lbl">$(x_i-\bar x)(y_i-\bar y)$</td><td>6</td><td>2</td><td>0</td><td>1</td><td>8</td><td><b>Sxy = 17</b></td></tr>
+<tr><td class="lbl">$(x_i-\bar x)^2$</td><td>4</td><td>1</td><td>0</td><td>1</td><td>4</td><td><b>Sxx = 10</b></td></tr>
+<tr class="hi"><td class="lbl">$\hat y_i=0.9+1.7x_i$</td><td>2.6</td><td>4.3</td><td>6.0</td><td>7.7</td><td>9.4</td><td>30</td></tr>
+<tr><td class="lbl">$e_i=y_i-\hat y_i$</td><td>+0.4</td><td>−0.3</td><td>0.0</td><td>−0.7</td><td>+0.6</td><td><b>0</b></td></tr>
+<tr><td class="lbl">$e_i^2$</td><td>0.16</td><td>0.09</td><td>0.00</td><td>0.49</td><td>0.36</td><td><b>SSE = 1.10</b></td></tr>
+</table></div>
+<p>پس $\bar x=3$، $\bar y=6$، و</p>
+$$w_1^\ast=\frac{17}{10}=1.7,\qquad w_0^\ast=6-1.7\times3=0.9,\qquad \mathrm{MSE}=\frac{1.10}{5}=0.22$$
+<p>تفسیر: «نمره‌ی پایه ۰٫۹ و هر ساعت مطالعه ۱٫۷ نمره». چون یک ساعت مطالعه واقعاً در این داده ۱٫۷ نمره می‌ارزد، $w_1$ عددی است که به مدیر/استاد گزارش می‌کنی — نه MSE.</p>
+
+<h3>۴.۳ چشم‌انداز تابع هزینه</h3>
+<p>اسلاید ۱۶ یک تصویر مهم دارد: هر زوج $(w_0,w_1)$ یک عدد هزینه دارد، پس MSE یک <b>سطح</b> روی صفحه‌ی پارامترهاست و کانتورهایش بیضی‌اند. دو حقیقت که از تصویر درنمی‌آید ولی کل بخش ۷ و ۸ روی آن سوار است:</p>
+
+<div class="box thm"><div class="bt">قضیه · MSE یک سهمی‌وار محدب است و کانتورهایش بیضی‌اند</div>
+با نماد ماتریسی $X\in\mathbb{R}^{n\times 2}$ (ستون اول همه‌ ۱) و $w=(w_0,w_1)^\top$ می‌توان نوشت
+$$\mathrm{MSE}(w)=\frac1n\|y-Xw\|_2^2=\underbrace{\mathrm{MSE}(w^\ast)}_{\text{ثابت}}+(w-w^\ast)^\top A\,(w-w^\ast),\qquad A=\tfrac1n X^\top X$$
+<details class="proofd"><summary>اثبات (دو خط)</summary>
+بنویس $y-Xw=(y-Xw^\ast)-X(w-w^\ast)$. چون $w^\ast$ معادلات نرمال را ارضا می‌کند، $X^\top(y-Xw^\ast)=0$ و جمله‌ی متقاطع حذف می‌شود:
+$$\|y-Xw\|^2=\|y-Xw^\ast\|^2+\|X(w-w^\ast)\|^2=\|y-Xw^\ast\|^2+(w-w^\ast)^\top X^\top X(w-w^\ast)$$
+تقسیم بر $n$ تمام است. <span class="qed">∎</span>
+</details>
+نتیجه‌ها: (۱) $A$ نیم‌معین مثبت است پس تابع <b>محدب</b> است و هیچ کمینه‌ی موضعیِ غیرسراسری ندارد — همان جمله‌ی اسلاید «<span class="ltr">For linear least squares the objective is convex</span>»؛ (۲) مجموعه‌ی سطح $\{w:\mathrm{MSE}(w)=c\}$ یک <b>بیضی</b> با مرکز $w^\ast$ است که محورهایش بردارهای ویژه‌ی $A$ و طول نیم‌محورهایش $\sqrt{(c-\mathrm{MSE}^\ast)/\lambda_i}$ است. هرچه نسبت $\lambda_{\max}/\lambda_{\min}$ بزرگ‌تر باشد بیضی کشیده‌تر است — و بخش ۸ نشان می‌دهد این دقیقاً همان چیزی است که گرادیان کاهشی را کند می‌کند.
+</div>
+
+<div class="box mistake"><div class="bt">❌ شکل اسلاید ۱۶ گمراه‌کننده است: کانتورها معمولاً <b>کج</b>اند</div>
+در تصویر اسلاید بیضی‌ها محورهایشان موازی محورهای $w_0$ و $w_1$ است. این فقط وقتی درست است که $\sum_i x_i=0$ باشد، یعنی $x$ را مرکز کرده باشی (چون آن‌وقت $A$ قطری می‌شود). برای داده‌ی خام مثال ۴.۲:
+$$A=\tfrac15X^\top X=\begin{pmatrix}1&3\\3&11\end{pmatrix}$$
+که قطری نیست؛ درایه‌ی غیرقطری ۳ یعنی $w_0$ و $w_1$ به هم گره خورده‌اند (اگر شیب را زیاد کنی باید عرض از مبدأ را کم کنی) و بیضی‌ها کج‌اند. در «کارگاه گرادیان کاهشی» (بخش ۷) دقیقاً همین کج‌شدن و راست‌شدنِ بیضی‌ها را با اسلایدر می‌بینی.
+</div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="closed">
+<h2><span class="num">۵</span> فرم بسته‌ی یک‌بعدی: اشتقاق کامل <span class="tag core">اسلاید ۱۷ و ۱۸</span><span class="tag exam">امتحانی</span></h2>
+<p>اسلاید دو فرمول را بدون اثبات می‌دهد و بعد در صفحه‌ی بعد می‌گوید «از مشتق‌گرفتن از SSE و صفر قراردادن مشتق‌ها می‌آید». اینجا کل مسیر را قدم‌به‌قدم می‌رویم. این محتمل‌ترین سؤال تشریحی این فصل است.</p>
+
+<div class="box proof"><div class="bt">اشتقاق · از SSE تا فرم بسته</div>
+<ol class="steps2">
+<li><b>تابع هدف.</b> چون $1/n$ کمینه‌ساز را عوض نمی‌کند، با SSE کار می‌کنیم:
+$$S(w_0,w_1)=\sum_{i=1}^{n}(y_i-w_0-w_1x_i)^2$$</li>
+
+<li><b>مشتق نسبت به $w_0$.</b> با قاعده‌ی زنجیره‌ای، مشتق درونی نسبت به $w_0$ برابر $-1$ است:
+$$\frac{\partial S}{\partial w_0}=\sum_i 2(y_i-w_0-w_1x_i)\cdot(-1)=-2\sum_i(y_i-w_0-w_1x_i)$$</li>
+
+<li><b>مشتق نسبت به $w_1$.</b> مشتق درونی $-x_i$ است:
+$$\frac{\partial S}{\partial w_1}=-2\sum_i x_i(y_i-w_0-w_1x_i)$$
+این دو دقیقاً همان دو سطر اسلاید ۱۸‌اند.</li>
+
+<li><b>معادلات نرمال.</b> هر دو را صفر بگذار و بر $-2$ تقسیم کن:
+$$\sum_i(y_i-w_0-w_1x_i)=0 \qquad\text{و}\qquad \sum_i x_i(y_i-w_0-w_1x_i)=0$$
+معادله‌ی اول یعنی $\sum e_i=0$ و دومی یعنی $\sum x_ie_i=0$: باقی‌مانده‌ها هم با بردار ۱ و هم با بردار $x$ <b>عمود</b>ند. این تعبیر هندسی را در بخش ۶ می‌بینی.</li>
+
+<li><b>حل معادله‌ی اول.</b> بازش کن: $\sum y_i-nw_0-w_1\sum x_i=0$. بر $n$ تقسیم کن:
+$$\bar y=w_0+w_1\bar x\ \Longrightarrow\ \boxed{\,w_0^\ast=\bar y-w_1^\ast\bar x\,}$$
+یعنی <b>خط OLS همیشه از نقطه‌ی میانگین $(\bar x,\bar y)$ می‌گذرد.</b> این را به‌عنوان یک واقعیت مستقل حفظ کن؛ در تست‌ها خیلی پرسیده می‌شود.</li>
+
+<li><b>جایگذاری در معادله‌ی دوم.</b> معادله‌ی دوم را باز کن: $\sum x_iy_i-w_0\sum x_i-w_1\sum x_i^2=0$. به‌جای $w_0$ عبارت $\bar y-w_1\bar x$ را بگذار:
+$$\sum x_iy_i-(\bar y-w_1\bar x)\,n\bar x-w_1\sum x_i^2=0$$
+$$\sum x_iy_i-n\bar x\bar y=w_1\Big(\sum x_i^2-n\bar x^2\Big)$$</li>
+
+<li><b>تبدیل به فرم مرکزشده.</b> دو اتحاد ساده (هر دو را یک‌بار خودت باز کن):
+$$\sum_i(x_i-\bar x)(y_i-\bar y)=\sum x_iy_i-n\bar x\bar y,\qquad \sum_i(x_i-\bar x)^2=\sum x_i^2-n\bar x^2$$
+پس
+$$\boxed{\,w_1^\ast=\frac{\sum_i(x_i-\bar x)(y_i-\bar y)}{\sum_i(x_i-\bar x)^2}=\frac{S_{xy}}{S_{xx}}\,}$$
+که دقیقاً فرمول اسلاید ۱۷ است.</li>
+
+<li><b>کمینه است، نه بیشینه یا زین‌اسبی.</b> ماتریس هسیَن $S$ برابر است با
+$$H_S=2\begin{pmatrix}n&\sum x_i\\[2pt]\sum x_i&\sum x_i^2\end{pmatrix}$$
+دترمینانش $4\big(n\sum x_i^2-(\sum x_i)^2\big)=4n\,S_{xx}\ge0$ است (نامساوی کوشی–شوارتس) و درایه‌ی $(1,1)$ آن مثبت است، پس $H_S$ نیم‌معین مثبت و $S$ محدب است. اگر $S_{xx}&gt;0$ باشد اکیداً محدب است و نقطه‌ی بحرانی <b>یکتا و کمینه‌ی سراسری</b> است. <span class="qed">∎</span></li>
+</ol>
+</div>
+
+<div class="box tip"><div class="bt">💡 سه صورت دیگر همین شیب که باید بشناسی</div>
+$$w_1^\ast=\frac{S_{xy}}{S_{xx}}=\frac{\operatorname{Cov}(x,y)}{\operatorname{Var}(x)}=r_{xy}\cdot\frac{s_y}{s_x}$$
+صورت آخر پل بین این جلسه و جلسه‌ی ۴ است: ضریب همبستگی پیرسون $r_{xy}$ همان شیب است وقتی هر دو متغیر استاندارد شده باشند. نتیجه‌ی جالب: اگر $x$ و $y$ هر دو z-score شده باشند، $w_1^\ast=r$ و $w_0^\ast=0$. و چون $|r|\le1$، شیب خط استانداردشده هیچ‌وقت از ۱ بیشتر نمی‌شود — همان پدیده‌ی «بازگشت به میانگین» که اسم «رگرسیون» از آن آمده است. <span class="tag extra">تکمیلی</span>
+</div>
+
+<div class="box warn"><div class="bt">⚠ کِی شیب تعریف‌نشده است؟</div>
+جمله‌ی پایین اسلاید ۱۷: «<span class="ltr">The slope is undefined if every training x value is identical.</span>» چون آن‌وقت $S_{xx}=0$ و مخرج صفر می‌شود. شهودش: اگر همه‌ی دانشجوها دقیقاً ۳ ساعت خوانده باشند، داده هیچ اطلاعاتی درباره‌ی «اثر یک ساعت بیشتر» ندارد. در فرم ماتریسی این همان حالتی است که ستون $x$ مضرب ستون ۱هاست و $X^\top X$ تکین می‌شود (بخش ۶). خویشاوند نزدیکش در عمل: ویژگی‌ای که واریانس تقریباً صفر دارد ($S_{xx}\approx0$) — شیب تعریف می‌شود ولی عددش بی‌معنی بزرگ و بی‌ثبات است.
+</div>
+
+<pre class="code">import numpy as np
+from sklearn.linear_model import LinearRegression
+
+x = np.array([1., 2., 3., 4., 5.])
+y = np.array([3., 4., 6., 7., 10.])
+
+# فرم بسته‌ی یک‌بعدی
+w1 = ((x - x.mean()) * (y - y.mean())).sum() / ((x - x.mean()) ** 2).sum()
+w0 = y.mean() - w1 * x.mean()
+print("one-dim  :", round(w0, 4), round(w1, 4))
+
+# فرم ماتریسی (با ستون ۱ها برای عرض از مبدأ)
+X = np.c_[np.ones(len(x)), x]
+print("X^T X =", (X.T @ X).tolist())
+print("X^T y =", (X.T @ y).tolist())
+beta = np.linalg.solve(X.T @ X, X.T @ y)   # بهتر از inv(X.T @ X) @ X.T @ y
+print("matrix   :", beta.round(4))
+
+# راه عددیِ پایدارتر، و راه آماده
+print("lstsq    :", np.linalg.lstsq(X, y, rcond=None)[0].round(4))
+lr = LinearRegression().fit(x.reshape(-1, 1), y)
+print("sklearn  :", round(lr.intercept_, 4), lr.coef_.round(4))
+
+yhat = beta[0] + beta[1] * x
+res = y - yhat
+print("yhat     :", yhat.round(2))
+print("residual :", res.round(2), " sum =", round(res.sum(), 12))
+print("SSE =", round((res ** 2).sum(), 4), " MSE =", round((res ** 2).mean(), 4))</pre>
+<div class="out">one-dim  : 0.9 1.7
+X^T X = [[5.0, 15.0], [15.0, 55.0]]
+X^T y = [30.0, 107.0]
+matrix   : [0.9 1.7]
+lstsq    : [0.9 1.7]
+sklearn  : 0.9 [1.7]
+yhat     : [2.6 4.3 6.  7.7 9.4]
+residual : [ 0.4 -0.3  0.  -0.7  0.6]  sum = -0.0
+SSE = 1.1  MSE = 0.22</div>
+<p class="mini">چهار راه، یک جواب. <code>np.linalg.solve</code> را به <code>inv</code> ترجیح بده (دقیق‌تر و سریع‌تر) و <code>lstsq</code> را به هر دو، چون وقتی $X^\top X$ تکین یا نزدیک تکین باشد هم جواب می‌دهد (از SVD استفاده می‌کند).</p>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="matrix">
+<h2><span class="num">۶</span> از یک ویژگی به چند ویژگی: فرم ماتریسی <span class="tag core">اسلاید ۱۹ و ۲۰</span><span class="tag exam">امتحانی</span></h2>
+<p>اسلاید ۱۹ مدل را به چند ویژگی تعمیم می‌دهد:</p>
+$$\hat y=w_0+w_1x_1+w_2x_2+\dots+w_px_p$$
+<p>مثال‌های خود اسلاید: ساعت مطالعه، نرخ حضور در کلاس، نمره‌ی قبلی. هر ویژگی ضریب خودش را می‌گیرد. نوشتن این برای $n$ نمونه با $\sum$ سریع زشت می‌شود، پس ماتریسی می‌نویسیم.</p>
+
+<div class="box def"><div class="bt">تعریف · ماتریس طرح (design matrix)</div>
+$$X=\begin{pmatrix}1&x_{11}&\cdots&x_{1p}\\ 1&x_{21}&\cdots&x_{2p}\\ \vdots&\vdots&&\vdots\\ 1&x_{n1}&\cdots&x_{np}\end{pmatrix}\in\mathbb{R}^{n\times(p+1)},\qquad
+\beta=\begin{pmatrix}w_0\\w_1\\\vdots\\w_p\end{pmatrix},\qquad \hat y=X\beta$$
+هر <b>سطر</b> یک نمونه، هر <b>ستون</b> یک ویژگی، و <b>ستون ۱ها</b> عرض از مبدأ را می‌سازد (اسلاید: «<span class="ltr">Include a column of 1s for the intercept</span>»). با این نماد:
+$$\beta^\ast=\operatorname*{arg\,min}_{\beta}\ \|y-X\beta\|_2^2$$
+</div>
+
+<div class="box proof"><div class="bt">اشتقاق · معادلات نرمال و فرم بسته‌ی ماتریسی</div>
+<ol class="steps2">
+<li><b>باز کردن تابع هدف.</b>
+$$L(\beta)=\|y-X\beta\|_2^2=(y-X\beta)^\top(y-X\beta)=y^\top y-2\beta^\top X^\top y+\beta^\top X^\top X\beta$$
+(جمله‌ی میانی: $y^\top X\beta$ یک عدد است پس با ترانهاده‌اش $\beta^\top X^\top y$ برابر است، و همین دو را با هم جمع کردیم.)</li>
+
+<li><b>گرادیان.</b> با دو اتحاد استاندارد $\nabla_\beta(b^\top\beta)=b$ و $\nabla_\beta(\beta^\top M\beta)=2M\beta$ برای $M$ متقارن:
+$$\nabla_\beta L=-2X^\top y+2X^\top X\beta$$</li>
+
+<li><b>صفر قراردادن: معادلات نرمال.</b>
+$$\boxed{\,X^\top X\beta=X^\top y\,}$$
+همان سطری که در اسلاید ۲۰ آمده است. توجه کن این یک دستگاه $(p+1)$ معادله و $(p+1)$ مجهول است، نه $n$ معادله.</li>
+
+<li><b>وارون‌پذیری.</b> هسیَن برابر $2X^\top X$ است که همیشه نیم‌معین مثبت است (چون $v^\top X^\top Xv=\|Xv\|^2\ge0$)، پس $L$ محدب است و هر نقطه‌ی بحرانی کمینه‌ی سراسری است. اگر $X$ <b>رتبه‌ی ستونی کامل</b> داشته باشد، $X^\top X$ معین مثبت و وارون‌پذیر است:
+$$\boxed{\,\hat\beta=(X^\top X)^{-1}X^\top y\,}$$</li>
+
+<li><b>تعبیر هندسی.</b> معادلات نرمال را بازنویسی کن: $X^\top(y-X\hat\beta)=0$، یعنی بردار باقی‌مانده بر <b>تمام</b> ستون‌های $X$ عمود است. پس $\hat y=X\hat\beta$ همان <b>تصویر متعامد</b> $y$ روی زیرفضای ستونی $X$ است و ماتریس کلاه $P=X(X^\top X)^{-1}X^\top$ یک تصویرگر است ($P^2=P$، $P^\top=P$). «کمترین مربعات» دقیقاً یعنی «نزدیک‌ترین نقطه‌ی آن زیرفضا به $y$». <span class="qed">∎</span></li>
+</ol>
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: همان داده‌ی ۵ نقطه‌ای، این‌بار ماتریسی</div>
+$$X=\begin{pmatrix}1&1\\1&2\\1&3\\1&4\\1&5\end{pmatrix},\quad y=\begin{pmatrix}3\\4\\6\\7\\10\end{pmatrix}
+\ \Longrightarrow\ X^\top X=\begin{pmatrix}n&\sum x\\ \sum x&\sum x^2\end{pmatrix}=\begin{pmatrix}5&15\\15&55\end{pmatrix},\quad X^\top y=\begin{pmatrix}\sum y\\ \sum xy\end{pmatrix}=\begin{pmatrix}30\\107\end{pmatrix}$$
+دترمینان: $5\times55-15^2=275-225=50\neq0$، پس وارون‌پذیر است و
+$$(X^\top X)^{-1}=\frac{1}{50}\begin{pmatrix}55&-15\\-15&5\end{pmatrix}
+\ \Longrightarrow\ \hat\beta=\frac{1}{50}\begin{pmatrix}55\cdot30-15\cdot107\\ -15\cdot30+5\cdot107\end{pmatrix}=\frac{1}{50}\begin{pmatrix}45\\85\end{pmatrix}=\begin{pmatrix}0.9\\1.7\end{pmatrix}$$
+دقیقاً همان $w_0=0.9$ و $w_1=1.7$ بخش ۴.۲. دو راه، یک جواب — چون فرم یک‌بعدی حالت خاص فرم ماتریسی است.
+</div>
+
+<h3>۶.۱ کِی $X^\top X$ تکین می‌شود؟</h3>
+<div class="box thm"><div class="bt">قاعده‌ی کلیدی</div>
+$X^\top X$ تکین است <b>اگر و تنها اگر</b> ستون‌های $X$ وابسته‌ی خطی باشند. دلیل یک خط است: $X^\top Xv=0\Rightarrow v^\top X^\top Xv=\|Xv\|^2=0\Rightarrow Xv=0$. پس هسته‌ی $X^\top X$ همان هسته‌ی $X$ است.
+</div>
+<div class="tablewrap"><table>
+<tr><th>موقعیت</th><th>چرا ستون‌ها وابسته می‌شوند</th><th>نمونه‌ی واقعی</th></tr>
+<tr><td>ویژگی‌های بیشتر از نمونه‌ها ($p+1&gt;n$)</td><td>$\operatorname{rank}(X)\le n&lt;p+1$، پس حتماً وابستگی هست</td><td>۵۰ بیمار و ۲۰٬۰۰۰ ژن</td></tr>
+<tr><td>ویژگی تکراری یا تبدیل واحد</td><td>یک ستون مضرب ستون دیگر است</td><td>«ساعت مطالعه» و «دقیقه‌ی مطالعه» با هم در مدل</td></tr>
+<tr><td>تله‌ی متغیر مجازی (dummy trap)</td><td>مجموع همه‌ی ستون‌های one-hot برابر ستون ۱هاست</td><td>۵ شهر با ۵ ستون one-hot + عرض از مبدأ (جلسه‌ی ۳)</td></tr>
+<tr><td>ویژگی ثابت</td><td>ستون مضرب ستون ۱هاست</td><td>ستونی که بعد از فیلتر فقط یک مقدار دارد</td></tr>
+<tr><td>ترکیب خطی ساختگی</td><td>یکی از ویژگی‌ها جمع یا تفاضل بقیه است</td><td>«کل»، «بخش اول» و «بخش دوم» با هم</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ در عمل، تکینگیِ دقیق نادر است؛ <b>نزدیکی به تکینگی</b> مسئله است</div>
+با نویز واقعی، دترمینان دقیقاً صفر نمی‌شود، فقط خیلی کوچک می‌شود. آن‌وقت $(X^\top X)^{-1}$ وجود دارد ولی درایه‌های غول‌پیکر دارد و ضریب‌ها بی‌ثبات می‌شوند: تغییر کوچکی در داده، ضریب‌ها را زیر و رو می‌کند. معیار کمّی‌اش <b>عدد شرطی</b> است (بخش ۸) و درمانش ریج (بخش ۹). به همین دلیل است که اسلاید ۲۰ می‌گوید «<span class="ltr">In practice, prefer numerically stable QR/SVD-based solvers</span>»: ساختن صریح $X^\top X$ عدد شرطی را <b>مربع</b> می‌کند ($\kappa(X^\top X)=\kappa(X)^2$)، پس حل مستقیم با تجزیه‌ی QR یا SVD روی خود $X$ دقت بیشتری می‌دهد. همان کاری که <code>np.linalg.lstsq</code> و <code>sklearn.LinearRegression</code> می‌کنند.
+</div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="gd">
+<h2><span class="num">۷</span> گرادیان کاهشی: وقتی فرم بسته به‌صرفه نیست <span class="tag core">اسلاید ۲۱ تا ۲۵</span></h2>
+<p>اگر فرمول دقیق داریم، چرا دنبال روش تکراری برویم؟ اسلاید ۲۱ عنوانش همین است: «<span class="ltr">What If a Closed-Form Solution Is Inconvenient?</span>». سه دلیل واقعی:</p>
+<div class="cards">
+<div><b>۱. هزینه‌ی محاسباتی</b>ساختن و وارون‌کردن $X^\top X$ حدود $O(np^2+p^3)$ عملیات می‌برد. با $p=10^5$ ویژگی (متن، تصویر) این عملاً غیرممکن است، ولی هر گام گرادیان فقط $O(np)$ است.</div>
+<div><b>۲. حافظه</b>فرم بسته همه‌ی داده را با هم می‌خواهد. گرادیان کاهشیِ تکه‌ای می‌تواند داده را تکه‌تکه از دیسک بخواند.</div>
+<div><b>۳. تعمیم‌پذیری</b>اکثر مدل‌ها (لجستیک، شبکه‌ی عصبی، SVM) اصلاً فرم بسته ندارند. جمله‌ی اسلاید: «<span class="ltr">Gradient descent is used well beyond linear regression.</span>» رگرسیون خطی فقط تمرینی است که می‌شود جوابش را با فرم بسته چک کرد.</div>
+</div>
+
+<div class="box def"><div class="bt">تعریف · گام گرادیان کاهشی</div>
+$$w\leftarrow w-\alpha\,\nabla L(w)$$
+<ul>
+<li>$\nabla L(w)$ جهت <b>تندترین افزایش</b> محلی تابع هزینه است؛ برای همین علامت منفی می‌گذاریم تا پایین برویم.</li>
+<li>$\alpha$ <b>نرخ یادگیری</b> است و اندازه‌ی هر گام را کنترل می‌کند.</li>
+</ul>
+پنج گام اسلاید ۲۱: مقداردهی اولیه ← پیش‌بینی ← گرادیان ← به‌روزرسانی ← تکرار تا شرط توقف.
+</div>
+
+<div class="box proof"><div class="bt">اشتقاق · گرادیان MSE رگرسیون خطی</div>
+از $\mathrm{MSE}=\frac1n\sum_i(y_i-w_0-w_1x_i)^2$، همان مشتق‌های بخش ۵ را این‌بار بدون صفر قراردادن می‌نویسیم و بر $n$ تقسیم می‌کنیم:
+$$\frac{\partial\mathrm{MSE}}{\partial w_0}=-\frac{2}{n}\sum_i(y_i-\hat y_i),\qquad
+\frac{\partial\mathrm{MSE}}{\partial w_1}=-\frac{2}{n}\sum_i x_i(y_i-\hat y_i)$$
+که دقیقاً دو فرمول اسلاید ۲۳ است، و در فرم ماتریسی:
+$$\nabla_\beta\mathrm{MSE}=-\frac{2}{n}X^\top(y-X\beta)=-\frac{2}{n}X^\top e$$
+<b>تعبیر:</b> گرادیان یعنی «همبستگی باقی‌مانده با هر ویژگی». اگر باقی‌مانده با ویژگی $j$ هنوز همبسته است، یعنی اطلاعات استفاده‌نشده‌ای مانده و باید $w_j$ را حرکت داد. وقتی همه‌ی این همبستگی‌ها صفر شوند، گرادیان صفر است و به همان معادلات نرمال بخش ۶ رسیده‌ایم. <b>گرادیان کاهشی چیزی جز حل تکراری همان دستگاه نیست.</b> <span class="qed">∎</span>
+</div>
+
+<h3>۷.۱ نرخ یادگیری: خیلی کم، خیلی زیاد، درست</h3>
+<p>اسلاید ۲۴ سه ستون دارد — «کند»، «پایدار»، «واگرا» — ولی مرز بین این سه را نمی‌گوید. برای تابع هزینه‌ی درجه‌دوم، این مرز را می‌شود <b>دقیقاً</b> حساب کرد و این یکی از جاهایی است که ریاضی‌ات به دردت می‌خورد:</p>
+
+<div class="box thm"><div class="bt">قضیه · شرط دقیق همگرایی برای MSE خطی</div>
+هسیَن MSE ثابت است: $H=\frac{2}{n}X^\top X$. گام گرادیان را حول $w^\ast$ بنویس (با استفاده از $\nabla L(w)=H(w-w^\ast)$ که از بخش ۴.۳ می‌آید):
+$$w_{t+1}-w^\ast=(I-\alpha H)(w_t-w^\ast)$$
+پس خطا در هر جهت ویژه با ضریب $|1-\alpha h_i|$ ضرب می‌شود که $h_i$ مقادیر ویژه‌ی $H$‌اند. همگرایی برای هر نقطه‌ی شروع، اگر و تنها اگر:
+$$\boxed{\ 0&lt;\alpha&lt;\frac{2}{h_{\max}}=\frac{n}{\lambda_{\max}(X^\top X)}\ }$$
+و بهترین نرخ ثابت و سرعت همگرایی‌اش:
+$$\alpha_{\text{opt}}=\frac{2}{h_{\min}+h_{\max}},\qquad \text{نرخ انقباض}=\frac{\kappa-1}{\kappa+1},\qquad \kappa=\frac{h_{\max}}{h_{\min}}=\frac{\lambda_{\max}(X^\top X)}{\lambda_{\min}(X^\top X)}$$
+<b>نتیجه‌ی مهم:</b> سرعت همگرایی فقط به <b>عدد شرطی</b> $\kappa$ بستگی دارد، نه به اندازه‌ی داده. اگر $\kappa=1$ باشد نرخ انقباض صفر است، یعنی <b>یک گام</b> کافی است.
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: همان ۵ نقطه، سه نرخ یادگیری</div>
+برای $x=(1,\dots,5)$ داشتیم $X^\top X=\begin{pmatrix}5&15\\15&55\end{pmatrix}$. مقادیر ویژه از $\lambda^2-60\lambda+50=0$:
+$$\lambda=30\pm\sqrt{900-50}=30\pm29.1548\ \Longrightarrow\ \lambda_{\max}=59.155,\quad \lambda_{\min}=0.845,\quad \kappa\approx70$$
+پس $\alpha_{\max}=n/\lambda_{\max}=5/59.155=0.0845$. حالا از $w=(0,0)$ شروع کن. گام اول با $\alpha=0.05$ را دستی حساب کنیم: با $w=(0,0)$ باقی‌مانده‌ها همان $y$ هستند، پس
+$$g_0=-\tfrac{2}{5}\sum y_i=-\tfrac{2}{5}(30)=-12,\qquad g_1=-\tfrac{2}{5}\sum x_iy_i=-\tfrac{2}{5}(107)=-42.8$$
+$$w_0\leftarrow 0-0.05(-12)=0.6,\qquad w_1\leftarrow 0-0.05(-42.8)=2.14$$
+و MSE از ۴۲ به ۱٫۶۵ افتاد. ادامه‌اش را کد پایین نشان می‌دهد.
+</div>
+
+<pre class="code">import numpy as np
+
+x = np.array([1., 2., 3., 4., 5.])
+y = np.array([3., 4., 6., 7., 10.])
+mse = lambda w0, w1: ((y - w0 - w1 * x) ** 2).mean()
+
+def gd(alpha, steps, w0=0.0, w1=0.0, log=()):
+    n = len(x)
+    for t in range(1, steps + 1):
+        e = y - (w0 + w1 * x)            # باقی‌مانده با وزن‌های فعلی
+        g0 = -2 / n * e.sum()            # مشتق نسبت به w0
+        g1 = -2 / n * (x * e).sum()      # مشتق نسبت به w1
+        w0, w1 = w0 - alpha * g0, w1 - alpha * g1
+        if t in log:
+            print(f"  t={t:<4} w0={w0:>11.4g}  w1={w1:>11.4g}  MSE={mse(w0, w1):.4g}")
+    return w0, w1
+
+X = np.c_[np.ones(len(x)), x]
+lam_max = np.linalg.eigvalsh(X.T @ X)[-1]
+print("MSE(0,0) =", mse(0, 0), "   alpha_max = n/lambda_max =", round(len(x) / lam_max, 4))
+for a in (0.01, 0.05, 0.1):
+    print(f"alpha = {a}")
+    gd(a, 200, log=(1, 2, 3, 20, 200))</pre>
+<div class="out">MSE(0,0) = 42.0    alpha_max = n/lambda_max = 0.0845
+alpha = 0.01
+  t=1    w0=       0.12  w1=      0.428  MSE=24.58
+  t=2    w0=     0.2119  w1=     0.7546  MSE=14.43
+  t=3    w0=     0.2824  w1=      1.004  MSE=8.511
+  t=20   w0=     0.5253  w1=      1.795  MSE=0.2461
+  t=200  w0=     0.6975  w1=      1.756  MSE=0.2275
+alpha = 0.05
+  t=1    w0=        0.6  w1=       2.14  MSE=1.648
+  t=2    w0=      0.498  w1=      1.746  MSE=0.2939
+  t=3    w0=     0.5244  w1=      1.816  MSE=0.2477
+  t=20   w0=     0.6166  w1=      1.778  MSE=0.2346
+  t=200  w0=     0.8868  w1=      1.704  MSE=0.22
+alpha = 0.1
+  t=1    w0=        1.2  w1=       4.28  MSE=78.17
+  t=2    w0=     -0.408  w1=     -1.576  MSE=145.7
+  t=3    w0=      1.819  w1=      6.416  MSE=271.7
+  t=20   w0=     -256.6  w1=     -927.2  MSE=1.099e+07
+  t=200  w0= -6.346e+26  w1= -2.291e+27  MSE=6.686e+55</div>
+
+<div class="tablewrap"><table>
+<tr><th>نرخ یادگیری</th><th>چه اتفاقی می‌افتد</th><th>علامت تشخیص روی نمودار MSE</th></tr>
+<tr><td>$\alpha=0.01$ (خیلی کم)</td><td>هر گام کوچک؛ بعد از ۲۰۰ گام هنوز $w_0=0.70$ به‌جای ۰٫۹</td><td>منحنی هزینه نرم و یکنواخت پایین می‌رود ولی به کف نمی‌رسد</td></tr>
+<tr><td>$\alpha=0.05$ (مناسب، $0.59\,\alpha_{\max}$)</td><td>سریع پایین می‌آید، بعد در دره‌ی باریک آرام می‌خزد</td><td>افت تند اولیه بعد یک دنباله‌ی تقریباً صاف</td></tr>
+<tr><td>$\alpha=0.1$ (خیلی زیاد، $1.18\,\alpha_{\max}$)</td><td><b>واگرایی</b>: علامت وزن‌ها هر گام عوض می‌شود و بزرگ‌تر می‌شود تا <code>inf</code> و <code>nan</code></td><td>MSE بالا می‌رود و نوسان می‌کند — اگر دیدی، فوراً $\alpha$ را ۳ تا ۱۰ برابر کم کن</td></tr>
+</table></div>
+
+<div class="box mistake"><div class="bt">❌ اشتباه رایج: «گرادیان کاهشی گیر افتاد، تعداد گام‌ها را زیاد می‌کنم»</div>
+جمله‌ی پایین اسلاید ۲۴ دقیقاً همین را هشدار می‌دهد: «<span class="ltr">do not assume more iterations can fix a poor learning rate</span>». اگر $\alpha$ بزرگ باشد، گام بیشتر یعنی واگرایی بیشتر (ردیف سوم جدول بالا: از $10^7$ به $10^{55}$). اگر $\alpha$ خیلی کوچک باشد، ۱۰ برابر کردن گام‌ها هم نجاتت نمی‌دهد چون سرعت همگرایی نمایی با پایه‌ی $(1-1/\kappa)$ است. <b>اول $\alpha$ را درست کن، بعد تعداد گام را.</b> و ترتیب درست کار: اول ویژگی‌ها را مقیاس کن تا $\kappa$ کوچک شود (بخش ۸)، چون هم $\alpha$ را آسان می‌کند و هم تعداد گام را.
+</div>
+
+<div id="w-gd"></div>
+
+<h3>۷.۲ Batch، Stochastic و Mini-batch</h3>
+<p>اسلاید ۲۵ می‌گوید گرادیان را می‌شود از تعداد متفاوتی نمونه حساب کرد. نکته‌ی کلیدی در جمله‌ی پایین صفحه است: «<span class="ltr">The choice changes speed and gradient noise, not the underlying objective.</span>» هر سه دارند <b>همان</b> MSE را کمینه می‌کنند؛ فقط تخمین گرادیان فرق می‌کند.</p>
+<div class="tablewrap"><table>
+<tr><th>روش</th><th>گرادیان از چند نمونه</th><th>هزینه‌ی هر گام</th><th>نویز گرادیان</th><th>کجا به‌درد می‌خورد</th></tr>
+<tr><td>Batch GD</td><td>همه‌ی $n$ نمونه</td><td>$O(np)$ — گران</td><td>صفر؛ مسیر صاف</td><td>داده‌ی کوچک؛ وقتی می‌خواهی دقیقاً همگرا شوی</td></tr>
+<tr><td>Stochastic GD (SGD)</td><td>یک نمونه</td><td>$O(p)$ — خیلی ارزان</td><td>زیاد؛ مسیر زیگزاگ</td><td>داده‌ی جریانی یا عظیم؛ خروج از نواحی تخت</td></tr>
+<tr><td>Mini-batch GD</td><td>$m$ نمونه (معمولاً ۳۲ تا ۵۱۲)</td><td>$O(mp)$</td><td>متوسط؛ با $\sqrt{m}$ کم می‌شود</td><td><b>پیش‌فرض عملی</b> تقریباً همه‌جا؛ با GPU هم جور است</td></tr>
+</table></div>
+<div class="box note"><div class="bt">📌 سه نکته‌ی عملی که اسلاید نمی‌گوید <span class="tag extra">تکمیلی</span></div>
+<ul>
+<li><b>SGD دقیقاً همگرا نمی‌شود</b>، حول کمینه می‌چرخد. برای همگرایی باید نرخ یادگیری را کم‌کم کاهش داد (<span class="ltr">learning rate schedule</span>)؛ به‌همین دلیل <code>SGDRegressor</code> در sklearn پارامتر <code>learning_rate="invscaling"</code> دارد.</li>
+<li><b>یک epoch</b> یعنی یک‌بار عبور از کل داده. Batch GD در هر epoch یک گام برمی‌دارد، SGD با $n$ نمونه $n$ گام. برای همین SGD اغلب در یک epoch خیلی جلوتر است.</li>
+<li><b>ترتیب نمونه‌ها مهم است</b>: اگر داده بر اساس برچسب مرتب باشد و بُر نزنی، SGD سوگیری می‌گیرد. همیشه <code>shuffle=True</code>.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="scale">
+<h2><span class="num">۸</span> چرا مقیاس‌بندی ویژگی به بهینه‌سازی کمک می‌کند <span class="tag core">اسلاید ۲۶</span></h2>
+<p>اسلاید سه ویژگی با واحدهای بسیار متفاوت می‌آورد — ساعت مطالعه ۰ تا ۱۵، نمره‌ی قبلی ۰ تا ۲۰، درآمد ۰ تا ۱٬۰۰۰٬۰۰۰ — و می‌گوید «<span class="ltr">One step size may poorly suit all weights</span>» و «<span class="ltr">The loss geometry can become easier to optimize</span>». حالا می‌توانیم این «هندسه‌ی آسان‌تر» را با عدد بگوییم.</p>
+
+<div class="box thm"><div class="bt">پیوند: واحد ویژگی ← عدد شرطی ← سرعت گرادیان کاهشی</div>
+اگر ویژگی $j$ را در عدد $s$ ضرب کنی (مثلاً ساعت را به دقیقه ببری)، ستون $j$ ماتریس $X$ در $s$ ضرب می‌شود، پس درایه‌های سطر و ستون $j$ ماتریس $X^\top X$ در $s$ (و درایه‌ی قطری‌اش در $s^2$) ضرب می‌شود. نتیجه:
+<ul>
+<li>$w_j^\ast$ در $1/s$ ضرب می‌شود و <b>پیش‌بینی‌ها عوض نمی‌شوند</b> — فرم بسته کاملاً بی‌تفاوت است.</li>
+<li>ولی $\lambda_{\max}$ تقریباً در $s^2$ ضرب می‌شود، پس $\kappa$ منفجر می‌شود و $\alpha_{\max}=n/\lambda_{\max}$ به همان نسبت کوچک می‌شود.</li>
+<li>و چون نرخ انقباض $(\kappa-1)/(\kappa+1)$ است، تعداد گام لازم تقریباً <b>متناسب با $\kappa$</b> رشد می‌کند.</li>
+</ul>
+شهود هندسی: کانتورها از دایره به بیضی خیلی کشیده تبدیل می‌شوند. گرادیان بر کانتور عمود است، پس در دره‌ی باریک تقریباً عمود بر مسیرِ درست را نشان می‌دهد و الگوریتم به‌جای دویدن در طول دره، بین دیواره‌هایش زیگزاگ می‌زند.
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: همان ۵ نقطه با چهار مقیاس مختلف</div>
+<div class="tablewrap"><table>
+<tr><th>مقیاس $x$</th><th>$X^\top X$</th><th>$\lambda_{\min}$ / $\lambda_{\max}$</th><th>$\kappa$</th><th>$\alpha_{\max}$</th><th>گام تا خطای نسبی ۰٫۱٪</th></tr>
+<tr><td>ساعت (۱ تا ۵)</td><td>$\begin{pmatrix}5&15\\15&55\end{pmatrix}$</td><td>0.845 / 59.15</td><td><b>۷۰</b></td><td>0.0845</td><td>۲۰۷</td></tr>
+<tr><td>دقیقه (۶۰×)</td><td>$\begin{pmatrix}5&900\\900&198000\end{pmatrix}$</td><td>0.909 / 198000</td><td><b>۲۱۷٬۸۰۹</b></td><td>$2.5\times10^{-5}$</td><td>۸۳۵٬۷۹۱</td></tr>
+<tr><td>فقط مرکزشده</td><td>$\begin{pmatrix}5&0\\0&10\end{pmatrix}$</td><td>5 / 10</td><td><b>۲</b></td><td>0.5</td><td>۲۶</td></tr>
+<tr class="hi"><td>استاندارد (z-score)</td><td>$\begin{pmatrix}5&0\\0&5\end{pmatrix}$</td><td>5 / 5</td><td><b>۱</b></td><td>1</td><td>۳۱ (یا <b>۱</b> با $\alpha$ بهینه)</td></tr>
+</table></div>
+<p class="mini">ستون آخر: تعداد گام batch GD از $w=(0,0)$ تا وقتی $\|w_t-w^\ast\|/\|w^\ast\|&lt;10^{-3}$ شود، با $\alpha=0.9\,\alpha_{\max}$.</p>
+فقط با عوض‌کردن واحد از ساعت به دقیقه، تعداد گام لازم <b>۴٬۰۰۰ برابر</b> می‌شود، بدون اینکه ذره‌ای اطلاعات اضافه یا کم شده باشد. و بعد از استانداردسازی، $\kappa$ به ۱ می‌رسد: کانتورها دایره‌ی کامل‌اند و با $\alpha_{\text{opt}}=2/(h_{\min}+h_{\max})=0.5$ گرادیان کاهشی در <b>یک گام</b> دقیقاً به جواب می‌رسد.
+</div>
+
+<div class="box tip"><div class="bt">💡 چرا فقط مرکزکردن هم $\kappa$ را از ۷۰ به ۲ می‌آورد؟</div>
+چون درایه‌ی غیرقطری $X^\top X$ برابر $\sum_i x_i$ است و با مرکزکردن صفر می‌شود؛ ماتریس قطری یعنی کانتورهای <b>بدون کج‌شدگی</b>. این همان گره بین $w_0$ و $w_1$ است که در بخش ۴.۳ گفتیم: با $x$ خام، تغییر شیب مجبورت می‌کند عرض از مبدأ را هم عوض کنی، و همین وابستگی دره را باریک می‌کند. تقسیم بر انحراف معیار قدم دوم است که بیضی را به دایره تبدیل می‌کند.
+</div>
+
+<pre class="code">import numpy as np
+
+x = np.array([1., 2., 3., 4., 5.])
+n = len(x)
+
+def report(name, xx):
+    X = np.c_[np.ones(n), xx]
+    lo, hi = np.linalg.eigvalsh(X.T @ X)
+    print(f"{name:<22} lambda_min={lo:10.4g}  lambda_max={hi:10.4g}"
+          f"  kappa={hi / lo:10.4g}  alpha_max={n / hi:.4g}")
+
+report("x in hours (1..5)", x)
+report("x in minutes (x60)", x * 60)
+report("x centered", x - x.mean())
+report("x z-scored", (x - x.mean()) / x.std())</pre>
+<div class="out">x in hours (1..5)      lambda_min=    0.8452  lambda_max=     59.15  kappa=     69.99  alpha_max=0.08452
+x in minutes (x60)     lambda_min=    0.9091  lambda_max=  1.98e+05  kappa= 2.178e+05  alpha_max=2.525e-05
+x centered             lambda_min=         5  lambda_max=        10  kappa=         2  alpha_max=0.5
+x z-scored             lambda_min=         5  lambda_max=         5  kappa=         1  alpha_max=1</div>
+
+<div class="box warn"><div class="bt">⚠ کدام مدل‌ها به مقیاس حساس‌اند و کدام نه — جمع‌بندی با جلسه‌ی ۵</div>
+<ul>
+<li><b>فرم بسته‌ی OLS</b>: کاملاً بی‌تفاوت. پیش‌بینی‌ها دقیقاً یکی می‌شوند (در بخش ۱۰ عددش را می‌بینی: هر دو MSE دقیقاً 4.578516).</li>
+<li><b>هر روش مبتنی بر گرادیان</b> (SGD، شبکه‌ی عصبی): به‌شدت حساس. بدون مقیاس‌بندی ممکن است اصلاً همگرا نشود.</li>
+<li><b>ریج و لاسو</b>: حساس، ولی به دلیل دیگری! جریمه‌ی $\lambda\|w\|^2$ ضریب‌ها را مقایسه می‌کند؛ ویژگی‌ای که واحد بزرگ‌تری دارد ضریب کوچک‌تری می‌گیرد و در نتیجه <b>کم‌تر جریمه می‌شود</b>. پس بدون استانداردسازی، جریمه ناعادلانه پخش می‌شود. مقیاس‌بندی قبل از منظم‌سازی اختیاری نیست.</li>
+<li><b>درخت و جنگل</b> (جلسه‌ی ۱۲): بی‌تفاوت، چون فقط آستانه‌گذاری می‌کنند.</li>
+</ul>
+و جمله‌ی آخر اسلاید ۲۶ را فراموش نکن: «<span class="ltr">Fit scalers only on training data</span>» — همان مرز fit/transform جلسه‌ی ۷ که در بخش ۱۰ دوباره سراغش می‌رویم.
+</div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section id="ridge">
+<h2><span class="num">۹</span> وقتی خط کافی نیست، و اولین منظم‌سازی: رگرسیون ریج <span class="tag core">اسلاید ۲۷ و ۲۸</span></h2>
+<p>اسلاید ۲۷ سه حالت شکست را می‌شمارد:</p>
+<div class="tablewrap"><table>
+<tr><th>مشکل</th><th>چطور تشخیص می‌دهی</th><th>چه کار کنی</th></tr>
+<tr><td><b>غیرخطی‌بودن</b></td><td>نمودار باقی‌مانده بر حسب $\hat y$ الگوی منحنی دارد (مثلاً U)</td><td>تبدیل ویژگی ($x^2$، $\log x$، اثر متقابل) یا مدل غنی‌تر؛ یادت باشد مدل همچنان «خطی» می‌ماند</td></tr>
+<tr><td><b>داده‌ی پرت</b></td><td>چند باقی‌مانده‌ی غول‌پیکر که کل SSE را می‌سازند</td><td>اول <b>بررسی کن</b> خطای ورود است یا واقعیت (جلسه‌ی ۲)؛ بعد تابع هزینه‌ی تاب‌آور مثل Huber</td></tr>
+<tr><td><b>تغییر زمینه</b></td><td>عملکرد روی داده‌ی جدیدتر یا کاربر جدید افت می‌کند</td><td>تقسیم زمانی و گروهی (جلسه‌ی ۷)، بازآموزی دوره‌ای</td></tr>
+</table></div>
+<p>و جمله‌ی پایین صفحه که ارزش حفظ‌کردن دارد: «<span class="ltr">A low training loss does not prove good future generalization.</span>» مشکل چهارمی هم هست که اسلاید جدا نمی‌کند ولی موضوع صفحه‌ی بعدش است: <b>هم‌خطی و واریانس زیاد ضریب‌ها</b>.</p>
+
+<div class="box def"><div class="bt">تعریف · رگرسیون ریج (Ridge / منظم‌سازی $L_2$)</div>
+$$L(\beta)=\frac{1}{n}\|y-X\beta\|_2^2+\lambda\|w\|_2^2$$
+<ul>
+<li><b>جمله‌ی برازش</b>: تا جای معقول به هدف‌های آموزش نزدیک شو.</li>
+<li><b>جمله‌ی جریمه</b>: ضریب‌های بزرگ را کوچک کن؛ $\lambda\ge0$ شدت را تعیین می‌کند.</li>
+<li>$w$ یعنی ضریب‌های ویژگی <b>بدون</b> عرض از مبدأ: معمولاً $w_0$ جریمه نمی‌شود (اسلاید: «<span class="ltr">Typically exclude the intercept</span>»)، چون جابه‌جایی مبدأ $y$ نباید مدل را عوض کند.</li>
+<li>$\lambda$ را با <b>اعتبارسنجی</b> انتخاب کن، نه با مجموعه‌ی آزمون (جلسه‌ی ۷).</li>
+</ul>
+</div>
+
+<div class="box proof"><div class="bt">اشتقاق · فرم بسته‌ی ریج و اینکه چرا همیشه وجود دارد</div>
+با همان روش بخش ۶ (این‌بار با $\|y-X\beta\|^2+\lambda\|\beta\|^2$ برای سادگیِ نماد):
+$$\nabla_\beta L=-2X^\top y+2X^\top X\beta+2\lambda\beta=0\ \Longrightarrow\ \boxed{\,\hat\beta_{\text{ridge}}=(X^\top X+\lambda I)^{-1}X^\top y\,}$$
+<b>چرا این وارون همیشه وجود دارد؟</b> برای هر $v\neq0$:
+$$v^\top(X^\top X+\lambda I)v=\|Xv\|^2+\lambda\|v\|^2\ \ge\ \lambda\|v\|^2&gt;0$$
+پس ماتریس <b>معین مثبت</b> است و هیچ مقدار ویژه‌ی صفری ندارد — حتی اگر $X$ ستون‌های کاملاً تکراری داشته باشد یا $p\gg n$ باشد. دقیق‌تر: اگر $X^\top X$ مقادیر ویژه‌ی $\lambda_1\ge\dots\ge\lambda_{p+1}\ge0$ داشته باشد، $X^\top X+\lambda I$ همان بردارهای ویژه را با مقادیر $\lambda_i+\lambda$ دارد، پس
+$$\kappa(X^\top X+\lambda I)=\frac{\lambda_{\max}+\lambda}{\lambda_{\min}+\lambda}\ \le\ \kappa(X^\top X)$$
+و با بزرگ‌شدن $\lambda$ به‌طور یکنوا به ۱ میل می‌کند. ریج هم‌زمان دو کار می‌کند: مسئله را <b>خوش‌وضع</b> می‌کند و گرادیان کاهشی را هم سریع‌تر. <span class="qed">∎</span>
+</div>
+
+<div class="box ex"><div class="bt">مثال دستی: دو ویژگی کاملاً تکراری</div>
+فرض کن «ساعت مطالعه» را دو بار در مدل گذاشته‌ای (یک‌بار مستقیم، یک‌بار از ستون دیگری که همان است). داده‌ی مرکزشده: $x_1=x_2=(-3,-1,1,3)$ و $y=(-6,-2,2,6)$.
+$$X^\top X=\begin{pmatrix}20&20\\20&20\end{pmatrix},\quad \det=0\ \Rightarrow\ \text{تکین},\qquad X^\top y=\begin{pmatrix}40\\40\end{pmatrix}$$
+OLS <b>بی‌نهایت</b> جواب دارد: هر $(w_1,w_2)$ با $w_1+w_2=2$ همان پیش‌بینی و همان SSE را می‌دهد — مثلاً $(2,0)$، $(0,2)$، $(1000,-998)$. مدل بی‌معنی نیست، ولی <b>ضریب‌ها</b> بی‌معنی‌اند و تفسیرشان خطرناک است. حالا ریج:
+$$\begin{pmatrix}20+\lambda&20\\20&20+\lambda\end{pmatrix}\begin{pmatrix}w_1\\w_2\end{pmatrix}=\begin{pmatrix}40\\40\end{pmatrix}$$
+با تقارن مسئله $w_1=w_2=w$ و از سطر اول $(40+\lambda)w=40$، پس
+$$w_1=w_2=\frac{40}{40+\lambda}$$
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">λ</th><th>0⁺</th><th>1</th><th>10</th><th>40</th><th>100</th></tr>
+<tr><td class="lbl">w₁ = w₂</td><td>1.000</td><td>0.9756</td><td>0.8</td><td>0.5</td><td>0.2857</td></tr>
+<tr><td class="lbl">w₁ + w₂ (شیب مؤثر)</td><td>2.000</td><td>1.9512</td><td>1.6</td><td>1.0</td><td>0.5714</td></tr>
+</table></div>
+دو درس: (۱) ریج از بین بی‌نهایت جواب، جوابِ <b>کمینه‌نُرم</b> را انتخاب می‌کند و وزن را بین ویژگی‌های هم‌ارز <b>مساوی</b> پخش می‌کند — رفتاری که معمولاً همان چیزی است که می‌خواهی؛ (۲) این کار رایگان نیست: شیب مؤثر از ۲ به ۱٫۶ و ۱ می‌افتد. ریج <b>اریبی</b> اضافه می‌کند تا واریانس را کم کند. $\lambda$ دقیقاً نقطه‌ی تعادل این دو است و با اعتبارسنجی متقاطع انتخاب می‌شود.
+</div>
+
+<pre class="code">import numpy as np
+from sklearn.linear_model import Ridge
+
+rng = np.random.default_rng(6)
+n = 40
+x1 = rng.normal(0, 1, n)
+x2 = x1 + rng.normal(0, 0.002, n)             # عملاً همان ویژگی
+X = np.c_[x1, x2]
+y = 2 * x1 + 3 * x2 + rng.normal(0, 0.1, n)   # مجموع ضریب واقعی = 5
+
+print("cond(X^T X) =", f"{np.linalg.cond(X.T @ X):.3g}")
+print("OLS        :", np.linalg.solve(X.T @ X, X.T @ y).round(2))
+for lam in (0.01, 0.1, 1.0, 10.0):
+    w = np.linalg.solve(X.T @ X + lam * np.eye(2), X.T @ y)
+    k = np.linalg.cond(X.T @ X + lam * np.eye(2))
+    print(f"ridge {lam:<6}: {w.round(3)}  sum={w.sum():.3f}  cond={k:.4g}")
+print("sklearn    :", Ridge(alpha=1.0, fit_intercept=False).fit(X, y).coef_.round(3))</pre>
+<div class="out">cond(X^T X) = 1.24e+06
+OLS        : [-13.35  18.35]
+ridge 0.01  : [2.396 2.602]  sum=4.999  cond=8037
+ridge 0.1   : [2.486 2.507]  sum=4.993  cond=809.3
+ridge 1.0   : [2.468 2.47 ]  sum=4.938  cond=81.88
+ridge 10.0  : [2.224 2.225]  sum=4.449  cond=9.089
+sklearn    : [2.468 2.47 ]</div>
+<p>نگاه کن چه اتفاقی افتاد: OLS ضریب‌های $-13.35$ و $+18.35$ می‌دهد (در حالی که ضریب‌های واقعی ۲ و ۳ بودند!) ولی <b>جمعشان</b> ۵ درست است. مدل پیش‌بینی خوبی می‌کند و تفسیر فاجعه‌باری دارد. با کوچک‌ترین ریج ($\lambda=0.01$) ضریب‌ها به ۲٫۴ و ۲٫۶ می‌آیند و عدد شرطی ۱۵۰ برابر کوچک می‌شود.</p>
+
+<div class="box mistake"><div class="bt">❌ تله‌ی نمادگذاری: $\lambda$ اسلاید با <code>alpha</code> در sklearn یکی نیست</div>
+اسلاید جمله‌ی برازش را بر $n$ تقسیم می‌کند ولی جریمه را نه: $\frac1n\|y-X\beta\|^2+\lambda\|w\|^2$. اما <code>sklearn.linear_model.Ridge</code> تابع هدفش $\|y-X\beta\|_2^2+\alpha\|w\|_2^2$ است، یعنی <b>بدون</b> $1/n$. پس برای اینکه همان مدل را بگیری باید
+$$\alpha_{\text{sklearn}}=n\cdot\lambda_{\text{اسلاید}}$$
+بگذاری. اگر این را ندانی و $\lambda=0.1$ را مستقیم به <code>Ridge(alpha=0.1)</code> بدهی، روی داده‌ی ۱۰٬۰۰۰ تایی عملاً ۱۰٬۰۰۰ برابر کم‌تر جریمه کرده‌ای. قاعده‌ی عملی: هیچ‌وقت $\lambda$ را از روی کاغذ کپی نکن؛ همیشه با <code>RidgeCV</code> روی یک شبکه‌ی لگاریتمی انتخابش کن.
+</div>
+
+<div class="box note"><div class="bt">📌 نگاه SVD به ریج <span class="tag extra">تکمیلی</span></div>
+اگر $X=U\Sigma V^\top$ تجزیه‌ی مقادیر منفرد باشد (جلسه‌ی ۶):
+$$\hat\beta_{\text{OLS}}=\sum_j\frac{u_j^\top y}{\sigma_j}v_j,\qquad \hat\beta_{\text{ridge}}=\sum_j\frac{\sigma_j}{\sigma_j^2+\lambda}\,(u_j^\top y)\,v_j$$
+در OLS، جهت‌هایی که $\sigma_j$ کوچکی دارند (جهت‌های کم‌واریانس داده) بر عددی نزدیک صفر تقسیم می‌شوند و نویز را منفجر می‌کنند. ریج همان جهت‌ها را با ضریب $\sigma_j^2/(\sigma_j^2+\lambda)$ <b>خفه</b> می‌کند و جهت‌های پرواریانس را تقریباً دست‌نخورده می‌گذارد. این دقیقاً همان کاری است که PCA با حذف مؤلفه‌های آخر می‌کند، فقط به‌صورت نرم و پیوسته.
+</div>
+
+<div id="w-ridge"></div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="pipeline">
+<h2><span class="num">۱۰</span> پایپ‌لاین امن در برابر نشت <span class="tag core">اسلاید ۲۹</span></h2>
+<p>اسلاید یک قطعه کد می‌دهد و زیرش می‌نویسد «<span class="ltr">Create the split first; fit the entire pipeline only on training observations.</span>» این همان درس جلسه‌ی ۷ است، فقط این‌بار با ابزارش.</p>
+
+<pre class="code">from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+model = make_pipeline(StandardScaler(), LinearRegression())
+model.fit(X_train, y_train)
+pred = model.predict(X_test)
+print(mean_squared_error(y_test, pred))</pre>
+
+<div class="box def"><div class="bt">چرا scaler باید <b>داخل</b> pipeline باشد — سه دلیل، نه یکی</div>
+<ol>
+<li><b>نشت آماری.</b> <code>StandardScaler</code> یاد می‌گیرد: میانگین و انحراف معیار را از داده برمی‌دارد. اگر روی کل داده <code>fit</code> کنی، میانگین مجموعه‌ی آزمون وارد تبدیل داده‌ی آموزش شده و امتیاز ارزیابی خوش‌بینانه می‌شود. آزمون جلسه‌ی ۷ را اجرا کن: «در لحظه‌ی پیش‌بینی، این عدد را می‌دانستیم؟» میانگینِ داده‌ی آینده را نمی‌دانستیم.</li>
+<li><b>اعتبارسنجی متقاطع.</b> در CV، داده در هر fold متفاوت است. فقط وقتی scaler داخل pipeline باشد، <code>cross_val_score</code> در هر fold آن را <b>از نو</b> روی بخش آموزشِ همان fold برازش می‌دهد. scaler بیرونی یعنی هر ۵ fold به داده‌ی هم نگاه کرده‌اند.</li>
+<li><b>استقرار (deployment).</b> در زمان پیش‌بینی روی یک نمونه‌ی تازه، باید دقیقاً همان میانگین و انحراف معیار زمان آموزش اعمال شود. pipeline این پارامترها را در خودش ذخیره می‌کند؛ کد دستی معمولاً این را فراموش می‌کند و همین یکی از رایج‌ترین باگ‌های تولیدی است.</li>
+</ol>
+</div>
+
+<div class="box mistake"><div class="bt">❌ کدی که اشتباه است ولی خطا نمی‌دهد</div>
+<pre class="code">scaler = StandardScaler().fit(X)              # ❌ کل داده، قبل از تقسیم
+Xs = scaler.transform(X)
+X_tr, X_te, y_tr, y_te = train_test_split(Xs, y, test_size=0.25)
+model = LinearRegression().fit(X_tr, y_tr)    # امتیاز خوش‌بینانه</pre>
+درست:
+<pre class="code">X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=42)
+model = make_pipeline(StandardScaler(), LinearRegression()).fit(X_tr, y_tr)  # ✓</pre>
+برای <code>StandardScaler</code> اثر این نشت معمولاً کوچک است (میانگین با نمونه‌ی بزرگ پایدار است) ولی برای <code>SimpleImputer</code>، کدگذاری هدف‌محور، PCA و به‌خصوص <b>انتخاب ویژگی</b> می‌تواند فاجعه‌بار باشد. نمونه‌اش را ببین:
+<pre class="code">import numpy as np
+from sklearn.model_selection import KFold, cross_val_score
+from sklearn.pipeline import make_pipeline
+from sklearn.feature_selection import SelectKBest, f_regression
+from sklearn.linear_model import LinearRegression
+
+rng = np.random.default_rng(1)
+X = rng.normal(size=(100, 400))      # نویز محض
+y = rng.normal(size=100)             # هیچ ربطی به X ندارد
+cv = KFold(5, shuffle=True, random_state=0)
+
+# نشت: انتخاب ویژگی روی کل داده، بعد اعتبارسنجی
+corr = np.abs([np.corrcoef(X[:, j], y)[0, 1] for j in range(X.shape[1])])
+top5 = np.argsort(corr)[-5:]
+print("leaky  CV R2 =", round(cross_val_score(LinearRegression(), X[:, top5], y, cv=cv).mean(), 3))
+
+# درست: انتخاب ویژگی داخل pipeline، در هر fold از نو
+honest = make_pipeline(SelectKBest(f_regression, k=5), LinearRegression())
+print("honest CV R2 =", round(cross_val_score(honest, X, y, cv=cv).mean(), 3))</pre>
+<div class="out">leaky  CV R2 = 0.101
+honest CV R2 = -0.222</div>
+داده کاملاً نویز است و هیچ رابطه‌ای وجود ندارد. روش نشتی $R^2=+0.10$ گزارش می‌کند (یعنی «مدل چیزی یاد گرفت») و روش درست $R^2=-0.22$ یعنی «از میانگین هم بدتر»، که حقیقت است. هیچ خطایی هم پرتاب نمی‌شود.
+</div>
+
+<h3>۱۰.۱ مقیاس‌بندی روی سه مدل: کجا فرق می‌کند، کجا نه</h3>
+<pre class="code">import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression, Ridge, SGDRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+rng = np.random.default_rng(0)
+n = 400
+hours      = rng.uniform(0, 15, n)
+attendance = rng.uniform(0.4, 1.0, n)
+prev       = rng.normal(14, 3, n)
+income     = rng.lognormal(11, 0.6, n)        # ویژگی بی‌ربط با واحد خیلی بزرگ
+X = np.c_[hours, attendance, prev, income]
+y = 5 + 1.8 * hours + 12 * attendance + 1.1 * prev + rng.normal(0, 2, n)
+
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.25, random_state=42)
+print("feature std:", X.std(0).round(2))
+
+lin  = LinearRegression().fit(X_tr, y_tr)
+pipe = make_pipeline(StandardScaler(), LinearRegression()).fit(X_tr, y_tr)
+print("OLS raw     MSE:", round(mean_squared_error(y_te, lin.predict(X_te)), 6))
+print("OLS scaled  MSE:", round(mean_squared_error(y_te, pipe.predict(X_te)), 6))
+print("coef raw    :", lin.coef_.round(4))
+print("coef scaled :", pipe[-1].coef_.round(3))
+
+sgd_raw = SGDRegressor(max_iter=2000, tol=1e-4, random_state=0).fit(X_tr, y_tr)
+sgd_sc  = make_pipeline(StandardScaler(),
+                        SGDRegressor(max_iter=2000, tol=1e-4, random_state=0)).fit(X_tr, y_tr)
+print("SGD raw     MSE:", f"{mean_squared_error(y_te, sgd_raw.predict(X_te)):.3g}")
+print("SGD scaled  MSE:", f"{mean_squared_error(y_te, sgd_sc.predict(X_te)):.3g}")
+
+r_raw = Ridge(alpha=10).fit(X_tr, y_tr)
+r_sc  = make_pipeline(StandardScaler(), Ridge(alpha=10)).fit(X_tr, y_tr)
+print("Ridge raw    MSE:", f"{mean_squared_error(y_te, r_raw.predict(X_te)):.4g}", r_raw.coef_.round(3))
+print("Ridge scaled MSE:", f"{mean_squared_error(y_te, r_sc.predict(X_te)):.4g}", r_sc[-1].coef_.round(3))
+
+p = pipe.predict(X_te)
+print("MAE =", round(mean_absolute_error(y_te, p), 3),
+      " RMSE =", round(mean_squared_error(y_te, p) ** 0.5, 3),
+      " R2 =", round(r2_score(y_te, p), 4))
+print("baseline (train mean) RMSE =", round(((y_te - y_tr.mean()) ** 2).mean() ** 0.5, 3))</pre>
+<div class="out">feature std: [4.420000e+00 1.700000e-01 2.790000e+00 4.529704e+04]
+OLS raw     MSE: 4.578516
+OLS scaled  MSE: 4.578516
+coef raw    : [ 1.8227  9.9023  1.1002 -0.    ]
+coef scaled : [ 8.115  1.7    3.03  -0.014]
+SGD raw     MSE: 8.62e+37
+SGD scaled  MSE: 4.58
+Ridge raw    MSE: 5.503 [ 1.812  4.633  1.077 -0.   ]
+Ridge scaled MSE: 4.711 [7.847 1.63  2.926 0.012]
+MAE = 1.782  RMSE = 2.14  R2 = 0.9433
+baseline (train mean) RMSE = 8.986</div>
+
+<div class="box thm"><div class="bt">سه درس از این خروجی — این جدول را حفظ کن</div>
+<ol>
+<li><b>OLS:</b> MSE خام و مقیاس‌شده تا ۶ رقم اعشار یکی است (4.578516). مقیاس‌بندی برای فرم بسته هیچ فرقی در <b>پیش‌بینی</b> نمی‌کند؛ فقط ضریب‌ها واحدشان عوض می‌شود. ضریب <code>income</code> در حالت خام $-0.0000$ است — نه چون بی‌اهمیت است (که هست)، بلکه چون واحدش ۴۵٬۰۰۰ برابر بزرگ‌تر است. <b>هیچ‌وقت اهمیت ویژگی را از روی ضریب خام قضاوت نکن</b>؛ از ضریب استانداردشده قضاوت کن که می‌گوید ساعت مطالعه (۸٫۱) مهم‌ترین است.</li>
+<li><b>SGD:</b> روی داده‌ی خام MSE می‌شود $8.6\times10^{37}$ — <b>واگرا شده</b>. دلیلش دقیقاً بخش ۸ است: ستون <code>income</code> با انحراف معیار ۴۵٬۰۰۰، $\lambda_{\max}$ را منفجر کرده و نرخ یادگیری پیش‌فرض خیلی بزرگ‌تر از $\alpha_{\max}$ شده. با مقیاس‌بندی، همان الگوریتم MSE = 4.58 می‌دهد، یعنی عملاً همان جواب بهینه.</li>
+<li><b>Ridge:</b> خام و مقیاس‌شده <b>جواب‌های متفاوت</b> می‌دهند (۵٫۵۰ در برابر ۴٫۷۱) چون جریمه به واحد ویژگی وابسته است. ضریب <code>attendance</code> در حالت خام از ۹٫۹ به ۴٫۶ کوبیده شده، فقط چون واحدش کوچک (۰ تا ۱) و در نتیجه ضریبش بزرگ بوده. این ناعادلانه است. <b>ریج بدون استانداردسازی باگ است، نه انتخاب.</b></li>
+</ol>
+</div>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="metrics">
+<h2><span class="num">۱۱</span> ارزیابی رگرسیون: MAE، RMSE و $R^2$ <span class="tag core">اسلاید ۳۰</span></h2>
+<p>اسلاید سه معیار را معرفی می‌کند و می‌گوید «<span class="ltr">Report held-out performance, residual diagnostics, and meaningful units.</span>» اینجا فرمول‌ها، یک مثال عددی و — مهم‌تر — جایی که هرکدام گمراه می‌کند.</p>
+
+<div class="box def"><div class="bt">سه فرمول</div>
+$$\mathrm{MAE}=\frac1n\sum_i|y_i-\hat y_i|,\qquad
+\mathrm{RMSE}=\sqrt{\frac1n\sum_i(y_i-\hat y_i)^2},\qquad
+R^2=1-\frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2}=1-\frac{\mathrm{SS}_{\text{res}}}{\mathrm{SS}_{\text{tot}}}$$
+MAE و RMSE هم‌واحد $y$‌اند (نمره، تومان، دقیقه) و همیشه $\mathrm{MAE}\le\mathrm{RMSE}$. $R^2$ بی‌واحد است و مدل را با <b>خط پایه‌ی «همیشه میانگین را بگو»</b> مقایسه می‌کند: $R^2=1$ یعنی برازش کامل، $R^2=0$ یعنی به‌خوبیِ میانگین، و $R^2&lt;0$ یعنی <b>بدتر از میانگین</b>.
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: همان ۵ نقطه‌ی بخش ۴.۲</div>
+باقی‌مانده‌ها: $(+0.4,-0.3,0,-0.7,+0.6)$، پس
+$$\mathrm{MAE}=\frac{0.4+0.3+0+0.7+0.6}{5}=\frac{2.0}{5}=0.4,\qquad
+\mathrm{RMSE}=\sqrt{\frac{1.10}{5}}=\sqrt{0.22}=0.469$$
+$$\mathrm{SS}_{\text{tot}}=(-3)^2+(-2)^2+0^2+1^2+4^2=30\ \Longrightarrow\ R^2=1-\frac{1.10}{30}=0.9633$$
+یعنی «مدل ۹۶٫۳٪ از پراکندگی نمره‌ها را توضیح می‌دهد» و «به‌طور معمول ۰٫۴ نمره خطا دارد». جمله‌ی دوم را به مشتری بگو، نه اولی را.
+</div>
+
+<div class="box ex"><div class="bt">مثال عددی: سه مدل با MAE یکسان و سرنوشت کاملاً متفاوت</div>
+$y=(10,12,11,13)$ با $\bar y=11.5$ و $\mathrm{SS}_{\text{tot}}=5$.
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">مدل</th><th>پیش‌بینی‌ها</th><th>باقی‌مانده‌ها</th><th>MAE</th><th>RMSE</th><th>R²</th></tr>
+<tr><td class="lbl">A: همه‌جا ۱ واحد کم‌تر</td><td>9, 11, 10, 12</td><td>+1, +1, +1, +1</td><td>1.00</td><td>1.00</td><td>0.20</td></tr>
+<tr><td class="lbl">B: سه‌تا دقیق، یکی ۴ واحد خطا</td><td>10, 12, 11, 9</td><td>0, 0, 0, +4</td><td>1.00</td><td><b>2.00</b></td><td><b>−2.20</b></td></tr>
+<tr><td class="lbl">C: همیشه میانگین</td><td>11.5 ×4</td><td>−1.5, +0.5, −0.5, +1.5</td><td>1.00</td><td>1.12</td><td>0.00</td></tr>
+</table></div>
+هر سه MAE = ۱ دارند ولی داستانشان فرق می‌کند: A یک <b>اریبی سیستماتیک</b> دارد که با یک ثابت قابل تصحیح است؛ B سه‌چهارم مواقع عالی است و یک‌بار فاجعه می‌کند؛ C اصلاً مدل نیست. $R^2$ منفی B می‌گوید «از پرتاب سکه هم بدتر». <b>هیچ‌وقت یک معیار تنها گزارش نکن.</b>
+</div>
+
+<div class="tablewrap"><table>
+<tr><th>معیار</th><th>کجا به‌دردت می‌خورد</th><th>کجا گمراهت می‌کند</th></tr>
+<tr><td><b>MAE</b></td><td>وقتی هزینه با اندازه‌ی خطا خطی است («هر دقیقه تأخیر یک واحد ضرر»)؛ تاب‌آور در برابر پرت</td><td>خطای بزرگ نادر را دست‌کم می‌گیرد؛ اگر یک پیش‌بینی فاجعه‌بار هزینه‌ی نامتناسب دارد، MAE آن را پنهان می‌کند</td></tr>
+<tr><td><b>RMSE</b></td><td>وقتی خطای بزرگ نامتناسب گران است؛ هم‌خانواده با همان چیزی که OLS کمینه می‌کند</td><td>یک داده‌ی پرت در مجموعه‌ی آزمون می‌تواند کل عدد را بسازد؛ همیشه توزیع باقی‌مانده را هم نگاه کن</td></tr>
+<tr><td><b>$R^2$</b></td><td>مقایسه‌ی بی‌واحد بین مدل‌ها روی <b>همان</b> داده؛ پاسخ به «آیا اصلاً از میانگین بهتریم؟»</td><td>۱) با افزودن هر ویژگی روی <b>آموزش</b> همیشه بالا می‌رود (برای همین $R^2$ تعدیل‌شده هست)؛ ۲) به پراکندگی $y$ وابسته است، پس بین دو مجموعه‌ی آزمون متفاوت قابل مقایسه نیست؛ ۳) روی آزمون می‌تواند منفی شود</td></tr>
+</table></div>
+
+<div class="box warn"><div class="bt">⚠ چهار دام که در امتحان و در عمل می‌بینی</div>
+<ul>
+<li><b>$R^2$ آموزش را به‌جای آزمون گزارش کردن.</b> $R^2$ آموزش با هر ویژگی اضافه بالا می‌رود، حتی اگر ویژگی نویز محض باشد. عدد معنادار، $R^2$ روی داده‌ی کنارگذاشته است.</li>
+<li><b>مقایسه‌ی $R^2$ بین دو مسئله.</b> $R^2=0.3$ در پیش‌بینی بازار سهام عالی و در پیش‌بینی قد از روی سن فاجعه است. مخرج $R^2$ پراکندگی خود $y$ است.</li>
+<li><b>MAPE روی مقادیر نزدیک صفر.</b> خطای نسبی وقتی $y_i\approx0$ باشد منفجر می‌شود و نسبت به کم‌برآورد و بیش‌برآورد نامتقارن است. اگر $y$ می‌تواند صفر باشد، MAPE را فراموش کن.</li>
+<li><b>گزارش معیار بدون خط پایه.</b> RMSE = ۲٫۱۴ خوب است یا بد؟ تا وقتی نگویی خط پایه‌ی «همیشه میانگین» RMSE = ۸٫۹۹ می‌دهد، عدد بی‌معنی است. همیشه یک خط پایه‌ی احمقانه هم گزارش کن (<code>DummyRegressor</code>).</li>
+</ul>
+</div>
+
+<div class="box tip"><div class="bt">💡 نمودار باقی‌مانده: تنها چیزی که سه عدد بالا نشان نمی‌دهند</div>
+باقی‌مانده‌ها را بر حسب $\hat y$ رسم کن. در مدل سالم، ابری بی‌شکل حول صفر می‌بینی. اگر <b>الگوی U یا منحنی</b> دیدی یعنی غیرخطی‌بودن جا مانده؛ اگر <b>قیف</b> دیدی (پراکندگی با $\hat y$ زیاد می‌شود) یعنی واریانس ناهمگن است و احتمالاً باید $\log y$ را مدل کنی. این همان «<span class="ltr">residual diagnostics</span>» اسلاید است و در امتحان هم با تصویر پرسیده می‌شود.
+</div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="activity">
+<h2><span class="num">۱۲</span> فعالیت کلاسی: بهترین خط را برازش کن <span class="tag core">اسلاید ۳۱ و ۳۲</span></h2>
+<div class="box think"><div class="bt">✋ اول خودت حدس بزن، بعد ادامه را بخوان</div>
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">x: ساعت</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+<tr><td class="lbl">y: نمره</td><td>3</td><td>5</td><td>7</td><td>9</td></tr>
+</table></div>
+۱) شیب و عرض از مبدأ چند است؟ ۲) MSE آموزشِ بهترین خط چند است؟ ۳) پیش‌بینی برای $x=5$ چیست؟ ۴) آیا پیش‌بینی برای $x=100$ قابل اعتماد است؟
+</div>
+<details><summary>پاسخ کامل با محاسبه</summary>
+<p>$\bar x=2.5$، $\bar y=6$.</p>
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">$x_i-\bar x$</th><th>−1.5</th><th>−0.5</th><th>0.5</th><th>1.5</th><th class="lbl">جمع</th></tr>
+<tr><td class="lbl">$y_i-\bar y$</td><td>−3</td><td>−1</td><td>1</td><td>3</td><td>0</td></tr>
+<tr><td class="lbl">حاصل‌ضرب</td><td>4.5</td><td>0.5</td><td>0.5</td><td>4.5</td><td><b>Sxy = 10</b></td></tr>
+<tr><td class="lbl">$(x_i-\bar x)^2$</td><td>2.25</td><td>0.25</td><td>0.25</td><td>2.25</td><td><b>Sxx = 5</b></td></tr>
+</table></div>
+<p>$w_1=10/5=2$ و $w_0=6-2(2.5)=1$، پس $\hat y=1+2x$ — همان جواب اسلاید ۳۲.</p>
+<ol>
+<li><b>MSE = 0.</b> هر چهار نقطه دقیقاً روی خط‌اند ($3,5,7,9$). پس $R^2=1$ هم هست.</li>
+<li><b>$\hat y(5)=1+2(5)=11$.</b> این <b>درون‌یابی</b> است و معقول است، چون ۵ فقط کمی بیرون بازه‌ی $[1,4]$ است.</li>
+<li><b>$\hat y(100)=201$.</b> فاجعه. اولاً نمره‌ی امتحان سقف دارد (۲۰ یا ۱۰۰)، پس مدل چیزی می‌گوید که از نظر فیزیکی ناممکن است. ثانیاً هیچ داده‌ای در آن ناحیه نداریم و خطی‌بودن فقط در بازه‌ی مشاهده‌شده آزموده شده. در واقعیت منحنی اشباع می‌شود (بازده نزولی مطالعه). این همان «<span class="ltr">Extrapolating far beyond the observed range is risky</span>» اسلاید است.</li>
+</ol>
+<div class="box mistake"><div class="bt">❌ و یک تله‌ی بزرگ‌تر که اسلاید نمی‌گوید</div>
+$\mathrm{MSE}=0$ روی آموزش <b>خبر خوبی نیست</b>، نشانه‌ی هشدار است. ۴ نقطه و ۲ پارامتر؛ اگر چندجمله‌ای درجه‌ی ۳ برازش می‌دادی (۴ پارامتر) باز هم MSE صفر می‌گرفتی و مدل به‌مراتب بدتری داشتی. برازش کامل روی آموزش هیچ چیزی درباره‌ی تعمیم نمی‌گوید — دقیقاً پیامی که اسلاید ۳۲ در تیترش دارد: «<span class="ltr">A perfect fit to four points does not guarantee future performance.</span>» عدد معنادار، خطای روی داده‌ی کنارگذاشته است (جلسه‌ی ۷).
+</div>
+</details>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="exam">
+<h2><span class="num">۱۳</span> دو مسئله‌ی حل‌شده به سبک امتحان <span class="tag exam">امتحانی</span></h2>
+
+<div class="exercise"><div class="et">مسئله‌ی ۱ · یک رگرسیون کامل از صفر<span class="lvl l3">· 🔴 تحلیلی</span></div>
+داده‌ی آموزش: $x=(0,1,2,3)$ و $y=(1,2,2,5)$.
+<ol>
+<li>با فرم بسته‌ی یک‌بعدی $w_0^\ast$ و $w_1^\ast$ را حساب کن و باقی‌مانده‌ها، SSE، MSE، MAE، RMSE و $R^2$ را بنویس.</li>
+<li>همین را با فرم ماتریسی تکرار کن: $X^\top X$، $X^\top y$، دترمینان و $(X^\top X)^{-1}$.</li>
+<li>مقادیر ویژه‌ی $X^\top X$، عدد شرطی و $\alpha_{\max}$ گرادیان کاهشی را بده.</li>
+<li>یک گام گرادیان کاهشی با $\alpha=0.1$ از $w=(0,0)$ بزن و بگو MSE چقدر شد.</li>
+</ol>
+<details><summary>راه‌حل کامل</summary>
+<p><b>بخش ۱.</b> $\bar x=1.5$، $\bar y=2.5$.</p>
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">$x_i-\bar x$</th><th>−1.5</th><th>−0.5</th><th>0.5</th><th>1.5</th><th class="lbl">جمع</th></tr>
+<tr><td class="lbl">$y_i-\bar y$</td><td>−1.5</td><td>−0.5</td><td>−0.5</td><td>2.5</td><td>0</td></tr>
+<tr><td class="lbl">حاصل‌ضرب</td><td>2.25</td><td>0.25</td><td>−0.25</td><td>3.75</td><td><b>Sxy = 6</b></td></tr>
+<tr><td class="lbl">مربع</td><td>2.25</td><td>0.25</td><td>0.25</td><td>2.25</td><td><b>Sxx = 5</b></td></tr>
+</table></div>
+<p>$w_1^\ast=6/5=1.2$ و $w_0^\ast=2.5-1.2(1.5)=0.7$، پس $\hat y=0.7+1.2x$.</p>
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">$\hat y_i$</th><th>0.7</th><th>1.9</th><th>3.1</th><th>4.3</th><th class="lbl">—</th></tr>
+<tr><td class="lbl">$e_i$</td><td>+0.3</td><td>+0.1</td><td>−1.1</td><td>+0.7</td><td><b>Σe = 0</b> ✓</td></tr>
+<tr><td class="lbl">$e_i^2$</td><td>0.09</td><td>0.01</td><td>1.21</td><td>0.49</td><td><b>SSE = 1.8</b></td></tr>
+</table></div>
+<p>$\mathrm{MSE}=1.8/4=0.45$؛ $\mathrm{RMSE}=\sqrt{0.45}=0.671$؛ $\mathrm{MAE}=(0.3+0.1+1.1+0.7)/4=0.55$.<br>
+$\mathrm{SS}_{\text{tot}}=2.25+0.25+0.25+6.25=9$، پس $R^2=1-1.8/9=0.8$.</p>
+<p><b>بخش ۲.</b> $X=\begin{pmatrix}1&0\\1&1\\1&2\\1&3\end{pmatrix}$:</p>
+$$X^\top X=\begin{pmatrix}4&6\\6&14\end{pmatrix},\quad X^\top y=\begin{pmatrix}10\\21\end{pmatrix},\quad \det=56-36=20$$
+$$(X^\top X)^{-1}=\frac{1}{20}\begin{pmatrix}14&-6\\-6&4\end{pmatrix}\ \Longrightarrow\ \hat\beta=\frac{1}{20}\begin{pmatrix}140-126\\-60+84\end{pmatrix}=\frac{1}{20}\begin{pmatrix}14\\24\end{pmatrix}=\begin{pmatrix}0.7\\1.2\end{pmatrix}\ ✓$$
+<p><b>بخش ۳.</b> معادله‌ی مشخصه: $\lambda^2-18\lambda+20=0$، پس $\lambda=9\pm\sqrt{81-20}=9\pm\sqrt{61}$، یعنی $\lambda_{\max}=16.810$ و $\lambda_{\min}=1.190$.</p>
+$$\kappa=\frac{16.810}{1.190}=14.13,\qquad \alpha_{\max}=\frac{n}{\lambda_{\max}}=\frac{4}{16.810}=0.2380$$
+<p><b>بخش ۴.</b> با $w=(0,0)$ باقی‌مانده‌ها همان $y$ هستند. $\sum y_i=10$ و $\sum x_iy_i=0(1)+1(2)+2(2)+3(5)=21$:</p>
+$$g_0=-\tfrac{2}{4}(10)=-5,\qquad g_1=-\tfrac{2}{4}(21)=-10.5$$
+$$w_0\leftarrow 0-0.1(-5)=0.5,\qquad w_1\leftarrow 0-0.1(-10.5)=1.05$$
+<p>MSE از $\frac{1^2+2^2+2^2+5^2}{4}=8.5$ به $0.659$ افتاد. چون $0.1&lt;\alpha_{\max}=0.238$، این گام پایدار است و ادامه‌اش به $(0.7,1.2)$ همگرا می‌شود.</p>
+</details></div>
+
+<div class="exercise"><div class="et">مسئله‌ی ۲ · عیب‌یابی گزارش یک هم‌گروهی<span class="lvl l3">· 🔴 تحلیلی</span></div>
+هم‌گروهی‌ات برای پیش‌بینی نمره‌ی پایان‌ترم این را تحویل داده است. <b>پنج</b> اشکال جدی پیدا کن و برای هرکدام بگو چه اتفاقی می‌افتد و چطور درستش می‌کنی.
+<pre class="code">scaler = StandardScaler().fit(X)                         # (1)
+Xs = scaler.transform(X)
+X_tr, X_te, y_tr, y_te = train_test_split(Xs, y, test_size=0.2)
+
+# ویژگی‌ها: study_hours, study_minutes, attendance, prev_grade   # (2)
+best = None
+for a in [0.01, 0.1, 1, 10, 100]:                        # (3)
+    m = Ridge(alpha=a).fit(X_tr, y_tr)
+    s = r2_score(y_te, m.predict(X_te))
+    if best is None or s > best[0]:
+        best = (s, a)
+print("best alpha:", best[1], " test R2:", best[0])      # (4)
+print("train R2:", r2_score(y_tr, m.predict(X_tr)))      # 0.98
+print("مهم‌ترین ویژگی:", np.argmax(m.coef_))             # (5)</pre>
+<details><summary>راه‌حل</summary>
+<ol>
+<li><b>(۱) نشت از راه scaler.</b> میانگین و انحراف معیار از کل داده (شامل آزمون) یاد گرفته شده است. درست: اول <code>train_test_split</code>، بعد <code>make_pipeline(StandardScaler(), Ridge(...))</code> تا در هر برازش از نو روی بخش آموزش fit شود. در CV این تفاوت واقعی می‌سازد (بخش ۱۰).</li>
+<li><b>(۲) دو ویژگی کاملاً هم‌خط.</b> <code>study_minutes = 60 × study_hours</code>، پس ستون‌های $X$ وابسته‌ی خطی‌اند و $X^\top X$ تکین است. با OLS یا جواب نمی‌گیری یا ضریب‌های بی‌معنی و بی‌ثبات (مثل $-13.35$ و $+18.35$ بخش ۹). ریج جلوی ترکیدن را می‌گیرد ولی مشکل ریشه‌ای — دو بار شمردن یک اطلاعات — باقی است. درست: یکی را حذف کن.</li>
+<li><b>(۳ و ۴) انتخاب ابرپارامتر روی مجموعه‌ی آزمون.</b> $\alpha$ با نگاه‌کردن به $R^2$ آزمون انتخاب شده، پس آن عدد دیگر تخمین بی‌طرفانه‌ای از عملکرد نیست؛ آزمون به بخشی از آموزش تبدیل شده است. درست: <code>RidgeCV</code> یا <code>GridSearchCV</code> روی داده‌ی آموزش با اعتبارسنجی متقاطع، و آزمون فقط <b>یک‌بار</b> در پایان (جلسه‌ی ۷).</li>
+<li><b>(۴) $R^2$ آموزش ۰٫۹۸ گزارش‌شده بدون خط پایه و بدون معیار هم‌واحد.</b> $R^2$ آموزش با هر ویژگی اضافه بالا می‌رود و چیزی اثبات نمی‌کند. درست: RMSE و MAE روی آزمون، کنار RMSE خط پایه‌ی <code>DummyRegressor(strategy="mean")</code>.</li>
+<li><b>(۵) قضاوت اهمیت ویژگی از روی بزرگی ضریب.</b> حتی اگر اینجا داده استانداردشده باشد، باز هم <code>argmax</code> روی ضریب <b>علامت‌دار</b> اشتباه است (باید <code>np.argmax(np.abs(m.coef_))</code> باشد) و با وجود هم‌خطی، تقسیم ضریب بین دو ویژگی تکراری کاملاً دلبخواه است. ضمناً <code>m</code> در این حلقه آخرین مدل ($\alpha=100$) است، نه بهترین مدل — یک باگ ساده‌ی پایتونی که عدد چاپ‌شده را هم غلط می‌کند.</li>
+</ol>
+<p><b>نسخه‌ی درست:</b></p>
+<pre class="code">X = X[:, [0, 2, 3]]                       # حذف ویژگی تکراری
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2, random_state=42)
+pipe = make_pipeline(StandardScaler(), RidgeCV(alphas=np.logspace(-3, 3, 25)))
+pipe.fit(X_tr, y_tr)                      # انتخاب alpha با CV، فقط روی train
+pred = pipe.predict(X_te)
+print(mean_absolute_error(y_te, pred), mean_squared_error(y_te, pred) ** 0.5, r2_score(y_te, pred))</pre>
+</details></div>
+</section>
+
+<!-- ============================================================ 14 -->
+<section id="exercises">
+<h2><span class="num">۱۴</span> تمرین‌ها</h2>
+<p>راه‌حل‌ها تاشده‌اند. اول خودت حل کن؛ تمرین‌های 🔴 و 🔵 دقیقاً سطح سؤال تشریحی میان‌ترم‌اند.</p>
+
+<div class="exercise"><div class="et">تمرین ۱ · فرم بسته با دست<span class="lvl l1">· 🟢 پایه</span></div>
+برای $x=(2,4,6,8)$ و $y=(5,6,9,12)$، خط OLS، باقی‌مانده‌ها، MSE، MAE و $R^2$ را حساب کن.
+<details><summary>راه‌حل</summary>
+$\bar x=5$، $\bar y=8$. انحراف‌های $x$: $(-3,-1,1,3)$ و $y$: $(-3,-2,1,4)$.<br>
+$S_{xy}=9+2+1+12=24$، $S_{xx}=9+1+1+9=20$، پس $w_1=1.2$ و $w_0=8-1.2(5)=2$.<br>
+$\hat y=(4.4,\,6.8,\,9.2,\,11.6)$، باقی‌مانده‌ها $(+0.6,-0.8,-0.2,+0.4)$ با جمع صفر ✓.<br>
+$\mathrm{SSE}=0.36+0.64+0.04+0.16=1.2$، $\mathrm{MSE}=0.3$، $\mathrm{MAE}=2.0/4=0.5$.<br>
+$\mathrm{SS}_{\text{tot}}=9+4+1+16=30$، پس $R^2=1-1.2/30=0.96$.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲ · جمع باقی‌مانده‌ها دروغ می‌گوید<span class="lvl l1">· 🟢 پایه</span></div>
+ثابت کن برای هر خطی به‌شکل $\hat y=\bar y+c(x-\bar x)$ (با هر $c$ دلخواه) جمع باقی‌مانده‌ها صفر است. بعد برای داده‌ی $x=(1,\dots,5)$، $y=(3,4,6,7,10)$ خطی با $\sum e_i=0$ و $\mathrm{SSE}&gt;25$ بساز.
+<details><summary>راه‌حل</summary>
+$\sum e_i=\sum(y_i-\bar y)-c\sum(x_i-\bar x)=0-c\cdot0=0$ برای هر $c$.<br>
+با $c=0$: خط افقی $\hat y=6$. باقی‌مانده‌ها $(-3,-2,0,1,4)$، جمع صفر، ولی $\mathrm{SSE}=9+4+0+1+16=30&gt;25$.<br>
+با $c=-1.7$ (شیب قرینه‌ی جواب درست) حتی بدتر می‌شود: $\mathrm{SSE}=\mathrm{SSE}_{\min}+(c-w_1)^2S_{xx}=1.1+(3.4)^2(10)=116.7$ و باز هم $\sum e_i=0$.<br>
+<b>درس:</b> شرط $\sum e_i=0$ فقط یکی از دو معادله‌ی نرمال است؛ معادله‌ی دوم ($\sum x_ie_i=0$) است که شیب را مشخص می‌کند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳ · شیب و ضریب همبستگی<span class="lvl l2">· 🟡 مهارتی</span></div>
+ثابت کن $w_1^\ast=r_{xy}\cdot s_y/s_x$ و نتیجه بگیر که اگر $x$ و $y$ هر دو استاندارد شده باشند، $w_1^\ast=r_{xy}$ و $w_0^\ast=0$.
+<details><summary>راه‌حل</summary>
+با تعریف‌ها $s_x^2=\frac{1}{n}S_{xx}$، $s_y^2=\frac{1}{n}S_{yy}$ و $r_{xy}=\dfrac{S_{xy}}{\sqrt{S_{xx}S_{yy}}}$:
+$$r_{xy}\frac{s_y}{s_x}=\frac{S_{xy}}{\sqrt{S_{xx}S_{yy}}}\cdot\frac{\sqrt{S_{yy}}}{\sqrt{S_{xx}}}=\frac{S_{xy}}{S_{xx}}=w_1^\ast$$
+اگر هر دو استاندارد باشند $s_x=s_y=1$ و $\bar x=\bar y=0$، پس $w_1^\ast=r$ و $w_0^\ast=\bar y-w_1\bar x=0$.<br>
+نتیجه‌ی مفهومی: چون $|r|\le1$، در مقیاس استاندارد شیب هیچ‌وقت از ۱ بیشتر نیست. اگر نمره‌ی امتحان اول کسی $+2$ انحراف معیار بوده، پیش‌بینی امتحان دوم $r\times2$ است که به میانگین نزدیک‌تر است — «بازگشت به میانگین».
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴ · وقتی همه‌ی $x$ها یکی‌اند<span class="lvl l2">· 🟡 مهارتی</span></div>
+فرض کن هر ۱۰ دانشجو دقیقاً ۳ ساعت خوانده‌اند ($x_i=3$) و نمره‌هایشان متفاوت است. (الف) چرا فرم بسته شکست می‌خورد؟ (ب) رتبه‌ی $X$ و $X^\top X$ چند است؟ (ج) اگر با گرادیان کاهشی حل کنی چه می‌شود؟ (د) چه مدلی هنوز معنا دارد؟
+<details><summary>راه‌حل</summary>
+(الف) $S_{xx}=\sum(x_i-3)^2=0$ و مخرج صفر می‌شود.<br>
+(ب) $X=[\mathbf{1}\ \ 3\cdot\mathbf{1}]$، ستون دوم سه برابر ستون اول است، پس $\operatorname{rank}(X)=1$ و $X^\top X=\begin{pmatrix}10&30\\30&90\end{pmatrix}$ با دترمینان $900-900=0$: تکین.<br>
+(ج) گرادیان کاهشی واگرا نمی‌شود ولی به جواب <b>یکتا</b> هم نمی‌رسد؛ در امتداد خط $w_0+3w_1=\bar y$ (یک دره‌ی کاملاً تخت با $\lambda_{\min}=0$) هرجا که برسد می‌ایستد. جوابی که می‌گیری به نقطه‌ی شروع بستگی دارد، که یعنی ضریب‌ها بی‌معنی‌اند.<br>
+(د) مدل ثابت $\hat y=\bar y$ کاملاً معنادار است و بهترین چیزی است که این داده اجازه می‌دهد. داده درباره‌ی «اثر ساعت مطالعه» هیچ اطلاعاتی ندارد، چون هیچ تنوعی در $x$ نیست. درس کلی: <b>بدون تنوع در ویژگی، ضریب قابل شناسایی نیست</b> — همان چیزی که در طراحی آزمایش «همخطی کامل» نامیده می‌شود.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵ · فرم ماتریسی با دو ویژگی<span class="lvl l2">· 🟡 مهارتی</span></div>
+با $x_1=(1,2,3,4)$، $x_2=(1,0,1,0)$ و $y=(2,3,5,7)$ ماتریس طرح را با ستون عرض از مبدأ بساز و $\hat\beta$ را حل کن (دستگاه $3\times3$ را با حذف گاوسی حل کن، نه با وارون‌گیری).
+<details><summary>راه‌حل</summary>
+$$X^\top X=\begin{pmatrix}4&10&2\\10&30&4\\2&4&2\end{pmatrix},\qquad X^\top y=\begin{pmatrix}17\\51\\7\end{pmatrix},\qquad \det(X^\top X)=16$$
+حل دستگاه می‌دهد $\hat\beta=(-0.25,\ 1.75,\ 0.25)$، یعنی $\hat y=-0.25+1.75x_1+0.25x_2$.<br>
+پیش‌بینی‌ها: $(1.75,\ 3.25,\ 5.25,\ 6.75)$ و باقی‌مانده‌ها $(+0.25,-0.25,-0.25,+0.25)$ با $\mathrm{SSE}=0.25$.<br>
+چک کن: $\sum e_i=0$ (عمود بر ستون ۱ها) و $\sum x_{1i}e_i=0.25-0.5-0.75+1=0$ ✓ و $\sum x_{2i}e_i=0.25-0.25=0$ ✓. هر سه معادله‌ی نرمال برقرارند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶ · چرا ریج همیشه وارون‌پذیر است<span class="lvl l3">· 🔴 تحلیلی</span></div>
+(الف) ثابت کن برای هر $\lambda&gt;0$ ماتریس $X^\top X+\lambda I$ معین مثبت است. (ب) اگر $X^\top X=\begin{pmatrix}5&15\\15&55\end{pmatrix}$ باشد، عدد شرطی را برای $\lambda=0,1,10,100$ حساب کن. (ج) حد $\hat\beta_{\text{ridge}}$ وقتی $\lambda\to\infty$ چیست؟
+<details><summary>راه‌حل</summary>
+(الف) برای هر $v\neq0$: $v^\top(X^\top X+\lambda I)v=\|Xv\|^2+\lambda\|v\|^2\ge\lambda\|v\|^2&gt;0$. پس هیچ مقدار ویژه‌ی نامثبتی ندارد و وارون‌پذیر است.<br>
+(ب) مقادیر ویژه‌ی $X^\top X$ از $\lambda^2-60\lambda+50=0$: $59.155$ و $0.845$. چون $X^\top X+\lambda I$ همان بردارهای ویژه را با مقادیر $\lambda_i+\lambda$ دارد:
+<div class="tablewrap"><table class="num">
+<tr><th class="lbl">λ</th><th>0</th><th>1</th><th>10</th><th>100</th></tr>
+<tr><td class="lbl">κ = (59.155+λ)/(0.845+λ)</td><td>70.0</td><td>32.6</td><td>6.4</td><td>1.58</td></tr>
+</table></div>
+(ج) $\hat\beta_{\text{ridge}}=(X^\top X+\lambda I)^{-1}X^\top y\approx\frac{1}{\lambda}X^\top y\to 0$. مدل به «همیشه صفر (یا میانگین، اگر عرض از مبدأ جریمه نشود)» میل می‌کند: اریبی بیشینه، واریانس صفر. این انتهای راست منحنی اریبی–واریانس است.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷ · شرط همگرایی گرادیان کاهشی<span class="lvl l3">· 🔴 تحلیلی</span></div>
+برای $L(w)=\frac12(w-w^\ast)^\top H(w-w^\ast)$ با $H$ متقارن معین مثبت، ثابت کن گام $w\leftarrow w-\alpha\nabla L$ از هر نقطه‌ی شروعی همگرا می‌شود اگر و تنها اگر $0&lt;\alpha&lt;2/h_{\max}$. بعد برای داده‌ی $x=(1,\dots,5)$ بگو با $\alpha=0.1$ چه اتفاقی می‌افتد.
+<details><summary>راه‌حل</summary>
+$\nabla L(w)=H(w-w^\ast)$، پس $w_{t+1}-w^\ast=(I-\alpha H)(w_t-w^\ast)$ و بعد از $t$ گام $(I-\alpha H)^t(w_0-w^\ast)$.<br>
+$H$ متقارن است پس قطری‌شدنی با پایه‌ی متعامد؛ در آن پایه هر مؤلفه در $(1-\alpha h_i)^t$ ضرب می‌شود. همگرایی به صفر برای هر خطای اولیه، یعنی $|1-\alpha h_i|&lt;1$ برای همه‌ی $i$، یعنی $0&lt;\alpha h_i&lt;2$، و چون باید برای بزرگ‌ترین $h_i$ هم برقرار باشد: $\alpha&lt;2/h_{\max}$.<br>
+اینجا $H=\frac2n X^\top X$ با $\lambda_{\max}=59.155$ و $n=5$، پس $h_{\max}=2(59.155)/5=23.66$ و $\alpha_{\max}=2/23.66=0.0845$.<br>
+با $\alpha=0.1$: $|1-0.1\times23.66|=1.366&gt;1$، پس مؤلفه‌ی خطا در جهت ویژه‌ی بزرگ هر گام ۱٫۳۷ برابر می‌شود و با تغییر علامت نوسان می‌کند. بعد از ۲۰۰ گام ضریب $1.366^{200}\approx10^{27}$ است — دقیقاً همان عددهای خروجی بخش ۷. در مقابل مؤلفه‌ی دیگر ($h_{\min}=0.338$) کاملاً پایدار است؛ واگرایی فقط از یک جهت می‌آید.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸ · تغییر واحد، چه چیزی عوض می‌شود<span class="lvl l2">· 🟡 مهارتی</span></div>
+مدل $\hat y=0.9+1.7x$ با $x$ بر حسب ساعت برازش شده است. حالا همان داده را با $x'=60x$ (دقیقه) برازش می‌دهیم. برای هرکدام بگو عوض می‌شود یا نه و اگر آری چطور: (الف) $w_1$؛ (ب) پیش‌بینی‌ها و MSE؛ (ج) $R^2$؛ (د) $\lambda_{\max}(X^\top X)$ و $\alpha_{\max}$؛ (ه) جریمه‌ی ریج با همان $\lambda$.
+<details><summary>راه‌حل</summary>
+(الف) $w_1'=w_1/60=0.02833$ و $w_0'=w_0=0.9$ بدون تغییر.<br>
+(ب) پیش‌بینی‌ها <b>دقیقاً</b> یکسان‌اند ($w_1'x'=\frac{w_1}{60}\cdot60x=w_1x$)، پس MSE، MAE و RMSE هم عوض نمی‌شوند.<br>
+(ج) $R^2$ هم عوض نمی‌شود (نه صورت و نه مخرجش تغییر می‌کند).<br>
+(د) $\lambda_{\max}$ از $59.155$ به $1.98\times10^5$ می‌رود (تقریباً $3600=60^2$ برابر) و $\alpha_{\max}=n/\lambda_{\max}$ به همان نسبت کوچک می‌شود: از $0.0845$ به $2.5\times10^{-5}$. گرادیان کاهشی با نرخ قبلی فوراً واگرا می‌شود.<br>
+(ه) جریمه از $\lambda w_1^2=\lambda(1.7)^2=2.89\lambda$ به $\lambda(0.02833)^2=8\times10^{-4}\lambda$ می‌رسد، یعنی <b>۳۶۰۰ برابر کم‌تر</b>. همان ویژگی، همان اطلاعات، ولی عملاً دیگر جریمه نمی‌شود. به همین دلیل ریج بدون استانداردسازی بی‌معنی است.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹ · یک داده‌ی پرت چقدر خط را می‌چرخاند<span class="lvl l2">· 🟡 مهارتی</span></div>
+در داده‌ی $x=(1,\dots,5)$، $y=(3,4,6,7,10)$ مقدار $y_5$ را از ۱۰ به ۲۰ عوض کن (خطای ورود داده). خط OLS جدید را حساب کن و با قبل مقایسه کن. اگر به‌جای MSE از MAE استفاده می‌کردیم چه؟
+<details><summary>راه‌حل</summary>
+$\bar y$ از ۶ به ۸ می‌رود. انحراف‌های $y$: $(-5,-4,-2,-1,12)$ و انحراف‌های $x$ همان $(-2,-1,0,1,2)$:<br>
+$S_{xy}=10+4+0-1+24=37$ و $S_{xx}=10$، پس $w_1=3.7$ و $w_0=8-3.7(3)=-3.1$.<br>
+شیب از ۱٫۷ به ۳٫۷ پرید — <b>بیش از دو برابر</b> — فقط با یک نقطه از پنج نقطه. چرا؟ چون آن نقطه هم باقی‌مانده‌ی بزرگی دارد و هم در لبه‌ی بازه‌ی $x$ است (اهرم بالا)، و تابع هزینه خطایش را <b>مربع</b> می‌کند.<br>
+با MAE خط تقریباً سر جایش می‌ماند: شیب از ۱٫۶۱ به ۱٫۵۱ می‌رود، یعنی حدود ۶٪ تغییر در برابر ۱۱۸٪ تغییر OLS. دلیلش این است که کمینه‌ساز $L_1$ میانه‌ی شرطی را تخمین می‌زند و میانه به یک مقدار پرت بی‌اعتناست (این دو عدد را با «ابزار ۱» بخش ۳ خودت ببین). در عمل سه گزینه داری: (۱) بررسی کن ۲۰ خطای ورود است یا واقعیت (جلسه‌ی ۲)؛ (۲) تابع هزینه‌ی تاب‌آور (<code>HuberRegressor</code>)؛ (۳) اگر واقعی است، مدل را نگه دار ولی در گزارش بگو یک نمونه حاکم بر نتیجه است.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰ · ریج، ویژگی تکراری و لاسو<span class="lvl l4">· 🔵 پژوهشگر</span></div>
+ویژگی $x_1$ را دو بار در مدل گذاشته‌ایم ($x_2=x_1$)، داده مرکزشده و بدون عرض از مبدأ است. (الف) نشان بده جواب ریج همیشه $w_1=w_2$ است. (ب) اگر به‌جای یک تکرار، $k$ نسخه‌ی یکسان بگذاریم، هر ضریب چقدر می‌شود؟ (ج) لاسو ($L_1$) در همین وضعیت چه می‌کند و چرا؟
+<details><summary>راه‌حل</summary>
+(الف) تابع هدف ریج نسبت به جابه‌جایی $w_1\leftrightarrow w_2$ متقارن است (چون $x_1=x_2$) و اکیداً محدب است (برای $\lambda&gt;0$)، پس جواب <b>یکتا</b> است و باید روی تقارن بیفتد: $w_1=w_2$. اگر $w_1\neq w_2$ بود، $(w_2,w_1)$ هم جواب بود و با یکتایی تناقض داشت.<br>
+(ب) با $k$ نسخه، بگذار $S=\sum_j w_j$. پیش‌بینی فقط به $S$ بستگی دارد، و جریمه $\lambda\sum w_j^2$ با $S$ ثابت وقتی کمینه می‌شود که همه برابر باشند ($w_j=S/k$، از نامساوی کوشی–شوارتس). آن‌وقت جریمه $\lambda S^2/k$ است: <b>هرچه نسخه‌های بیشتری از یک ویژگی داشته باشی، ریج کم‌تر جریمه‌اش می‌کند.</b> این یک تله‌ی واقعی است؛ ویژگی‌های تکراری وزن مؤثر بیشتری می‌گیرند.<br>
+(ج) جریمه‌ی $L_1$ برابر $\lambda\sum|w_j|$ است و با $S$ ثابت و همه‌ی $w_j$ هم‌علامت، مقدارش $\lambda|S|$ است — <b>مستقل از نحوه‌ی تقسیم</b>. پس لاسو بی‌نهایت جواب بهینه دارد و حل‌کننده‌ی عددی معمولاً یکی را دلبخواه انتخاب می‌کند (اغلب همه‌ی وزن روی یک ویژگی و صفر روی بقیه). برای همین می‌گویند «لاسو بین ویژگی‌های هم‌خط بی‌ثبات است» و <b>Elastic Net</b> (ترکیب $L_1+L_2$) ساخته شد تا هم انتخاب ویژگی بکند و هم ویژگی‌های گروهی را با هم نگه دارد.
+</details></div>
+</section>
+
+<!-- ============================================================ 15 -->
+<section id="quiz"><h2><span class="num">۱۵</span> تست: ۱۵ پرسش</h2>
+<p>سه پرسش آخرِ فهرست از جلسه‌های ۵، ۶ و ۷ مرورند. اگر غلط زدی، همان جلسه را دوباره ببین.</p>
+<div class="quiz"></div></section>
+
+<!-- ============================================================ 16 -->
+<section id="summary">
+<h2><span class="num">۱۶</span> جمع‌بندی و اصطلاح‌نامه</h2>
+
+<div class="box thm"><div class="bt">۷ چیزی که باید یادت بماند</div><ol>
+<li><b>یادگیری = تابع هزینه + بهینه‌ساز.</b> مدل خانواده‌ی توابع را می‌دهد، تابع هزینه می‌گوید کدام عضو بهتر است، و بهینه‌ساز آن را پیدا می‌کند. عوض‌کردن هرکدام، الگوریتم دیگری می‌سازد.</li>
+<li><b>جمع باقی‌مانده‌ها معیار نیست.</b> برای هر خطی که از $(\bar x,\bar y)$ بگذرد دقیقاً صفر است. مربع را به قدرمطلق ترجیح می‌دهیم چون مشتق‌پذیر است و جواب بسته و یکتا می‌دهد — به قیمت حساسیت به داده‌ی پرت.</li>
+<li><b>فرم بسته‌ی یک‌بعدی:</b> $w_1^\ast=S_{xy}/S_{xx}$ و $w_0^\ast=\bar y-w_1^\ast\bar x$؛ و خط OLS همیشه از نقطه‌ی میانگین می‌گذرد.</li>
+<li><b>فرم ماتریسی:</b> معادلات نرمال $X^\top X\beta=X^\top y$ یعنی «باقی‌مانده بر همه‌ی ستون‌های $X$ عمود است»، و با رتبه‌ی ستونی کامل $\hat\beta=(X^\top X)^{-1}X^\top y$. تکینگی دقیقاً یعنی وابستگی خطی ستون‌ها.</li>
+<li><b>گرادیان کاهشی حل تکراری همان دستگاه است.</b> $\nabla\mathrm{MSE}=-\frac2nX^\top e$؛ همگرایی اگر و تنها اگر $\alpha&lt;n/\lambda_{\max}(X^\top X)$، و سرعتش فقط به عدد شرطی $\kappa$ بستگی دارد.</li>
+<li><b>مقیاس‌بندی، هندسه را عوض می‌کند نه جواب را.</b> فرم بسته بی‌تفاوت است، گرادیان کاهشی حیاتی وابسته است (در مثال ما $\kappa$ از ۲۱۷٬۸۰۹ به ۱ آمد)، و ریج بدون استانداردسازی جریمه را ناعادلانه پخش می‌کند.</li>
+<li><b>یک معیار هرگز کافی نیست.</b> MAE، RMSE و $R^2$ را با هم و روی داده‌ی کنارگذاشته گزارش کن، کنار یک خط پایه‌ی احمقانه و نمودار باقی‌مانده. و هر چیزی که «یاد می‌گیرد» — scaler، imputer، انتخاب ویژگی، $\lambda$ — باید داخل pipeline و فقط روی آموزش برازش شود.</li>
+</ol></div>
+
+<div class="box note"><div class="bt">⏭ برای جلسه‌ی بعد</div>
+صفحه‌ی آخر اسلاید ۷ می‌گوید: «<span class="ltr">From fitting a line to modeling probability</span>» و فرمول $p(y=1\mid x)=\sigma(w^\top x+b)$ را نشان می‌دهد. در جلسه‌ی ۱۱ همان ساختار را دوباره می‌بینی — مدل خطی داخل یک تابع سیگموید، تابع هزینه‌ی آنتروپی متقاطع به‌جای MSE، و همان گرادیان کاهشی برای حلش، چون این‌بار فرم بسته‌ای وجود ندارد. اگر بخش ۷ این صفحه را خوب فهمیده باشی، جلسه‌ی ۱۱ فقط عوض‌کردن دو قطعه از همین اسکلت است.
+</div>
+
+<div class="gloss">
+<div><b>model</b>: مدل؛ خانواده‌ی توابع پارامتری $f(x;\theta)$</div>
+<div><b>parameter / weight</b>: پارامتر یا وزن؛ $w_0$ و $w_1$</div>
+<div><b>intercept / bias</b>: عرض از مبدأ؛ پیش‌بینی در $x=0$</div>
+<div><b>slope / coefficient</b>: شیب یا ضریب</div>
+<div><b>prediction</b>: پیش‌بینی $\hat y$</div>
+<div><b>residual</b>: باقی‌مانده $e_i=y_i-\hat y_i$</div>
+<div><b>loss / cost / objective function</b>: تابع زیان، هزینه یا هدف</div>
+<div><b>MSE / SSE / RMSE</b>: میانگین مربعات خطا / مجموع مربعات خطا / ریشه‌ی میانگین مربعات</div>
+<div><b>MAE</b>: میانگین قدرمطلق خطا</div>
+<div><b>R-squared</b>: ضریب تعیین؛ نسبت واریانس توضیح‌داده‌شده</div>
+<div><b>OLS (ordinary least squares)</b>: کمترین مربعات معمولی</div>
+<div><b>normal equations</b>: معادلات نرمال $X^\top X\beta=X^\top y$</div>
+<div><b>design matrix</b>: ماتریس طرح $X$</div>
+<div><b>closed-form solution</b>: جواب بسته (فرمول صریح)</div>
+<div><b>full column rank</b>: رتبه‌ی ستونی کامل</div>
+<div><b>singular / ill-conditioned</b>: تکین / بدوضع</div>
+<div><b>condition number</b>: عدد شرطی $\kappa=\lambda_{\max}/\lambda_{\min}$</div>
+<div><b>multicollinearity</b>: هم‌خطی چندگانه</div>
+<div><b>convex</b>: محدب؛ تابعی بدون کمینه‌ی موضعی غیرسراسری</div>
+<div><b>Hessian</b>: ماتریس هسیَن (مشتق‌های دوم)</div>
+<div><b>gradient descent</b>: گرادیان کاهشی</div>
+<div><b>learning rate</b>: نرخ یادگیری $\alpha$</div>
+<div><b>convergence / divergence</b>: همگرایی / واگرایی</div>
+<div><b>batch / stochastic / mini-batch</b>: دسته‌ای / تصادفی / دسته‌ی کوچک</div>
+<div><b>epoch</b>: یک عبور کامل از داده‌ی آموزش</div>
+<div><b>feature scaling / standardization</b>: مقیاس‌بندی / استانداردسازی ویژگی</div>
+<div><b>regularization</b>: منظم‌سازی</div>
+<div><b>ridge regression (L2)</b>: رگرسیون ریج</div>
+<div><b>lasso (L1)</b>: لاسو؛ منظم‌سازی که ضریب‌ها را صفر می‌کند</div>
+<div><b>shrinkage</b>: انقباض ضریب‌ها به سمت صفر</div>
+<div><b>bias–variance trade-off</b>: بده‌بستان اریبی و واریانس</div>
+<div><b>hat matrix / projection</b>: ماتریس کلاه؛ تصویر متعامد روی فضای ستونی</div>
+<div><b>extrapolation</b>: برون‌یابی؛ پیش‌بینی بیرون بازه‌ی داده</div>
+<div><b>pipeline</b>: زنجیره‌ی پیش‌پردازش و مدل در یک شیء</div>
+<div><b>data leakage</b>: نشت داده</div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+ {q:`کمترین مربعات معمولی (OLS) دقیقاً چه چیزی را کمینه می‌کند؟`,
+  o:[`مجموع فاصله‌های عمود بر خط`,`مجموع مربعات فاصله‌های <b>عمودی</b> نقطه‌ها تا خط`,`مجموع قدرمطلق باقی‌مانده‌ها`,`بیشترین باقی‌مانده`],
+  a:1, e:R`فاصله‌ی عمودی، چون ما $y$ را از روی $x$ پیش‌بینی می‌کنیم. کمینه‌کردن فاصله‌ی عمود بر خط مسئله‌ی دیگری است (total least squares / PC1 جلسه‌ی ۶) و کمینه‌کردن قدرمطلق می‌شود رگرسیون $L_1$.`},
+ {q:R`خط OLS با عرض از مبدأ، حتماً از کدام نقطه می‌گذرد؟`,
+  o:[R`$(0,0)$`, R`$(\bar x,\bar y)$`, R`نقطه‌ی میانه‌ی داده‌ها`, R`از هیچ نقطه‌ی خاصی`],
+  a:1, e:R`از معادله‌ی نرمال اول: $\sum e_i=0$ که معادل $\bar y=w_0+w_1\bar x$ است. این یعنی خط از نقطه‌ی میانگین می‌گذرد — نه میانه و نه مبدأ.`},
+ {q:`برای یک خط دلخواه، جمع باقی‌مانده‌ها صفر درآمد. چه نتیجه‌ای می‌گیری؟`,
+  o:[`خط بهینه است`,`تقریباً بهینه است`,`هیچ: هر خطی که از نقطه‌ی میانگین بگذرد این خاصیت را دارد، حتی خط افقی`,`محاسبه اشتباه بوده`],
+  a:2, e:R`شرط $\sum e_i=0$ فقط یکی از دو معادله‌ی نرمال است. خط افقی $\hat y=\bar y$ هم آن را دارد ولی در مثال بخش ۳ ‏SSE‏اش ۳۰ برابر خط OLS است. معادله‌ی دوم ($\sum x_ie_i=0$) است که شیب را تعیین می‌کند.`},
+ {q:R`داده: $x=(1,2,3)$ و $y=(2,3,5)$. اسلاید خط نامزد $\hat y=1+x$ را می‌آورد که $\mathrm{SSE}=1$ دارد. کمینه‌ی واقعی SSE چقدر است؟`,
+  o:[R`$1$، چون همان خط بهینه است`, R`$1/6$، با خط $\hat y=\frac13+\frac32x$`, R`$0$، چون سه نقطه همیشه روی یک خط می‌افتند`, R`$1/3$`],
+  a:1, e:R`$S_{xy}=3$ و $S_{xx}=2$ پس $w_1=1.5$ و $w_0=1/3$، و SSE به $1/6$ می‌رسد — شش برابر کم‌تر از خط نامزد، با اینکه از <b>هیچ</b> نقطه‌ای دقیق نمی‌گذرد.`},
+ {q:R`در کدام حالت $X^\top X$ حتماً تکین است؟`,
+  o:[`وقتی داده‌ی پرت داریم`, `وقتی ویژگی‌ها واحدهای خیلی متفاوت دارند`, `وقتی «ساعت مطالعه» و «دقیقه‌ی مطالعه» هر دو در مدل باشند`, `وقتی نویز زیاد است`],
+  a:2, e:R`دقیقه = ۶۰ × ساعت، پس یک ستون مضرب ستون دیگر است و ستون‌ها وابسته‌ی خطی‌اند. $X^\top X$ تکین است اگر و تنها اگر ستون‌های $X$ وابسته‌ی خطی باشند. واحد نامناسب فقط عدد شرطی را بد می‌کند، نه تکین.`},
+ {q:`ویژگی‌ها را استاندارد (z-score) کردیم و دوباره با فرم بسته‌ی OLS برازش دادیم. پیش‌بینی‌ها چه می‌شوند؟`,
+  o:[`بهتر می‌شوند`, `بدتر می‌شوند`, `دقیقاً یکی می‌مانند؛ فقط ضریب‌ها واحدشان عوض می‌شود`, `بستگی به داده دارد`],
+  a:2, e:`در خروجی بخش ۱۰، MSE هر دو حالت تا شش رقم اعشار 4.578516 بود. فرم بسته به مقیاس بی‌تفاوت است. مقیاس‌بندی برای گرادیان کاهشی و برای منظم‌سازی حیاتی است، نه برای خودِ جواب OLS.`},
+ {q:R`برای داده‌ای $\alpha_{\max}=n/\lambda_{\max}(X^\top X)=0.0845$ است. با $\alpha=0.1$ و ۲۰۰ گام چه می‌بینی؟`,
+  o:[`همگرایی سریع‌تر، چون گام بزرگ‌تر است`, `همگرایی کندتر ولی درست`, `واگرایی: MSE بالا می‌رود و وزن‌ها با تغییر علامت منفجر می‌شوند`, `همگرایی به یک کمینه‌ی موضعی دیگر`],
+  a:2, e:R`چون $\alpha>\alpha_{\max}$، ضریب خطا در جهت ویژه‌ی بزرگ برابر $|1-\alpha h_{\max}|=1.37>1$ است و هر گام ۱٫۳۷ برابر می‌شود. گزینه‌ی آخر غلط است چون MSE خطی محدب است و اصلاً کمینه‌ی موضعی دیگری ندارد.`},
+ {q:R`$\kappa(X^\top X)$ برای $x$ بر حسب ساعت ۷۰ است. اگر واحد را به دقیقه عوض کنیم، $\kappa$ تقریباً چقدر می‌شود؟`,
+  o:[`همان ۷۰، چون اطلاعات عوض نشده`, `۴٬۲۰۰ (۶۰ برابر)`, `حدود ۲۲۰٬۰۰۰ (تقریباً $60^2$ برابر)`, `۱، چون بزرگ‌تر شدن اعداد مسئله را بهتر می‌کند`],
+  a:2, e:R`ضرب ستون در $s$ یعنی ضرب درایه‌ی قطری متناظر $X^\top X$ در $s^2$، پس $\lambda_{\max}$ تقریباً $3600$ برابر می‌شود در حالی که $\lambda_{\min}$ تقریباً ثابت می‌ماند. عدد دقیق محاسبه‌شده: ۲۱۷٬۸۰۹. اطلاعات عوض نشده ولی <b>هندسه‌ی بهینه‌سازی</b> فاجعه شده است.`},
+ {q:R`چرا $(X^\top X+\lambda I)$ برای هر $\lambda>0$ وارون‌پذیر است؟`,
+  o:[R`چون $X^\top X$ همیشه وارون‌پذیر است`, R`چون $v^\top(X^\top X+\lambda I)v=\|Xv\|^2+\lambda\|v\|^2\ge\lambda\|v\|^2>0$، پس معین مثبت است`, `چون دترمینانش همیشه ۱ است`, `فقط وقتی تعداد نمونه‌ها از ویژگی‌ها بیشتر باشد`],
+  a:1, e:R`مقادیر ویژه از $\lambda_i$ به $\lambda_i+\lambda$ منتقل می‌شوند و چون $\lambda_i\ge0$، هیچ‌کدام صفر نمی‌شوند. همین باعث می‌شود ریج حتی با ستون‌های کاملاً تکراری یا $p\gg n$ جواب یکتا بدهد.`},
+ {q:R`در ریج، وقتی $\lambda\to\infty$ ضریب‌های ویژگی‌ها به چه سمتی می‌روند؟`,
+  o:[`به بی‌نهایت`, `به ضریب‌های OLS`, `به صفر (مدل به خط پایه‌ی ثابت تبدیل می‌شود)`, `به ۱`],
+  a:2, e:R`$\hat\beta\approx\frac1\lambda X^\top y\to0$. این انتهای منحنی اریبی–واریانس است: واریانس صفر، اریبی بیشینه. انتهای دیگرش $\lambda=0$ یعنی OLS.`},
+ {q:R`روی مجموعه‌ی آزمون $R^2=-0.22$ گرفته‌ای. یعنی چه؟`,
+  o:[`محاسبه غلط است؛ $R^2$ نمی‌تواند منفی شود`, `مدل ۲۲٪ از واریانس را توضیح می‌دهد`, `مدل از «همیشه میانگین را بگو» هم بدتر است`, `همبستگی منفی است`],
+  a:2, e:R`$R^2=1-\mathrm{SS}_{\text{res}}/\mathrm{SS}_{\text{tot}}$ و اگر خطای مدل از خطای خط پایه‌ی میانگین بیشتر باشد منفی می‌شود. روی داده‌ی آموزشِ مدل خطی با عرض از مبدأ هیچ‌وقت منفی نمی‌شود، ولی روی آزمون کاملاً ممکن است — مثل مثال نشت بخش ۱۰.`},
+ {q:`دو مدل روی یک داده‌ی آزمون MAE یکسان ۱٫۰ دارند، ولی RMSE یکی ۱٫۰ و دیگری ۲٫۰ است. چه نتیجه‌ای می‌گیری؟`,
+  o:[`مدل دوم بهتر است`, `مدل دوم چند خطای بزرگ نادر دارد در حالی که اولی خطایش یکنواخت پخش شده`, `محاسبه اشتباه است، چون RMSE همیشه با MAE برابر است`, `مدل اول اریبی دارد`],
+  a:1, e:R`$\mathrm{MAE}\le\mathrm{RMSE}$ همیشه برقرار است و فاصله‌شان نشانه‌ی پراکندگی خطاست. برابری فقط وقتی رخ می‌دهد که همه‌ی خطاها هم‌اندازه باشند. جدول سه‌مدلیِ بخش ۱۱ را ببین.`},
+ {q:`<b>مرور جلسه‌ی ۷:</b> چرا <code>StandardScaler</code> باید داخل <code>Pipeline</code> باشد و نه قبل از آن؟`,
+  o:[`فقط برای تمیزی کد`, `چون سریع‌تر اجرا می‌شود`, `چون scaler هم «یاد می‌گیرد» (میانگین و انحراف معیار) و باید در هر fold فقط روی بخش آموزشِ همان fold برازش شود`, `چون sklearn بدون آن خطا می‌دهد`],
+  a:2, e:`مرز fit/transform جلسه‌ی ۷: هر چیزی که از داده پارامتر یاد می‌گیرد (imputer، scaler، encoder، PCA، انتخاب ویژگی) باید داخل pipeline باشد تا نشت نکند. در مثال بخش ۱۰، روش نشتی روی نویز محض $R^2=+0.10$ گزارش کرد.`},
+ {q:`<b>مرور جلسه‌ی ۵:</b> کدام مدل اصلاً به مقیاس ویژگی‌ها حساس نیست؟`,
+  o:[`رگرسیون ریج`, `گرادیان کاهشی روی رگرسیون خطی`, `kNN`, `درخت تصمیم و جنگل تصادفی`],
+  a:3, e:`درخت‌ها فقط آستانه می‌گذارند و به هر تبدیل یکنوا بی‌اعتنایند. ریج حساس است چون جریمه به واحد وابسته است، گرادیان کاهشی حساس است چون عدد شرطی عوض می‌شود، و kNN حساس است چون فاصله محاسبه می‌کند.`},
+ {q:R`<b>مرور جلسه‌ی ۶:</b> ماتریس $X^\top X$ مقادیر ویژه‌ی $59.15$ و $0.85$ دارد. کدام جمله درست است؟`,
+  o:[R`عدد شرطی حدود ۷۰ است و کانتورهای MSE بیضی‌های کشیده‌اند`, R`ماتریس تکین است`, R`PC1 حدود ۵۰٪ واریانس را توضیح می‌دهد`, R`گرادیان کاهشی با هر $\alpha$ همگرا می‌شود`],
+  a:0, e:R`$\kappa=59.15/0.85\approx70$. تکین نیست (هیچ مقدار ویژه‌ی صفری ندارد)، سهم مؤلفه‌ی اول $59.15/60\approx98.6\%$ است، و همگرایی فقط برای $\alpha<n/\lambda_{\max}$ تضمین می‌شود.`}
+];
+
+window.PAGE_INIT=function(ML){
+  const {h,css,alpha,fa,fmt,L,slider,Plot,shell,onResize}=ML;
+  const F=x=>fa(String(x)).replace(/\./g,"٫");
+  const sum=a=>a.reduce((s,v)=>s+v,0);
+  const mean=a=>sum(a)/a.length;
+  /* حل دستگاه ۲×۲ متقارن */
+  function solve2(A,b){ const d=A[0]*A[3]-A[1]*A[2]; return [(b[0]*A[3]-A[1]*b[1])/d,(A[0]*b[1]-b[0]*A[2])/d]; }
+  /* مقدار و بردار ویژه‌ی ماتریس متقارن ۲×۲ [[a,b],[b,d]] */
+  function eig2(a,b,d){
+    const tr=a+d, disc=Math.sqrt(((a-d)/2)**2+b*b);
+    const l1=tr/2+disc, l2=tr/2-disc;
+    let v1;
+    if(Math.abs(b)>1e-14){ const n1=Math.hypot(b,l1-a); v1=[b/n1,(l1-a)/n1]; }
+    else v1=(a>=d)?[1,0]:[0,1];
+    return {l1,l2,v1,v2:[-v1[1],v1[0]]};
+  }
+  function clipped(p,fn){ const c=p.ctx; c.save(); c.beginPath();
+    c.rect(p.p.l,p.p.t,p.W-p.p.l-p.p.r,p.H-p.p.t-p.p.b); c.clip(); fn(); c.restore(); }
+
+  /* ============ ابزار ۱: چرا مربع؟ ============ */
+  (function(){
+    const el=document.getElementById("w-loss"); if(!el) return;
+    shell(el,"🔧 ابزار ۱: چرا مربع و نه قدرمطلق؟",
+      "خط را با دو اسلایدر حرکت بده. سمت راست داده و باقی‌مانده‌هاست؛ سمت چپ تابع هزینه بر حسب شیب (با همان $w_0$ فعلی)، یک‌بار با مربع و یک‌بار با قدرمطلق، هر کدام تقسیم بر کمینه‌ی خودش. به کنج‌های تیز منحنی قدرمطلق نگاه کن: دقیقاً جایی‌اند که یک باقی‌مانده از علامت عوض می‌کند و تابع مشتق ندارد.");
+    el.classList.add("wls");
+    const XS=[1,2,3,4,5];
+    let w0=1.0, w1=1.0, out=false;
+    const cvs=h("div",{class:"canvases"});
+    const cA=h("canvas"), cB=h("canvas"); cvs.append(cA,cB); el.append(cvs);
+    const lg=h("div",{class:"gl"}); el.append(lg);
+    const ctr=h("div",{class:"controls"});
+    const s0=slider("w₀:",-4,8,0.1,w0,v=>{w0=v;draw();},v=>v.toFixed(1));
+    const s1=slider("w₁:",-1,4,0.05,w1,v=>{w1=v;draw();},v=>v.toFixed(2));
+    ctr.append(s0,s1);
+    const ol=h("label"); const ocb=h("input",{type:"checkbox"});
+    ol.append(ocb," داده‌ی پرت (y₅ از ۱۰ به ۲۰)"); ocb.onchange=()=>{out=ocb.checked;draw();}; ctr.append(ol);
+    const b1=h("button",{class:"btn ghost",type:"button"},"برو روی خط OLS");
+    const b2=h("button",{class:"btn ghost",type:"button"},"برو روی خط قدرمطلق");
+    ctr.append(b1,b2); el.append(ctr);
+    const ro=h("div",{class:"readout"}); el.append(ro);
+    const YS=()=>out?[3,4,6,7,20]:[3,4,6,7,10];
+    function ols(){ const y=YS(), mx=mean(XS), my=mean(y);
+      const sxy=sum(XS.map((v,i)=>(v-mx)*(y[i]-my))), sxx=sum(XS.map(v=>(v-mx)**2));
+      const b=sxy/sxx; return [my-b*mx,b]; }
+    function lad(){ const y=YS(); let best=null;
+      for(let b=-1;b<=4.0001;b+=0.002){
+        const r=XS.map((v,i)=>y[i]-b*v).sort((p,q)=>p-q);
+        const a=r[2];                                   /* میانه برای n=5 */
+        const L1=sum(XS.map((v,i)=>Math.abs(y[i]-a-b*v)));
+        if(!best||L1<best[2]) best=[a,b,L1];
+      } return [best[0],best[1]]; }
+    b1.onclick=()=>{ const w=ols(); w0=Math.round(w[0]*10)/10; w1=Math.round(w[1]*20)/20;
+      s0.querySelector("input").value=w0; s1.querySelector("input").value=w1;
+      s0.querySelector(".val").textContent=w0.toFixed(1); s1.querySelector(".val").textContent=w1.toFixed(2); draw(); };
+    b2.onclick=()=>{ const w=lad(); w0=Math.round(w[0]*10)/10; w1=Math.round(w[1]*20)/20;
+      s0.querySelector("input").value=w0; s1.querySelector("input").value=w1;
+      s0.querySelector(".val").textContent=w0.toFixed(1); s1.querySelector(".val").textContent=w1.toFixed(2); draw(); };
+    function draw(){
+      const y=YS(), c1=css("--plot-c1"), c2=css("--plot-c2"), c3=css("--plot-c3"), c4=css("--plot-c4"), ink=css("--ink-3");
+      const ymax=out?22:12;
+      const pA=new Plot(cA,[0,6],[0,ymax],{l:34,r:10,t:10,b:28});
+      pA.axes("x (ساعت مطالعه)","y (نمره)",{xstep:1,ystep:out?4:2,xfmt:v=>fa(v),yfmt:v=>fa(v)});
+      clipped(pA,()=>{
+        const o=ols(), l=lad();
+        pA.line([[0,o[0]],[6,o[0]+6*o[1]]],c3,1.6,[7,4]);
+        pA.line([[0,l[0]],[6,l[0]+6*l[1]]],c4,1.6,[2,3]);
+        XS.forEach((v,i)=>{ const yh=w0+w1*v; pA.line([[v,y[i]],[v,yh]],css("--warn"),1.6,[4,3]); });
+        pA.line([[0,w0],[6,w0+6*w1]],c2,2.5);
+        XS.forEach((v,i)=>pA.dot(v,y[i],c1,4.5));
+      });
+      /* منحنی هزینه بر حسب شیب */
+      const bs=[]; for(let b=-1;b<=4.0001;b+=0.02) bs.push(b);
+      const L2=bs.map(b=>sum(XS.map((v,i)=>(y[i]-w0-b*v)**2)));
+      const L1=bs.map(b=>sum(XS.map((v,i)=>Math.abs(y[i]-w0-b*v))));
+      const m2=Math.min(...L2), m1=Math.min(...L1);
+      const r2=L2.map(v=>v/m2), r1=L1.map(v=>v/m1);
+      const top=Math.min(12,Math.max(...r1.concat(r2.filter(v=>v<40))));
+      const pB=new Plot(cB,[-1,4],[0,top],{l:34,r:10,t:10,b:28});
+      pB.axes("شیب w₁","هزینه ÷ کمینه‌ی خودش",{xstep:1,ystep:Math.max(1,Math.round(top/5)),xfmt:v=>fa(v),yfmt:v=>fa(v)});
+      clipped(pB,()=>{
+        pB.line(bs.map((b,i)=>[b,r2[i]]),c2,2.5);
+        pB.line(bs.map((b,i)=>[b,r1[i]]),c4,2.5);
+        pB.vline(w1,ink,[4,4]);
+        pB.hline(1,css("--plot-grid"),[2,3]);
+      });
+      lg.innerHTML=`<span><i style="background:${c1};border-radius:50%" class="dot"></i>داده</span>
+        <span><i style="background:${c2}"></i>خط فعلی تو</span>
+        <span><i style="background:${c3}"></i>خط OLS (مربع)</span>
+        <span><i style="background:${c4}"></i>خط قدرمطلق</span>
+        <span><i style="background:${css("--warn")}"></i>باقی‌مانده‌ها</span>`;
+      const e=XS.map((v,i)=>y[i]-w0-w1*v);
+      const o=ols(), l=lad();
+      let msg=`خط فعلی: ${L("y = "+fmt(w0,2)+" + "+fmt(w1,2)+" x")}\n`+
+        `مجموع باقی‌مانده‌ها ${L("Σe = "+fmt(sum(e),3))} · مجموع قدرمطلق ${L("Σ|e| = "+fmt(sum(e.map(Math.abs)),3))} · مجموع مربعات ${L("Σe² = "+fmt(sum(e.map(v=>v*v)),3))}\n`+
+        `کمینه‌ی مربعات اینجاست: ${L("w0 = "+fmt(o[0],3)+" , w1 = "+fmt(o[1],3))} · کمینه‌ی قدرمطلق: ${L("w0 ≈ "+fmt(l[0],2)+" , w1 ≈ "+fmt(l[1],2))}`;
+      if(Math.abs(sum(e))<1e-9) msg+=`\n✓ جمع باقی‌مانده‌ها صفر شد — ولی این فقط یعنی خط از نقطه‌ی میانگین می‌گذرد، نه اینکه بهینه است.`;
+      if(out) msg+=`\n⚠ با یک داده‌ی پرت، شیب OLS از ۱٫۷ به ۳٫۷ پرید (بیش از دو برابر) ولی شیب قدرمطلق فقط از ۱٫۶۱ به ۱٫۵۱ رفت. مربع‌کردن، خطای ۱۰ واحدی را ۱۰۰ برابر جریمه می‌کند.`;
+      ro.textContent=msg;
+    }
+    onResize(cA,draw); onResize(cB,draw); draw();
+  })();
+
+  /* ============ ابزار ۲: کارگاه گرادیان کاهشی ============ */
+  (function(){
+    const el=document.getElementById("w-gd"); if(!el) return;
+    shell(el,"🔧 ابزار ۲: کارگاه گرادیان کاهشی",
+      "داده همان پنج نقطه‌ی بخش ۴.۲ است و شروع همیشه از $w=(0,0)$. سمت راست: خط برازشِ گام آخر روی داده. سمت چپ: کانتورهای تابع هزینه در صفحه‌ی $(w_0,w_1)$ و مسیر حرکت، با ستاره‌ی مرجع روی جواب فرم بسته. نرخ یادگیری را از $\\alpha_{\\max}$ بزرگ‌تر کن تا واگرایی را ببینی، و بعد با مقیاس ویژگی بازی کن تا ببینی همان $\\alpha$ چطور از پایدار به واگرا می‌رود.");
+    el.classList.add("wgd");
+    const X0=[1,2,3,4,5], Y=[3,4,6,7,10], n=5;
+    let logA=Math.log10(0.05), steps=30, logS=0, zs=false;
+    const cvs=h("div",{class:"canvases"});
+    const cA=h("canvas"), cB=h("canvas"); cvs.append(cA,cB); el.append(cvs);
+    const lg=h("div",{class:"gl"}); el.append(lg);
+    const ctr=h("div",{class:"controls"});
+    const sA=slider("نرخ یادگیری α:",-6,0.3,0.025,logA,v=>{logA=v;draw();},
+                    v=>{const a=Math.pow(10,v); return a>=0.001?(+a.toPrecision(2)).toString():a.toExponential(1);});
+    const sT=slider("تعداد گام:",1,200,1,steps,v=>{steps=v;draw();},v=>fa(v));
+    const sS=slider("مقیاس ویژگی (x × s):",-0.7,1.8,0.05,logS,v=>{logS=v;draw();},
+                    v=>(+Math.pow(10,v).toPrecision(3)).toString());
+    ctr.append(sA,sT,sS);
+    const zl=h("label"); const zcb=h("input",{type:"checkbox"});
+    zl.append(zcb," استانداردسازی z-score"); zcb.onchange=()=>{zs=zcb.checked;draw();}; ctr.append(zl);
+    const bt=h("button",{class:"btn ghost",type:"button"},"α را روی ۰٫۹×α_max بگذار"); ctr.append(bt);
+    el.append(ctr);
+    const ro=h("div",{class:"readout"}); el.append(ro);
+
+    function design(){
+      let xs=X0.map(v=>v*Math.pow(10,logS)), m=0, sd=1;
+      if(zs){ m=mean(xs); sd=Math.sqrt(mean(xs.map(v=>(v-m)**2))); xs=xs.map(v=>(v-m)/sd); }
+      const Sx=sum(xs), Sxx=sum(xs.map(v=>v*v)), Sy=sum(Y), Sxy=sum(xs.map((v,i)=>v*Y[i]));
+      const A=[n,Sx,Sx,Sxx];                       /* X^T X */
+      const w=solve2(A,[Sy,Sxy]);
+      const Q=[A[0]/n,A[1]/n,A[2]/n,A[3]/n];       /* ماتریس فرم درجه‌دوم */
+      const ev=eig2(A[0],A[1],A[3]);
+      const mseMin=mean(xs.map((v,i)=>(Y[i]-w[0]-w[1]*v)**2));
+      return {xs,m,sd,s:Math.pow(10,logS),A,w,Q,ev,mseMin,aMax:n/ev.l1};
+    }
+    function run(d,alpha,T){
+      let w0=0,w1=0; const tr=[[0,0]]; let bad=false;
+      for(let t=0;t<T;t++){
+        let g0=0,g1=0;
+        for(let i=0;i<n;i++){ const e=Y[i]-w0-w1*d.xs[i]; g0+=e; g1+=d.xs[i]*e; }
+        w0+=alpha*(2/n)*g0; w1+=alpha*(2/n)*g1;
+        if(!isFinite(w0)||!isFinite(w1)||Math.abs(w0)>1e12||Math.abs(w1)>1e12){ bad=true; break; }
+        tr.push([w0,w1]);
+      }
+      return {tr,bad,w:[w0,w1]};
+    }
+    bt.onclick=()=>{ const d=design(); logA=Math.log10(0.9*d.aMax);
+      const inp=sA.querySelector("input"); inp.value=logA; inp.dispatchEvent(new Event("input")); };
+
+    function draw(){
+      sS.style.opacity=zs?.4:1; sS.querySelector("input").disabled=zs;
+      const d=design(), alpha=Math.pow(10,logA), r=run(d,alpha,steps);
+      const c1=css("--plot-c1"), c2=css("--plot-c2"), c3=css("--plot-c3"), c4=css("--plot-c4"),
+            ink=css("--ink-3"), diag=css("--plot-diag");
+      /* ---- سمت راست: داده و خط ---- */
+      const toOrig=w=>[w[0]-w[1]*d.m/d.sd, w[1]*d.s/d.sd];
+      const pA=new Plot(cA,[0,6],[0,13],{l:32,r:10,t:10,b:28});
+      pA.axes("x (ساعت مطالعه)","y (نمره)",{xstep:1,ystep:2,xfmt:v=>fa(v),yfmt:v=>fa(v)});
+      clipped(pA,()=>{
+        const o=toOrig(d.w); pA.line([[0,o[0]],[6,o[0]+6*o[1]]],c3,1.8,[7,4]);
+        const k=Math.max(1,Math.floor(r.tr.length/6));
+        for(let i=0;i<r.tr.length-1;i+=k){ const g=toOrig(r.tr[i]);
+          pA.line([[0,g[0]],[6,g[0]+6*g[1]]],alpha4(c2,.22),1.2); }
+        const f=toOrig(r.w); pA.line([[0,f[0]],[6,f[0]+6*f[1]]],c2,2.5);
+        X0.forEach((v,i)=>pA.dot(v,Y[i],c1,4.5));
+      });
+      /* ---- سمت چپ: کانتور و مسیر ---- */
+      const q=u=>d.Q[0]*u[0]*u[0]+2*d.Q[1]*u[0]*u[1]+d.Q[3]*u[1]*u[1];
+      const cStart=q([-d.w[0],-d.w[1]]);
+      const E=eig2(d.Q[0],d.Q[1],d.Q[3]);
+      /* جعبه‌ی محیطی کوچک‌ترین کانتور: |u| <= sqrt(c * (Q^-1)_jj) */
+      const det=d.Q[0]*d.Q[3]-d.Q[1]*d.Q[2], c0=Math.max(cStart*0.01,1e-12);
+      const ex=Math.sqrt(c0*d.Q[3]/det), ey=Math.sqrt(c0*d.Q[0]/det);
+      /* نیم‌بازه‌ی برابر در هر دو محور تا شکل بیضی‌ها واقعی دیده شود */
+      const hh=Math.max(Math.abs(d.w[0]),Math.abs(d.w[1]),ex,ey,0.5)*1.45;
+      const pB=new Plot(cB,[d.w[0]-hh,d.w[0]+hh],[d.w[1]-hh,d.w[1]+hh],{l:40,r:12,t:12,b:40});
+      pB.axes("w₀ (عرض از مبدأ)","w₁ (شیب)",{xfmt:v=>String(+v.toPrecision(3)),yfmt:v=>String(+v.toPrecision(3))});
+      clipped(pB,()=>{
+        [0.01,0.03,0.08,0.16,0.3,0.5,0.75,1.05].forEach((f,j)=>{
+          const c=Math.max(cStart*f,1e-12), pts=[];
+          const r1=Math.sqrt(c/Math.max(E.l1,1e-300)), r2=Math.sqrt(c/Math.max(E.l2,1e-300));
+          for(let t=0;t<=120;t++){ const th=t/120*2*Math.PI;
+            pts.push([d.w[0]+r1*Math.cos(th)*E.v1[0]+r2*Math.sin(th)*E.v2[0],
+                      d.w[1]+r1*Math.cos(th)*E.v1[1]+r2*Math.sin(th)*E.v2[1]]); }
+          pB.line(pts,alpha4(c3,.25+0.07*j),1.3);
+        });
+        pB.line(r.tr,c2,1.8);
+        const k=Math.max(1,Math.ceil(r.tr.length/80));
+        for(let i=0;i<r.tr.length;i+=k) pB.dot(r.tr[i][0],r.tr[i][1],c2,2.6);
+        pB.dot(0,0,ink,4);
+        pB.dot(d.w[0],d.w[1],diag,6);
+        pB.line([[d.w[0]-hh,d.w[1]],[d.w[0]+hh,d.w[1]]],alpha4(diag,.45),1,[3,3]);
+        pB.line([[d.w[0],d.w[1]-hh],[d.w[0],d.w[1]+hh]],alpha4(diag,.45),1,[3,3]);
+      });
+      lg.innerHTML=`<span><i class="dot" style="background:${c1};border-radius:50%"></i>داده</span>
+        <span><i style="background:${c3}"></i>جواب فرم بسته</span>
+        <span><i style="background:${c2}"></i>مسیر و خط گرادیان کاهشی</span>
+        <span><i class="dot" style="background:${diag};border-radius:50%"></i>کمینه‌ی واقعی w*</span>
+        <span><i class="dot" style="background:${ink};border-radius:50%"></i>نقطه‌ی شروع (0,0)</span>`;
+      const mseF=r.bad?Infinity:mean(d.xs.map((v,i)=>(Y[i]-r.w[0]-r.w[1]*v)**2));
+      const o=toOrig(d.w), f=r.bad?[NaN,NaN]:toOrig(r.w);
+      const ratio=alpha/d.aMax;
+      let msg=`عدد شرطی ${L("κ(XᵀX) = "+(+d.ev.l1/d.ev.l2).toPrecision(5))} · `+
+        `${L("λmax = "+(+d.ev.l1).toPrecision(4)+" , λmin = "+(+d.ev.l2).toPrecision(4))}\n`+
+        `${L("α = "+(+alpha).toPrecision(3))} در برابر ${L("α_max = n/λmax = "+(+d.aMax).toPrecision(3))} → نسبت ${L((+ratio).toPrecision(3))}\n`+
+        `جواب دقیق در این مقیاس: ${L("w* = ("+fmt(d.w[0],4)+", "+fmt(d.w[1],4)+")")} با ${L("MSE = "+fmt(d.mseMin,4))}\n`;
+      if(r.bad||!isFinite(mseF)||mseF>1e8){
+        msg+=`⛔ واگرا شد. چون ${L("α > α_max")} است، خطا در جهت ویژه‌ی بزرگ هر گام در ${L((+Math.abs(1-alpha*2*d.ev.l1/n)).toPrecision(3))} ضرب می‌شود و منفجر می‌شود. α را کم کن یا ویژگی را استاندارد کن.`;
+      }else{
+        msg+=`بعد از ${F(steps)} گام: ${L("w = ("+fmt(r.w[0],4)+", "+fmt(r.w[1],4)+")")} با ${L("MSE = "+fmt(mseF,4))} — فاصله تا کمینه ${L(fmt(mseF-d.mseMin,6))}\n`+
+          `همین خط در واحد اصلی (ساعت): ${L("y = "+fmt(f[0],3)+" + "+fmt(f[1],3)+" x")} در برابر جواب دقیق ${L("y = "+fmt(o[0],3)+" + "+fmt(o[1],3)+" x")}`;
+        if(ratio<0.02) msg+=`\n🐢 نرخ خیلی کوچک است: مسیر روی کانتور به‌سختی تکان می‌خورد. گام بیشتر هم جبرش نمی‌کند، چون سرعت همگرایی نمایی با پایه‌ی نزدیک به ۱ است.`;
+        else if((+d.ev.l1/d.ev.l2)>40) msg+=`\n↯ کانتورها خیلی کشیده‌اند؛ مسیر به‌جای حرکت در طول دره، بین دیواره‌هایش زیگزاگ می‌زند. همین است که مقیاس‌بندی درمانش می‌کند.`;
+        else if(mseF-d.mseMin<1e-6) msg+=`\n✓ عملاً به جواب فرم بسته رسیدی. وقتی κ نزدیک ۱ باشد، گرادیان کاهشی در چند گام کار یک وارون‌گیری ماتریس را می‌کند.`;
+      }
+      if(zs) msg+=`\nℹ با استانداردسازی، اسلایدر مقیاس بی‌اثر است: z-score هر ضریب s را خنثی می‌کند و همیشه ${L("κ = 1")} می‌دهد.`;
+      ro.textContent=msg;
+    }
+    function alpha4(c,a){ return alpha(c,a); }
+    onResize(cA,draw); onResize(cB,draw); draw();
+  })();
+
+  /* ============ ابزار ۳: ریج و هم‌خطی ============ */
+  (function(){
+    const el=document.getElementById("w-ridge"); if(!el) return;
+    shell(el,"🔧 ابزار ۳: ریج روی دو ویژگی تقریباً یکسان",
+      "همان داده‌ی بخش ۹ (دو ویژگی با همبستگی ۰٫۹۹۹۹، ضریب‌های واقعی ۲ و ۳). $\\lambda$ را حرکت بده. سمت راست مسیر ضریب‌ها بر حسب $\\lambda$ و سمت چپ خطای آموزش و آزمون. نگاه کن که ضریب‌ها با کوچک‌ترین $\\lambda$ سر جایشان می‌نشینند، در حالی که خطای پیش‌بینی تقریباً هیچ تغییری نمی‌کند: ریج اینجا پیش‌بینی را نجات نمی‌دهد، <b>تفسیر</b> را نجات می‌دهد.");
+    el.classList.add("wrd");
+    const x1=[1.0531,1.7765,-2.5533,-0.138,1.0137,1.3521,0.6538,1.4971,0.29,0.5513,0.1787,-1.0739,-0.8466,0.3796,-0.5802,1.2716,1.2924,1.7988,-0.0261,1.3837,-0.9058,-0.8163,0.0813,0.2814,-1.599,-1.7307,0.3551,-0.8622,1.2084,0.3945,0.3072,0.2084,0.8955,-0.153,1.0856,-0.5259,-0.225,-0.6805,0.5977,0.0359];
+    const x2=[1.0514,1.7805,-2.554,-0.1382,1.0145,1.3556,0.6535,1.4985,0.2902,0.5483,0.1803,-1.0718,-0.8471,0.3796,-0.5832,1.2685,1.2916,1.8,-0.027,1.3843,-0.9039,-0.8161,0.0825,0.2843,-1.6015,-1.7292,0.3513,-0.8613,1.2088,0.3935,0.305,0.2083,0.8947,-0.1529,1.0838,-0.5248,-0.2271,-0.6811,0.5969,0.0384];
+    const yy=[5.1108,8.8531,-12.6504,-0.7564,4.947,6.7995,3.239,7.5733,1.3583,2.7666,0.9651,-5.2596,-4.3452,2.0402,-3.0001,6.1974,6.3641,9.0132,-0.1654,6.9643,-4.4738,-4.0492,0.3845,1.5972,-8.224,-8.8226,1.7134,-4.4339,5.7874,1.89,1.4545,0.797,4.5608,-0.6347,5.5461,-2.6771,-1.1164,-3.5164,3.0066,0.1196];
+    const u1=[0.4099,-0.343,1.0338,0.8266,1.2389,-1.6053,-1.8196,0.4047,-0.5772,0.3978,0.2989,0.1802,0.9193,0.5566,0.4724,-0.8938,1.7247,0.1266,1.107,0.3271,1.2694,0.1535,0.2176,0.1378,-0.7087,-0.572,-0.1469,-0.117,-0.9827,2.3566,-0.9814,-0.306,2.4453,-0.6597,0.7659,0.6609,-0.208,-1.4289,-1.553,-0.0079];
+    const u2=[0.4107,-0.3473,1.0341,0.8253,1.2407,-1.6049,-1.8212,0.4039,-0.5771,0.4005,0.305,0.1809,0.9195,0.558,0.4725,-0.8924,1.7256,0.1268,1.1056,0.3276,1.2714,0.1539,0.2208,0.1399,-0.7087,-0.5683,-0.149,-0.1144,-0.9788,2.3563,-0.9814,-0.3039,2.4484,-0.6586,0.7666,0.663,-0.2073,-1.4311,-1.5532,-0.0077];
+    const vy=[1.9139,-1.6759,5.1074,4.2153,6.063,-8.1048,-9.2368,2.1614,-2.7463,2.1559,1.672,1.0055,4.6982,2.6293,2.4072,-4.5031,8.6058,0.5226,5.6742,1.6645,6.216,0.8313,1.1008,0.6007,-3.5651,-2.9191,-0.9642,-0.7246,-4.8471,11.8192,-4.8779,-1.6404,12.1762,-3.2886,3.9009,3.2263,-1.1438,-7.0372,-7.7589,-0.0771];
+    const N=x1.length;
+    const A11=sum(x1.map(v=>v*v)), A12=sum(x1.map((v,i)=>v*x2[i])), A22=sum(x2.map(v=>v*v));
+    const B=[sum(x1.map((v,i)=>v*yy[i])), sum(x2.map((v,i)=>v*yy[i]))];
+    const EV=eig2(A11,A12,A22);
+    const fitW=lam=>solve2([A11+lam,A12,A12,A22+lam],B);
+    const mseOn=(a,b,c,w)=>mean(a.map((v,i)=>(c[i]-w[0]*v-w[1]*b[i])**2));
+    let logL=-1;
+    const cvs=h("div",{class:"canvases"});
+    const cA=h("canvas"), cB=h("canvas"); cvs.append(cA,cB); el.append(cvs);
+    const lg=h("div",{class:"gl"}); el.append(lg);
+    const ctr=h("div",{class:"controls"});
+    ctr.append(slider("λ:",-4,3,0.05,logL,v=>{logL=v;draw();},
+      v=>{const a=Math.pow(10,v); return a>=0.01?(+a.toPrecision(3)).toString():a.toExponential(1);}));
+    el.append(ctr);
+    const ro=h("div",{class:"readout"}); el.append(ro);
+    const LS=[]; for(let v=-4;v<=3.0001;v+=0.05) LS.push(v);
+    const W=LS.map(v=>fitW(Math.pow(10,v)));
+    const TR=W.map(w=>mseOn(x1,x2,yy,w)), TE=W.map(w=>mseOn(u1,u2,vy,w));
+    function draw(){
+      const c1=css("--plot-c1"), c2=css("--plot-c2"), c3=css("--plot-c3"), ink=css("--ink-3"), diag=css("--plot-diag");
+      const lo=Math.min(...W.map(w=>Math.min(w[0],w[1])))-1, hi=Math.max(...W.map(w=>Math.max(w[0],w[1])))+1;
+      const pA=new Plot(cA,[-4,3],[lo,hi],{l:36,r:10,t:10,b:28});
+      pA.axes("log₁₀ λ","ضریب‌ها",{xstep:1});
+      clipped(pA,()=>{
+        pA.hline(0,css("--plot-grid"),[2,3]);
+        pA.hline(2,alpha(ink,.5),[5,4]); pA.hline(3,alpha(ink,.5),[5,4]);
+        pA.line(LS.map((v,i)=>[v,W[i][0]]),c1,2.5);
+        pA.line(LS.map((v,i)=>[v,W[i][1]]),c2,2.5);
+        pA.line(LS.map((v,i)=>[v,W[i][0]+W[i][1]]),c3,1.8,[6,4]);
+        pA.vline(logL,diag,[4,4]);
+      });
+      const pB=new Plot(cB,[-4,3],[-2.4,1.2],{l:40,r:10,t:10,b:28});
+      pB.axes("log₁₀ λ","MSE (مقیاس لگاریتمی)",{xstep:1,ystep:1,yfmt:v=>String(+Math.pow(10,v).toPrecision(1))});
+      clipped(pB,()=>{
+        pB.line(LS.map((v,i)=>[v,Math.log10(TR[i])]),c1,2.5);
+        pB.line(LS.map((v,i)=>[v,Math.log10(TE[i])]),c2,2.5);
+        pB.vline(logL,diag,[4,4]);
+      });
+      lg.innerHTML=`<span><i style="background:${c1}"></i>سمت راست: w₁ · سمت چپ: خطای آموزش</span>
+        <span><i style="background:${c2}"></i>سمت راست: w₂ · سمت چپ: خطای آزمون</span>
+        <span><i style="background:${c3}"></i>مجموع w₁+w₂ (مقدار واقعی ۵)</span>
+        <span><i style="background:${diag}"></i>λ فعلی</span>`;
+      const lam=Math.pow(10,logL), w=fitW(lam), k=(EV.l1+lam)/(EV.l2+lam);
+      const w0=fitW(1e-12);
+      ro.textContent=
+        `λ فعلی: ${L((+lam).toPrecision(3))} · ضریب‌ها ${L("w1 = "+fmt(w[0],3)+" , w2 = "+fmt(w[1],3))} · مجموع ${L(fmt(w[0]+w[1],3))} (مقدار واقعی ۵)\n`+
+        `اندازه‌ی بردار ضریب ${L("‖w‖ = "+fmt(Math.hypot(w[0],w[1]),3))} · عدد شرطی ${L("κ = "+(+k).toPrecision(5))} (بدون ریج ${L((+EV.l1/EV.l2).toPrecision(5))})\n`+
+        `خطا: ${L("train MSE = "+fmt(mseOn(x1,x2,yy,w),4)+" , test MSE = "+fmt(mseOn(u1,u2,vy,w),4))}\n`+
+        `برای مقایسه، OLS خالص: ${L("w1 = "+fmt(w0[0],2)+" , w2 = "+fmt(w0[1],2))} — ضریب‌ها بی‌معنی‌اند ولی مجموعشان ${L(fmt(w0[0]+w0[1],3))} درست است.`+
+        (lam>=5?`\n⚠ λ خیلی بزرگ است: ضریب‌ها به صفر کوبیده شده‌اند و خطای آموزش و آزمون هر دو بالا رفته‌اند. این سمتِ «اریبی زیاد» است.`:
+         lam<=0.002?`\n⚠ λ تقریباً صفر: ضریب‌ها دوباره منفجر می‌شوند چون ماتریس عملاً تکین است.`:
+         `\n✓ در این بازه ضریب‌ها نزدیک ۲٫۵ و ۲٫۵ می‌مانند: ریج وزن را بین دو ویژگی هم‌ارز مساوی پخش می‌کند.`);
+    }
+    onResize(cA,draw); onResize(cB,draw); draw();
+  })();
+};
+</script>
+</body></html>
