@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۷ · دیدگاه‌های مدل‌سازی و اجرای دستی با فهرست رویدادهای آینده</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.g-t,.g-s{unicode-bidi:plaintext}
+.g-t{fill:currentColor;font:700 12px Vazirmatn,Tahoma,sans-serif}
+.g-s{fill:currentColor;opacity:.72;font:11px Vazirmatn,Tahoma,sans-serif}
+.g-m{fill:currentColor;font:600 11px "JetBrains Mono",monospace}
+.g-box{fill:var(--paper);stroke:var(--line-2);stroke-width:1.3}
+.g-box2{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.3}
+.g-box3{fill:var(--event-soft);stroke:var(--event);stroke-width:1.3}
+.g-box4{fill:var(--thm-soft);stroke:var(--thm);stroke-width:1.3}
+.g-ar{stroke:currentColor;stroke-opacity:.55;stroke-width:1.5;fill:none}
+.g-back{stroke:var(--event);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+.g-ax{stroke:currentColor;stroke-opacity:.4;stroke-width:1.2}
+.g-proc{stroke:var(--plot-c1);stroke-width:3;stroke-linecap:round}
+.g-ev{fill:var(--plot-c2)}
+.g-cut{stroke:var(--plot-c2);stroke-width:1.4;stroke-dasharray:4 4}
+table.sim td.fel{white-space:normal;direction:ltr;unicode-bidi:isolate;text-align:left;min-width:170px;max-width:300px;line-height:1.95;font-size:.95em}
+table.sim td.lst{white-space:normal;direction:ltr;unicode-bidi:isolate;text-align:left;min-width:92px;max-width:160px;line-height:1.8}
+table.sim td.cmt{white-space:normal;text-align:start;min-width:150px;max-width:230px;line-height:1.9;font-family:Vazirmatn,Tahoma,sans-serif}
+table.sim td.ev{font-family:Vazirmatn,Tahoma,sans-serif;font-weight:700;white-space:nowrap}
+table.sim td.z{color:var(--ink-3)}
+table.sim tr.zero td{background:var(--code)}
+.evlist.w5>div{grid-template-columns:48px 70px minmax(0,1fr) 46px}
+.evlist.w5 span.mono{display:block;text-align:right}
+.evlist .st{color:var(--thm);font-family:Vazirmatn,Tahoma,sans-serif;font-weight:700}
+.wtab td,.wtab th{text-align:center;font-family:var(--mono);font-size:.86em;white-space:nowrap}
+.wtab td:first-child,.wtab th:first-child{font-family:Vazirmatn,Tahoma,sans-serif;text-align:start}
+.controls .chk{display:flex;align-items:center;gap:6px}
+.controls .chk input{width:18px;height:18px;accent-color:var(--event)}
+.cmp th:first-child{text-align:start}
+.cmp td:first-child{font-weight:700;background:var(--code)}
+.cmp td,.cmp th{vertical-align:top;font-size:.9em}
+</style>
+</head>
+<body data-session="7">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۷ از ۲۰ · بخش ب</div>
+  <h1>دیدگاه‌های مدل‌سازی و <span class="hl">اجرای دستی با فهرست رویدادهای آینده</span></h1>
+  <p class="lead">چهار راه برای نگاه کردن به یک سیستم گسسته، و بعد دو اجرای دستی کامل با FEL: صف تک‌سرور و کامیون‌های تخلیه‌ی معدن. این جلسه جایی است که «جدول فصل ۲» به «موتور شبیه‌سازی فصل ۳» تبدیل می‌شود.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۳۰ دقیقه</span><span>📚 منبع: جزوه Ch.3 ص ۲۱ تا ۳۸ · Banks فصل ۳، مثال‌های ۴ و ۵</span><span class="hot">به کار تمرین ۳ سؤال ۲ و ۳ می‌آید</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>چهار دیدگاه زمان‌بندی رویداد، تعامل فرایند، پویش فعالیت و سه‌فازی را از هم تفکیک کنی و بگویی هرکدام چه چیزی را واحد مدل می‌گیرد و چطور ساعت را جلو می‌برد.</li>
+      <li>یک جدول اجرای دستی با FEL را سطر‌به‌سطر پر کنی: ساعت، FEL قبل و بعد، حالت سیستم و شمارنده‌های آماری.</li>
+      <li>قرارداد رویدادهای هم‌زمان را صریح بنویسی و بگویی کجا نتیجه را عوض می‌کند.</li>
+      <li>میانگین‌های زمان‌مدار ($\bar L$، $\bar L_Q$، بهره‌وری) را به‌صورت <b>انتگرال زمانی</b> حساب کنی و بدانی چرا میانگین ساده‌ی ستون‌های جدول غلط است.</li>
+      <li>مدل بسته‌ی کامیون‌های تخلیه را تا لحظه‌ی ۷۶ اجرا کنی و بهره‌وری بارکن و باسکول را دربیاوری.</li>
+      <li>همان الگوریتم را در پایتون با <span class="ltr">heapq</span> پیاده کنی و خروجی‌اش را با جدول دستی تطبیق دهی.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+<p>۱. در جدول فصل ۲ سطرها «مشتری» بودند و از بالا به پایین مشتری‌به‌مشتری جلو می‌رفتی. حالا می‌خواهی سیستمی را شبیه‌سازی کنی که در آن یک کامیون بعد از باسکول به جاده می‌رود و <b>دوباره برمی‌گردد</b>. چرا جدول مشتری‌به‌مشتری دیگر کار نمی‌کند؟</p>
+<p>۲. اگر در لحظه‌ی $t=11$ هم یک ورود و هم یک خروج زمان‌بندی شده باشد، کدام را اول پردازش می‌کنی؟ آیا جواب فرق می‌کند؟ در چه سیستمی قطعاً فرق می‌کند؟</p>
+<p>۳. ستون «تعداد در صف» جدولت این مقادیر را دارد: ۳، ۲، ۱، ۰، ۰، ۰. میانگین طول صف ۱ است؟ چه چیزی را جا انداخته‌ای؟</p>
+</div>
+
+<!-- ===================================================== 01 -->
+<section id="worldviews">
+<h2 data-short="چهار دیدگاه"><span class="num">01</span> چهار دیدگاه مدل‌سازی <span class="tag core">جزوه</span></h2>
+<p>یک سیستم واحد را می‌شود از چند زاویه مدل کرد. جزوه (ص ۲۱ تا ۲۵) این زاویه‌ها را <b>دیدگاه</b> (<span class="ltr">world view</span>) می‌نامد و تعریفش این است:</p>
+<div class="box def"><div class="bt">تعریف ۷.۱ · دیدگاه مدل‌سازی</div>
+دیدگاه، جهت‌گیری‌ای است که به مدل‌ساز می‌گوید <b>واحد فکر کردن</b> چیست و برنامه را حول چه چیزی سازمان بدهد. هر بسته‌ی نرم‌افزاری شبیه‌سازی معمولاً یک یا دو دیدگاه را پشتیبانی می‌کند، و همان دیدگاه شکل کد تو را تعیین می‌کند. اینجا فقط دیدگاه‌های شبیه‌سازی <b>گسسته</b> مطرح‌اند.
+</div>
+<p>نمودار جزوه سه شاخه زیر «شبیه‌سازی گسسته» می‌گذارد — زمان‌بندی رویداد، تعامل فرایند و پویش فعالیت — و بعد <b>سه‌فازی</b> را به‌عنوان اصلاح پویش فعالیت معرفی می‌کند:</p>
+<div class="flow"><span>شبیه‌سازی گسسته</span><i>⟵</i><span>زمان‌بندی رویداد</span><i>·</i><span>تعامل فرایند</span><i>·</i><span>پویش فعالیت</span><i>→ اصلاح →</i><span>سه‌فازی</span></div>
+
+<h3>۱. زمان‌بندی رویداد (<span class="ltr">event-scheduling</span>)</h3>
+<p>واحد فکر کردن <b>رویداد</b> است: لحظه‌ای که حالت سیستم را عوض می‌کند. کاری که می‌کنی، دقیقاً همان‌هایی است که جزوه فهرست کرده است:</p>
+<ol class="steps">
+<li>موجودیت‌ها و ویژگی‌هایشان را مشخص کن.</li>
+<li>ویژگی‌های (متغیرهای حالت) خود سیستم را مشخص کن.</li>
+<li>تعریف کن چه چیزی باعث تغییر حالت می‌شود — یعنی فهرست انواع رویداد.</li>
+<li>برای هر نوع رویداد یک <b>روال</b> (<span class="ltr">event routine</span>) بنویس.</li>
+<li>ساعت را با <b>پرش متغیر</b> جلو ببر: همیشه به زمان قریب‌الوقوع‌ترین رویداد روی FEL.</li>
+</ol>
+<h3>۲. تعامل فرایند (<span class="ltr">process-interaction</span>)</h3>
+<p>واحد فکر کردن <b>فرایند</b> است: چرخه‌ی عمر <i>یک</i> موجودیت. جزوه تعریفش را دقیق می‌دهد:</p>
+<div class="box def"><div class="bt">تعریف ۷.۲ · فرایند</div>
+فرایند، فهرستی زمان‌ترتیب‌شده از رویدادها، فعالیت‌ها و تأخیرها — از جمله درخواست منابع — است که چرخه‌ی عمر یک موجودیت را در حرکتش درون سیستم تعریف می‌کند.
+</div>
+<p>مدل‌ساز می‌نویسد «مشتری می‌رسد ← در صف منتظر کارمند می‌ماند ← خدمت می‌گیرد ← می‌رود»، درست مثل داستان. فرایندها با هم <b>تعامل</b> دارند: یک فرایند در صف می‌ماند چون منبعی که می‌خواهد مشغول فرایند دیگری است. پرش زمان باز هم متغیر است؛ موتور پشت صحنه همان FEL را دارد، ولی تو آن را نمی‌بینی.</p>
+<h3>۳. پویش فعالیت (<span class="ltr">activity-scanning</span>)</h3>
+<p>واحد فکر کردن <b>فعالیت</b> و <b>شرط شروع</b> آن است. در هر جلو رفتن ساعت، شرط همه‌ی فعالیت‌ها بررسی می‌شود و هر فعالیتی که شرطش درست باشد شروع می‌شود. جزوه صریح می‌گوید پرش زمان <b>ثابت</b> است و عیب اصلی هم همین است: پویش مکرر همه‌ی شرط‌ها، اجرا را کند می‌کند.</p>
+<h3>۴. سه‌فازی (<span class="ltr">three-phase approach</span>)</h3>
+<p>اصلاح پویش فعالیت، با ترکیب آن با زمان‌بندی رویداد. ایده‌ی کلیدی جزوه: <b>رویداد یعنی فعالیتی با مدت صفر</b>. فعالیت‌ها دو دسته می‌شوند:</p>
+<div class="two">
+<div class="box note"><div class="bt">فعالیت B · <span class="ltr">bound to occur</span></div>
+فعالیت‌هایی که حتماً رخ می‌دهند: همه‌ی رویدادهای اولیه و فعالیت‌های بی‌قیدوشرط. زمان پایانشان را در لحظه‌ی شروع می‌دانی، پس می‌شود از پیش زمان‌بندی‌شان کرد. <b>FEL فقط رویدادهای نوع B را دارد.</b>
+</div>
+<div class="box note"><div class="bt">فعالیت C · <span class="ltr">conditional</span></div>
+فعالیت‌ها یا رویدادهایی که <b>مشروط</b> به درست بودن شرطی هستند. زمانشان را از پیش نمی‌دانی. فقط در انتهای هر جلو رفتن زمان — بعد از اجرای همه‌ی Bهای سررسیده — پویش می‌شوند.
+</div>
+</div>
+<p>نتیجه: پرش زمان دوباره متغیر می‌شود (مثل زمان‌بندی رویداد) و کندی پویش فعالیت از بین می‌رود، ولی خوانایی «شرط ⟵ کنش» حفظ می‌شود.</p>
+
+<div class="box tip"><div class="bt">💡 همان صف تک‌سرور در چهار زبان</div>
+<p><b>زمان‌بندی رویداد:</b> دو روال می‌نویسی، <span class="ltr">Arrival</span> و <span class="ltr">Departure</span>. «شروع خدمت» جایی داخل این دو روال پنهان است.</p>
+<p><b>تعامل فرایند:</b> یک تابع می‌نویسی: <span class="ltr mono">arrive → request(server) → hold(S) → release(server) → leave</span>.</p>
+<p><b>پویش فعالیت:</b> یک جفت می‌نویسی: «اگر مشتری در صف باشد <b>و</b> سرور آزاد باشد ⟵ خدمت را شروع کن».</p>
+<p><b>سه‌فازی:</b> «پایان خدمت» و «ورود» فعالیت‌های B هستند (روی FEL)؛ «شروع خدمت» فعالیت C است (پویش‌شونده). همان جفتِ پویش فعالیت، ولی فقط در لحظه‌های رویداد بررسی می‌شود.</p>
+<p>این مقایسه نشان می‌دهد چرا «شروع خدمت» در جدول‌های فصل ۳ هیچ‌وقت روی FEL نیست: زمانش را از پیش نمی‌دانی.</p>
+</div>
+
+<h3>جدول مقایسه</h3>
+<div class="tablewrap"><table class="cmp">
+<tr><th></th><th>زمان‌بندی رویداد</th><th>تعامل فرایند</th><th>پویش فعالیت</th><th>سه‌فازی</th></tr>
+<tr><td>واحد مدل‌سازی</td><td>رویداد: لحظه‌ی تغییر حالت</td><td>فرایند: چرخه‌ی عمر یک موجودیت</td><td>فعالیت به‌همراه شرط شروعش</td><td>فعالیت B (قطعی) و C (مشروط)</td></tr>
+<tr><td>چه چیزی می‌نویسی</td><td>یک روال برای هر نوع رویداد</td><td>یک تابع برای هر نوع موجودیت</td><td>یک جفت «شرط ⟵ کنش» برای هر فعالیت</td><td>روال‌های B + جفت‌های «شرط ⟵ کنش» برای C</td></tr>
+<tr><td>چه کسی زمان را جلو می‌برد</td><td>FEL؛ ساعت به زمان قریب‌الوقوع‌ترین رویداد می‌پرد — <b>پرش متغیر</b></td><td>FEL پنهان در موتور؛ هر فرایند در نقطه‌ی تعلیق منتظر می‌ماند — <b>پرش متغیر</b></td><td>ساعت با گام ثابت $\Delta t$ جلو می‌رود و هر گام همه‌ی شرط‌ها پویش می‌شوند — <b>پرش ثابت</b></td><td>FEL فقط Bها را دارد؛ فاز A ساعت را به زمان B بعدی می‌برد — <b>پرش متغیر</b></td></tr>
+<tr><td>محتوای FEL</td><td>همه‌ی رویدادهای زمان‌بندی‌شده</td><td>زمان بیدار شدن هر فرایند معلق</td><td>ندارد (فقط ساعت و شرط‌ها)</td><td>فقط رویدادهای نوع B</td></tr>
+<tr><td>هزینه‌ی اجرا</td><td>کم</td><td>کم</td><td>زیاد: پویش مکرر همه‌ی شرط‌ها</td><td>کم</td></tr>
+<tr><td>کجا به کار می‌آید</td><td>منطق حالت پیچیده، مدل‌های کوچک و سریع، وقتی خودت موتور را می‌نویسی و کنترل کامل می‌خواهی</td><td>سیستم‌های جریان‌محور (صف، خط تولید، شبکه) که کدشان باید شبیه داستان موجودیت خوانده شود</td><td>وقتی شروع یک فعالیت به شرط ترکیبی چند منبع وابسته است و نوشتن رویدادها سخت می‌شود</td><td>همان‌جای پویش فعالیت، ولی بدون کندی — انتخاب پیش‌فرض بسته‌های صنعتی</td></tr>
+<tr><td>معادل نرم‌افزاری <span class="tag book">افزوده</span></td><td><span class="ltr">SIMSCRIPT</span>، <span class="ltr">GASP</span>، کد دستی با <span class="ltr">heapq</span>/<span class="ltr">PriorityQueue</span></td><td><span class="ltr">GPSS</span>، <span class="ltr">Arena/SIMAN</span>، <span class="ltr">Simula</span>، <span class="ltr">SimPy</span> با <span class="ltr">yield env.timeout</span></td><td><span class="ltr">CSL</span> و <span class="ltr">ECSL</span> (نسل قدیم بریتانیایی)</td><td><span class="ltr">SIMUL8</span> و بسته‌های مشابه؛ ریشه‌اش روش <span class="ltr">Tocher</span> است</td></tr>
+</table></div>
+<div class="box note"><div class="bt">📎 نکته درباره‌ی ستون آخر</div>
+سطر «معادل نرم‌افزاری» در جزوه نیست؛ افزوده‌ی این صفحه است تا بدانی هر دیدگاه در عمل کجا دیده می‌شود. برای امتحان، چهار سطر اول و «پرش ثابت در پویش فعالیت، متغیر در بقیه» حرف اصلی است.
+</div>
+
+<h3>یک تصویر که تفاوت دو دیدگاه اول را نشان می‌دهد</h3>
+<p>اسلاید ص ۲۵ جزوه این شکل را می‌کشد: چند فرایند $P_1,\dots,P_4$ روی محور زمان، هر کدام با رویدادهای $E$ و فعالیت‌های $A$ بین آن‌ها.</p>
+<div class="fig">
+<svg style="direction:ltr" viewBox="0 0 660 258" role="img" aria-label="چند فرایند روی محور زمان؛ دیدگاه فرایند نخ‌های افقی را می‌بیند و دیدگاه رویداد برش‌های عمودی را">
+  <line class="g-ax" x1="40" y1="222" x2="640" y2="222"/>
+  <polygon points="640,222 630,218 630,226" fill="currentColor" opacity=".4"/>
+  <text class="g-s" x="636" y="240" text-anchor="end">زمان</text>
+  <g class="g-proc"><line x1="70" y1="196" x2="178" y2="196"/></g>
+  <circle class="g-ev" cx="70" cy="196" r="5"/><circle class="g-ev" cx="124" cy="196" r="5"/><circle class="g-ev" cx="178" cy="196" r="5"/>
+  <text class="g-m" x="70" y="186" text-anchor="middle">E1</text><text class="g-m" x="124" y="186" text-anchor="middle">E2</text>
+  <text class="g-m" x="97" y="212" text-anchor="middle">A1</text><text class="g-m" x="151" y="212" text-anchor="middle">A2</text>
+  <text class="g-t" x="48" y="200" text-anchor="middle">P1</text>
+  <g class="g-proc"><line x1="246" y1="156" x2="354" y2="156"/></g>
+  <circle class="g-ev" cx="246" cy="156" r="5"/><circle class="g-ev" cx="300" cy="156" r="5"/><circle class="g-ev" cx="354" cy="156" r="5"/>
+  <text class="g-m" x="246" y="146" text-anchor="middle">E5</text><text class="g-m" x="300" y="146" text-anchor="middle">E6</text>
+  <text class="g-m" x="273" y="172" text-anchor="middle">A5</text><text class="g-m" x="327" y="172" text-anchor="middle">A6</text>
+  <text class="g-t" x="224" y="160" text-anchor="middle">P3</text>
+  <g class="g-proc"><line x1="214" y1="112" x2="330" y2="112"/></g>
+  <circle class="g-ev" cx="214" cy="112" r="5"/><circle class="g-ev" cx="272" cy="112" r="5"/><circle class="g-ev" cx="330" cy="112" r="5"/>
+  <text class="g-m" x="214" y="102" text-anchor="middle">E3</text><text class="g-m" x="272" y="102" text-anchor="middle">E4</text>
+  <text class="g-m" x="243" y="128" text-anchor="middle">A3</text><text class="g-m" x="301" y="128" text-anchor="middle">A4</text>
+  <text class="g-t" x="192" y="116" text-anchor="middle">P2</text>
+  <g class="g-proc"><line x1="420" y1="68" x2="540" y2="68"/></g>
+  <circle class="g-ev" cx="420" cy="68" r="5"/><circle class="g-ev" cx="480" cy="68" r="5"/><circle class="g-ev" cx="540" cy="68" r="5"/>
+  <text class="g-m" x="420" y="58" text-anchor="middle">E7</text><text class="g-m" x="480" y="58" text-anchor="middle">E8</text>
+  <text class="g-m" x="450" y="84" text-anchor="middle">A7</text><text class="g-m" x="510" y="84" text-anchor="middle">A8</text>
+  <text class="g-t" x="398" y="72" text-anchor="middle">P4</text>
+  <line class="g-cut" x1="272" y1="48" x2="272" y2="222"/>
+  <text class="g-s" x="286" y="38">ساعت اینجاست؛ FEL فقط همین برش را می‌بیند</text>
+  <text class="g-s" x="40" y="26">نخ افقی آبی = یک فرایند (دیدگاه تعامل فرایند)</text>
+</svg>
+<figcaption>همان داده، دو خوانش. <b>تعامل فرایند</b> نخ‌های افقی را می‌خواند: زندگی هر موجودیت از اول تا آخر. <b>زمان‌بندی رویداد</b> برش‌های عمودی را می‌خواند: در هر لحظه‌ی رویداد، فقط می‌پرسد «چه چیزی الان عوض می‌شود؟» و بعد به برش بعدی می‌پرد. مدل یکی است؛ ترتیب نوشتن کد فرق می‌کند.</figcaption>
+</div>
+</section>
+
+<!-- ===================================================== 02 -->
+<section id="cycle">
+<h2 data-short="چرخه‌ی اجرا"><span class="num">02</span> چرخه‌ی اجرا: زمان‌بندی رویداد و سه‌فازی <span class="tag core">جزوه</span></h2>
+<p>جزوه برای هر دو دیدگاه یک فلوچارت می‌کشد. تفاوتشان دقیقاً در این است که «شرط‌ها» کجا بررسی می‌شوند.</p>
+<div class="two">
+<div class="fig">
+<svg style="direction:ltr" viewBox="0 0 320 352" role="img" aria-label="فلوچارت چرخه‌ی زمان‌بندی رویداد">
+  <rect class="g-box" x="110" y="6" width="100" height="26" rx="13"/><text class="g-t" x="160" y="23" text-anchor="middle">شروع</text>
+  <rect class="g-box2" x="36" y="48" width="248" height="30" rx="10"/><text class="g-t" x="160" y="67" text-anchor="middle">مقداردهی اولیه: ساعت ← ۰، حالت، FEL</text>
+  <rect class="g-box3" x="36" y="94" width="248" height="30" rx="10"/><text class="g-t" x="160" y="113" text-anchor="middle">رویداد قریب‌الوقوع؛ ساعت ← زمانش</text>
+  <rect class="g-box" x="12" y="142" width="86" height="30" rx="10"/><text class="g-t" x="55" y="161" text-anchor="middle">روال ورود</text>
+  <rect class="g-box" x="117" y="142" width="86" height="30" rx="10"/><text class="g-t" x="160" y="161" text-anchor="middle">روال خروج</text>
+  <rect class="g-box" x="222" y="142" width="86" height="30" rx="10"/><text class="g-t" x="265" y="161" text-anchor="middle">روال n</text>
+  <rect class="g-box4" x="100" y="196" width="120" height="30" rx="10"/><text class="g-t" x="160" y="215" text-anchor="middle">شرط پایان؟</text>
+  <rect class="g-box" x="100" y="252" width="120" height="28" rx="10"/><text class="g-t" x="160" y="270" text-anchor="middle">گزارش خروجی</text>
+  <rect class="g-box" x="110" y="300" width="100" height="26" rx="13"/><text class="g-t" x="160" y="317" text-anchor="middle">پایان</text>
+  <g class="g-ar"><path d="M160 32 V48"/><path d="M160 78 V94"/><path d="M160 124 V136 H55 V142"/><path d="M160 124 V142"/><path d="M160 136 H265 V142"/>
+  <path d="M55 172 V184 H160"/><path d="M265 172 V184 H160"/><path d="M160 172 V196"/><path d="M160 226 V252"/><path d="M160 280 V300"/></g>
+  <path class="g-back" d="M100 211 H14 V109 H36"/>
+  <text class="g-s" x="20" y="240">نه</text><text class="g-s" x="166" y="244">بله</text>
+</svg>
+<figcaption>زمان‌بندی رویداد: هر دور، یک رویداد از FEL برداشته می‌شود، ساعت به زمان آن می‌پرد و روال مربوطه اجرا می‌شود. روال‌ها خودشان رویدادهای تازه روی FEL می‌گذارند.</figcaption>
+</div>
+<div class="fig">
+<svg style="direction:ltr" viewBox="0 0 320 352" role="img" aria-label="فلوچارت چرخه‌ی سه‌فازی">
+  <rect class="g-box" x="110" y="6" width="100" height="26" rx="13"/><text class="g-t" x="160" y="23" text-anchor="middle">شروع</text>
+  <rect class="g-box2" x="36" y="48" width="248" height="30" rx="10"/><text class="g-t" x="160" y="67" text-anchor="middle">مقداردهی اولیه</text>
+  <rect class="g-box3" x="36" y="94" width="248" height="30" rx="10"/><text class="g-t" x="160" y="113" text-anchor="middle">فاز A: پویش زمان (ساعت ← B بعدی)</text>
+  <rect class="g-box3" x="36" y="140" width="248" height="30" rx="10"/><text class="g-t" x="160" y="159" text-anchor="middle">فاز B: اجرای Bهای سررسیده</text>
+  <rect class="g-box4" x="36" y="186" width="248" height="30" rx="10"/><text class="g-t" x="160" y="205" text-anchor="middle">فاز C: پویش همه‌ی Cها</text>
+  <rect class="g-box" x="100" y="238" width="120" height="30" rx="10"/><text class="g-t" x="160" y="257" text-anchor="middle">شرط پایان؟</text>
+  <rect class="g-box" x="100" y="288" width="120" height="26" rx="10"/><text class="g-t" x="160" y="306" text-anchor="middle">خروجی و پایان</text>
+  <g class="g-ar"><path d="M160 32 V48"/><path d="M160 78 V94"/><path d="M160 124 V140"/><path d="M160 170 V186"/><path d="M160 216 V238"/><path d="M160 268 V288"/></g>
+  <path class="g-back" d="M284 206 H302 V178 H160 V186"/>
+  <path class="g-back" d="M100 253 H14 V109 H36"/>
+  <text class="g-s" x="20" y="282">نه</text><text class="g-s" x="166" y="284">بله</text>
+  <text class="g-s" x="300" y="232" text-anchor="end">شرط دیگری</text><text class="g-s" x="300" y="245" text-anchor="end">برقرار شد؟ بله</text>
+</svg>
+<figcaption>سه‌فازی: فاز A فقط ساعت را جلو می‌برد، فاز B کارهای قطعیِ سررسیده را انجام می‌دهد و فاز C می‌پرسد «حالا چه چیز مشروطی ممکن شد؟». پویش فقط یک بار در هر پرش زمان انجام می‌شود، نه در گام‌های ثابت.</figcaption>
+</div>
+</div>
+
+<div class="box thm"><div class="bt">الگوریتم · یک دور کامل زمان‌بندی رویداد</div>
+فرض کن ساعت $t_{\text{old}}$ است و رویداد قریب‌الوقوع در $t$ قرار دارد.
+<ol class="steps">
+<li><b>انتخاب.</b> کوچک‌ترین زمان روی FEL را بردار. اگر چند رویداد هم‌زمان‌اند، قرارداد اولویت را اعمال کن.</li>
+<li><b>انباشت آمار (قبل از تغییر حالت!).</b> برای هر متغیر زمان‌مدار $X$: $\text{area}_X \mathrel{+}= X\cdot(t-t_{\text{old}})$. این همان انتگرال‌گیری است و باید <b>پیش از</b> عوض شدن حالت انجام شود.</li>
+<li><b>جلو بردن ساعت.</b> $t_{\text{old}}\leftarrow t$.</li>
+<li><b>اجرای روال.</b> متغیرهای حالت را عوض کن، موجودیت‌ها را از فهرست‌ها بردار یا به آن‌ها اضافه کن.</li>
+<li><b>زمان‌بندی رویدادهای تازه.</b> با نمونه‌گیری از توزیع فعالیت‌ها، رویدادهای آینده را روی FEL بگذار.</li>
+<li><b>شمارنده‌های مشتری‌مدار.</b> اگر مشتری‌ای تمام شد، $S$، $N_D$، $F$ و مانند آن‌ها را به‌روز کن.</li>
+<li><b>شرط پایان.</b> اگر برقرار است گزارش بده، وگرنه برگرد به قدم ۱.</li>
+</ol>
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج · جای قدم ۲</div>
+اگر اول حالت را عوض کنی و بعد انتگرال بگیری، مساحت را با مقدار <b>جدید</b> حساب کرده‌ای و کل آمار زمان‌مدارت غلط می‌شود. قاعده‌ی حفظ‌کردنی: <b>اول مساحتِ بازه‌ی گذشته را ببند، بعد حالت را عوض کن.</b> در جدول دستی همین کار را با ستون $B$ می‌کنی: $B$ سطر جدید را از $B$ سطر قبل به‌علاوه‌ی $LS_{\text{قبل}}\times(t-t_{\text{قبل}})$ می‌سازی.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · فقط یک عکس در حافظه</div>
+جزوه (ص ۳۲) تأکید می‌کند: در پیاده‌سازی زمان‌بندی رویداد، فقط <b>یک</b> عکس لحظه‌ای (<span class="ltr">snapshot</span>) در حافظه است. عکس بعدی فقط از روی عکس فعلی ساخته می‌شود و عکس‌های گذشته برای جلو بردن ساعت نقشی ندارند. نتیجه‌ی عملی: <b>عکس فعلی باید همه‌ی اطلاعات لازم برای ادامه را داشته باشد.</b> اگر معیاری می‌خواهی که به گذشته نیاز دارد (مثلاً زمان ورود مشتری برای محاسبه‌ی زمان پاسخ)، باید آن را به‌عنوان <b>ویژگی موجودیت</b> داخل حالت نگه داری — دقیقاً کاری که در بخش ۰۴ می‌کنیم.
+</div>
+</section>
+
+<!-- ===================================================== 03 -->
+<section id="single">
+<h2 data-short="مثال ۱ · تک‌سرور"><span class="num">03</span> مثال ۱ · صف تک‌سرور با زمان‌بندی رویداد <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>همان فروشگاه فصل ۲ (جلسه‌ی ۴)، ولی این بار به‌جای روش موردی و جدول مشتری‌به‌مشتری، با FEL. جزوه (ص ۲۹) مدل را این‌طور تعریف می‌کند:</p>
+<div class="cards">
+<div><b>حالت سیستم</b>$[\,LQ(t),\,LS(t)\,]$ — تعداد در صف انتظار و تعداد در حال خدمت ($0$ یا $1$).</div>
+<div><b>موجودیت‌ها</b>سرور و مشتری‌ها <b>صریحاً مدل نمی‌شوند</b>؛ فقط دو شمارنده داریم.</div>
+<div><b>رویدادها</b>$A$ ورود، $D$ خروج، $E$ توقف شبیه‌سازی.</div>
+<div><b>اعلان رویداد</b>$(A,t)$، $(D,t)$، $(E,t)$ — بدون نام مشتری.</div>
+<div><b>فعالیت‌ها</b>زمان بین‌ورود و زمان خدمت (مدتشان در لحظه‌ی شروع معلوم است).</div>
+<div><b>تأخیر</b>زمانی که مشتری در صف انتظار می‌ماند — مدتش از پیش معلوم نیست.</div>
+</div>
+<div class="flow"><span>جمعیت فراخوان</span><i>→</i><span>صف انتظار (FIFO)</span><i>→</i><span>سرور</span><i>→</i><span>خروج</span></div>
+
+<h3>داده‌ها و شرط اولیه</h3>
+<p>اولین مشتری در لحظه‌ی $t=0$ می‌رسد و بلافاصله خدمت می‌گیرد. دنباله‌ی زمان‌های بین‌ورود $a^*$ و زمان‌های خدمت $s^*$ از پیش داده شده‌اند، و رویداد توقف $(E,60)$ روی FEL است:</p>
+<div class="two">
+<div class="tablewrap"><table class="sim">
+<tr><th>مشتری</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>C6</th><th>C7</th><th>C8</th></tr>
+<tr><td>$a^*$ تا بعدی</td><td>1</td><td>1</td><td>6</td><td>3</td><td>7</td><td>5</td><td>2</td><td>—</td></tr>
+<tr><td>زمان ورود</td><td>0</td><td>1</td><td>2</td><td>8</td><td>11</td><td>18</td><td>23</td><td>25</td></tr>
+<tr><td>$s^*$ خدمت</td><td>4</td><td>2</td><td>5</td><td>4</td><td>1</td><td>5</td><td>4</td><td>—</td></tr>
+</table></div>
+<div class="stats">
+  <div><div class="l">شمارنده‌ی B</div><div class="v">∫LS</div><div class="f">زمان مشغولی سرور</div></div>
+  <div><div class="l">شمارنده‌ی MQ</div><div class="v">max LQ</div><div class="f">بیشینه‌ی طول صف</div></div>
+  <div><div class="l">افق جدول جزوه</div><div class="v">0 → 23</div><div class="f">رویداد (E,60) اجرا نمی‌شود</div></div>
+</div>
+</div>
+
+<h3>قرارداد رویدادهای هم‌زمان</h3>
+<div class="box def"><div class="bt">قرارداد · اول خروج، بعد ورود</div>
+وقتی در یک لحظه هم $(D,t)$ و هم $(A,t)$ روی FEL‌اند، جزوه اول $D$ را می‌نویسد (ببین FEL لحظه‌ی ۸: <span class="mono ltr">(D,11)(A,11)(E,60)</span>). یعنی <b>اول سرور آزاد می‌شود، بعد مشتری تازه می‌رسد</b> — همان قراردادی که در جلسه‌ی ۴ و ۵ هم داشتیم. این را همیشه صریح بنویس؛ در بخش ۱۰ می‌بینی کجا نتیجه را عوض می‌کند.
+</div>
+
+<h3>قدم‌های اول، با FEL قبل و بعد</h3>
+<p>سه دور اول را کُند و با جزئیات می‌رویم تا ساختار دست‌ت بیاید. هر خط: ساعت، رویدادی که برداشته شد، FEL و حالت.</p>
+<div class="evlist w5">
+<div class="h"><span>ساعت</span><span>رویداد</span><span>FEL</span><span>B</span></div>
+<div><span>—</span><span class="st">اولیه</span><span class="mono ltr">(A,0)(E,60)</span><span>0</span></div>
+<div class="hl"><span>0</span><span class="arr">A ← C1</span><span class="mono ltr">(A,1)(D,4)(E,60)</span><span>0</span></div>
+<div><span></span><span class="st">حالت</span><span>سرور آزاد بود ⟵ C1 مستقیم به خدمت؛ $LQ=0$، $LS=1$؛ $a^*=1$ و $s^*=4$ زمان‌بندی شدند</span><span></span></div>
+<div class="hl"><span>1</span><span class="arr">A ← C2</span><span class="mono ltr">(A,2)(D,4)(E,60)</span><span>1</span></div>
+<div><span></span><span class="st">حالت</span><span>سرور مشغول ⟵ C2 در صف؛ $LQ=1$، $LS=1$، $MQ=1$؛ $B \mathrel{+}= 1\times(1-0)$</span><span></span></div>
+<div class="hl"><span>2</span><span class="arr">A ← C3</span><span class="mono ltr">(D,4)(A,8)(E,60)</span><span>2</span></div>
+<div><span></span><span class="st">حالت</span><span>$LQ=2$، $MQ=2$؛ $a^*=6$ ⟵ ورود بعدی در ۸؛ حالا $D$ زودتر از $A$ است پس اول نوشته می‌شود</span><span></span></div>
+<div class="hl"><span>4</span><span class="dep">D ← C1</span><span class="mono ltr">(D,6)(A,8)(E,60)</span><span>4</span></div>
+<div><span></span><span class="st">حالت</span><span>C1 رفت؛ صف خالی نیست ⟵ C2 بلافاصله خدمت می‌گیرد، $LQ=1$، $LS=1$؛ $s^*=2$ ⟵ خروج بعدی در ۶</span><span></span></div>
+</div>
+<p>نکته‌ای که در این چهار خط دیده می‌شود: «شروع خدمت C2» هیچ‌وقت روی FEL نیامد. در دیدگاه زمان‌بندی رویداد، شروع خدمت داخل <b>روال خروج</b> پنهان است — و همان‌طور که در بخش ۰۱ دیدیم، در دیدگاه سه‌فازی یک فعالیت C است.</p>
+
+<h3>جدول کامل (جزوه ص ۳۱)</h3>
+<p>FEL ستون «بعد» هر سطر، دقیقاً FEL ستون «قبل» سطر بعدی است — این بازنویسی فقط برای این است که در امتحان بتوانی هر سطر را مستقل چک کنی.</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>ساعت</th><th>رویداد</th><th>FEL قبل</th><th>$LQ$</th><th>$LS$</th><th>FEL بعد</th><th>$B$</th><th>$MQ$</th><th>توضیح</th></tr>
+<tr class="hl"><td>0</td><td class="ev">A · C1</td><td class="fel">(A,0)(E,60)</td><td>0</td><td>1</td><td class="fel">(A,1)(D,4)(E,60)</td><td>0</td><td>0</td><td class="cmt">شرط اولیه؛ $a^*=1$، $s^*=4$</td></tr>
+<tr><td>1</td><td class="ev">A · C2</td><td class="fel">(A,1)(D,4)(E,60)</td><td>1</td><td>1</td><td class="fel">(A,2)(D,4)(E,60)</td><td>1</td><td>1</td><td class="lst">$a^*=1$؛ یک مشتری منتظر</td></tr>
+<tr><td>2</td><td class="ev">A · C3</td><td class="fel">(A,2)(D,4)(E,60)</td><td>2</td><td>1</td><td class="fel">(D,4)(A,8)(E,60)</td><td>2</td><td>2</td><td class="lst">$a^*=6$؛ دو مشتری منتظر</td></tr>
+<tr><td>4</td><td class="ev">D · C1</td><td class="fel">(D,4)(A,8)(E,60)</td><td>1</td><td>1</td><td class="fel">(D,6)(A,8)(E,60)</td><td>4</td><td>2</td><td class="lst">C2 به خدمت؛ $s^*=2$</td></tr>
+<tr><td>6</td><td class="ev">D · C2</td><td class="fel">(D,6)(A,8)(E,60)</td><td>0</td><td>1</td><td class="fel">(A,8)(D,11)(E,60)</td><td>6</td><td>2</td><td class="lst">C3 به خدمت؛ $s^*=5$</td></tr>
+<tr><td>8</td><td class="ev">A · C4</td><td class="fel">(A,8)(D,11)(E,60)</td><td>1</td><td>1</td><td class="fel">(D,11)(A,11)(E,60)</td><td>8</td><td>2</td><td class="lst">$a^*=3$؛ تساوی در ۱۱ ساخته شد</td></tr>
+<tr class="hl"><td>11</td><td class="ev">D · C3 سپس A · C5</td><td class="fel">(D,11)(A,11)(E,60)</td><td>1</td><td>1</td><td class="fel">(D,15)(A,18)(E,60)</td><td>11</td><td>2</td><td class="cmt">دو رویداد هم‌زمان؛ C4 به خدمت ($s^*=4$)، C5 به صف ($a^*=7$)</td></tr>
+<tr><td>15</td><td class="ev">D · C4</td><td class="fel">(D,15)(A,18)(E,60)</td><td>0</td><td>1</td><td class="fel">(D,16)(A,18)(E,60)</td><td>15</td><td>2</td><td class="lst">C5 به خدمت؛ $s^*=1$</td></tr>
+<tr class="zero"><td>16</td><td class="ev">D · C5</td><td class="fel">(D,16)(A,18)(E,60)</td><td>0</td><td class="idle">0</td><td class="fel">(A,18)(E,60)</td><td>16</td><td>2</td><td class="cmt">صف خالی ⟵ <b>سرور بیکار</b>؛ هیچ $D$ روی FEL نیست</td></tr>
+<tr><td>18</td><td class="ev">A · C6</td><td class="fel">(A,18)(E,60)</td><td>0</td><td>1</td><td class="fel">(D,23)(A,23)(E,60)</td><td>16</td><td>2</td><td class="lst">$B$ تکان نخورد (بیکاری ۱۶ تا ۱۸)؛ $a^*=5$، $s^*=5$</td></tr>
+<tr class="hl"><td>23</td><td class="ev">D · C6 سپس A · C7</td><td class="fel">(D,23)(A,23)(E,60)</td><td>0</td><td>1</td><td class="fel">(A,25)(D,27)(E,60)</td><td>21</td><td>2</td><td class="cmt">تساوی دوم؛ C7 مستقیم به خدمت ($s^*=4$)، $a^*=2$</td></tr>
+</table></div>
+<div class="legend"><span>ردیف‌های پررنگ: رویدادهای هم‌زمان یا شرط اولیه</span><span>ردیف خاکستری: سرور بیکار</span></div>
+
+<div class="box mistake"><div class="bt">❌ دو خطای چاپی در جدول جزوه (ص ۳۱)</div>
+<p><b>۱.</b> در سطر ساعت ۱۸ ستون توضیح نوشته شده <span class="ltr mono">Sixth A occurs: (A,11)</span>. درستش <span class="ltr mono">(A,18)</span> است؛ ورود پنجم در ۱۱ بود و همان سطر ۱۱ ثبتش کرده.</p>
+<p><b>۲.</b> در همان سطر نوشته شده <span class="ltr mono">(a* = 7)</span>، ولی FEL همان سطر <span class="ltr mono">(A,23)</span> را نشان می‌دهد. اگر $a^*=7$ بود ورود بعدی در $18+7=25$ می‌افتاد، نه ۲۳. <b>درستش $a^*=5$ است.</b> (در سطر ۲۳ هم $a^*=2$ داده شده که با ورود هشتم در ۲۵ می‌خواند، پس خود FEL سازگار است و فقط عدد توضیح اشتباه تایپ شده — احتمالاً از سطر ۱۱ کپی شده.)</p>
+<p>در جدول بالا هر دو تصحیح اعمال شده‌اند. این را در امتحان جدی بگیر: همیشه $a^*$ و $s^*$ را با زمان‌های روی FEL تطبیق بده؛ ناسازگاری یعنی یک جا اشتباه کرده‌ای.</p>
+</div>
+
+<h3>آمار این اجرا</h3>
+<div class="stats">
+  <div><div class="l">افق گزارش</div><div class="v">T = 23</div><div class="f">آخرین رویداد ثبت‌شده</div></div>
+  <div><div class="l">زمان مشغولی سرور</div><div class="v">B = 21</div><div class="f">بیکار فقط ۱۶ تا ۱۸</div></div>
+  <div><div class="l">بهره‌وری سرور</div><div class="v">0.913</div><div class="f">21 / 23</div></div>
+  <div><div class="l">بیشینه‌ی طول صف</div><div class="v">MQ = 2</div><div class="f">از لحظه‌ی ۲ به بعد</div></div>
+</div>
+<p>جزوه همین دو جمله را می‌نویسد: «سرور ۲۱ از ۲۳ واحد زمانی مشغول بود» و «بیشینه‌ی طول صف ۲ بود». توجه کن که مخرج ۲۳ است، نه ۶۰: رویداد $(E,60)$ هرگز اجرا نشد و جدول در ۲۳ قطع شده. اگر افق را ۶۰ می‌گرفتی و داده‌ی بیشتری نداشتی، بهره‌وری مصنوعاً کوچک می‌شد. <b>افق گزارش را همیشه صریح بنویس.</b></p>
+</section>
+
+<!-- ===================================================== 04 -->
+<section id="extended">
+<h2 data-short="نسخه‌ی گسترش‌یافته"><span class="num">04</span> نسخه‌ی گسترش‌یافته: وقتی باید مشتری‌ها را هم مدل کرد <span class="tag core">جزوه</span></h2>
+<p>فرض کن تحلیل‌گر دو معیار تازه می‌خواهد (جزوه ص ۳۳):</p>
+<ul>
+<li>میانگین <b>زمان پاسخ</b> (زمان در سیستم) هر مشتری؛</li>
+<li>نسبت مشتریانی که بیش از ۵ واحد زمانی در سیستم مانده‌اند.</li>
+</ul>
+<p>با مدل قبلی نمی‌شود: عکس لحظه‌ای فقط $LQ$ و $LS$ را دارد و وقتی مشتری‌ای خارج می‌شود هیچ‌کس نمی‌داند کِی آمده بود. پس مدل را گسترش می‌دهیم:</p>
+<div class="cards">
+<div><b>موجودیت‌ها</b>مشتری‌های $C_1, C_2, \dots$ با ویژگی «زمان ورود»: $(C_i,t)$.</div>
+<div><b>اعلان رویداد</b>$(A,t,C_i)$ و $(D,t,C_j)$ — حالا نام مشتری هم هست.</div>
+<div><b>فهرست</b>«صف صندوق» (<span class="ltr">Checkout Line</span>): مشتریان حاضر در سیستم، مرتب بر اساس زمان ورود.</div>
+<div><b>$S$</b>جمع زمان پاسخ همه‌ی مشتریانی که تا الان خارج شده‌اند.</div>
+<div><b>$F$</b>تعداد مشتریانی که $\ge 5$ واحد زمانی در سیستم بوده‌اند.</div>
+<div><b>$N_D$</b>تعداد خروج‌ها تا لحظه‌ی جاری.</div>
+</div>
+<div class="box warn"><div class="bt">⚠ این سه شمارنده فقط در رویداد خروج به‌روز می‌شوند</div>
+زمان پاسخ یک مشتری تازه در لحظه‌ی خروجش معلوم می‌شود: $R_j = t - (\text{زمان ورود } C_j)$. پس در روال خروج: $S \mathrel{+}= R_j$، $N_D \mathrel{+}= 1$، و اگر $R_j \ge 5$ آنگاه $F \mathrel{+}= 1$. در رویداد ورود هیچ‌کدام عوض نمی‌شوند. این «مشتری‌مدار» بودن را با $B$ که «زمان‌مدار» است اشتباه نگیر.
+</div>
+
+<h3>جدول گسترش‌یافته (جزوه ص ۳۴)</h3>
+<p>ساعت‌ها و زمان‌های فعالیت دقیقاً همان‌های بخش قبل‌اند؛ فقط فهرست مشتری و سه شمارنده اضافه شده است. <span class="mono ltr">(C<sub>i</sub>,t)</span> یعنی مشتری $C_i$ که در لحظه‌ی $t$ وارد شده است.</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>ساعت</th><th>$LQ$</th><th>$LS$</th><th>صف صندوق</th><th>FEL (بعد)</th><th>$S$</th><th>$N_D$</th><th>$F$</th><th>رویدادِ این سطر</th></tr>
+<tr><td>0</td><td>0</td><td>1</td><td class="lst">(C1,0)</td><td class="fel">(A,1,C2)(D,4,C1)(E,60)</td><td>0</td><td>0</td><td>0</td><td class="cmt">ورود C1</td></tr>
+<tr><td>1</td><td>1</td><td>1</td><td class="lst">(C1,0)(C2,1)</td><td class="fel">(A,2,C3)(D,4,C1)(E,60)</td><td>0</td><td>0</td><td>0</td><td class="cmt">ورود C2</td></tr>
+<tr><td>2</td><td>2</td><td>1</td><td class="lst">(C1,0)(C2,1)(C3,2)</td><td class="fel">(D,4,C1)(A,8,C4)(E,60)</td><td>0</td><td>0</td><td>0</td><td class="cmt">ورود C3</td></tr>
+<tr class="hl"><td>4</td><td>1</td><td>1</td><td class="lst">(C2,1)(C3,2)</td><td class="fel">(D,6,C2)(A,8,C4)(E,60)</td><td>4</td><td>1</td><td>0</td><td class="cmt">خروج C1: $R=4-0=4$</td></tr>
+<tr class="hl"><td>6</td><td>0</td><td>1</td><td class="lst">(C3,2)</td><td class="fel">(A,8,C4)(D,11,C3)(E,60)</td><td>9</td><td>2</td><td>1</td><td class="cmt">خروج C2: $R=6-1=5\ \ (\ge 5)$</td></tr>
+<tr><td>8</td><td>1</td><td>1</td><td class="lst">(C3,2)(C4,8)</td><td class="fel">(D,11,C3)(A,11,C5)(E,60)</td><td>9</td><td>2</td><td>1</td><td class="cmt">ورود C4</td></tr>
+<tr class="hl"><td>11</td><td>1</td><td>1</td><td class="lst">(C4,8)(C5,11)</td><td class="fel">(D,15,C4)(A,18,C6)(E,60)</td><td>18</td><td>3</td><td>2</td><td class="cmt">خروج C3: $R=11-2=9$؛ سپس ورود C5</td></tr>
+<tr class="hl"><td>15</td><td>0</td><td>1</td><td class="lst">(C5,11)</td><td class="fel">(D,16,C5)(A,18,C6)(E,60)</td><td>25</td><td>4</td><td>3</td><td class="cmt">خروج C4: $R=15-8=7$</td></tr>
+<tr class="zero"><td>16</td><td>0</td><td class="idle">0</td><td class="lst">—</td><td class="fel">(A,18,C6)(E,60)</td><td>30</td><td>5</td><td>4</td><td class="cmt">خروج C5: $R=16-11=5$؛ سرور بیکار</td></tr>
+<tr><td>18</td><td>0</td><td>1</td><td class="lst">(C6,18)</td><td class="fel">(D,23,C6)(A,23,C7)(E,60)</td><td>30</td><td>5</td><td>4</td><td class="cmt">ورود C6</td></tr>
+<tr class="hl"><td>23</td><td>0</td><td>1</td><td class="lst">(C7,23)</td><td class="fel">(A,25,C8)(D,27,C7)(E,60)</td><td>35</td><td>6</td><td>5</td><td class="cmt">خروج C6: $R=23-18=5$؛ سپس ورود C7</td></tr>
+</table></div>
+<p>و نتیجه‌ها دقیقاً همان‌های جزوه:</p>
+$$\overline{\text{زمان پاسخ}}=\frac{S}{N_D}=\frac{35}{6}=5.83,\qquad \widehat{P}(R\ge 5)=\frac{F}{N_D}=\frac{5}{6}=0.83$$
+
+<div class="box mistake"><div class="bt">❌ خطای چاپی سوم (ص ۳۴، سطر ساعت ۱۵)</div>
+در جزوه FEL این سطر <span class="ltr mono">(D,16,C4)(A,18,C6)(E,60)</span> نوشته شده. ولی C4 <b>همین الان</b> در لحظه‌ی ۱۵ خارج شده است؛ خروج بعدی مال C5 است که تازه به خدمت رفته. درستش <span class="ltr mono">(D,16,<b>C5</b>)</span> است — و خودِ سطر بعدی ($S$ از ۲۵ به ۳۰ با $R=16-11=5$) همین را تأیید می‌کند، چون ۱۱ زمان ورود C5 است. در جدول بالا تصحیح شده.
+</div>
+<div class="box think"><div class="bt">🧠 چرا ۵ از ۶ مشتری بیش از ۵ واحد ماندند؟</div>
+چون سیستم پرباری است: میانگین خدمت در این نمونه $\bar s = 25/7 \approx 3.57$ و میانگین بین‌ورود $\bar a = 25/7 \approx 3.57$، یعنی شدت بار $\rho \approx 1$. در بار نزدیک به یک، صف به‌راحتی تشکیل می‌شود و زمان پاسخ به‌شدت از زمان خدمت بزرگ‌تر می‌شود. این یک «حس عددی» است که باید در فصل ۱۱ به آن برگردی، نه نتیجه‌گیری آماری از ۶ مشتری.
+</div>
+</section>
+
+<!-- ===================================================== 05 -->
+<section id="integral">
+<h2 data-short="آمار زمان‌مدار"><span class="num">05</span> آمار زمان‌مدار: چرا انتگرال و نه میانگین ساده <span class="tag exam">امتحانی</span></h2>
+<p>در جدول شبیه‌سازی دو نوع کاملاً متفاوت آمار داریم و قاطی کردنشان رایج‌ترین خطای این فصل است.</p>
+<div class="vs">
+<div><h4>زمان‌مدار (<span class="ltr">time-average</span>)</h4>
+$\bar L$، $\bar L_Q$، بهره‌وری. مخرج <b>طول زمان</b> است. هر مقدار باید به اندازه‌ی <b>مدتی که دوام آورده</b> وزن بگیرد.</div>
+<div><h4>مشتری‌مدار (<span class="ltr">customer-average</span>)</h4>
+$\bar w$، $\bar w_Q$، نسبت $R\ge 5$. مخرج <b>تعداد مشتری</b> است. هر مشتری یک رأی دارد، صرف‌نظر از این‌که چقدر مانده.</div>
+</div>
+<div class="box thm"><div class="bt">تعریف ۷.۳ · میانگین زمانی به‌صورت سطح زیر منحنی</div>
+اگر $L(t)$ تعداد در سیستم در لحظه‌ی $t$ باشد، میانگین زمانی روی بازه‌ی $[0,T]$ این است:
+$$\bar L=\frac{1}{T}\int_0^T L(t)\,dt$$
+$L(t)$ تابعی <b>پله‌ای</b> است و فقط در لحظه‌های رویداد می‌پرد. پس اگر رویدادها در $t_0=0<t_1<\dots<t_m=T$ باشند و $L_k$ مقدار $L$ روی بازه‌ی $[t_k,t_{k+1})$ باشد:
+$$\int_0^T L(t)\,dt=\sum_{k=0}^{m-1} L_k\,(t_{k+1}-t_k)$$
+همین فرمول با $LQ$ به‌جای $L$، $\bar L_Q$ را می‌دهد و با $LS$ (که فقط ۰ یا ۱ است) <b>دقیقاً</b> بهره‌وری سرور را:
+$$\rho=\frac{1}{T}\int_0^T LS(t)\,dt=\frac{B}{T}$$
+<span class="qed">∎</span>
+</div>
+<div class="box mistake"><div class="bt">❌ چرا میانگین ساده‌ی ستون غلط است</div>
+سطرهای جدول در لحظه‌های <b>رویداد</b> نوشته می‌شوند و فاصله‌ی زمانی‌شان برابر نیست. در جدول تک‌سرور بالا، حالت $LQ=2$ فقط ۲ واحد دوام آورد ($2 \to 4$) ولی حالت $LQ=0$ بین ۱۸ تا ۲۳ پنج واحد. میانگین ساده‌ی ستون به هر دو وزن یکسان می‌دهد. بدتر از آن: در جدول‌های با رویداد هم‌زمان، سطرهایی وجود دارند که <b>مدت صفر</b> دارند (دو سطر با ساعت ۱۰ در مثال کامیون) — میانگین ساده به حالتی که اصلاً زمانی طول نکشیده هم رأی می‌دهد.
+</div>
+
+<h3>روی همین مثال تک‌سرور</h3>
+<p>از ستون‌های $LQ$ و $LS$ جدول بخش ۰۳، تابع $L(t)=LQ(t)+LS(t)$ را بساز:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>بازه</th><td>[0,1)</td><td>[1,2)</td><td>[2,4)</td><td>[4,6)</td><td>[6,8)</td><td>[8,11)</td><td>[11,15)</td><td>[15,16)</td><td>[16,18)</td><td>[18,23)</td><th>جمع</th></tr>
+<tr><th>مدت</th><td>1</td><td>1</td><td>2</td><td>2</td><td>2</td><td>3</td><td>4</td><td>1</td><td>2</td><td>5</td><td>23</td></tr>
+<tr><th>$LQ$</th><td>0</td><td>1</td><td>2</td><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td></td></tr>
+<tr><th>$LS$</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td class="idle">0</td><td>1</td><td></td></tr>
+<tr class="sum"><th>$LQ\times$مدت</th><td>0</td><td>1</td><td>4</td><td>2</td><td>0</td><td>3</td><td>4</td><td>0</td><td>0</td><td>0</td><td>14</td></tr>
+<tr class="sum"><th>$L\times$مدت</th><td>1</td><td>2</td><td>6</td><td>4</td><td>2</td><td>6</td><td>8</td><td>1</td><td>0</td><td>5</td><td>35</td></tr>
+</table></div>
+<div class="stats">
+  <div><div class="l">میانگین تعداد در سیستم</div><div class="v">1.522</div><div class="f">35 / 23</div></div>
+  <div><div class="l">میانگین طول صف</div><div class="v">0.609</div><div class="f">14 / 23</div></div>
+  <div><div class="l">بهره‌وری سرور</div><div class="v">0.913</div><div class="f">21 / 23</div></div>
+  <div><div class="l">میانگین زمان در سیستم</div><div class="v">5.833</div><div class="f">35 / 6 (مشتری‌مدار)</div></div>
+  <div><div class="l">میانگین انتظار در صف</div><div class="v">2.333</div><div class="f">14 / 6 (مشتری‌مدار)</div></div>
+  <div><div class="l">میانگین ساده‌ی ستون LQ</div><div class="v">0.545</div><div class="f">غلط: 6 / 11 سطر</div></div>
+</div>
+
+<div class="box tip"><div class="bt">💡 یک تساوی که آزمون صحت رایگان می‌دهد</div>
+<p>دقت کن: $\int_0^{23} L(t)\,dt = 35$ و از طرف دیگر جمع زمان پاسخ شش مشتری خارج‌شده در جدول گسترش‌یافته هم $S=35$ بود. تصادفی نیست:</p>
+$$\int_0^T L(t)\,dt=\sum_{\text{مشتریان}} (\text{مدت حضورشان در }[0,T])$$
+<p>چون هر مشتری در هر لحظه‌ای که داخل سیستم است، دقیقاً یک واحد به ارتفاع $L(t)$ اضافه می‌کند. در لحظه‌ی ۲۳ تنها مشتری داخل سیستم C7 است که تازه رسیده و سهمش صفر است، پس مساحت دقیقاً با جمع زمان پاسخ‌های کامل برابر می‌شود. همین برای صف: $\int LQ\,dt=14$ و جمع انتظارهای شش مشتری $0+3+4+3+4+0=14$.</p>
+<p>نتیجه‌ی عملی: <b>همیشه این دو را جداگانه حساب کن و با هم مقایسه کن.</b> اگر نخواندند، یک جای جدولت اشتباه است. همین تساوی، صورت نمونه‌ای رابطه‌ی لیتل است: تقسیم هر دو طرف بر $T$ و بعد بر $n$ می‌دهد $\bar L=\lambda\,\bar w$ با $\lambda=n/T$. اینجا: $\lambda=6/23$ و $\bar w=35/6$، پس $\lambda\bar w=35/23=1.522=\bar L$. ✓</p>
+</div>
+<div class="box warn"><div class="bt">⚠ در برنامه چطور پیاده می‌شود</div>
+نیازی به نگه داشتن کل تاریخچه نیست — فقط دو متغیر: مقدار فعلی و زمان آخرین تغییر.
+<pre class="code">
+# در ابتدای هر رویداد، *قبل* از عوض کردن حالت:
+area_L  += (LQ + LS) * (t - last_t)
+area_LQ += LQ        * (t - last_t)
+B       += LS        * (t - last_t)
+last_t   = t
+# ... حالا حالت را عوض کن ...
+</pre>
+همین الگو در اکسل هم می‌شود یک ستون «مدت» ($t_{k+1}-t_k$) و یک ستون حاصل‌ضرب، و بعد <span class="ltr mono">SUM</span> تقسیم بر $T$.
+</div>
+</section>
+
+<!-- ===================================================== 06 -->
+<section id="dumptruck">
+<h2 data-short="مثال ۲ · کامیون‌ها"><span class="num">06</span> مثال ۲ · کامیون‌های تخلیه <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>شش کامیون تخلیه، زغال‌سنگ را از دهانه‌ی یک معدن کوچک به راه‌آهن می‌برند (جزوه ص ۳۵ تا ۳۸):</p>
+<div class="flow"><span>صف بارکن</span><i>→</i><span>۲ بارکن (موازی)</span><i>→</i><span>صف باسکول</span><i>→</i><span>۱ باسکول</span><i>→</i><span>سفر، تخلیه و بازگشت</span><i>↺ برگشت به صف بارکن</i></div>
+<ul>
+<li>هر کامیون را یکی از <b>دو بارکن</b> پر می‌کند. بعد از بارگیری فوراً به باسکول می‌رود تا وزن شود (زمان رفتن از بارکن تا باسکول ناچیز است).</li>
+<li>هم بارکن و هم باسکول صف <b>FCFS</b> دارند. باسکول فقط یکی است.</li>
+<li>بعد از وزن شدن، کامیون سفر می‌کند، زغال را تخلیه می‌کند و به صف بارکن برمی‌گردد.</li>
+<li><b>هدف مطالعه:</b> تخمین بهره‌وری بارکن‌ها و باسکول.</li>
+</ul>
+<div class="box note"><div class="bt">📎 این یک سیستم <b>بسته</b> است</div>
+برخلاف صف تک‌سرور، اینجا «جمعیت فراخوان» بی‌نهایت نیست: همیشه دقیقاً ۶ کامیون در گردش‌اند. ورود به صف بارکن یک رویداد <span class="ltr">ALQ</span> است که از <b>داخل</b> سیستم می‌آید (پایان سفر)، نه از بیرون. نتیجه‌ی مهم: نرخ ورود ثابت نیست — هرچه صف‌ها بلندتر شوند، کامیون کمتری در جاده است و نرخ بازگشت کمتر می‌شود. این سیستم خودش را تنظیم می‌کند و هیچ‌وقت منفجر نمی‌شود.
+</div>
+
+<h3>مدل</h3>
+<div class="cards">
+<div><b>حالت سیستم</b>$[\,LQ(t),\,L(t),\,WQ(t),\,W(t)\,]$</div>
+<div><b>$LQ(t)$</b>تعداد کامیون در صف بارکن، $\in\{0,1,2,\dots\}$</div>
+<div><b>$L(t)$</b>تعداد در حال بارگیری، $\in\{0,1,2\}$</div>
+<div><b>$WQ(t)$</b>تعداد در صف باسکول، $\in\{0,1,2,\dots\}$</div>
+<div><b>$W(t)$</b>تعداد در حال وزن شدن، $\in\{0,1\}$</div>
+<div><b>موجودیت‌ها</b>شش کامیون <span class="ltr">DT1 … DT6</span> — این بار <b>صریحاً</b> مدل می‌شوند، چون باید بدانی کدام کامیون کجاست.</div>
+</div>
+<div class="tablewrap"><table class="wtab">
+<tr><th>اعلان رویداد</th><th>معنی</th></tr>
+<tr><td><span class="ltr">(ALQ, t, DTi)</span></td><td>کامیون $i$ در لحظه‌ی $t$ به صف بارکن می‌رسد (پایان سفر)</td></tr>
+<tr><td><span class="ltr">(EL, t, DTi)</span></td><td>کامیون $i$ در لحظه‌ی $t$ بارگیری‌اش تمام می‌شود</td></tr>
+<tr><td><span class="ltr">(EW, t, DTi)</span></td><td>کامیون $i$ در لحظه‌ی $t$ وزن شدنش تمام می‌شود</td></tr>
+</table></div>
+<p><b>فعالیت‌ها:</b> بارگیری، وزن کردن، سفر. <b>تأخیرها:</b> انتظار در صف بارکن و انتظار پشت باسکول.</p>
+
+<h3>توزیع‌ها و داده‌ی این اجرا</h3>
+<div class="two">
+<div class="tablewrap"><table>
+<tr><th colspan="3">زمان بارگیری</th></tr>
+<tr><th>زمان</th><th>احتمال</th><th>تجمعی</th></tr>
+<tr><td>5</td><td>0.30</td><td>0.30</td></tr>
+<tr><td>10</td><td>0.50</td><td>0.80</td></tr>
+<tr><td>15</td><td>0.20</td><td>1.00</td></tr>
+<tr><th colspan="3">زمان وزن کردن</th></tr>
+<tr><td>12</td><td>0.70</td><td>0.70</td></tr>
+<tr><td>16</td><td>0.30</td><td>1.00</td></tr>
+</table></div>
+<div class="tablewrap"><table>
+<tr><th colspan="3">زمان سفر</th></tr>
+<tr><th>زمان</th><th>احتمال</th><th>تجمعی</th></tr>
+<tr><td>40</td><td>0.40</td><td>0.40</td></tr>
+<tr><td>60</td><td>0.30</td><td>0.70</td></tr>
+<tr><td>80</td><td>0.20</td><td>0.90</td></tr>
+<tr><td>100</td><td>0.10</td><td>1.00</td></tr>
+</table></div>
+</div>
+<p>برای این اجرای دستی، مقادیر فعالیت از پیش داده شده‌اند و <b>به ترتیب</b> مصرف می‌شوند:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>بارگیری</th><td>10</td><td>5</td><td>5</td><td>10</td><td>15</td><td>10</td><td>10</td></tr>
+<tr><th>وزن کردن</th><td>12</td><td>12</td><td>12</td><td>16</td><td>12</td><td>16</td><td class="z">—</td></tr>
+<tr><th>سفر</th><td>60</td><td>100</td><td>40</td><td>40</td><td>80</td><td class="z">—</td><td class="z">—</td></tr>
+</table></div>
+<p><b>شرط اولیه (ص ۳۸):</b> در لحظه‌ی صفر، پنج کامیون نزد بارکن‌ها و یکی روی باسکول‌اند. یعنی <span class="ltr">DT2</span> و <span class="ltr">DT3</span> در حال بارگیری، <span class="ltr">DT4, DT5, DT6</span> در صف بارکن، و <span class="ltr">DT1</span> روی باسکول.</p>
+<p><b>شمارنده‌ها:</b> $BL$ جمع زمان مشغولی <b>هر دو</b> بارکن (یعنی $\int L\,dt$) و $BS$ زمان مشغولی باسکول (یعنی $\int W\,dt$).</p>
+<div class="box warn"><div class="bt">⚠ $BL$ «زمان‌–بارکن» است، نه «زمان»</div>
+وقتی هر دو بارکن مشغول‌اند، $BL$ در هر واحد زمان <b>۲ واحد</b> رشد می‌کند. ببین: بین ۰ و ۵ هر دو مشغول‌اند و $BL$ از ۰ به ۱۰ می‌رود، نه ۵. به همین دلیل در انتها باید بر ۲ تقسیم کنی تا «بهره‌وری یک بارکن» دربیاید.
+</div>
+
+<h3>جدول کامل تا لحظه‌ی ۷۶</h3>
+<p>جزوه جدول را در ساعت ۲۴ قطع می‌کند (چون اسلاید جا نداشت). ادامه‌اش را از Banks (جدول ۶ فصل ۳) اضافه کرده‌ایم تا اجرا تمام شود و بهره‌وری‌ها قابل محاسبه باشد — دقیقاً با همان داده‌ی فعالیت بالا، که تا لحظه‌ی ۷۶ تمام می‌شود.</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>ساعت</th><th>رویداد</th><th>$LQ$</th><th>$L$</th><th>$WQ$</th><th>$W$</th><th>صف بارکن</th><th>صف باسکول</th><th>FEL (بعد از رویداد)</th><th>$BL$</th><th>$BS$</th></tr>
+<tr class="hl"><td>0</td><td class="ev">شرط اولیه</td><td>3</td><td>2</td><td>0</td><td>1</td><td class="lst">DT4, DT5, DT6</td><td class="lst">—</td><td class="fel">(EL,5,DT3) (EL,10,DT2) (EW,12,DT1)</td><td>0</td><td>0</td></tr>
+<tr><td>5</td><td class="ev">EL · DT3</td><td>2</td><td>2</td><td>1</td><td>1</td><td class="lst">DT5, DT6</td><td class="lst">DT3</td><td class="fel">(EL,10,DT2) (EL,5+5,DT4) (EW,12,DT1)</td><td>10</td><td>5</td></tr>
+<tr><td>10</td><td class="ev">EL · DT2</td><td>1</td><td>2</td><td>2</td><td>1</td><td class="lst">DT6</td><td class="lst">DT3, DT2</td><td class="fel">(EL,10,DT4) (EW,12,DT1) (EL,10+10,DT5)</td><td>20</td><td>10</td></tr>
+<tr class="zero"><td>10</td><td class="ev">EL · DT4</td><td>0</td><td>2</td><td>3</td><td>1</td><td class="lst">—</td><td class="lst">DT3, DT2, DT4</td><td class="fel">(EW,12,DT1) (EL,20,DT5) (EL,10+15,DT6)</td><td>20</td><td>10</td></tr>
+<tr><td>12</td><td class="ev">EW · DT1</td><td>0</td><td>2</td><td>2</td><td>1</td><td class="lst">—</td><td class="lst">DT2, DT4</td><td class="fel">(EL,20,DT5) (EW,12+12,DT3) (EL,25,DT6) (ALQ,12+60,DT1)</td><td>24</td><td>12</td></tr>
+<tr><td>20</td><td class="ev">EL · DT5</td><td>0</td><td>1</td><td>3</td><td>1</td><td class="lst">—</td><td class="lst">DT2, DT4, DT5</td><td class="fel">(EW,24,DT3) (EL,25,DT6) (ALQ,72,DT1)</td><td>40</td><td>20</td></tr>
+<tr><td>24</td><td class="ev">EW · DT3</td><td>0</td><td>1</td><td>2</td><td>1</td><td class="lst">—</td><td class="lst">DT4, DT5</td><td class="fel">(EL,25,DT6) (EW,24+12,DT2) (ALQ,72,DT1) (ALQ,24+100,DT3)</td><td>44</td><td>24</td></tr>
+<tr class="hl"><td>25</td><td class="ev">EL · DT6</td><td>0</td><td class="idle">0</td><td>3</td><td>1</td><td class="lst">—</td><td class="lst">DT4, DT5, DT6</td><td class="fel">(EW,36,DT2) (ALQ,72,DT1) (ALQ,124,DT3)</td><td>45</td><td>25</td></tr>
+<tr><td>36</td><td class="ev">EW · DT2</td><td>0</td><td class="idle">0</td><td>2</td><td>1</td><td class="lst">—</td><td class="lst">DT5, DT6</td><td class="fel">(EW,36+16,DT4) (ALQ,72,DT1) (ALQ,36+40,DT2) (ALQ,124,DT3)</td><td>45</td><td>36</td></tr>
+<tr><td>52</td><td class="ev">EW · DT4</td><td>0</td><td class="idle">0</td><td>1</td><td>1</td><td class="lst">—</td><td class="lst">DT6</td><td class="fel">(EW,52+12,DT5) (ALQ,72,DT1) (ALQ,76,DT2) (ALQ,52+40,DT4) (ALQ,124,DT3)</td><td>45</td><td>52</td></tr>
+<tr><td>64</td><td class="ev">EW · DT5</td><td>0</td><td class="idle">0</td><td>0</td><td>1</td><td class="lst">—</td><td class="lst">—</td><td class="fel">(ALQ,72,DT1) (ALQ,76,DT2) (EW,64+16,DT6) (ALQ,92,DT4) (ALQ,124,DT3) (ALQ,64+80,DT5)</td><td>45</td><td>64</td></tr>
+<tr><td>72</td><td class="ev">ALQ · DT1</td><td>0</td><td>1</td><td>0</td><td>1</td><td class="lst">—</td><td class="lst">—</td><td class="fel">(ALQ,76,DT2) (EW,80,DT6) (EL,72+10,DT1) (ALQ,92,DT4) (ALQ,124,DT3) (ALQ,144,DT5)</td><td>45</td><td>72</td></tr>
+<tr class="hl"><td>76</td><td class="ev">ALQ · DT2</td><td>0</td><td>2</td><td>0</td><td>1</td><td class="lst">—</td><td class="lst">—</td><td class="fel">(EW,80,DT6) (EL,82,DT1) (EL,76+10,DT2) (ALQ,92,DT4) (ALQ,124,DT3) (ALQ,144,DT5)</td><td>49</td><td>76</td></tr>
+</table></div>
+<div class="legend"><span>سطر خاکستری: دو رویداد هم‌زمان در ساعت ۱۰؛ سطر اول مدت صفر دارد</span><span>سلول آبی: بارکن بیکار</span></div>
+
+<div class="box tip"><div class="bt">💡 سه چیزی که این جدول یادت می‌دهد</div>
+<p><b>۱. دو رویداد هم‌زمان ⟵ دو سطر.</b> در ساعت ۱۰ هم <span class="ltr mono">(EL,10,DT2)</span> و هم <span class="ltr mono">(EL,10,DT4)</span> سررسید دارند. جزوه آن‌ها را جدا پردازش می‌کند، پس سطر اول ساعت ۱۰ <b>مدت صفر</b> دارد و در هیچ انتگرالی سهم نمی‌گیرد. در $BL$ و $BS$ هم تغییری نمی‌بینی.</p>
+<p><b>۲. بیکار شدن بدون خروج.</b> در ساعت ۲۰، $L$ از ۲ به ۱ می‌افتد چون <span class="ltr">DT5</span> بارگیری‌اش تمام شد و <b>صف بارکن خالی بود</b>؛ یک بارکن بیکار ماند. در ۲۵ بارکن دوم هم بیکار می‌شود و از ۲۵ تا ۷۲ هیچ بارگیری‌ای انجام نمی‌شود — به همین دلیل $BL$ بین ۲۵ و ۷۲ ثابت روی ۴۵ می‌ماند.</p>
+<p><b>۳. آزمون بقای کامیون.</b> در هر سطر باید $LQ+L+WQ+W+(\text{تعداد در سفر})=6$ باشد. در ساعت ۶۴: $0+0+0+1=1$ داخل سیستم و پنج کامیون در جاده (DT1, DT2, DT3, DT4, DT5) ⟵ جمع ۶ ✓. این ارزان‌ترین آزمون صحت برای یک مدل بسته است.</p>
+</div>
+
+<h3>بهره‌وری‌ها</h3>
+<p>در لحظه‌ی ۷۶ داریم $BL=49$ و $BS=76$. با افق $T=76$:</p>
+$$\bar\rho_{\text{بارکن}}=\frac{BL/2}{T}=\frac{49/2}{76}=\frac{24.5}{76}=0.32,\qquad \bar\rho_{\text{باسکول}}=\frac{BS}{T}=\frac{76}{76}=1.00$$
+<div class="stats">
+  <div><div class="l">میانگین بارکن مشغول</div><div class="v">0.645</div><div class="f">∫L dt / T = 49/76</div></div>
+  <div><div class="l">بهره‌وری یک بارکن</div><div class="v">0.32</div><div class="f">0.645 / 2</div></div>
+  <div><div class="l">بهره‌وری باسکول</div><div class="v">1.00</div><div class="f">76/76 — هیچ‌وقت بیکار نشد</div></div>
+  <div><div class="l">میانگین صف بارکن</div><div class="v">0.329</div><div class="f">∫LQ dt / T = 25/76</div></div>
+  <div><div class="l">میانگین صف باسکول</div><div class="v">1.553</div><div class="f">∫WQ dt / T = 118/76</div></div>
+  <div><div class="l">میانگین کامیون در جاده</div><div class="v">2.47</div><div class="f">6 − (0.645+0.329+1.553+1)</div></div>
+</div>
+
+<h3>چرا انتگرال زمانی، و نه میانگین ساده‌ی ستون‌ها</h3>
+<p>این جدول نمونه‌ی درسی خوبی است، چون فاصله‌ی سطرها به‌شدت نابرابر است: بین ۰ و ۵ پنج واحد، بین ۱۰ و ۱۰ <b>صفر</b> واحد، بین ۲۵ و ۳۶ یازده واحد. حساب کنیم:</p>
+<div class="tablewrap"><table class="wtab">
+<tr><th></th><th>مدت‌ها (طول بازه‌ها)</th><th>انتگرال زمانی (درست)</th><th>میانگین ساده‌ی ۱۳ سطر (غلط)</th><th>خطا</th></tr>
+<tr><td>$L$ (بارکن مشغول)</td><td>5, 5, 0, 2, 8, 4, 1, 11, 16, 12, 8, 4</td><td>49 / 76 = 0.645</td><td>15 / 13 = 1.154</td><td>+۷۹٪</td></tr>
+<tr><td>$LQ$ (صف بارکن)</td><td>همان</td><td>25 / 76 = 0.329</td><td>6 / 13 = 0.462</td><td>+۴۰٪</td></tr>
+<tr><td>بهره‌وری بارکن</td><td>—</td><td>0.645 / 2 = 0.32</td><td>1.154 / 2 = 0.58</td><td>تقریباً دو برابر</td></tr>
+</table></div>
+<p>سه دلیلِ دقیق:</p>
+<ol class="steps">
+<li><b>سطرها هم‌فاصله نیستند.</b> حالت $L=2$ فقط در بازه‌های کوتاه اول ($0\to 20$، جمعاً ۲۰ واحد) برقرار بود، ولی $L=0$ از ۲۵ تا ۷۲ یعنی ۴۷ واحد دوام آورد. میانگین ساده به اولی ۵ رأی می‌دهد و به دومی ۴. انتگرال به دومی وزن ۴۷ می‌دهد.</li>
+<li><b>سطر با مدت صفر.</b> سطر اول ساعت ۱۰ اصلاً «زمانی» را نمایندگی نمی‌کند؛ فقط یک حالت گذرا بین دو رویداد هم‌زمان است. در انتگرال ضریبش صفر است، در میانگین ساده یک‌سیزدهم وزن می‌گیرد.</li>
+<li><b>تعریف خودِ کمیت.</b> «بهره‌وری» یعنی <b>کسری از زمان</b> که منبع مشغول است. مخرجش ذاتاً زمان است، نه تعداد سطر. همان‌طور که سرعت متوسط سفر را با میانگین سرعت‌های ثبت‌شده در لحظه‌های دلخواه حساب نمی‌کنی، بلکه مسافت را بر زمان تقسیم می‌کنی.</li>
+</ol>
+<div class="box think"><div class="bt">🧠 معنی عددها برای مدیر معدن</div>
+باسکول ۱۰۰٪ مشغول است و به‌طور میانگین ۱٫۵۵ کامیون پشتش منتظر است، در حالی که هر بارکن فقط ۳۲٪ کار می‌کند. <b>گلوگاه باسکول است.</b> ولی مواظب باش: ۷۶ دقیقه با شرط اولیه‌ی خیلی خاص (۵ کامیون از ۶ تا نزد بارکن‌ها) اصلاً تخمین حالت پایدار نیست. Banks صریح می‌گوید این عددها را نمی‌شود تخمین دقیق بهره‌وری بلندمدت دانست؛ یا باید اجرا را خیلی طولانی‌تر کرد، یا اگر به <b>رفتار گذرای</b> یکی‌دو ساعت اول علاقه داری، این یک نمونه از آن رفتار است و برای نمونه‌های بیشتر باید همین اجرا را با جریان‌های تصادفی متفاوت تکرار کنی.
+</div>
+<div class="box mistake"><div class="bt">❌ خطای چاپی چهارم (ص ۳۸)</div>
+زمان‌های سفر در اسلاید «<span class="ltr mono">60, 100, 40, 40 80</span>» نوشته شده‌اند — ویرگول بین ۴۰ و ۸۰ جا افتاده. درستش پنج مقدار است: <span class="ltr mono">60, 100, 40, 40, 80</span>، که دقیقاً پنج سفرِ رخ‌داده تا لحظه‌ی ۷۶ را پوشش می‌دهد.
+</div>
+<div class="box note"><div class="bt">📎 نکته‌ای که Banks اضافه می‌کند <span class="tag book">کتاب</span></div>
+اگر فقط بهره‌وری می‌خواستی، لازم نبود کامیون‌ها را صریح مدل کنی؛ اعلان‌ها می‌توانستند <span class="ltr mono">(EL, t)</span> باشند و فقط <b>تعداد</b> کامیون‌ها در هر بخش را نگه می‌داشتی. ولی اگر میانگین «زمان در سیستم» یا نسبت کامیون‌هایی که بیش از ۳۰ دقیقه در سیستم‌اند را بخواهی، موجودیت $DT_i$ با ویژگی «زمان رسیدن به صف بارکن» ضروری است. <b>پیچیدگی مدل تابع معیاری است که می‌خواهی اندازه بگیری</b> — همان حرف جلسه‌ی ۳.
+</div>
+</section>
+
+<!-- ===================================================== 07 -->
+<section id="bench">
+<h2 data-short="میز کار"><span class="num">07</span> میز کار شبیه‌سازی دستی <span class="tag extra">ابزار</span></h2>
+<p>بهترین راه یاد گرفتن این فصل، پر کردن ده‌ها جدول است — ولی غلط‌گیری دستی‌شان وقت‌کُش است. این ابزار همان کاری را می‌کند که تو روی کاغذ می‌کنی: رویداد به رویداد جلو می‌رود، FEL قبل و بعد را می‌نویسد، و در انتها انتگرال‌های زمانی و میانگین‌های مشتری‌مدار را می‌دهد.</p>
+<p><b>چطور استفاده کن:</b> اول مثال جزوه را بزن و سطرها را با جدول بخش ۰۳ مقایسه کن. بعد رشته‌ها را دست‌کاری کن و ببین کجا سرور بیکار می‌شود. آخر هم یک مسئله را روی کاغذ حل کن و <b>بعد</b> با ابزار چک کن — نه برعکس.</p>
+<div id="w-bench"></div>
+<div class="box warn"><div class="bt">⚠ تفاوت کوچک با جدول جزوه</div>
+وقتی یک ورود و یک خروج هم‌زمان‌اند، جزوه هر دو را در <b>یک</b> سطر می‌نویسد؛ ابزار دو سطر جدا می‌سازد (اول خروج، بعد ورود) که سطر اول مدت صفر دارد. حالت نهایی و همه‌ی آمارها یکی است. دو سطری بودن برای این است که ببینی موتور دقیقاً چه کار می‌کند.
+</div>
+</section>
+
+<!-- ===================================================== 08 -->
+<section id="python">
+<h2 data-short="پیاده‌سازی پایتون"><span class="num">08</span> همین الگوریتم در پایتون <span class="tag extra">افزوده</span></h2>
+<p>جدول دستی و برنامه دو نمایش از یک چیزند. این برنامه‌ی کوتاه دقیقاً جدول بخش ۰۳ را بازتولید می‌کند. FEL با <span class="ltr mono">heapq</span> (پشته‌ی کمینه) پیاده شده و قرارداد «اول خروج، بعد ورود» با یک کلید اولویت در تاپل اعمال می‌شود.</p>
+<pre class="code">
+import heapq
+
+IA = [1, 1, 6, 3, 7, 5, 2]   # a*: gap between arrival k and k+1
+SV = [4, 2, 5, 4, 1, 5, 4]   # s*: service time of customer k
+STOP = 60                    # the (E, 60) stopping event
+
+# priority inside one clock instant: D before A before E
+PRIO = {"D": 0, "A": 1, "E": 2}
+
+def run(IA, SV, stop):
+    n = min(len(IA) + 1, len(SV))
+    arrive = [0.0]
+    for a in IA[:n - 1]:
+        arrive.append(arrive[-1] + a)
+
+    fel = [(t, PRIO["A"], "A", i) for i, t in enumerate(arrive)]
+    fel.append((stop, PRIO["E"], "E", -1))
+    heapq.heapify(fel)
+
+    LQ = LS = 0
+    queue, rows = [], []
+    clock = last = 0.0
+    B = area_L = area_Q = 0.0
+    MQ = 0
+    S = F = ND = 0.0                       # customer-based counters
+
+    while fel:
+        t, _, kind, c = heapq.heappop(fel)
+        # 1) close the integral of the interval that just ended
+        B      += LS * (t - last)
+        area_L += (LQ + LS) * (t - last)
+        area_Q += LQ * (t - last)
+        last = clock = t                   # 2) advance the clock
+
+        if kind == "E":
+            rows.append((clock, "E", LQ, LS, B))
+            break
+        if kind == "A":                    # 3) arrival routine
+            if LS == 0:
+                LS = 1
+                heapq.heappush(fel, (clock + SV[c], PRIO["D"], "D", c))
+            else:
+                queue.append(c)
+                LQ += 1
+                MQ = max(MQ, LQ)
+        else:                              # 4) departure routine
+            R = clock - arrive[c]          # response time of this customer
+            S += R; ND += 1; F += (R &gt;= 5)
+            LS = 0
+            if queue:
+                j = queue.pop(0)
+                LQ -= 1
+                LS = 1
+                heapq.heappush(fel, (clock + SV[j], PRIO["D"], "D", j))
+        rows.append((clock, kind + "-C%d" % (c + 1), LQ, LS, B))
+
+    T = clock
+    return rows, dict(T=T, B=B, rho=B / T, L=area_L / T, LQ=area_Q / T,
+                      MQ=MQ, w=S / ND, p5=F / ND, area_L=area_L, area_Q=area_Q)
+
+rows, st = run(IA, SV, STOP)
+for r in rows:
+    print("%6.1f  %-6s LQ=%d LS=%d  B=%5.1f" % r)
+print(st)
+
+# a cheap self-check: the area under L(t) must equal the sum of response times
+# (true when every customer that entered has also left by time T)
+</pre>
+<p>خروجی ردیف‌به‌ردیف این برنامه عیناً ساعت‌ها و حالت‌های جدول بخش ۰۳ است — با این تفاوت که رویدادهای هم‌زمان (ساعت ۱۱ و ۲۳) دو سطر جدا می‌گیرند، چون موتور آن‌ها را یکی‌یکی از FEL برمی‌دارد. شمارنده‌ی $B$ هم همان اعداد ستون $B$ جزوه را می‌دهد. حالا به آمار نهایی نگاه کن؛ برنامه را با سه افق مختلف ببند:</p>
+<div class="tablewrap"><table class="wtab">
+<tr><th>افق گزارش</th><th>$B$</th><th>بهره‌وری</th><th>$\bar L$</th><th>$\bar L_Q$</th><th>$\bar w$ (زمان پاسخ)</th></tr>
+<tr><td>تا ساعت ۲۳ (جدول جزوه)</td><td>21</td><td>21/23 = 0.913</td><td>35/23 = 1.522</td><td>14/23 = 0.609</td><td>35/6 = 5.833</td></tr>
+<tr><td>تا خروج آخرین مشتری (۲۷)</td><td>25</td><td>25/27 = 0.926</td><td>39/27 = 1.444</td><td>14/27 = 0.519</td><td>39/7 = 5.571</td></tr>
+<tr><td>تا رویداد پایان (۶۰)</td><td>25</td><td>25/60 = 0.417</td><td>39/60 = 0.650</td><td>14/60 = 0.233</td><td>39/7 = 5.571</td></tr>
+</table></div>
+<p>سه سطر، سه عدد کاملاً متفاوت برای «بهره‌وری سرور» — با یک داده‌ی یکسان. تفاوت فقط در <b>افق</b> است. سطر آخر نشان می‌دهد اگر رویداد پایان را در ۶۰ بگذاری ولی بعد از ۲۷ هیچ ورودی نداشته باشی، ۳۳ واحد بیکاری کامل وارد مخرج می‌شود. این تله در تمرین‌ها و امتحان زیاد دیده می‌شود: <b>افق را مطابق تعریف معیار انتخاب کن و بنویسش.</b></p>
+<div class="box note"><div class="bt">📎 دو جزئیات پیاده‌سازی که ارزش دانستن دارند</div>
+<p><b>۱. چرا همه‌ی ورودها را از اول روی FEL گذاشتیم؟</b> چون در این مسئله دنباله‌ی $a^*$ از پیش داده شده است (و تمرین ۳ سؤال ۲ هم همین را می‌خواهد). در حالت عمومی، روال ورود خودش ورود بعدی را زمان‌بندی می‌کند: داخل شاخه‌ی <span class="ltr mono">kind == "A"</span> یک خط <span class="ltr mono">heapq.heappush(fel, (clock + next_gap(), 1, "A", c+1))</span> اضافه کن. دو روش برای همین داده نتیجه‌ی یکسان می‌دهند، ولی روش دوم حافظه‌ی $O(1)$ برای ورودها می‌خواهد.</p>
+<p><b>۲. چرا تاپل با کلید اولویت؟</b> <span class="ltr mono">heapq</span> تاپل‌ها را واژه‌نامه‌ای مقایسه می‌کند. با قرار دادن عدد اولویت در جای دوم، در هر لحظه‌ی زمانی یکسان، $D$ قبل از $A$ و $A$ قبل از $E$ بیرون می‌آید — دقیقاً قرارداد جزوه، بدون یک خط <span class="ltr mono">if</span> اضافه.</p>
+</div>
+</section>
+
+<!-- ===================================================== 09 -->
+<section id="exam">
+<h2 data-short="مسئله‌ی امتحانی"><span class="num">09</span> مسئله‌ی حل‌شده و راهنمای تمرین ۳ <span class="tag exam">امتحانی</span> <span class="tag hw">تمرین</span></h2>
+<div class="box ex"><div class="bt">مسئله · یک سرور FIFO، پنج مشتری، با FEL</div>
+<p>یک سرور تک‌خدمت‌دهنده‌ی FIFO، ابتدا خالی و بیکار. پنج مشتری با زمان ورود $0,\,2,\,7,\,10,\,11$ و زمان خدمت $4,\,3,\,2,\,2,\,3$. ورودها از ابتدا معلوم‌اند، پس فهرست رویدادهای آینده فقط <b>ورودهای باقی‌مانده</b> و <b>پایان خدمت در حال اجرا</b> را دارد. قرارداد: در تساوی زمانی، خروج قبل از ورود.</p>
+<p>(الف) جدول رویداد به رویداد را با FEL قبل و بعد پر کن. (ب) انتظار هر مشتری در صف و زمان پاسخش. (ج) میانگین زمانی طول صف و تعداد در سیستم روی افق صفر تا آخرین خروج. (د) بهره‌وری سرور. (ه) نتیجه‌ها را با آزمون مساحت چک کن.</p>
+</div>
+<details><summary>راه‌حل کامل</summary>
+<p><b>(الف)</b> زمان‌های بین‌ورود: $2,\,5,\,3,\,1$. FEL اولیه: <span class="mono ltr">(A,0,C1)(A,2,C2)(A,7,C3)(A,10,C4)(A,11,C5)</span>.</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>ساعت</th><th>رویداد</th><th>FEL قبل</th><th>$LQ$</th><th>$LS$</th><th>FEL بعد</th><th>$B$</th><th>توضیح</th></tr>
+<tr><td>0</td><td class="ev">A · C1</td><td class="fel">(A,0,C1)(A,2,C2)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>0</td><td>1</td><td class="fel">(A,2,C2)(D,4,C1)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>0</td><td class="cmt">سرور آزاد ⟵ خدمت فوری</td></tr>
+<tr><td>2</td><td class="ev">A · C2</td><td class="fel">(A,2,C2)(D,4,C1)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>1</td><td>1</td><td class="fel">(D,4,C1)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>2</td><td class="cmt">سرور مشغول ⟵ صف</td></tr>
+<tr><td>4</td><td class="ev">D · C1</td><td class="fel">(D,4,C1)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>0</td><td>1</td><td class="fel">(D,7,C2)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>4</td><td class="lst">C2 از صف به خدمت (۳ واحد)</td></tr>
+<tr class="hl"><td>7</td><td class="ev">D · C2</td><td class="fel">(D,7,C2)(A,7,C3)(A,10,C4)(A,11,C5)</td><td>0</td><td class="idle">0</td><td class="fel">(A,7,C3)(A,10,C4)(A,11,C5)</td><td>7</td><td class="cmt">تساوی! اول خروج ⟵ صف خالی، سرور بیکار</td></tr>
+<tr class="hl"><td>7</td><td class="ev">A · C3</td><td class="fel">(A,7,C3)(A,10,C4)(A,11,C5)</td><td>0</td><td>1</td><td class="fel">(D,9,C3)(A,10,C4)(A,11,C5)</td><td>7</td><td class="cmt">مدت صفر؛ C3 بدون انتظار به خدمت</td></tr>
+<tr class="zero"><td>9</td><td class="ev">D · C3</td><td class="fel">(D,9,C3)(A,10,C4)(A,11,C5)</td><td>0</td><td class="idle">0</td><td class="fel">(A,10,C4)(A,11,C5)</td><td>9</td><td class="cmt">سیستم خالی؛ تنها بیکاری واقعی</td></tr>
+<tr><td>10</td><td class="ev">A · C4</td><td class="fel">(A,10,C4)(A,11,C5)</td><td>0</td><td>1</td><td class="fel">(A,11,C5)(D,12,C4)</td><td>9</td><td class="lst">$B$ تکان نخورد (بیکاری ۹ تا ۱۰)</td></tr>
+<tr><td>11</td><td class="ev">A · C5</td><td class="fel">(A,11,C5)(D,12,C4)</td><td>1</td><td>1</td><td class="fel">(D,12,C4)</td><td>10</td><td class="cmt">صف دوباره</td></tr>
+<tr><td>12</td><td class="ev">D · C4</td><td class="fel">(D,12,C4)</td><td>0</td><td>1</td><td class="fel">(D,15,C5)</td><td>11</td><td class="lst">C5 به خدمت (۳ واحد)</td></tr>
+<tr class="sum"><td>15</td><td class="ev">D · C5</td><td class="fel">(D,15,C5)</td><td>0</td><td class="idle">0</td><td class="fel">— (خالی)</td><td>14</td><td class="cmt">پایان: FEL خالی شد</td></tr>
+</table></div>
+<p><b>(ب)</b> انتظار در صف $w_k=\text{شروع}_k-\text{ورود}_k$ و زمان پاسخ $R_k=\text{خروج}_k-\text{ورود}_k$:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>مشتری</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>جمع</th></tr>
+<tr><td>ورود</td><td>0</td><td>2</td><td>7</td><td>10</td><td>11</td><td></td></tr>
+<tr><td>شروع خدمت</td><td>0</td><td>4</td><td>7</td><td>10</td><td>12</td><td></td></tr>
+<tr><td>خروج</td><td>4</td><td>7</td><td>9</td><td>12</td><td>15</td><td></td></tr>
+<tr class="sum"><td>انتظار $w$</td><td>0</td><td class="wait">2</td><td>0</td><td>0</td><td class="wait">1</td><td>3</td></tr>
+<tr class="sum"><td>زمان پاسخ $R$</td><td>4</td><td>5</td><td>2</td><td>2</td><td>4</td><td>17</td></tr>
+</table></div>
+<p>میانگین انتظار $=3/5=0.6$ و میانگین زمان پاسخ $=17/5=3.4$.</p>
+<p><b>(ج)</b> افق $T=15$ (آخرین خروج). جدول مدت‌ها:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>بازه</th><td>[0,2)</td><td>[2,4)</td><td>[4,7)</td><td>[7,9)</td><td>[9,10)</td><td>[10,11)</td><td>[11,12)</td><td>[12,15)</td><th>جمع</th></tr>
+<tr><th>مدت</th><td>2</td><td>2</td><td>3</td><td>2</td><td>1</td><td>1</td><td>1</td><td>3</td><td>15</td></tr>
+<tr><th>$LQ$</th><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td></td></tr>
+<tr><th>$L$</th><td>1</td><td>2</td><td>1</td><td>1</td><td>0</td><td>1</td><td>2</td><td>1</td><td></td></tr>
+<tr class="sum"><th>$LQ\times$مدت</th><td>0</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>3</td></tr>
+<tr class="sum"><th>$L\times$مدت</th><td>2</td><td>4</td><td>3</td><td>2</td><td>0</td><td>1</td><td>2</td><td>3</td><td>17</td></tr>
+</table></div>
+<p>پس $\bar L_Q=3/15=0.2$ و $\bar L=17/15=1.133$. دقت کن که دو سطر ساعت ۷ هر دو مدت صفر دارند و در این جدول اصلاً ظاهر نمی‌شوند.</p>
+<p><b>(د)</b> سرور فقط بین ۹ و ۱۰ بیکار بود، پس $B=15-1=14$ و $\rho=14/15=0.933$.</p>
+<p><b>(ه)</b> آزمون مساحت: $\int_0^{15}L\,dt=17=\sum R_k$ ✓ و $\int_0^{15}LQ\,dt=3=\sum w_k$ ✓. رابطه‌ی لیتل: $\lambda=5/15=1/3$ و $\lambda\bar R=\tfrac13\times 3.4=1.133=\bar L$ ✓. چون سیستم در $t=0$ خالی شروع شد و در $T=15$ خالی تمام شد، تساوی‌ها <b>دقیق</b>اند و هیچ جمله‌ی مرزی باقی نمی‌ماند.</p>
+<p><b>نکته‌ی تساوی ساعت ۷:</b> با قرارداد معکوس («اول ورود») C3 لحظه‌ای در صف می‌نشست و بلافاصله با خروج C2 بیرون کشیده می‌شد؛ حالت نهایی، انتظارها و همه‌ی مساحت‌ها عیناً همین می‌شدند، چون هر دو سطر مدت صفر دارند. در بخش تمرین‌ها می‌بینی کجا قرارداد واقعاً نتیجه را عوض می‌کند.</p>
+</details>
+
+<div class="box hw"><div class="bt">🎯 راهنمای تمرین ۳، سؤال ۲ — اجرای دستی با فهرست رویدادها</div>
+<p>سؤال یک سرور FIFO <b>ابتدا خالی</b> با سه مشتری می‌دهد و می‌خواهد بعد از هر رویداد ساعت، مشتری در خدمت، صف، زمان رویداد بعدی و <b>کل</b> فهرست رویدادهای آینده ثبت شود؛ بعد انتظار هر مشتری، میانگین زمانی طول صف و بهره‌وری روی افق صفر تا آخرین خروج خواسته شده. مسئله‌ی بالا دقیقاً همین شکل است با عددهای دیگر. روش:</p>
+<ol class="steps">
+<li><b>FEL اولیه را درست بساز.</b> سؤال صریح می‌گوید ورودها از ابتدا معلوم‌اند و فهرست آینده فقط «ورودهای باقی‌مانده» و «پایان خدمتِ در حال اجرا» را نگه دارد. پس در لحظه‌ی صفر هیچ $D$ روی FEL نیست — اولین $D$ را خودِ رویداد ورود اول می‌سازد. اگر رویداد پایان جداگانه‌ای تعریف نکرده‌ای، ننویسش.</li>
+<li><b>یک سطر برای هر رویداد.</b> ستون‌ها: ساعت · رویداد برداشته‌شده · FEL قبل · مشتری در خدمت · محتوای صف (به ترتیب FIFO) · FEL بعد. «زمان رویداد بعدی» همان کوچک‌ترین زمان در FEL بعد است؛ یک ستون جدا برایش بگذار چون سؤال خواسته.</li>
+<li><b>قرارداد تساوی را اول بنویس.</b> سؤال گفته خروج پیش از ورود هم‌زمان. با عددهای سؤال <b>بررسی کن</b> آیا اصلاً تساوی رخ می‌دهد؛ اگر رخ نداد هم در جوابت بنویس که قرارداد را اعمال کرده‌ای و این‌جا بی‌اثر بوده.</li>
+<li><b>ستون $B$ را سطر به سطر بساز</b>، نه در آخر: $B_{\text{جدید}}=B_{\text{قبل}}+LS_{\text{قبل}}\times(t-t_{\text{قبل}})$. این‌طور اگر جایی سرور بیکار شود خودبه‌خود لحاظ می‌شود.</li>
+<li><b>میانگین زمانی طول صف</b> را از جدول «بازه × مدت» بگیر، نه از میانگین ستون $LQ$. بازه‌ها را از روی ساعت‌های متوالی بساز و سطرهای با مدت صفر را حذف کن.</li>
+<li><b>بهره‌وری</b> $=B/T$ که $T$ زمان آخرین خروج است (سؤال همین افق را خواسته). اگر سرور در وسط بیکار شده، $B&lt;T$.</li>
+<li><b>آزمون صحت قبل از تحویل.</b> سه چیز را چک کن: (الف) $\sum_k w_k = \int_0^T LQ\,dt$؛ (ب) $\sum_k R_k = \int_0^T L\,dt$؛ (ج) تعداد ورودها = تعداد خروج‌ها. اگر یکی نخواند، جدولت ایراد دارد — نه فرمول‌ها.</li>
+</ol>
+<p><b>دام‌هایی که نمره می‌برند:</b> گرفتن $T$ برابر زمان آخرین <b>ورود</b> به‌جای آخرین خروج؛ نوشتن «شروع خدمت» به‌عنوان یک رویداد روی FEL (نیست، مشروط است)؛ مرتب ننوشتن FEL بر حسب زمان؛ و میانگین گرفتن ساده از ستون $LQ$.</p>
+</div>
+
+<div class="box hw"><div class="bt">🎯 راهنمای تمرین ۳، سؤال ۳ — دیدگاه مدل و شرط پایان</div>
+<p>سؤال سه چیز می‌خواهد: مقایسه‌ی سه دیدگاه برای یک صف، تفاوت پایان در زمان ثابت $T=10$ با پایان بعد از خروج دهمین مشتری، و قرارداد برخورد با رویدادی که دقیقاً در لحظه‌ی پایان رخ می‌دهد. روش:</p>
+<ol class="steps">
+<li><b>بخش دیدگاه‌ها را با یک قالب ثابت بنویس</b>، نه با توصیف کلی. برای هر دیدگاه چهار چیز را برای <b>همان صف تک‌سرور</b> مشخص کن: واحد مدل‌سازی · چه چیزی می‌نویسی · چه چیزی ساعت را جلو می‌برد · «شروع خدمت» کجا ظاهر می‌شود. جدول بخش ۰۱ و کادر «همان صف در چهار زبان» همین قالب را دارد؛ با عبارت خودت و با متغیرهای همان مسئله بازنویسی‌اش کن.</li>
+<li><b>برای شرط پایان، بپرس چه چیزی تصادفی است.</b> در پایان با زمان ثابت $T=10$، افق قطعی است و <b>تعداد مشتریان خارج‌شده</b> متغیر تصادفی است. در پایان بعد از خروج دهمین مشتری، تعداد قطعی است و <b>طول اجرا $T$</b> متغیر تصادفی است. همین جمله را برای هر دو نوع آمار تکرار کن: در حالت اول مخرج آمار زمان‌مدار ثابت و مخرج آمار مشتری‌مدار تصادفی است؛ در حالت دوم برعکس.</li>
+<li><b>برای بخش اریبی، سراغ مکانیزم برو، نه فقط نتیجه.</b> اگر در لحظه‌ی ۱۰ هنوز مشتری در صف است، میانگینی که از مشتریان خارج‌شده می‌گیری یک <b>نمونه‌ی انتخابی</b> است: دقیقاً آن‌هایی که انتظار طولانی دارند هنوز خارج نشده‌اند و در میانگین نمی‌آیند. پس این میانگین به‌طور سیستماتیک کمتر از میانگین نهایی همه‌ی واردشده‌ها می‌شود. یک مثال عددی کوچک بساز که در آن مشتری باقی‌مانده انتظار بزرگی دارد و نشان بده دو عدد چقدر فرق می‌کنند.</li>
+<li><b>برای قرارداد لحظه‌ی پایان، هر دو انتخاب را بنویس و یکی را اعلام کن.</b> دو گزینه: «رویدادِ در لحظه‌ی $T$ پردازش شود و بعد توقف» یا «پیش از پردازش توقف». بعد بگو این انتخاب چه چیزهایی را عوض می‌کند: آیا خروجِ در لحظه‌ی ۱۰ در $N_D$ شمرده می‌شود؟ رویداد توقف $(E,T)$ نسبت به $D$ و $A$ هم‌زمان چه اولویتی دارد؟</li>
+<li><b>نکته‌ی انتگرال را فراموش نکن:</b> در هر دو قرارداد، آخرین تکه‌ی مساحت $(T-t_{\text{آخرین رویداد}})\times L$ باید به انتگرال اضافه شود، وگرنه آمار زمان‌مدارت کوتاه می‌آید. این جمله را صریح در جوابت بنویس.</li>
+</ol>
+<p><b>چیزی که نباید بنویسی:</b> جمله‌ی کلی «پایان با زمان ثابت ساده‌تر است». سؤال دنبال پیامد آماری است، نه راحتی پیاده‌سازی.</p>
+</div>
+</section>
+
+<!-- ===================================================== 10 -->
+<section id="exercises">
+<h2><span class="num">10</span> تمرین‌ها</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">🟢 پایه</span></div>
+در جدول تک‌سرور، FEL لحظه‌ی ۲ به‌صورت <span class="mono ltr">(D,4)(A,8)(E,60)</span> نوشته شده ولی FEL لحظه‌ی ۱ به‌صورت <span class="mono ltr">(A,2)(D,4)(E,60)</span>. چرا ترتیب عوض شد؟
+<details><summary>راه‌حل</summary>FEL همیشه بر حسب <b>زمان</b> مرتب نگه داشته می‌شود تا برداشتن رویداد قریب‌الوقوع یک عمل ثابت باشد. در لحظه‌ی ۱، ورود بعدی در ۲ است و خروج در ۴، پس $A$ اول می‌آید. در لحظه‌ی ۲ ورود بعدی به ۸ پریده (چون $a^*=6$) و حالا خروج در ۴ زودتر است. ترتیب نوشتن محتوایی نیست؛ ویژگی ساختار داده است. در پایتون همین کار را <span class="ltr mono">heapq</span> انجام می‌دهد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">🟢 پایه</span></div>
+اگر جدول تک‌سرور را یک سطر جلوتر ببری: مشتری هشتم در ۲۵ می‌رسد و خروج C7 در ۲۷ است. انتظار C8 چقدر است، و $B$ در لحظه‌ی ۲۷ چه عددی می‌شود؟
+<details><summary>راه‌حل</summary>در لحظه‌ی ۲۵ سرور مشغول C7 است (تا ۲۷)، پس C8 در صف می‌ماند: $LQ=1$، و انتظارش $27-25=2$ واحد. سرور از ۲۳ تا ۲۷ یک‌سره مشغول بوده، پس $B(27)=21+1\times(27-23)=25$. بهره‌وری روی افق ۲۷ می‌شود $25/27=0.926$ — بزرگ‌تر از $21/23=0.913$، چون در فاصله‌ی ۲۳ تا ۲۷ هیچ بیکاری تازه‌ای اضافه نشد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l1">🟢 پایه</span></div>
+در مثال کامیون‌ها، چرا $BL$ بین ساعت ۱۲ و ۲۰ شانزده واحد زیاد می‌شود ولی بین ۲۰ و ۲۴ فقط چهار واحد؟
+<details><summary>راه‌حل</summary>$BL$ انتگرال $L(t)$ است، نه انتگرال «بارکن مشغول است یا نه». بین ۱۲ و ۲۰ هر دو بارکن مشغول‌اند ($L=2$)، پس $2\times 8=16$. در ساعت ۲۰ کامیون <span class="ltr">DT5</span> بارگیری‌اش تمام می‌شود و چون صف بارکن خالی است یک بارکن بیکار می‌ماند، پس بین ۲۰ و ۲۴ داریم $L=1$ و $1\times 4=4$. اگر $BL$ را «زمان مشغولی حداقل یک بارکن» می‌گرفتی، هر دو بازه به ترتیب ۸ و ۴ می‌شدند و بهره‌وری غلط درمی‌آمد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">🟡 مهارتی</span></div>
+از جدول بخش ۰۳، مقادیر $\int_0^{23}LQ\,dt$ و $\int_0^{23}L\,dt$ را دربیاور و با جمع انتظارها و جمع زمان پاسخ‌های شش مشتری خارج‌شده مقایسه کن.
+<details><summary>راه‌حل</summary>
+بازه‌ها و مدت‌ها: $[0,1)\!:\!1$، $[1,2)\!:\!1$، $[2,4)\!:\!2$، $[4,6)\!:\!2$، $[6,8)\!:\!2$، $[8,11)\!:\!3$، $[11,15)\!:\!4$، $[15,16)\!:\!1$، $[16,18)\!:\!2$، $[18,23)\!:\!5$.<br>
+$LQ$ در همین بازه‌ها: $0,1,2,1,0,1,1,0,0,0$ ⟵ $\int LQ=1+4+2+3+4=14$.<br>
+$L=LQ+LS$: $1,2,3,2,1,2,2,1,0,1$ ⟵ $\int L=1+2+6+4+2+6+8+1+0+5=35$.<br>
+از طرف دیگر انتظارها: C1 تا C6 به ترتیب $0,3,4,3,4,0$ ⟵ جمع ۱۴ ✓ و زمان پاسخ‌ها $4,5,9,7,5,5$ ⟵ جمع ۳۵ ✓ (همان $S$ جدول گسترش‌یافته). C7 در ۲۳ رسیده و هنوز صفر واحد در سیستم بوده، پس چیزی به مساحت اضافه نکرده است.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">🟡 مهارتی</span></div>
+برای هر سطر جدول کامیون‌ها، تعداد کامیون‌های «در سفر» را بنویس و نشان بده مجموع همیشه ۶ است. برای ساعت‌های ۳۶ و ۶۴ نام کامیون‌های در سفر را هم بده.
+<details><summary>راه‌حل</summary>
+تعداد در سفر $=6-(LQ+L+WQ+W)$. از بالا به پایین: $0,0,0,0,1,1,2,2,3,4,5,4,3$.<br>
+<b>ساعت ۳۶:</b> داخل سیستم $0+0+2+1=3$ (<span class="ltr">DT5, DT6</span> در صف باسکول و <span class="ltr">DT4</span> روی باسکول)، پس سه کامیون در سفرند: <span class="ltr">DT1</span> (از ۱۲، برگشت در ۷۲)، <span class="ltr">DT3</span> (از ۲۴، برگشت در ۱۲۴) و <span class="ltr">DT2</span> (از ۳۶، برگشت در ۷۶).<br>
+<b>ساعت ۶۴:</b> داخل سیستم فقط <span class="ltr">DT6</span> روی باسکول است، پس پنج کامیون در سفرند: <span class="ltr">DT1, DT2, DT3, DT4, DT5</span> با زمان‌های بازگشت ۷۲، ۷۶، ۱۲۴، ۹۲ و ۱۴۴ — که همه روی FEL همان سطر دیده می‌شوند.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">🟡 مهارتی</span></div>
+میانگین زمانی صف باسکول را از جدول کامیون‌ها حساب کن و با میانگین ساده‌ی ستون $WQ$ روی ۱۳ سطر مقایسه کن.
+<details><summary>راه‌حل</summary>
+مدت‌ها: $5,5,0,2,8,4,1,11,16,12,8,4$ و $WQ$ در شروع هر بازه: $0,1,2,3,2,3,2,3,2,1,0,0$.<br>
+$\int WQ\,dt=0+5+0+6+16+12+2+33+32+12+0+0=118$ ⟵ $\bar{WQ}=118/76=1.553$.<br>
+میانگین ساده‌ی ستون: $(0+1+2+3+2+3+2+3+2+1+0+0+0)/13=19/13=1.462$. این‌جا اتفاقاً نزدیک درآمد، ولی تصادفی است: بازه‌های بلند ($[25,36)$ با $WQ=3$ و $[36,52)$ با $WQ=2$) با بازه‌های کوتاهِ کم‌مقدار تا حدی خنثی شدند. همین مقایسه را برای $L$ انجام بده و خطای ۷۹ درصدی را ببین — نزدیکی عددی در یک ستون، هیچ تضمینی برای ستون دیگر نیست.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l2">🟡 مهارتی</span></div>
+صف تک‌سرور با <b>اتاق انتظار محدود به ظرفیت ۲</b>: مشتری‌ای که صف پر باشد برمی‌گردد و از دست می‌رود. در لحظه‌ی $t$ هم‌زمان یک خروج و یک ورود روی FEL‌اند و در لحظه‌ی $t^-$ داریم $LQ=2$ و $LS=1$. نشان بده دو قرارداد ترتیب، نتیجه‌های متفاوتی می‌دهند.
+<details><summary>راه‌حل</summary>
+<b>اول خروج:</b> مشتری در خدمت می‌رود، سرِ صف به خدمت می‌رود و $LQ$ به ۱ می‌افتد؛ حالا ورود جا دارد و پذیرفته می‌شود ⟵ $LQ=2$، $LS=1$، هیچ مشتری‌ای از دست نمی‌رود.<br>
+<b>اول ورود:</b> مشتری تازه صف را پر می‌بیند ($LQ=2$) و <b>از دست می‌رود</b>؛ بعد خروج رخ می‌دهد و $LQ$ به ۱ می‌افتد ⟵ $LQ=1$، $LS=1$، یک مشتری ازدست‌رفته.<br>
+دو حالت نهایی متفاوت و دو مقدار متفاوت برای شمارنده‌ی «مشتریان ازدست‌رفته». در مدل‌های بدون محدودیت ظرفیت معمولاً فرقی نمی‌کند، ولی به محض این‌که جایی <b>شرط مقایسه‌ای</b> روی حالت داشته باشی (ظرفیت، سیاست ترک صف، اولویت)، قرارداد نتیجه را عوض می‌کند. پس همیشه بنویسش.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">🔴 تحلیلی</span></div>
+دو قرارداد پایان برای یک صف: (الف) پایان در زمان ثابت $T=10$؛ (ب) پایان بعد از خروج دهمین مشتری. برای هر کدام بگو کدام کمیت تصادفی است، و با یک مثال عددی کوچک نشان بده چرا در حالت (الف) میانگین انتظار مشتریان <b>خارج‌شده</b> با میانگین نهایی همه‌ی <b>واردشده‌ها</b> فرق می‌کند.
+<details><summary>راه‌حل</summary>
+(الف) افق $T=10$ قطعی است؛ تعداد خروج‌ها $N_D$ تصادفی است. آمار زمان‌مدار ($\bar L$، $\rho$) مخرج ثابت دارد، آمار مشتری‌مدار مخرج تصادفی.<br>
+(ب) تعداد قطعی است (۱۰)؛ طول اجرا $T$ تصادفی است. حالا برعکس: مخرج آمار زمان‌مدار تصادفی است، و بدتر از آن، ممکن است با مقدار خودِ آمار همبسته باشد (اجرای شلوغ‌تر طولانی‌تر می‌شود)، که تخمین را اریب می‌کند.<br>
+<b>مثال عددی:</b> ورودها در $0,1,2$ و خدمت‌ها $3,3,3$. خروج‌ها در $3,6,9$ و انتظارها $0,2,4$. اگر در $T=10$ قطع کنی، هر سه خارج شده‌اند و میانگین $=2$. حالا ورود چهارمی در ۳ اضافه کن: انتظارش $9-3=6$ و خروجش در ۱۲ است، یعنی <b>بعد</b> از افق. میانگین مشتریان خارج‌شده هنوز $6/3=2$ است، ولی میانگین نهایی هر چهار مشتری $12/4=3$. بزرگ‌ترین انتظار دقیقاً همانی است که جا ماند؛ این یک اریبی سیستماتیک به سمت پایین است، نه نوسان تصادفی.<br>
+چاره: یا تا خروج همه‌ی واردشده‌ها ادامه بده (شبیه‌سازی پایان‌پذیر با «تخلیه‌ی سیستم»)، یا صریح اعلام کن که آمار فقط روی خروج‌های تا $T$ است و در مقایسه‌ها همین تعریف را برای همه‌ی سیستم‌ها به‌کار ببر.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l3">🔴 تحلیلی</span></div>
+مدل تک‌سرور را در دیدگاه <b>سه‌فازی</b> بازنویسی کن: کدام چیزها فعالیت B و کدام C هستند؟ یک دور کامل چرخه را بنویس و نشان بده در لحظه‌ی ۴ (خروج C1) نتیجه با جدول جزوه یکی درمی‌آید.
+<details><summary>راه‌حل</summary>
+<b>فعالیت‌های B</b> (روی FEL): «ورود مشتری بعدی» با مدت $a^*$ و «پایان خدمت» با مدت $s^*$. هر دو در لحظه‌ی شروعشان مدت معلومی دارند.<br>
+<b>فعالیت C</b> (پویش‌شونده): «شروع خدمت» با شرط <span class="ltr mono">LQ &gt; 0 and LS == 0</span> و کنش <span class="ltr mono">LQ -= 1; LS = 1; schedule (D, t+s*)</span>.<br>
+<b>یک دور در ساعت ۴:</b> فاز A ساعت را به ۴ می‌برد (کوچک‌ترین زمان B روی FEL). فاز B رویداد $(D,4)$ را اجرا می‌کند: $LS\leftarrow 0$ و مشتری C1 خارج می‌شود — <b>همین و بس</b>؛ در این دیدگاه روال خروج سرِ صف را به خدمت نمی‌برد. فاز C شرط‌ها را می‌پویَد: $LQ=2&gt;0$ و $LS=0$ ⟵ شرط برقرار است، پس C2 به خدمت می‌رود، $LQ\leftarrow 1$، $LS\leftarrow 1$ و $(D,6)$ زمان‌بندی می‌شود. فاز C دوباره می‌پویَد: حالا $LS=1$ است و شرط برقرار نیست، پس متوقف می‌شود. حالت نهایی $LQ=1$، $LS=1$ و FEL $=$ <span class="mono ltr">(D,6)(A,8)(E,60)</span> — دقیقاً سطر ساعت ۴ جزوه.<br>
+<b>فایده:</b> منطق «چه کسی بعد از خروج به خدمت می‌رود» یک بار نوشته می‌شود، نه داخل هر روال خروج. در مدل‌های بزرگ با چند منبع، همین جداسازی خطاهای زیادی را حذف می‌کند.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">🔵 پژوهشگر</span></div>
+مثال کامیون‌ها یک سیستم بسته است. رابطه‌ی لیتل را برای «سیستم» $=$ (صف بارکن $+$ بارکن‌ها $+$ صف باسکول $+$ باسکول) روی بازه‌ی $[0,76]$ بررسی کن. چه چیزی نمی‌گذارد تساوی دقیق باشد و چطور درستش می‌کنی؟
+<details><summary>راه‌حل</summary>
+$\int_0^{76}(LQ+L+WQ+W)\,dt=25+49+118+76=268$، پس $\bar N=268/76=3.526$ کامیون به‌طور میانگین داخل سیستم‌اند (و $6-3.526=2.474$ در جاده؛ مستقیم هم می‌شود چک کرد: $60+52+40+24+12=188$ و $188/76=2.474$ ✓).<br>
+برای لیتل لازم است $\bar N=\lambda\,\bar R$ با $\lambda$ نرخ ورود به سیستم و $\bar R$ میانگین زمان حضور. در $[0,76]$ فقط دو ورود (<span class="ltr">ALQ</span>) رخ داده: <span class="ltr">DT1</span> در ۷۲ و <span class="ltr">DT2</span> در ۷۶. پس $\lambda=2/76$، عددی بی‌معنا برای این افق.<br>
+<b>چرا تساوی برقرار نیست:</b> سیستم نه در $t=0$ خالی بود و نه در $t=76$. مساحت $268$ شامل سهم شش کامیونی است که از قبل داخل بودند و سهم آن‌هایی که هنوز خارج نشده‌اند — یعنی <b>جمله‌های مرزی</b>. فرم دقیق چنین است:
+$$\int_0^{T} N(t)\,dt=\sum_{\text{خروج‌های کامل}} R_k+\underbrace{\text{سهم ناتمام‌ها}}_{\text{مرز }T}-\underbrace{0}_{\text{مرز }0}$$
+و چون مرزها صفر نیستند، $\bar N=\lambda\bar R$ فقط <b>تقریبی</b> است.<br>
+<b>درست کردنش:</b> سه راه — (۱) افق را طوری انتخاب کن که سیستم در دو سر خالی باشد (در سیستم بسته ممکن نیست)؛ (۲) اجرا را بسیار طولانی کن تا جمله‌های مرزی نسبت به $T$ ناچیز شوند و لیتل در حد حالت پایدار برقرار شود؛ (۳) برای یک افق محدود، جمله‌های مرزی را صریح حساب کن: به‌جای $\sum R_k$ روی خروج‌های کامل، مجموع «زمان حضور هر کامیون <b>داخل</b> بازه‌ی $[0,T]$» را بگیر — آن وقت تساوی دوباره دقیق می‌شود. برای $[0,76]$ این مجموع باید عیناً ۲۶۸ شود؛ محاسبه‌اش کن و ببین.</details></div>
+</section>
+
+<section id="quiz"><h2><span class="num">11</span> تست</h2><div class="quiz"></div></section>
+
+<section id="summary">
+<h2><span class="num">12</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box note"><div class="bt">۶ چیزی که باید یادت بماند</div>
+<ol>
+<li><b>دیدگاه = واحد فکر کردن.</b> رویداد (زمان‌بندی رویداد)، چرخه‌ی عمر موجودیت (تعامل فرایند)، شرط شروع فعالیت (پویش فعالیت)، یا B و C (سه‌فازی). فقط پویش فعالیت پرش زمانی ثابت دارد؛ بقیه متغیر.</li>
+<li><b>FEL فقط چیزهایی را دارد که زمانشان معلوم است.</b> «شروع خدمت» هیچ‌وقت روی FEL نیست — مشروط است. در سه‌فازی اسم رسمی‌اش فعالیت C است.</li>
+<li><b>یک عکس لحظه‌ای، نه بیشتر.</b> هر چیزی که برای ادامه یا برای معیارها لازم داری باید داخل حالت باشد. اگر زمان پاسخ می‌خواهی، زمان ورود را به‌عنوان ویژگی مشتری نگه دار.</li>
+<li><b>قرارداد رویدادهای هم‌زمان را بنویس.</b> «اول خروج، بعد ورود». در مدل بدون محدودیت، نتیجه فرق نمی‌کند؛ به محض وجود ظرفیت یا اولویت، فرق می‌کند.</li>
+<li><b>آمار زمان‌مدار = انتگرال، آمار مشتری‌مدار = میانگین ساده.</b> $\bar L=\frac1T\int L\,dt$ و $\rho=B/T$ را با وزن مدت بساز؛ $\bar w$ را بر تعداد مشتری تقسیم کن. هرگز میانگین ساده‌ی ستون جدول را نگیر، به‌خصوص وقتی سطری با مدت صفر داری.</li>
+<li><b>آزمون مساحت را رایگان بگیر.</b> $\sum w_k=\int LQ\,dt$ و $\sum R_k=\int L\,dt$ وقتی سیستم در دو سرِ افق خالی باشد. اگر نخواند، جدول غلط است. در سیستم بسته (کامیون‌ها) جمله‌های مرزی را فراموش نکن.</li>
+</ol>
+</div>
+<div class="box tip"><div class="bt">⏭ برای جلسه‌ی بعد</div>
+جلسه‌ی ۸ همین الگوریتم را به کد واقعی تبدیل می‌کند: چارچوب شیءگرای جاوا در جزوه (و معادل پایتونی‌اش)، ساختارهای داده‌ی فهرست و FEL، و گراف‌های شبیه‌سازی. قبلش کد پایتون بخش ۰۸ را خودت دوباره بنویس و با جدول بخش ۰۳ تطبیق بده؛ اگر این را بلد باشی، جلسه‌ی ۸ فقط «همین، ولی مرتب‌تر» است.
+</div>
+<div class="gloss">
+<div><b>world view</b>: دیدگاه مدل‌سازی</div>
+<div><b>event-scheduling</b>: زمان‌بندی رویداد</div>
+<div><b>process-interaction</b>: تعامل فرایند</div>
+<div><b>activity-scanning</b>: پویش فعالیت</div>
+<div><b>three-phase approach</b>: روش سه‌فازی</div>
+<div><b>B activity (bound to occur)</b>: فعالیت قطعی (زمان‌بندی‌شدنی)</div>
+<div><b>C activity (conditional)</b>: فعالیت مشروط</div>
+<div><b>event routine</b>: روال رویداد</div>
+<div><b>event notice</b>: اعلان رویداد</div>
+<div><b>future event list (FEL)</b>: فهرست رویدادهای آینده</div>
+<div><b>imminent event</b>: رویداد قریب‌الوقوع</div>
+<div><b>variable / fixed time advance</b>: پرش زمانی متغیر / ثابت</div>
+<div><b>system snapshot</b>: عکس لحظه‌ای سیستم</div>
+<div><b>manual simulation</b>: شبیه‌سازی دستی</div>
+<div><b>single-server queue</b>: صف تک‌سرور</div>
+<div><b>checkout line</b>: صف صندوق</div>
+<div><b>response time (time in system)</b>: زمان پاسخ (زمان در سیستم)</div>
+<div><b>delay (queue waiting time)</b>: تأخیر (زمان انتظار در صف)</div>
+<div><b>time-average</b>: میانگین زمانی (زمان‌مدار)</div>
+<div><b>customer-average</b>: میانگین مشتری‌مدار</div>
+<div><b>area under the curve</b>: سطح زیر منحنی</div>
+<div><b>utilization</b>: بهره‌وری (کسر زمان مشغولی)</div>
+<div><b>maximum queue length</b>: بیشینه‌ی طول صف</div>
+<div><b>dump truck</b>: کامیون تخلیه</div>
+<div><b>loader / scale</b>: بارکن / باسکول</div>
+<div><b>FCFS (first-come, first-served)</b>: خدمت به ترتیب ورود</div>
+<div><b>closed system</b>: سیستم بسته</div>
+<div><b>bottleneck</b>: گلوگاه</div>
+<div><b>transient behavior</b>: رفتار گذرا</div>
+<div><b>terminating condition</b>: شرط پایان</div>
+<div><b>tie-breaking convention</b>: قرارداد رویدادهای هم‌زمان</div>
+<div><b>Little's law</b>: رابطه‌ی لیتل</div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+{q:`در دیدگاه زمان‌بندی رویداد، «شروع خدمت» چه چیزی است؟`,
+ o:[`کاری مشروط که روی FEL زمان‌بندی نمی‌شود و داخل روال ورود یا خروج انجام می‌گیرد`,`رویدادی که همیشه روی FEL است`,`یک فعالیت با مدت تصادفی که در FEL می‌آید`,`یک تأخیر با مدت معلوم`],a:0,
+ e:R`زمان شروع خدمت را از پیش نمی‌دانی: به دو شرط «مشتری در صف هست» و «سرور آزاد است» بستگی دارد. پس روی FEL نمی‌آید. در دیدگاه سه‌فازی اسم رسمی‌اش فعالیت C است.`},
+{q:`تفاوت اصلی پویش فعالیت با زمان‌بندی رویداد در جلو بردن ساعت چیست؟`,
+ o:[`پویش فعالیت پرش زمانی ثابت دارد و در هر گام شرط همه‌ی فعالیت‌ها را می‌سنجد`,`پویش فعالیت هم از FEL استفاده می‌کند ولی سریع‌تر است`,`زمان‌بندی رویداد گام ثابت دارد و پویش فعالیت متغیر`,`هیچ تفاوتی در جلو بردن ساعت ندارند`],a:0,
+ e:R`جزوه صریح می‌نویسد پویش فعالیت «پرش زمانی ثابت» دارد و عیبش همین است: پویش مکرر برای فهمیدن این‌که آیا فعالیتی می‌تواند شروع شود، اجرا را کند می‌کند. سه‌فازی همین را با FEL درست می‌کند.`},
+{q:`در روش سه‌فازی، FEL چه چیزی را نگه می‌دارد؟`,
+ o:[`فقط فعالیت‌های نوع B`,`هم B و هم C`,`فقط فعالیت‌های نوع C`,`هیچ‌چیز؛ سه‌فازی FEL ندارد`],a:0,
+ e:R`فعالیت‌های B آن‌هایی‌اند که حتماً رخ می‌دهند و زمان پایانشان در لحظه‌ی شروع معلوم است، پس می‌شود از پیش زمان‌بندی‌شان کرد. Cها مشروط‌اند و فقط در فاز C پویش می‌شوند.`},
+{q:`در جدول صف تک‌سرور جزوه، در لحظه‌ی ۱۶ ستون LS صفر می‌شود. پیامد مستقیمش روی شمارنده‌ها چیست؟`,
+ o:[`B بین ۱۶ و ۱۸ هیچ رشدی نمی‌کند، چون سرور بیکار است`,`B با نرخ نصف رشد می‌کند`,`MQ به صفر برمی‌گردد`,`شبیه‌سازی باید متوقف شود چون FEL خالی شده`],a:0,
+ e:R`$B=\int LS\,dt$ است و $LS=0$ یعنی سهم صفر. ببین در جدول هم $B$ در سطر ۱۶ و سطر ۱۸ هر دو ۱۶ است. ضمناً FEL خالی نشده؛ هنوز $(A,18)$ و $(E,60)$ رویش هستند.`},
+{q:`چرا میانگین ساده‌ی ستون LQ در یک جدول شبیه‌سازی رویدادی غلط است؟`,
+ o:[`چون سطرها در لحظه‌های رویدادند و فاصله‌ی زمانی برابر ندارند؛ هر حالت باید به اندازه‌ی مدتش وزن بگیرد`,`چون LQ همیشه عدد صحیح است`,`چون سطر اول شرط اولیه است و باید حذف شود`,`چون LQ گاهی صفر می‌شود و صفرها میانگین را خراب می‌کنند`],a:0,
+ e:R`$\bar L_Q=\frac1T\int_0^T LQ(t)\,dt=\frac1T\sum_k LQ_k\,(t_{k+1}-t_k)$. در مثال کامیون‌ها میانگین ساده‌ی ستون $L$ عدد ۱٫۱۵ می‌دهد در حالی که مقدار درست ۰٫۶۴۵ است — تقریباً دو برابر.`},
+{q:`در جدول کامیون‌ها دو سطر با ساعت ۱۰ وجود دارد. سطر اول در انتگرال‌های زمانی چه سهمی دارد؟`,
+ o:[`هیچ؛ مدتش صفر است`,`سهمی برابر با سطرهای دیگر`,`نصف سهم سطرهای دیگر`,`سهمی منفی که باید کم شود`],a:0,
+ e:R`دو رویداد <span class="ltr">(EL,10,DT2)</span> و <span class="ltr">(EL,10,DT4)</span> هم‌زمان‌اند و جدا پردازش می‌شوند. فاصله‌ی زمانی بین دو سطر صفر است، پس در هر انتگرالی ضریب صفر می‌گیرد — ولی در میانگین ساده یک‌سیزدهم وزن می‌گرفت.`},
+{q:`در مثال کامیون‌ها در لحظه‌ی ۷۶ داریم BL = 49. بهره‌وری میانگین <b>یک</b> بارکن چقدر است؟`,
+ o:[`۰٫۳۲`,`۰٫۶۴`,`۱٫۰۰`,`۰٫۱۶`],a:0,
+ e:R`$BL$ جمع زمان مشغولی هر دو بارکن است، یعنی $\int L\,dt$. پس میانگین تعداد بارکن مشغول $49/76=0.645$ و بهره‌وری یک بارکن $(49/2)/76=0.32$ است.`},
+{q:`باسکول در همان مثال بهره‌وری ۱٫۰۰ دارد. کدام نتیجه‌گیری درست است؟`,
+ o:[`باسکول گلوگاه است (میانگین صفش هم ۱٫۵۵ است)، ولی ۷۶ دقیقه با شرط اولیه‌ی خاص، تخمین حالت پایدار نیست`,`باسکول دقیقاً به اندازه‌ی لازم ظرفیت دارد و نیازی به تغییر نیست`,`یکی از دو بارکن را باید حذف کرد چون بهره‌وری‌شان کم است`,`شبیه‌سازی خطا دارد، چون بهره‌وری نمی‌تواند دقیقاً ۱ باشد`],a:0,
+ e:R`بهره‌وری ۱ در یک اجرای کوتاه کاملاً ممکن است: باسکول از لحظه‌ی صفر همیشه کامیون داشت. Banks هم تأکید می‌کند این عددها تخمین بلندمدت نیستند؛ یا اجرای بلندتر لازم است یا باید آن را نمونه‌ای از رفتار گذرا دانست.`},
+{q:`در FEL هم‌زمان (D,11) و (A,11) داریم. قرارداد جزوه چیست و کجا واقعاً نتیجه را عوض می‌کند؟`,
+ o:[`اول خروج، بعد ورود؛ در مدل بی‌ظرفیت فرقی نمی‌کند، ولی با اتاق انتظار محدود تعیین می‌کند مشتری پذیرفته شود یا از دست برود`,`اول ورود؛ چون صف باید قبل از خدمت پر شود`,`ترتیب هیچ‌وقت مهم نیست چون حالت نهایی یکی است`,`باید تصادفی انتخاب شود تا اریبی ایجاد نشود`],a:0,
+ e:R`جزوه FEL را <span class="ltr">(D,11)(A,11)(E,60)</span> می‌نویسد. با صف نامحدود، هر دو ترتیب به یک حالت نهایی می‌رسند؛ ولی اگر ظرفیت صف محدود باشد، «اول خروج» یک جا آزاد می‌کند و ورود پذیرفته می‌شود، و «اول ورود» مشتری را از دست می‌دهد.`},
+{q:`در مدل گسترش‌یافته‌ی تک‌سرور، شمارنده‌های S، N<sub>D</sub> و F چه زمانی به‌روز می‌شوند؟`,
+ o:[`فقط در رویداد خروج، چون زمان پاسخ مشتری تازه آن‌جا معلوم می‌شود`,`در هر رویداد ورود، چون آن‌جا مشتری وارد می‌شود`,`یک‌جا در پایان شبیه‌سازی`,`در هر گام ثابت زمانی`],a:0,
+ e:R`$R_j=t-(\text{زمان ورود }C_j)$ فقط در لحظه‌ی خروج معلوم می‌شود. به همین دلیل هم لازم است زمان ورود را به‌عنوان ویژگی مشتری نگه داری — عکس لحظه‌ای تاریخچه ندارد.`},
+{q:`(مرور جلسه‌ی ۶) تفاوت «فعالیت» و «تأخیر» چیست؟`,
+ o:[`مدت فعالیت در لحظه‌ی شروع معلوم است و می‌شود پایانش را زمان‌بندی کرد؛ مدت تأخیر به شرط‌های آینده بستگی دارد`,`فعالیت همیشه تصادفی است و تأخیر همیشه ثابت`,`تأخیر فقط در صف رخ می‌دهد و فعالیت فقط در سرور`,`فرقی ندارند؛ دو نام برای یک چیزند`],a:0,
+ e:R`همین تفاوت تعیین می‌کند چه چیزی روی FEL می‌رود: پایان فعالیت بله، پایان تأخیر نه. زمان خدمت فعالیت است، انتظار در صف تأخیر.`},
+{q:`(مرور) در مثال تک‌سرور $\int_0^{23}L\,dt=35$ و تا لحظه‌ی ۲۳ شش مشتری خارج شده‌اند. میانگین زمان در سیستم چقدر است؟`,
+ o:[`35/6 ≈ 5.83`,`35/23 ≈ 1.52`,`6/23 ≈ 0.26`,`23/6 ≈ 3.83`],a:0,
+ e:R`مساحت زیر $L(t)$ برابر جمع زمان‌های حضور است، پس $\sum R_k=35$ و میانگین مشتری‌مدار $35/6$. عدد $35/23$ میانگین <b>زمان‌مدار</b> $\bar L$ است — دو کمیت متفاوت که با $\bar L=\lambda\bar w$ به هم وصل می‌شوند.`},
+{q:`(مرور جلسه‌ی ۴) از جدول فصل ۲ به جدول فصل ۳ چه چیزی اساساً عوض شد؟`,
+ o:[`ترتیب پیشروی: جدول فصل ۲ مشتری‌به‌مشتری جلو می‌رفت، جدول فصل ۳ رویدادبه‌رویداد در زمان`,`توزیع‌های ورودی عوض شدند`,`فصل ۳ دیگر از اعداد تصادفی استفاده نمی‌کند`,`فصل ۲ دقیق‌تر است و فصل ۳ تقریبی`],a:0,
+ e:R`همین تغییر است که اجازه می‌دهد سیستم‌هایی را مدل کنی که در آن‌ها موجودیت برمی‌گردد (کامیون‌ها) یا چند منبع هم‌زمان درگیرند — جایی که مفهوم «سطر = یک مشتری» دیگر معنی ندارد.`},
+{q:`برای سیستمی که شروع یک فعالیت در آن به آزاد بودن هم‌زمانِ سه منبع مختلف بستگی دارد، کدام دیدگاه طبیعی‌تر است؟`,
+ o:[`پویش فعالیت یا سه‌فازی، چون شرط ترکیبی را یک‌جا و صریح می‌نویسی`,`زمان‌بندی رویداد، چون همیشه سریع‌ترین است`,`تعامل فرایند، چون موجودیت‌محور است`,`هیچ‌کدام؛ باید مدل پیوسته ساخت`],a:0,
+ e:R`در زمان‌بندی رویداد باید همین شرط را در <b>هر سه</b> روالی که ممکن است منبعی را آزاد کنند تکرار کنی، که منبع خطاست. سه‌فازی شرط را یک بار به‌عنوان فعالیت C می‌نویسد و سرعت را هم حفظ می‌کند.`}
+];
+
+window.PAGE_INIT=function(ML){
+  const fa=ML.fa, c=v=>ML.css(v);
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function f2(x,d=2){return fa((+x).toFixed(d));}
+  const num=x=>{const r=Math.round(x*1000)/1000;return String(r);};
+  function inp(label,val,on){
+    const l=ML.h("label"); l.append(label+" ");
+    const i=ML.h("input",{type:"text",value:val});
+    i.oninput=()=>on(i.value);
+    l.append(i); l._i=i; return l;
+  }
+  function chk(label,val,on){const l=ML.h("label",{class:"chk"});const i=ML.h("input",{type:"checkbox"});i.checked=val;i.onchange=()=>on(i.checked);l.append(i,label);return l;}
+  const FAD="۰۱۲۳۴۵۶۷۸۹", ARD="٠١٢٣٤٥٦٧٨٩";
+  function parse(s){
+    s=String(s).replace(/[۰-۹]/g,d=>FAD.indexOf(d)).replace(/[٠-٩]/g,d=>ARD.indexOf(d)).replace(/٫/g,".");
+    return s.split(/[^0-9.]+/).filter(x=>x.length).map(Number).filter(x=>isFinite(x));
+  }
+
+  /* ---------------- میز کار شبیه‌سازی دستی ---------------- */
+  (function(){
+    const el=document.getElementById("w-bench");
+    ML.shell(el,"🔧 میز کار شبیه‌سازی دستی",
+      "یک سرور FIFO، ابتدا خالی. مشتری اول در لحظه‌ی صفر می‌رسد و عدد i‌ام فهرست بین‌ورود، فاصله‌ی ورود مشتری i تا i+1 است. قرارداد تساوی: اول خروج، بعد ورود. ابزار جدول رویدادبه‌رویداد با FEL قبل و بعد، نمودار تعداد در سیستم، نوار زمانی هر مشتری و همه‌ی میانگین‌ها را می‌سازد. چک‌باکس FEL را عوض کن: خاموش یعنی سبک جزوه (فقط ورود بعدی زمان‌بندی شده)، روشن یعنی سبک تمرین ۳ سؤال ۲ (همه‌ی ورودهای معلوم روی فهرست). ترتیب رویدادها و همه‌ی آمارها در دو حالت یکی است.");
+    const S={ia:"1 1 6 3 7 5 2", sv:"4 2 5 4 1 5 4", n:8, ma:4, ms:4, seed:7, felAll:false};
+    const ctr=ML.h("div",{class:"controls"});
+    const iaIn=inp("بین‌ورود:",S.ia,v=>{S.ia=v;run();});
+    const svIn=inp("خدمت:",S.sv,v=>{S.sv=v;run();});
+    const bGen=ML.h("button",{class:"btn ghost",type:"button"},"🎲 بساز");
+    const bEx=ML.h("button",{class:"btn ghost",type:"button"},"📄 مثال جزوه");
+    ctr.append(iaIn,svIn,
+      ML.slider("تعداد مشتری",2,16,1,S.n,v=>{S.n=v;gen();},v=>fa(v)),
+      ML.slider("میانگین بین‌ورود",1,8,1,S.ma,v=>{S.ma=v;gen();},v=>fa(v)),
+      ML.slider("میانگین خدمت",1,8,1,S.ms,v=>{S.ms=v;gen();},v=>fa(v)),
+      chk("همه‌ی ورودهای باقی‌مانده روی FEL",S.felAll,v=>{S.felAll=v;run();}),
+      bGen,bEx);
+    const tw=ML.h("div",{class:"tablewrap"});
+    const cv1=ML.h("canvas",{class:"wide"}), cv2=ML.h("canvas",{class:"wide"});
+    const lg=ML.h("div",{class:"legend"});
+    lg.innerHTML=`<span><i style="background:${c("--plot-c1")}"></i>تعداد در سیستم L(t)</span>`+
+      `<span><i style="background:${c("--plot-c2")}"></i>طول صف LQ(t)</span>`+
+      `<span><i style="background:${c("--plot-c3")}"></i>میانگین زمانی</span>`+
+      `<span>نوار پایین: نارنجی = انتظار، آبی = خدمت</span>`;
+    const ro=ML.h("div",{class:"readout"});
+    el.append(ctr,tw,cv1,lg,cv2,ro);
+
+    function simulate(IA,SV){
+      const n=Math.min(IA.length+1,SV.length);
+      if(n<1) return null;
+      const arr=[0]; for(let i=1;i<n;i++) arr.push(arr[i-1]+IA[i-1]);
+      let LQ=0,LS=0,B=0,aL=0,aQ=0,last=0,MQ=0,nextA=0,inSvc=-1,dep=Infinity;
+      const q=[],st=new Array(n).fill(0),en=new Array(n).fill(0);
+      const rows=[],pL=[[0,0]],pQ=[[0,0]];
+      const fel=()=>{
+        const e=[];
+        if(inSvc>=0) e.push([dep,0,"D",inSvc]);
+        const lim = S.felAll? n : Math.min(n,nextA+1);
+        for(let i=nextA;i<lim;i++) e.push([arr[i],1,"A",i]);
+        e.sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
+        return e.length? e.map(x=>"("+x[2]+","+num(x[0])+",C"+(x[3]+1)+")").join(" ") : "(empty)";
+      };
+      let guard=0;
+      while((nextA<n||inSvc>=0)&&guard++<5000){
+        const tA=nextA<n?arr[nextA]:Infinity, tD=inSvc>=0?dep:Infinity;
+        const isD=tD<=tA, t=isD?tD:tA, dt=t-last, before=fel();
+        B+=LS*dt; aL+=(LQ+LS)*dt; aQ+=LQ*dt;
+        pL.push([t,LQ+LS]); pQ.push([t,LQ]); last=t;
+        let label;
+        if(isD){
+          const cst=inSvc; en[cst]=t; label="D · C"+(cst+1);
+          LS=0; inSvc=-1; dep=Infinity;
+          if(q.length){const j=q.shift(); LQ--; LS=1; inSvc=j; st[j]=t; dep=t+SV[j];}
+        }else{
+          const cst=nextA++; label="A · C"+(cst+1);
+          if(LS===0){LS=1; inSvc=cst; st[cst]=t; dep=t+SV[cst];}
+          else {q.push(cst); LQ++; if(LQ>MQ) MQ=LQ;}
+        }
+        pL.push([t,LQ+LS]); pQ.push([t,LQ]);
+        rows.push({t,label,LQ,LS,before,after:fel(),B});
+      }
+      const T=last;
+      let sumR=0,sumW=0;
+      for(let i=0;i<n;i++){sumR+=en[i]-arr[i]; sumW+=st[i]-arr[i];}
+      return {n,arr,st,en,rows,pL,pQ,T,B,aL,aQ,MQ,sumR,sumW};
+    }
+
+    let D=null;
+    function gen(){
+      const rng=mulberry32(S.seed*7919+S.n*31+S.ma*7+S.ms);
+      const ia=[],sv=[];
+      for(let i=0;i<S.n-1;i++) ia.push(1+Math.floor(rng()*(2*S.ma-1)));
+      for(let i=0;i<S.n;i++) sv.push(1+Math.floor(rng()*(2*S.ms-1)));
+      S.ia=ia.join(" "); S.sv=sv.join(" ");
+      iaIn._i.value=S.ia; svIn._i.value=S.sv;
+      run();
+    }
+    bGen.onclick=()=>{S.seed=(S.seed*7919+13)%100000; gen();};
+    bEx.onclick=()=>{S.ia="1 1 6 3 7 5 2"; S.sv="4 2 5 4 1 5 4";
+      iaIn._i.value=S.ia; svIn._i.value=S.sv; run();};
+
+    function run(){
+      const IA=parse(S.ia).map(x=>Math.max(0,x));
+      const SV=parse(S.sv).filter(x=>x>0);
+      if(SV.length<1){
+        tw.innerHTML=""; D=null;
+        ro.textContent="دست‌کم یک زمان خدمت مثبت لازم است. مثلاً: 4 2 5 4 1";
+        draw(); return;
+      }
+      D=simulate(IA,SV);
+      const r=D.rows.slice(0,44);
+      let h='<table class="sim"><tr><th>#</th><th>ساعت</th><th>رویداد</th><th>FEL قبل</th><th>LQ</th><th>LS</th><th>FEL بعد</th><th>B</th></tr>';
+      r.forEach((x,i)=>{
+        const cls = x.LS===0 ? ' class="zero"' : "";
+        h+="<tr"+cls+"><td>"+fa(i+1)+"</td><td>"+fa(num(x.t))+"</td><td class=\"ev\">"+x.label+"</td>"+
+           '<td class="fel">'+x.before+"</td><td>"+fa(x.LQ)+"</td>"+
+           (x.LS===0?'<td class="idle">':"<td>")+fa(x.LS)+"</td>"+
+           '<td class="fel">'+x.after+"</td><td>"+fa(num(x.B))+"</td></tr>";
+      });
+      if(D.rows.length>44) h+='<tr class="sum"><td colspan="8">… '+fa(D.rows.length-44)+" سطر دیگر نمایش داده نشد</td></tr>";
+      tw.innerHTML=h+"</table>";
+      const T=D.T>0?D.T:1;
+      const ok=x=>Math.abs(x)<1e-9?"✅":"⚠";
+      ro.textContent=
+        fa(D.n)+" مشتری · افق T = "+fa(num(D.T))+" (آخرین خروج) · بیشینه‌ی طول صف = "+fa(D.MQ)+"\n"+
+        "  میانگین تعداد در سیستم   L  = "+ML.L(num(D.aL)+" / "+num(T)+" = "+f2(D.aL/T,3))+"\n"+
+        "  میانگین طول صف           LQ = "+ML.L(num(D.aQ)+" / "+num(T)+" = "+f2(D.aQ/T,3))+"\n"+
+        "  بهره‌وری سرور            rho= "+ML.L(num(D.B)+" / "+num(T)+" = "+f2(D.B/T,3))+"\n"+
+        "  میانگین زمان در سیستم    w  = "+ML.L(num(D.sumR)+" / "+fa(D.n)+" = "+f2(D.sumR/D.n,3))+"\n"+
+        "  میانگین انتظار در صف     wQ = "+ML.L(num(D.sumW)+" / "+fa(D.n)+" = "+f2(D.sumW/D.n,3))+"\n"+
+        "آزمون مساحت  "+ok(D.aL-D.sumR)+"  سطح زیر L برابر "+ML.L(num(D.aL))+" و جمع زمان پاسخ‌ها برابر "+ML.L(num(D.sumR))+"\n"+
+        "آزمون مساحت  "+ok(D.aQ-D.sumW)+"  سطح زیر LQ برابر "+ML.L(num(D.aQ))+" و جمع انتظارها برابر "+ML.L(num(D.sumW))+"\n"+
+        "رابطه‌ی لیتل: نرخ "+ML.L(fa(D.n)+" / "+num(T)+" = "+f2(D.n/T,3))+" ضربدر "+ML.L(f2(D.sumR/D.n,3))+" برابر "+ML.L(f2(D.aL/T,3))+" است";
+      draw();
+    }
+
+    function draw(){
+      if(!D){ new ML.Plot(cv1,[0,1],[0,1],{}); new ML.Plot(cv2,[0,1],[0,1],{}); return; }
+      const T=D.T>0?D.T:1;
+      let ymax=1; D.pL.forEach(p=>{if(p[1]>ymax) ymax=p[1];});
+      const P=new ML.Plot(cv1,[0,T],[0,ymax+0.6],{l:40,b:30,t:14});
+      P.axes("زمان","تعداد",{ystep:ymax<=6?1:Math.ceil(ymax/5),yfmt:y=>fa(Math.round(y)),xfmt:x=>fa(+x.toFixed(T>40?0:1))});
+      P.area(D.pL,ML.alpha(c("--plot-c1"),0.2));
+      P.line(D.pL,c("--plot-c1"),2.2);
+      P.line(D.pQ,c("--plot-c2"),1.7,[5,4]);
+      P.hline(D.aL/T,c("--plot-c3"));
+      P.text(T*0.985,D.aL/T,"L = "+f2(D.aL/T,2),c("--plot-c3"),"right",-5);
+      const n=D.n;
+      const Q=new ML.Plot(cv2,[0,T],[0.4,n+0.6],{l:46,b:30,t:12});
+      Q.axes("زمان","مشتری",{ystep:1,yfmt:y=>{const k=Math.round(y);return (k>=1&&k<=n)?"C"+fa(n+1-k):"";},xfmt:x=>fa(+x.toFixed(T>40?0:1))});
+      const ctx=Q.ctx, c1=c("--plot-c1"), c2=c("--plot-c2");
+      for(let i=0;i<n;i++){
+        const y=n-i, yy=Q.Y(y), hh=Math.max(7,Math.min(16,(Q.H-42)/Math.max(1,n)-3));
+        if(D.st[i]>D.arr[i]){ctx.fillStyle=ML.alpha(c2,0.75);
+          ctx.fillRect(Q.X(D.arr[i]),yy-hh/2,Math.max(1.5,Q.X(D.st[i])-Q.X(D.arr[i])),hh);}
+        ctx.fillStyle=c1;
+        ctx.fillRect(Q.X(D.st[i]),yy-hh/2,Math.max(1.5,Q.X(D.en[i])-Q.X(D.st[i])),hh);
+      }
+    }
+    ML.onResize(cv1,draw); ML.onResize(cv2,draw);
+    run();
+  })();
+};
+</script>
+</body>
+</html>

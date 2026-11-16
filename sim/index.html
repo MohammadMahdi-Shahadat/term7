@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شبیه‌سازی کامپیوتری · فهرست جلسه‌ها</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+main.home{max-width:1120px;padding:0 24px 80px}
+@media (max-width:560px){main.home{padding:0 16px 64px}}
+.top{display:flex;flex-wrap:wrap;gap:32px;align-items:stretch;padding:52px 0 32px}
+.top .intro{flex:999 1 520px;min-width:0}
+.top .kick{margin:0 0 12px;font-size:.84em;font-weight:700;color:var(--accent)}
+.top h1{font-size:2.9em;margin:0;line-height:1.35}
+.top .lead{margin:16px 0 0;max-width:640px}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.cta a{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;border-radius:12px;text-decoration:none;font-weight:700}
+.cta a.p{background:var(--accent);color:var(--paper)} .cta a.p:hover{background:var(--event);color:var(--paper)}
+.cta a.s{border:1px solid var(--line-2);background:var(--paper);color:var(--ink)}
+.clockcard{flex:1 1 320px;min-width:0;background:var(--ink);color:var(--bg);border-radius:20px;padding:24px 26px;display:flex;flex-direction:column;gap:16px}
+.clockcard .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:.82em;font-weight:700;opacity:.85}
+.clockcard .big{font-family:var(--mono);font-size:2.7em;white-space:nowrap;font-weight:700;line-height:1;direction:ltr;text-align:left}
+.clockcard .big span{opacity:.45}
+.ticks{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:4px}
+.ticks i{height:26px;border-radius:4px;background:rgba(255,255,255,.14)}
+:root[data-theme="dark"] .ticks i{background:rgba(0,0,0,.14)}
+.ticks i.b{background:#F0915F} .ticks i.d{background:#6CCB92} .ticks i.n{background:transparent;border:1.5px solid #F0915F}
+.clockcard .nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:.82em}
+.clockcard .nums>div{border-top:1px solid rgba(255,255,255,.2);padding-top:10px}
+.clockcard .nums b{display:block;font-family:var(--mono);font-size:1.6em}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .clockcard{background:#E8EAEF;color:#12151B}:root:not([data-theme="light"]) .clockcard .nums>div{border-color:rgba(0,0,0,.2)}:root:not([data-theme="light"]) .ticks i{background:rgba(0,0,0,.12)}}
+:root[data-theme="dark"] .clockcard{background:#E8EAEF;color:#12151B} :root[data-theme="dark"] .clockcard .nums>div{border-color:rgba(0,0,0,.2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ticks i.b{background:#AE4217}:root:not([data-theme="light"]) .ticks i.n{border-color:#AE4217}:root:not([data-theme="light"]) .ticks i.d{background:#1E6F42}}
+:root[data-theme="dark"] .ticks i.b{background:#AE4217} :root[data-theme="dark"] .ticks i.n{border-color:#AE4217} :root[data-theme="dark"] .ticks i.d{background:#1E6F42}
+.tl{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--paper);padding:22px 22px 16px}
+.tl .in{min-width:900px}
+.tl .dots,.tl .lbl{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));text-align:center;align-items:end}
+.tl .dots div i{display:block;margin:0 auto;border-radius:50%}
+.tl .dots i.b{width:16px;height:16px;background:var(--accent)}
+.tl .dots i.d{width:16px;height:16px;background:var(--good)}
+.tl .dots i.n{width:16px;height:16px;border:3px solid var(--event);background:var(--paper)}
+.tl .dots i.u{width:10px;height:10px;background:var(--line-2);margin:3px auto}
+.tl .dots i.m{width:16px;height:16px;border-radius:2px;transform:rotate(45deg);border:2.5px solid var(--ink-2)}
+.tl .dots small{display:block;font-size:.72em;font-weight:700;white-space:nowrap;color:var(--ink-3);margin-bottom:4px}
+.tl .dots small.now{color:var(--event)}
+.tl .axis{height:2px;background:var(--line-2);margin:10px 0 6px}
+.tl .lbl{font-family:var(--mono);font-size:.72em;color:var(--ink-3)}
+.tl .parts{display:grid;grid-template-columns:5fr 6fr 9fr;gap:8px;margin-top:12px;font-size:.78em;font-weight:700}
+.tl .parts div{background:var(--bg);color:var(--ink-2);border-radius:8px;padding:4px 10px}
+.tl .parts div:first-child{background:var(--accent-soft);color:var(--accent)}
+.fel{display:flex;flex-wrap:wrap;gap:20px}
+.fel .list{flex:999 1 520px;min-width:0;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px 24px}
+.fel .hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.fel .hd span{font-family:var(--mono);font-size:.76em;color:var(--ink-3);direction:ltr}
+.fel .ev{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line-2)}
+.fel .ev:last-child{border-bottom:0}
+.fel .ev .t{font-family:var(--mono);font-weight:700;color:var(--ink-2)}
+.fel .ev .t.hot{color:var(--event)}
+.fel .ev .chip{font-size:.76em;font-weight:700;border-radius:999px;padding:1px 12px;white-space:nowrap;background:var(--bg);color:var(--ink-3)}
+.fel .ev .chip.hot{background:var(--event-soft);color:var(--event)}
+@media (max-width:560px){.fel .ev{grid-template-columns:1fr}}
+.fel .pen{flex:1 1 300px;min-width:0;background:var(--event-soft);border-radius:16px;padding:20px 24px}
+.fel .pen h3{margin:0;color:var(--event)}
+.fel .pen .f{font-family:var(--mono);font-size:.98em;white-space:nowrap;overflow-x:auto;font-weight:700;text-align:center;direction:ltr;margin:14px 0 6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:26px}
+.sc{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px;min-height:150px;transition:border-color .15s,transform .1s}
+a.sc:hover{border-color:var(--accent);color:var(--ink);transform:translateY(-2px)}
+.sc .h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sc .n{font-family:var(--mono);font-size:1.65em;font-weight:700;color:var(--accent);line-height:1.2}
+.sc .st{font-size:.72em;font-weight:700;border-radius:999px;padding:1px 10px;background:var(--good-soft);color:var(--good)}
+.sc .t{font-weight:800;line-height:1.6}
+.sc .s{font-size:.78em;color:var(--ink-3);margin-top:auto}
+.sc.done{border-color:var(--good)} .sc.done .st{background:var(--good);color:var(--paper)}
+.sc.cur{border:2px solid var(--accent);padding:17px 19px} .sc.cur .st{background:var(--accent-soft);color:var(--accent)}
+.sc.locked{background:transparent;border:1px dashed var(--line-2);min-height:120px}
+.sc.locked .n{color:var(--ink-3);font-size:1.35em} .sc.locked .t{color:var(--ink-2);font-weight:700} .sc.locked .st{background:transparent;color:var(--ink-3)}
+.parth{margin:0 0 12px;font-size:1em;font-weight:800;color:var(--ink-2)}
+.parth.a{color:var(--accent)}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.how>div{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.how .e{font-family:var(--mono);font-size:.82em;font-weight:700;color:var(--event);direction:ltr;text-align:right}
+.how b{display:block;margin-top:2px}
+.how p{margin:6px 0 0;font-size:.9em;color:var(--ink-2)}
+</style>
+</head>
+<body data-session="0">
+<main class="home">
+
+<div class="top">
+  <div class="intro">
+    <p class="kick">دکتر حسین پیوندی · دانشکده‌ی علوم ریاضی و کامپیوتر · نیم‌سال اول ۱۴۰۵–۱۴۰۶</p>
+    <h1>شبیه‌سازی سیستم‌های <span class="hl" style="color:var(--event)">گسسته‌پیشامد</span></h1>
+    <p class="lead">هر جلسه یک صفحه است: شهود، تعریف دقیق، شبیه‌سازی دستی قدم‌به‌قدم، کد پایتون و فرمول اکسل، ابزار تعاملی، تمرین با راه‌حل و تست. <b>جلسه‌های ۱ تا ۱۳</b> همه‌ی چیزی است که تا الان در کلاس گفته شده: فصل ۱ و ۲ (مبانی و شبیه‌سازی با جدول)، فصل ۳ (اصول کلی و فهرست رویدادهای آینده)، فصل ۵ (مدل‌های آماری) و فصل ۶ (تولید و آزمون اعداد تصادفی).</p>
+    <div class="cta"><a class="p" id="cont" href="session-01.html">شروع از جلسه‌ی ۱ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a><a class="s" href="#fel">مهلت‌ها</a></div>
+  </div>
+  <div class="clockcard" aria-label="ساعت شبیه‌سازی درس: پیشرفت مطالعه">
+    <div class="row"><span>ساعت شبیه‌سازی درس</span><span class="mono" style="direction:ltr">CLOCK</span></div>
+    <div class="big" id="clk">t = 00<span>/20</span></div>
+    <div class="ticks" id="ticks" aria-hidden="true"></div>
+    <div class="nums"><div>جلسه‌های آماده<b id="nb">5</b></div><div>تمام‌شده<b id="nd">0</b></div></div>
+  </div>
+</div>
+
+<section id="timeline" style="margin-top:8px">
+<h2>مسیر درس روی محور زمان</h2>
+<div class="tl"><div class="in">
+  <div class="dots" id="dots"></div>
+  <div class="axis"></div>
+  <div class="lbl" id="lbl"></div>
+  <div class="parts"><div>الف · فصل ۱ و ۲</div><div>ب · فصل ۳ و ۵: اصول DES و مدل‌های آماری</div><div>ج · فصل ۶ به بعد: اعداد تصادفی، ورودی، اعتبارسنجی، خروجی</div></div>
+</div></div>
+</section>
+
+<section id="fel">
+<div class="fel">
+  <div class="list">
+    <div class="hd"><h2 style="margin:0">فهرست رویدادهای آینده</h2><span>FEL · sorted by time</span></div>
+    <div class="ev"><span class="t">۸ آبان · ۲۳:۵۹</span><span><b>تمرین ۱ — تحویل شد ✅</b> · سیستم کتابخانه، شاخص‌های کافه، مونت‌کارلو و مدل پیوسته، صف سوپرمارکت، مرکز تماس، موجودی (M, N)، تکرار شبیه‌سازی، مراحل پروژه</span><span class="chip">جلسه‌های ۲ تا ۵</span></div>
+    <div class="ev"><span class="t hot">۲۲ آبان · گذشته</span><span><b>تمرین ۲ — هنوز فرستاده نشده</b> · طبقه‌بندی مدل‌ها، نردبان، تأخیرهای شبکه، سطح جزئیات، نظم صف، ساعت و FEL، کارت شبکه در اکسل، موجودی دوره‌ای. <b>با جریمه هنوز قابل ارسال است.</b></span><span class="chip hot">جلسه‌های ۲، ۳ و ۶</span></div>
+    <div class="ev"><span class="t hot">۶ آذر · ۲۳:۵۹</span><span><b>تحویل تمرین ۳</b> · وضعیت/فعالیت/تأخیر، اجرای دستی FEL، دیدگاه مدل، انتخاب توزیع، مولد همنهشتی، ارزیابی مولد، آزمون یکنواختی، دو صف متوالی</span><span class="chip hot">جلسه‌های ۶ تا ۱۳</span></div>
+    <div class="ev"><span class="t">۲۰ دی</span><span><b>آخرین مهلت ارسال همه‌ی تمرین‌ها</b> (با تأخیر). بعد از آن هیچ تمرینی پذیرفته نمی‌شود.</span><span class="chip">سقف</span></div>
+  </div>
+  <div class="pen">
+    <h3>جریمه‌ی تأخیر تمرین‌ها</h3>
+    <p class="f">final = raw × (W − k) / W</p>
+    <p style="margin:0;font-size:.9em;color:var(--ink-2)"><b>W</b> = تعداد هفته‌های باقی‌مانده از مهلت آن تمرین تا ۲۰ دی، <b>k</b> = هفته‌های تأخیر (۱ تا ۷ روز = ۱ هفته). <b>برای تمرین ۲:</b> از ۲۲ آبان تا ۲۰ دی حدود ۸ هفته است، پس هر هفته تأخیر حدود ۱۲٫۵٪ نمره می‌برد. هرچه به ۲۰ دی نزدیک‌تر شویم جریمه‌ی هر هفته سنگین‌تر می‌شود.</p>
+  </div>
+</div>
+</section>
+
+<section id="sessions">
+<h2>جلسه‌ها</h2>
+<p style="margin-top:-6px;color:var(--ink-2)">بخش الف از روی جزوه‌ی کلاس (Ch.1 و Ch.2) و کتاب Banks ساخته شده. ترتیب بخش ب و ج از روی فصل‌های کتاب و موقت است و هم‌پای کلاس به‌روز می‌شود.</p>
+<div id="cards"></div>
+</section>
+
+<section id="how">
+<h2>هر جلسه را این‌طور بخوان</h2>
+<div class="how">
+  <div><div class="e">e1 · arrival</div><b>اول فکر کن</b><p>کادر «قبل از خواندن» را با قلم و کاغذ جواب بده، بعد متن را بخوان.</p></div>
+  <div><div class="e">e2 · service</div><b>جدول را خودت پر کن</b><p>شبیه‌سازی دستی را سطربه‌سطر انجام بده و بعد با جدول حل‌شده مقایسه کن. همین کار را در اکسل هم تکرار کن.</p></div>
+  <div><div class="e">e3 · experiment</div><b>با ابزار بازی کن</b><p>نرخ ورود، سیاست یا تعداد تکرار را عوض کن و ببین خروجی‌ها چطور جابه‌جا می‌شوند.</p></div>
+  <div><div class="e">e4 · departure</div><b>تمرین و تست</b><p>تمرین‌ها را بدون راه‌حل حل کن و تست را بزن. بهترین نمره در همین مرورگر می‌ماند.</p></div>
+</div>
+<div class="box warn"><div class="bt">درباره‌ی تمرین سری اول</div>
+صفحه‌ها روش حل هر سؤال تمرین ۱ را با <b>مثال‌های مشابه و عددهای دیگر</b> قدم‌به‌قدم یاد می‌دهند و بخش «راهنمای تمرین ۱» دارند، ولی جواب نهایی خود سؤال‌ها را نمی‌نویسند؛ تمرین مال خودت است و در کلاس باید بتوانی از آن دفاع کنی.
+</div>
+</section>
+
+<section id="sources">
+<h2>منابع</h2>
+<ul style="color:var(--ink-2)">
+<li><span class="ltr">Banks, Carson, Nelson, Nicol — Discrete-Event System Simulation, 5th ed.</span> (کتاب اصلی)</li>
+<li>جزوه‌ی کلاس: <span class="ltr">Sim(22889)@14051 — Part 1: Introduction to Simulation, Part 2: Simulation Examples</span> (بر پایه‌ی اسلایدهای Mesut Güneş)</li>
+<li>تمرین سری اول، طراح: محمدرضا رحمانی</li>
+</ul>
+</section>
+
+</main>
+<script>
+window.PAGE_INIT = function(ML){
+  const {SESSIONS,PARTS,fa,fileOf,loadProg} = ML;
+  const pad = n => String(n).padStart(2,"0");
+  const prog = loadProg();
+  const built = SESSIONS.filter(s=>s.built).length;
+  const done = SESSIONS.filter(s=>(prog[s.n]||{}).done).length;
+  const cur = SESSIONS.find(s=>s.built && !(prog[s.n]||{}).done);
+  document.getElementById("clk").innerHTML = `t = ${pad(done)}<span>/${SESSIONS.length}</span>`;
+  document.getElementById("nb").textContent = fa(built);
+  document.getElementById("nd").textContent = fa(done);
+  if(cur){ const c=document.getElementById("cont"); c.href=fileOf(cur.n); c.firstChild.textContent = (done? "ادامه از جلسه‌ی ":"شروع از جلسه‌ی ")+fa(cur.n)+" "; }
+  const ticks=document.getElementById("ticks");
+  SESSIONS.forEach(s=>{ const i=document.createElement("i"); const st=prog[s.n]||{}; i.className = st.done?"d": (cur&&s.n===cur.n?"n": s.built?"b":""); ticks.appendChild(i); });
+  const dots=document.getElementById("dots"), lbl=document.getElementById("lbl");
+  const lastBuilt = Math.max(...SESSIONS.filter(s=>s.built).map(s=>s.n));
+  SESSIONS.forEach(s=>{
+    const d=document.createElement("div"); const st=prog[s.n]||{};
+    let cls = st.done?"d": s.built?"b":"u", tag="";
+    if(s.n===12){ cls="m"; tag='<small>میان‌ترم</small>'; }
+    if(s.n===20){ cls="m"; tag='<small>پایان‌ترم</small>'; }
+    if(s.n===lastBuilt+1){ cls="n"; tag='<small class="now">کلاس این‌جاست</small>'; }
+    d.innerHTML = tag+`<i class="${cls}"></i>`; dots.appendChild(d);
+    const l=document.createElement("span"); l.textContent=pad(s.n); lbl.appendChild(l);
+  });
+  const host=document.getElementById("cards");
+  Object.keys(PARTS).forEach((p,pi)=>{
+    const h=document.createElement("h3"); h.className="parth"+(pi===0?" a":""); h.textContent=PARTS[p]; host.appendChild(h);
+    const g=document.createElement("div"); g.className="grid";
+    SESSIONS.filter(s=>s.part===p).forEach(s=>{
+      const st=prog[s.n]||{};
+      const a=document.createElement(s.built?"a":"div");
+      a.className="sc"+(s.built?"":" locked")+(st.done?" done":"")+(cur&&s.n===cur.n&&s.built&&!st.done&&done>0?" cur":"");
+      if(s.built) a.href=fileOf(s.n);
+      const badge = st.done?"✓ تمام": s.built?"آماده":"به‌زودی";
+      const sub = s.built ? (st.quiz?`بهترین نمره‌ی تست: ${fa(st.quiz[0])} از ${fa(st.quiz[1])} · `:"")+s.src : s.src;
+      a.innerHTML=`<div class="h"><span class="n">${pad(s.n)}</span><span class="st">${badge}</span></div><span class="t">${s.title}</span><span class="s">${sub}</span>`;
+      g.appendChild(a);
+    });
+    host.appendChild(g);
+  });
+};
+</script>
+</body>
+</html>

@@ -12,9 +12,9 @@ const SESSIONS = [
   {n:6,  part:"الف", title:"نمونه‌گیری، عدم‌توازن کلاس، تقسیم داده و افزایش داده", built:true},
   {n:7,  part:"الف", title:"مهندسی ویژگی (۱): عملیات رایج", built:true},
   {n:8,  part:"الف", title:"مهندسی ویژگی (۲): نشت داده + آزمون جامع بخش داده", built:true},
-  {n:9,  part:"ب", title:"توسعه‌ی مدل (۱): انتخاب مدل، baseline، ensemble، ردیابی آزمایش", built:false},
-  {n:10, part:"ب", title:"توسعه‌ی مدل (۲): آموزش توزیع‌شده، AutoML و تنظیم ابرپارامتر", built:false},
-  {n:11, part:"ب", title:"ارزیابی آفلاین", built:false},
+  {n:9,  part:"ب", title:"انتخاب مدل: شش توصیه‌ی ارزیابی الگوریتم و انسامبل‌ها", built:true},
+  {n:10, part:"ب", title:"آموزش در مقیاس: موازی‌سازی داده، مدل و pipeline + AutoML", built:true},
+  {n:11, part:"ب", title:"ارزیابی آفلاین: baseline، آزمون‌های رفتاری، کالیبراسیون و برش‌ها", built:true},
   {n:12, part:"ب", title:"استقرار (۱): batch و online، feature store", built:false},
   {n:13, part:"ب", title:"استقرار (۲): فشرده‌سازی مدل، edge و cloud", built:false},
   {n:14, part:"ب", title:"سرویس‌دهی عملی: TF Serving و Ray Serve", built:false},
@@ -442,8 +442,148 @@ function wHashing(el){
   onResize(cv,draw); draw();
 }
 
+/* ======================================================================
+   Widget 9 — majority vote of n independent classifiers (session 9)
+   ====================================================================== */
+function binomTail(n,p){ // P(at least ceil((n+1)/2) successes)
+  const k0=Math.floor(n/2)+1; let s=0, c=1;
+  for(let k=0;k<=n;k++){
+    if(k>0) c = c*(n-k+1)/k;
+    if(k>=k0) s += c*Math.pow(p,k)*Math.pow(1-p,n-k);
+  }
+  return s;
+}
+function wVote(el){
+  shell(el,"🔧 ابزار: رأی اکثریت در انسامبل",
+    "اگر $n$ طبقه‌بندِ <b>مستقل</b> هرکدام با دقت $p$ رأی بدهند، احتمال درست بودن رأی اکثریت برابر است با $\\sum_{k>n/2}\\binom{n}{k}p^k(1-p)^{n-k}$.");
+  let n=3, p=0.7;
+  const cv=h("canvas",{class:"wide"}); el.append(cv);
+  const ctr=h("div",{class:"controls"});
+  ctr.append(slider("تعداد مدل‌ها n (فرد)",3,25,2,n,v=>{n=v;draw();}),
+             slider("دقت هر مدل p",0.30,0.95,0.01,p,v=>{p=v;draw();},v=>(v*100).toFixed(0)+"%"));
+  el.append(ctr); const out=h("div",{class:"readout"}); el.append(out);
+  function draw(){
+    const pts=[],pts2=[],pts3=[];
+    for(let x=0.30;x<=0.951;x+=0.005){ pts.push([x,binomTail(n,x)]); pts2.push([x,x]); pts3.push([x,binomTail(25,x)]); }
+    const P=new Plot(cv,[0.30,0.95],[0,1]);
+    P.axes("دقت هر مدل p","دقت رأی اکثریت",{xstep:0.1,ystep:0.2,xfmt:x=>(x*100).toFixed(0)+"%",yfmt:y=>(y*100).toFixed(0)+"%"});
+    P.line(pts2,css("--plot-grid"),1.5,[5,4]);
+    P.line(pts3,alpha(css("--plot-c3")||css("--plot-c2"),0.45),1.6,[3,3]);
+    P.line(pts,css("--plot-c1"),2.6);
+    P.vline(0.5,css("--plot-grid"));
+    P.dot(p,binomTail(n,p),css("--plot-c2"),5);
+    const q=binomTail(n,p);
+    out.textContent =
+      `با ${L("n = "+n)} مدل و دقت ${L((p*100).toFixed(0)+"%")} برای هرکدام، دقت رأی اکثریت ${L((q*100).toFixed(2)+"%")} می‌شود `+
+      `(${q>p?"+":""}${L(((q-p)*100).toFixed(2))} واحد نسبت به یک مدل تنها).\n`+
+      `${p>0.5 ? "چون p > ۵۰٪ است، با زیادکردن n دقت به ۱۰۰٪ میل می‌کند (قضیه‌ی هیئت‌منصفه‌ی کُندُرسه)." :
+                 "چون p < ۵۰٪ است، زیادکردن n دقت را بدتر می‌کند — انسامبلِ مدل‌های بدتر از سکه، بدتر هم می‌شود."}\n`+
+      `خط‌چین خاکستری: یک مدل تنها · خط‌چین رنگی: ${L("n = 25")}\n`+
+      `⚠️ همه‌ی این محاسبه روی فرض <استقلال خطاها> است. مدل‌هایی که روی یک داده و با یک معماری آموزش دیده‌اند خطای همبسته دارند و سود واقعی خیلی کمتر از این نمودار است.`;
+  }
+  onResize(cv,draw); draw();
+}
+
+/* ======================================================================
+   Widget 10 — pipeline parallelism bubble (session 10)
+   ====================================================================== */
+function wPipe(el){
+  shell(el,"🔧 ابزار: حباب در موازی‌سازی مدل و pipeline",
+    "با $K$ دستگاه و $M$ میکروبچ، سهم زمانی که دستگاه‌ها واقعاً کار می‌کنند برابر است با $\\dfrac{M}{M+K-1}$؛ بقیه حباب (bubble) است.");
+  let K=4, M=1;
+  const cv=h("canvas",{class:"wide"}); el.append(cv);
+  const ctr=h("div",{class:"controls"});
+  ctr.append(slider("تعداد دستگاه‌ها K",2,16,1,K,v=>{K=v;draw();}),
+             slider("تعداد میکروبچ‌ها M",1,64,1,M,v=>{M=v;draw();}));
+  el.append(ctr); const out=h("div",{class:"readout"}); el.append(out);
+  const util=(k,m)=>m/(m+k-1);
+  function draw(){
+    const pts=[]; for(let m=1;m<=64;m++) pts.push([m,util(K,m)]);
+    const P=new Plot(cv,[1,64],[0,1]);
+    P.axes("تعداد میکروبچ‌ها M","بهره‌وری دستگاه‌ها",{xstep:8,ystep:0.2,yfmt:y=>(y*100).toFixed(0)+"%"});
+    P.hline(1,css("--plot-grid"));
+    P.line(pts,css("--plot-c1"),2.6);
+    P.dot(M,util(K,M),css("--plot-c2"),5);
+    const u=util(K,M);
+    out.textContent =
+      `${L("K = "+K)} دستگاه، ${L("M = "+M)} میکروبچ → بهره‌وری ${L((u*100).toFixed(1)+"%")}، حباب ${L(((1-u)*100).toFixed(1)+"%")}\n`+
+      `شتاب مؤثر نسبت به یک دستگاه: ${L((K*u).toFixed(2)+"×")} (از سقف نظری ${L(K+"×")})\n`+
+      `${M===1 ? "با M = 1 همان موازی‌سازی مدلِ ساده (naive) است: در هر لحظه فقط یک دستگاه کار می‌کند." :
+                 "هرچه M بزرگ‌تر شود حباب کوچک‌تر می‌شود، ولی حافظه‌ی لازم برای نگه‌داشتن فعال‌سازی‌های میکروبچ‌ها بالا می‌رود."}\n`+
+      `برای رسیدن به بهره‌وری ۹۰٪ لازم است ${L("M ≥ 9(K−1) = "+(9*(K-1)))} باشد.`;
+  }
+  onResize(cv,draw); draw();
+}
+
+/* ======================================================================
+   Widget 11a — calibration / reliability diagram (session 11)
+   ====================================================================== */
+function wCalib(el){
+  shell(el,"🔧 ابزار: نمودار اطمینان و کالیبراسیون",
+    "مدلِ کالیبره یعنی از بین نمونه‌هایی که به آن‌ها احتمال $p$ داده، واقعاً سهم $p$ مثبت باشند. این‌جا انحراف را با $q(p)=\\dfrac{p^{\\gamma}}{p^{\\gamma}+(1-p)^{\\gamma}}$ مدل می‌کنیم.");
+  let g=0.6, B=10;
+  const cv=h("canvas",{class:"wide"}); el.append(cv);
+  const ctr=h("div",{class:"controls"});
+  ctr.append(slider("γ (۱ یعنی کاملاً کالیبره)",0.3,3,0.05,g,v=>{g=v;draw();}),
+             slider("تعداد سطل‌ها",5,20,1,B,v=>{B=v;draw();}));
+  el.append(ctr); const out=h("div",{class:"readout"}); el.append(out);
+  const q=(p)=>{ const a=Math.pow(p,g), b=Math.pow(1-p,g); return a+b===0?0.5:a/(a+b); };
+  function draw(){
+    const P=new Plot(cv,[0,1],[0,1]);
+    P.axes("احتمالی که مدل می‌دهد","سهم واقعی مثبت‌ها",{xstep:0.2,ystep:0.2});
+    P.line([[0,0],[1,1]],css("--plot-grid"),1.6,[5,4]);
+    let ece=0;
+    for(let i=0;i<B;i++){
+      const lo=i/B, hi=(i+1)/B, mid=(lo+hi)/2, v=q(mid);
+      P.bar(mid,(hi-lo)*0.82,0,v,alpha(css("--plot-c1"),0.45));
+      ece += Math.abs(mid-v)/B;
+    }
+    const curve=[]; for(let x=0;x<=1.0001;x+=0.01) curve.push([x,q(x)]);
+    P.line(curve,css("--plot-c1"),2.4);
+    out.textContent =
+      `γ = ${L(g.toFixed(2))} → ${g<0.98?"مدل بیش‌اطمینان (overconfident) است: وقتی می‌گوید ۹۰٪، واقعیت کمتر است."
+        : g>1.02?"مدل کم‌اطمینان (underconfident) است: وقتی می‌گوید ۹۰٪، واقعیت بیشتر است."
+        : "مدل کاملاً کالیبره است."}\n`+
+      `خطای کالیبراسیون (ECE با سطل‌های هم‌اندازه): ${L((ece*100).toFixed(2)+"%")}\n`+
+      `مثال: وقتی مدل احتمال ${L("0.90")} می‌دهد، سهم واقعی مثبت‌ها ${L(q(0.9).toFixed(3))} است؛ برای ${L("0.70")} می‌شود ${L(q(0.7).toFixed(3))}.\n`+
+      `دقت و کالیبراسیون دو چیز جدا هستند: یک مدل می‌تواند دقت بالا و کالیبراسیون بد داشته باشد و برعکس.`;
+  }
+  onResize(cv,draw); draw();
+}
+
+/* ======================================================================
+   Widget 11b — Simpson's paradox across slices (session 11)
+   ====================================================================== */
+function wSimpson(el){
+  shell(el,"🔧 ابزار: پارادوکس سیمپسون روی دو برش",
+    "مدل A در <b>هر دو برش</b> از B بهتر است، ولی اگر سهم برش‌ها در داده‌ی ارزیابی فرق کند، در مجموع می‌تواند بدتر دربیاید.");
+  let sA=0.20, sB=0.80;
+  const A1=0.93, A2=0.73, B1=0.87, B2=0.69;
+  const cv=h("canvas",{class:"wide"}); el.append(cv);
+  const ctr=h("div",{class:"controls"});
+  ctr.append(slider("سهم برش «آسان» در داده‌ی A",0,1,0.01,sA,v=>{sA=v;draw();},v=>(v*100).toFixed(0)+"%"),
+             slider("سهم برش «آسان» در داده‌ی B",0,1,0.01,sB,v=>{sB=v;draw();},v=>(v*100).toFixed(0)+"%"));
+  el.append(ctr); const out=h("div",{class:"readout"}); el.append(out);
+  function draw(){
+    const oA=sA*A1+(1-sA)*A2, oB=sB*B1+(1-sB)*B2;
+    const P=new Plot(cv,[0,6],[0.6,1]);
+    P.axes("","دقت",{xstep:1,ystep:0.05,xfmt:x=>["","A آسان","B آسان","A سخت","B سخت","A کل","B کل"][Math.round(x)]||"",yfmt:y=>(y*100).toFixed(0)+"%"});
+    const c1=css("--plot-c1"), c2=css("--plot-c2");
+    P.bar(1,0.6,0.6,A1,c1); P.bar(2,0.6,0.6,B1,c2);
+    P.bar(3,0.6,0.6,A2,c1); P.bar(4,0.6,0.6,B2,c2);
+    P.bar(5,0.6,0.6,oA,c1);  P.bar(6,0.6,0.6,oB,c2);
+    out.textContent =
+      `برش آسان: A = ${L((A1*100).toFixed(0)+"%")} در برابر B = ${L((B1*100).toFixed(0)+"%")} → A بهتر\n`+
+      `برش سخت: A = ${L((A2*100).toFixed(0)+"%")} در برابر B = ${L((B2*100).toFixed(0)+"%")} → A بهتر\n`+
+      `کل: A = ${L((oA*100).toFixed(1)+"%")} در برابر B = ${L((oB*100).toFixed(1)+"%")} → ${oA>oB?"A بهتر":oA<oB?"⚠️ B بهتر! پارادوکس سیمپسون":"مساوی"}\n`+
+      `دقتِ کل میانگینِ وزن‌دارِ برش‌هاست و وزن‌ها را ترکیب داده تعیین می‌کند، نه کیفیت مدل. برای همین فقط به عدد کل نگاه نکن.`;
+  }
+  onResize(cv,draw); draw();
+}
+
 /* ---------- boot ---------- */
-const WIDGETS={ensemble:wEnsemble, objmix:wObjMix, bytes:wBytes, fresh:wFresh, lfvote:wLFVote, reservoir:wReservoir, confusion:wConfusion, hashing:wHashing};
+const WIDGETS={ensemble:wEnsemble, objmix:wObjMix, bytes:wBytes, fresh:wFresh, lfvote:wLFVote, reservoir:wReservoir, confusion:wConfusion, hashing:wHashing,
+               vote:wVote, pipe:wPipe, calib:wCalib, simpson:wSimpson};
 window.ML={Plot,css,fmt,fa,h,slider,onResize,SESSIONS,PARTS,fileOf,loadProg,WIDGETS,renderMath};
 function boot(){
   buildChrome(); buildQuiz();

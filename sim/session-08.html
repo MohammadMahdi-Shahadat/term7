@@ -1,0 +1,1245 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۸ · پیاده‌سازی: از جاوا تا چارچوب شیءگرا و گراف‌های شبیه‌سازی</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+/* ---- event-graph figures (this page only) ---- */
+.eg{max-width:100%;height:auto;display:block;margin:4px auto}
+.eg-n{fill:var(--paper);stroke:currentColor;stroke-width:1.6}
+.eg-nt{fill:currentColor;font:italic 600 13px Georgia,"Times New Roman",serif}
+.eg-st{fill:var(--ink-2);font:12px var(--mono)}
+.eg-e{fill:none;stroke:currentColor;stroke-width:1.7}
+.eg-cancel{stroke:var(--bad);stroke-dasharray:6 5}
+.eg-sq{fill:none;stroke:var(--event);stroke-width:1.5}
+.eg-c{fill:var(--event);font:italic 600 13px Georgia,"Times New Roman",serif}
+.eg-d{fill:var(--accent);font:italic 700 14px Georgia,"Times New Roman",serif}
+.eg-x{fill:var(--bad);font:600 11px var(--mono)}
+.eg-ab{fill:var(--thm-soft);stroke:var(--thm);stroke-width:1.2}
+.eg-at{fill:var(--thm);font:700 12px var(--mono)}
+.eg-ax{stroke:currentColor;stroke-width:1.4;fill:none}
+.eg-tick{stroke:var(--event);stroke-width:2.4}
+.fc-b{fill:var(--paper);stroke:var(--line-2);stroke-width:1.4}
+.fc-b.hot{fill:var(--event-soft);stroke:var(--event)}
+.fc-d{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.4}
+.fc-t{fill:var(--ink);font:13px Vazirmatn,Tahoma,sans-serif}
+.fc-l{fill:var(--ink-3);font:12px Vazirmatn,Tahoma,sans-serif}
+/* ---- live highlighting inside the widget ---- */
+#wg-ren.off{opacity:.15}
+.eg-ng.on ellipse{fill:var(--event-soft);stroke:var(--event);stroke-width:3.2}
+.eg-ng.on .eg-nt{fill:var(--event)}
+.eg .fire{stroke:var(--good);stroke-width:3.4}
+.eg .block{stroke:var(--line-2);opacity:.4}
+.egtab td,.egtab th{text-align:center;font-family:var(--mono);font-size:.85em;white-space:nowrap}
+.egtab tr.now td{background:var(--event-soft);font-weight:700}
+.egtab td.note{font-family:Vazirmatn,Tahoma,sans-serif;white-space:normal;text-align:start;min-width:155px;font-weight:400}
+.egcols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:start;margin-top:10px}
+@media (max-width:640px){.egcols{grid-template-columns:1fr}}
+.controls .chk{display:flex;align-items:center;gap:6px}
+.controls .chk input{width:18px;height:18px;accent-color:var(--event)}
+table.map td:first-child{font-family:var(--mono);font-size:.86em;white-space:nowrap;direction:ltr;text-align:left}
+table.g2c td code{white-space:pre-wrap}
+.tandem td,.tandem th{text-align:center}
+</style>
+</head>
+<body data-session="8">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+<marker id="eg-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker>
+<marker id="eg-arx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B42318"/></marker>
+</defs></svg>
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۸ از ۲۰ · بخش ب</div>
+  <h1>پیاده‌سازی: از جاوا تا چارچوب شیءگرا و <span class="hl">گراف‌های شبیه‌سازی</span></h1>
+  <p class="lead">تا این‌جا الگوریتم زمان‌بندی رویداد را روی کاغذ اجرا کرده‌ای. حالا همان الگوریتم را سه بار می‌بینی: یک بار به‌صورت یک برنامه‌ی خام جاوا، یک بار به‌صورت یک چارچوب شیءگرا که مدل را از موتور جدا می‌کند، و یک بار به‌صورت <b>گراف</b> — تنها زبان تصویری‌ای که مستقیماً منطق فهرست رویدادهای آینده را مدل می‌کند.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۴۰ دقیقه</span><span>📚 منبع: جزوه Ch.3 ص ۳۹ تا ۷۸ · Banks فصل ۳ · Schruben 1983</span><span class="hot">به کار تمرین ۳ سؤال ۸ می‌آید</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>چهار بخش هر برنامه‌ی زمان‌بندی رویداد (برنامه‌ی اصلی، مقداردهی اولیه، روال هر رویداد، گزارش‌گیر) را نام ببری و بگویی کدام آماره در کدام بخش جمع می‌شود.</li>
+      <li>کد جاوای جزوه را خط‌به‌خط بخوانی و معادل اجراشدنی‌اش را در پایتون با <span class="ltr">heapq</span> بنویسی.</li>
+      <li>بگویی چارچوب شیءگرا چه چیزی را از مدل جدا می‌کند و چرا <span class="ltr">SimEntity</span> و <span class="ltr">SimControl</span> لازم‌اند.</li>
+      <li>یک گراف شبیه‌سازی بخوانی و بنویسی: گره، یال، شرط روی یال، تأخیر روی یال، ویژگی روی یال و یال لغوکننده.</li>
+      <li>از روی گراف تشخیص بدهی کدام رویدادها باید در ابتدای اجرا در FEL گذاشته شوند، و چرا قرارداد رویداد <span class="ltr">Run</span> ساخته شده است.</li>
+      <li>هر عنصر گراف را به تکه‌ی متناظرش در کد ترجمه کنی و یک شبیه‌سازی دو صف متوالی را از روی گراف پیاده کنی.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+<p>۱. در جدول دستی جلسه‌ی ۷ «زمان آزاد شدن سرور» یک ستون بود. در یک برنامه، این عدد کجا باید نگه‌داری شود: در یک متغیر، یا در فهرست رویدادهای آینده؟ فرق این دو انتخاب چیست؟</p>
+<p>۲. اگر بخواهی همان برنامه را برای سیستمی با ده نوع رویداد بنویسی، بدنه‌ی حلقه‌ی اصلی‌ات چه شکلی می‌شود؟ آیا یک <code>if/else</code> ده‌شاخه‌ای قابل نگه‌داری است؟</p>
+<p>۳. رویداد «شروع خدمت» با رویداد «ورود» چه فرقی دارد؟ آیا می‌شود آن را حذف کرد و همه‌چیز را داخل «ورود» و «خروج» انجام داد؟ اگر بشود، چه چیزی را از دست می‌دهی؟</p>
+<p>۴. در ابتدای اجرا کدام رویدادها باید در FEL باشند؟ آیا یک قاعده‌ی مکانیکی برای پیدا کردنشان بلدی، یا هر بار شهودی تصمیم می‌گیری؟</p>
+</div>
+
+<!-- ===================================================== 01 -->
+<section id="why">
+<h2 data-short="چرا کد؟"><span class="num">01</span> از جدول دستی به برنامه <span class="tag core">جزوه</span></h2>
+<p>جدول دستی جلسه‌های ۴ تا ۷ دقیقاً همان الگوریتم زمان‌بندی رویداد را اجرا می‌کند، فقط با دست. تا بیست سطر، این بهترین ابزار یادگیری است؛ از هزار مشتری به بالا غیرممکن است. مثال جزوه در این فصل همان فروشگاه است، ولی این بار:</p>
+<div class="cards">
+  <div><b>یک سرور، صف FIFO</b>باجه‌ی فروشگاه، صف نامحدود.</div>
+  <div><b>۱۰۰۰ مشتری</b>شرط پایان: خروج هزارمین مشتری (نه زمان ثابت).</div>
+  <div><b>بین‌ورود نمایی، میانگین ۴٫۵</b><span class="ltr">λ = 1/4.5 = 0.2222</span></div>
+  <div><b>خدمت نمایی، میانگین ۳٫۲</b><span class="ltr">μ = 1/3.2 = 0.3125</span></div>
+</div>
+<p>این همان سیستم <span class="ltr">M/M/1</span> است: ورود پواسون (<span class="ltr">M</span>)، خدمت نمایی (<span class="ltr">M</span>) و یک سرور. مزیت بزرگش این است که <b>جواب دقیق نظری دارد</b>، پس می‌شود با آن برنامه را صحت‌سنجی کرد. شدت بار:</p>
+<p>$$\rho=\frac{\lambda}{\mu}=\frac{1/4.5}{1/3.2}=\frac{3.2}{4.5}=0.711$$</p>
+<div class="box def"><div class="bt">تعریف ۸.۱ · چهار بخش هر برنامه‌ی زمان‌بندی رویداد</div>
+<ol>
+<li><b>برنامه‌ی اصلی</b> (<span class="ltr">main</span>): پارامترها را می‌گیرد، مقداردهی اولیه را صدا می‌زند، و حلقه‌ی «رویداد قریب‌الوقوع را بردار ← ساعت را جلو ببر ← روال آن رویداد را صدا بزن» را تا شرط پایان تکرار می‌کند.</li>
+<li><b>مقداردهی اولیه</b> (<span class="ltr">initialization</span>): ساعت را صفر می‌کند، حالت اولیه‌ی سیستم را می‌سازد، آماره‌های تجمعی را صفر می‌کند و <b>رویداد(های) اولیه</b> را در FEL می‌گذارد.</li>
+<li><b>روال هر رویداد</b> (<span class="ltr">event routine</span>): برای هر نوع رویداد یکی. سه کار می‌کند: حالت را عوض می‌کند، آماره‌ها را جمع می‌زند، و رویدادهای آینده را زمان‌بندی می‌کند.</li>
+<li><b>گزارش‌گیر</b> (<span class="ltr">report generator</span>): در پایان، از آماره‌های تجمعی شاخص‌ها را می‌سازد و چاپ می‌کند.</li>
+</ol>
+</div>
+<figure class="fig">
+<svg viewBox="0 0 660 480" width="660" direction="ltr" role="img" aria-label="structure of an event-scheduling program" class="eg"><rect class="fc-b" x="180.0" y="7.0" width="300" height="38" rx="10"/><text class="fc-t" x="330" y="31" text-anchor="middle" direction="rtl">()main — شروع و خواندن پارامترها</text><path class="eg-e" d="M 330 45 L 330 72" marker-end="url(#eg-ar)"/><rect class="fc-b" x="110.0" y="74.0" width="440" height="52" rx="10"/><text class="fc-t" x="330" y="96" text-anchor="middle" direction="rtl">()initialization</text><text class="fc-t" x="330" y="114" text-anchor="middle" direction="rtl">ساعت ← ۰، حالت اولیه، آماره‌ها ← ۰، رویدادهای اولیه در FEL</text><path class="eg-e" d="M 330 126 L 330 156" marker-end="url(#eg-ar)"/><rect class="fc-b hot" x="100.0" y="162.0" width="460" height="52" rx="10"/><text class="fc-t" x="330" y="184" text-anchor="middle" direction="rtl">قریب‌الوقوع‌ترین رویداد را از FEL بردار و حذف کن</text><text class="fc-t" x="330" y="202" text-anchor="middle" direction="rtl">ساعت ← زمان آن رویداد</text><path class="eg-e" d="M 330 214 L 330 240" marker-end="url(#eg-ar)"/><path class="fc-d" d="M 330 241.0 L 405.0 272 L 330 303.0 L 255.0 272 Z"/><text class="fc-t" x="330" y="277" text-anchor="middle" direction="rtl">نوع رویداد؟</text><path class="eg-e" d="M 255 272 L 160 272 L 160 306" marker-end="url(#eg-ar)"/><path class="eg-e" d="M 405 272 L 500 272 L 500 306" marker-end="url(#eg-ar)"/><rect class="fc-b" x="60.0" y="311.0" width="200" height="42" rx="10"/><text class="fc-t" x="160" y="337" text-anchor="middle" direction="rtl">()processArrival</text><rect class="fc-b" x="392.5" y="311.0" width="215" height="42" rx="10"/><text class="fc-t" x="500" y="337" text-anchor="middle" direction="rtl">()processDeparture</text><path class="eg-e" d="M 160 353 L 160 380 L 300 380 L 330 380" marker-end="url(#eg-ar)"/><path class="eg-e" d="M 500 353 L 500 380 L 360 380 L 330 380" marker-end="url(#eg-ar)"/><path class="fc-d" d="M 330 382.0 L 425.0 412 L 330 442.0 L 235.0 412 Z"/><text class="fc-t" x="330" y="417" text-anchor="middle" direction="rtl">شبیه‌سازی تمام شد؟</text><path class="eg-e" d="M 235 412 L 40 412 L 40 188 L 96 188" marker-end="url(#eg-ar)"/><text class="fc-l" x="140" y="404" text-anchor="middle" direction="rtl">خیر</text><path class="eg-e" d="M 425 412 L 530 412 L 530 446" marker-end="url(#eg-ar)"/><text class="fc-l" x="470" y="404" text-anchor="middle" direction="rtl">بله</text><rect class="fc-b" x="425.0" y="445.0" width="210" height="34" rx="10"/><text class="fc-t" x="530" y="467" text-anchor="middle" direction="rtl">()reportGeneration</text></svg>
+<figcaption>ساختار کلی برنامه‌ی زمان‌بندی رویداد (جزوه ص ۴۲؛ Banks شکل ۳.۵). کادر نارنجی قلب برنامه است: همان «روال پیشروی زمان» که در جلسه‌ی ۶ دیدی. هیچ‌جای این نمودار حلقه‌ای روی <b>زمان</b> نیست؛ حلقه روی <b>رویدادها</b>ست و ساعت با پرش جلو می‌رود.</figcaption>
+</figure>
+<div class="box note"><div class="bt">📘 نکته‌ی درسی</div>
+در فایل اسلاید، همه‌ی اسلایدهای «<span class="ltr">Simulation in Java</span>» و چارچوب شیءگرا مُهر <span class="ltr">OPTIONAL</span> خورده‌اند؛ یعنی جزئیات نحو جاوا موضوع امتحان نیست. آن‌چه <b>می‌ماند</b> این است: کدام آماره کجا جمع می‌شود، چرا <span class="ltr">lastEventTime</span> لازم است، و چطور همین ساختار را در زبان خودت بنویسی. بخش گراف‌های شبیه‌سازی (بخش ۸ به بعد) مهر <span class="ltr">OPTIONAL</span> ندارد.
+</div>
+</section>
+
+<!-- ===================================================== 02 -->
+<section id="java-state">
+<h2 data-short="متغیرها و Event"><span class="num">02</span> متغیرهای شبیه‌سازی و کلاس <span class="ltr">Event</span> <span class="tag core">جزوه</span></h2>
+<p>قبل از کد، جزوه (ص ۴۱) هر متغیر را در یک دسته می‌گذارد. این دسته‌بندی مهم‌تر از خود کد است، چون در هر مدل تازه باید همین کار را بکنی:</p>
+<div class="tablewrap"><table>
+<tr><th>دسته</th><th>در این مدل</th><th>چرا جداست</th></tr>
+<tr><td>حالت سیستم <span class="ltr">(system state)</span></td><td><code>queueLength</code>، <code>numberInService</code></td><td>هرچه برای ادامه‌ی اجرا لازم است؛ اگر این‌ها را بدانی، گذشته را لازم نداری.</td></tr>
+<tr><td>ویژگی موجودیت‌ها <span class="ltr">(entity attributes)</span></td><td><code>customers</code> (صف مشتری‌ها)</td><td>داده‌ی هر مشتری، مثل زمان ورودش، که برای محاسبه‌ی زمان در سیستم لازم است.</td></tr>
+<tr><td>فهرست رویدادهای آینده</td><td><code>futureEventList</code></td><td>تعهدهای آینده؛ مستقل از حالت فعلی.</td></tr>
+<tr><td>مدت فعالیت‌ها <span class="ltr">(activity durations)</span></td><td><code>meanInterArrivalTime</code>، <code>meanServiceTime</code></td><td>توزیع‌ها، نه مقدارها. مقدار هر بار تولید می‌شود.</td></tr>
+<tr><td>پارامترهای ورودی</td><td>دو میانگین بالا + <code>totalCustomers</code></td><td>چیزی که کاربر عوض می‌کند.</td></tr>
+<tr><td>متغیرهای شبیه‌سازی</td><td><code>clock</code>، <code>lastEventTime</code>، <code>totalBusy</code>، <code>maxQueueLength</code>، <code>sumResponseTime</code></td><td>انباره‌های تجمعی؛ بخشی از مدل نیستند، ابزار اندازه‌گیری‌اند.</td></tr>
+<tr><td>آماره‌های خروجی</td><td><code>rho</code>، <code>avgr</code>، <code>pc4</code></td><td>فقط در گزارش‌گیر ساخته می‌شوند.</td></tr>
+</table></div>
+<div class="box tip"><div class="bt">💡 چرا <code>lastEventTime</code> جدا از <code>clock</code> لازم است</div>
+بهره‌وری سرور یک انتگرال زمانی است: $\rho=\frac1T\int_0^T B(t)\,dt$ که $B(t)\in\{0,1\}$. چون حالت فقط در لحظه‌ی رویدادها عوض می‌شود، این انتگرال جمعِ طول بازه‌هایی است که $B=1$ بوده. برای شکستن زمان به این بازه‌ها باید «زمان رویداد قبلی» را نگه داری. همین الگو برای میانگین زمانیِ طول صف هم به کار می‌رود (مساحت زیر پلکان $Q(t)$).
+</div>
+<h3>کلاس <span class="ltr">Event</span> (جزوه ص ۴۴)</h3>
+<p>ساده‌ترین تحقق ممکن یک رویداد: فقط دو ویژگی، نوع و زمان.</p>
+<pre class="code plain">
+class Event {
+    public double time;
+    private int type;
+
+    public Event(int _type, double _time) {
+        type = _type;
+        time = _time;
+    }
+
+    public int getType()    { return type; }
+    public double getTime() { return time; }
+}
+</pre>
+<div class="box mistake"><div class="bt">❌ جایی که این کلاس گول‌زننده است</div>
+همین کلاس دو نقش بازی می‌کند. وقتی مشتری وارد می‌شود، <b>خودِ شیء رویداد ورود</b> در صف <code>customers</code> ذخیره می‌شود و بعداً در خروج، <code>finished.getTime()</code> به‌عنوان <b>زمان ورود آن مشتری</b> خوانده می‌شود. یعنی «اعلان رویداد» و «موجودیت مشتری» در این برنامه یکی‌اند. در مدل‌های بزرگ‌تر این کار اشتباه است: مشتری باید کلاس خودش را داشته باشد با ویژگی‌هایش (زمان ورود، نوع، اولویت) و اعلان رویداد فقط به آن اشاره کند.
+</div>
+<h3>همان کلاس در پایتون</h3>
+<p>در پایتون، <code>heapq</code> یک هرم کمینه روی هر شیء مقایسه‌پذیر می‌سازد. پس فقط باید بگوییم رویدادها چطور با هم مقایسه می‌شوند:</p>
+<pre class="code">
+import heapq
+
+ARRIVAL, DEPARTURE = 1, 2
+
+class Event:
+    __slots__ = ("time", "type", "seq")
+    def __init__(self, type_, time, seq=0):
+        self.type = type_; self.time = time; self.seq = seq
+    def __lt__(self, other):                      # heapq only needs "&lt;"
+        return (self.time, self.seq) &lt; (other.time, other.seq)
+</pre>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · <code>seq</code> چرا لازم است</div>
+اگر فقط روی <code>time</code> مقایسه کنی، دو رویدادِ هم‌زمان ترتیب <b>نامعین</b> پیدا می‌کنند و خروجی برنامه با هر اجرا یا هر نسخه‌ی پایتون فرق می‌کند. با افزودن یک شماره‌ی ترتیبیِ صعودی، قاعده‌ی تساوی صریح می‌شود: «هم‌زمان‌ها به ترتیب زمان‌بندی‌شدن». در جلسه‌ی ۷ همین مسئله را با قرارداد «اول خروج، بعد ورود» حل کردی؛ آن‌جا هم باید اولویت را صریح بنویسی، نه این‌که به شانس بسپاری.
+</div>
+</section>
+
+<!-- ===================================================== 03 -->
+<section id="java-main">
+<h2 data-short="main و مقداردهی"><span class="num">03</span> برنامه‌ی اصلی و مقداردهی اولیه <span class="tag core">جزوه</span></h2>
+<pre class="code plain">
+public static void main(String argv[]) {
+    meanInterArrivalTime = 4.5;
+    meanServiceTime      = 3.2;
+    totalCustomers       = 1000;
+    long seed            = Long.parseLong(argv[0]);
+
+    stream          = new Random(seed);      // Initialize RNG stream
+    futureEventList = new EventList();       // Initialize the FEL
+    customers       = new Queue();           // Set which holds the customers
+
+    initialization();
+
+    // Loop until first "totalCustomers" have departed
+    while (numberOfDepartures &lt; totalCustomers) {
+        Event event = (Event) futureEventList.getMin();   // Get imminent event
+        futureEventList.dequeue();                        // Be rid of it
+        clock = event.getTime();                          // Advance simulation time
+        if (event.getType() == ARRIVAL) processArrival(event);
+        else                            processDeparture(event);
+    }
+    reportGeneration();
+}
+</pre>
+<p>سه خط وسط حلقه، دقیقاً همان «روال پیشروی زمان» جلسه‌ی ۶ است: <b>کم‌ترین زمان را پیدا کن، از فهرست بردار، ساعت را روی آن بگذار</b>. هیچ‌جا ساعت واحدواحد جلو نمی‌رود.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · شرط پایان</div>
+شرط پایان این برنامه <b>شمارشی</b> است: <code>numberOfDepartures &lt; totalCustomers</code>. پس طول اجرا (<span class="ltr">clock</span> در پایان) خودش یک متغیر تصادفی است، نه عددی ثابت. اگر به‌جایش <code>clock &lt; T</code> می‌گذاشتی، تعداد مشتری تصادفی می‌شد و باید تکلیف مشتریان نیمه‌کاره را هم روشن می‌کردی. این همان تفاوتی است که تمرین ۳ سؤال ۳ می‌پرسد.
+</div>
+<pre class="code plain">
+// Seed the event list with TotalCustomers arrivals
+public static void initialization() {
+    clock = 0.0;
+    queueLength = 0;      numberInService = 0;
+    lastEventTime = 0.0;  totalBusy = 0;
+    maxQueueLength = 0;   sumResponseTime = 0;
+    numberOfDepartures = 0;  longService = 0;
+
+    // Create first arrival event
+    double eventTime = exponential(stream, meanInterArrivalTime);
+    Event event = new Event(ARRIVAL, eventTime);
+    futureEventList.enqueue(event);
+}
+</pre>
+<div class="box mistake"><div class="bt">❌ خطای جزوه · توضیح بالای تابع غلط است</div>
+کامنت می‌گوید «فهرست رویداد را با <span class="ltr">TotalCustomers</span> ورود پُر کن»، ولی کد فقط <b>یک</b> ورود می‌سازد. درست همین کد است، نه کامنت: ورودها <b>زنجیره‌ای</b> ساخته می‌شوند، یعنی هر ورود، ورود بعدی را زمان‌بندی می‌کند (بخش ۴). اگر واقعاً هزار ورود را از اول در FEL می‌ریختی، نتیجه از نظر آماری همان بود ولی حافظه و زمان هر <span class="ltr">insert</span> بی‌دلیل زیاد می‌شد. این دقیقاً همان گره‌ی «یال خودزمان‌بند» در گراف‌های شبیه‌سازی است که در بخش ۹ می‌بینی.
+</div>
+<div class="box tip"><div class="bt">💡 اولین ورود در لحظه‌ی صفر یا بعد از آن؟</div>
+این برنامه اولین ورود را در $t=t_A^{(1)}$ می‌گذارد، نه در $t=0$. یعنی سیستم مدتی خالی می‌ماند. در جدول‌های دستی جلسه‌ی ۴ قرارداد برعکس بود (مشتری اول در لحظه‌ی صفر). هیچ‌کدام غلط نیست؛ فقط در گزارشت بنویس کدام را گرفته‌ای، چون روی بهره‌وریِ اجرای کوتاه اثر می‌گذارد. تمرین ۳ سؤال ۸ صریحاً می‌گوید «ورود اول صفر».
+</div>
+</section>
+
+<!-- ===================================================== 04 -->
+<section id="java-events">
+<h2 data-short="ورود و خروج"><span class="num">04</span> رویداد ورود و رویداد خروج <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<pre class="code plain">
+public static void processArrival(Event event) {
+    customers.enqueue(event);
+    queueLength++;
+
+    // If the server is idle, fetch the event, do statistics and put into service
+    if (numberInService == 0) scheduleDeparture();
+    else totalBusy += (clock - lastEventTime);        // server is busy
+
+    if (maxQueueLength &lt; queueLength) maxQueueLength = queueLength;
+
+    // Schedule the next arrival
+    Double eventTime = clock + exponential(stream, meanInterArrivalTime);
+    futureEventList.enqueue(new Event(ARRIVAL, eventTime));
+    lastEventTime = clock;
+}
+
+public static void scheduleDeparture() {
+    double serviceTime = exponential(stream, meanServiceTime);
+    futureEventList.enqueue(new Event(DEPARTURE, clock + serviceTime));
+    numberInService = 1;
+    queueLength--;
+}
+
+public static void processDeparture(Event e) {
+    Event finished = (Event) customers.dequeue();     // the customer description
+    if (queueLength &gt; 0) scheduleDeparture();
+    else numberInService = 0;
+
+    double response = clock - finished.getTime();     // time in system
+    sumResponseTime += response;
+    if (response &gt; 4.0) longService++;
+    totalBusy += (clock - lastEventTime);
+    numberOfDepartures++;
+    lastEventTime = clock;
+}
+</pre>
+<p>چهار چیز را دقیق بخوان:</p>
+<ol class="steps">
+<li><b>ورود، خودش ورود بعدی را می‌سازد.</b> سه خط آخر <code>processArrival</code> همان «زنجیره‌ی ورودها»ست. اگر این را فراموش کنی، شبیه‌سازی بعد از مشتری اول می‌ایستد.</li>
+<li><b>صف و خدمت با هم شمرده می‌شوند.</b> هر ورود <code>queueLength++</code> می‌کند، و اگر سرور بیکار باشد <code>scheduleDeparture()</code> بلافاصله <code>queueLength--</code> می‌کند. پس بعد از پایان روال، <code>queueLength</code> فقط <b>منتظرها</b>ست. بنابراین <code>maxQueueLength</code> بیشینه‌ی طول <b>خط انتظار</b> است، نه تعداد در سیستم.</li>
+<li><b>انباشت زمان مشغولی مشروط است.</b> <code>totalBusy += clock - lastEventTime</code> فقط وقتی اجرا می‌شود که سرور در آن بازه <b>مشغول</b> بوده: در ورودی که سرور از قبل مشغول بوده، و در هر خروج (چون قبل از خروج قطعاً مشغول بوده). اگر سرور بیکار بوده، هیچ‌چیز اضافه نمی‌شود. این دقیقاً همان شکستن انتگرال $\int B(t)\,dt$ به بازه‌های بین دو رویداد است.</li>
+<li><b>زمان پاسخ از روی شیء مشتری حساب می‌شود.</b> <code>finished.getTime()</code> زمان ورودِ همان مشتری است، پس <code>response</code> زمان <b>در سیستم</b> است (انتظار + خدمت)، نه فقط انتظار.</li>
+</ol>
+<div class="box thm"><div class="bt">رابطه · درستی انباشت زمان مشغولی</div>
+فرض کن رویدادها در زمان‌های $t_0=0&lt;t_1&lt;\dots&lt;t_m=T$ رخ دهند. چون $B(t)$ بین دو رویداد ثابت است:
+$$\int_0^T B(t)\,dt=\sum_{k=1}^{m} B(t_{k-1}^+)\,(t_k-t_{k-1})$$
+کد دقیقاً همین جمع را می‌سازد: در هر رویداد، اگر سرور در بازه‌ی تمام‌شده مشغول بوده، طول بازه ($\texttt{clock}-\texttt{lastEventTime}$) را اضافه می‌کند و بعد <code>lastEventTime</code> را به‌روز می‌کند.
+<span class="qed">∎</span>
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج · جابه‌جایی ترتیب دو خط</div>
+اگر در <code>processDeparture</code> خط <code>totalBusy += ...</code> را <b>بعد</b> از <code>lastEventTime = clock</code> بگذاری، همیشه صفر اضافه می‌شود و بهره‌وری صفر درمی‌آید. قاعده: <b>اول انباشت، بعد به‌روزرسانی مُهر زمانی</b>. همین خطا در محاسبه‌ی مساحت زیر $Q(t)$ هم رخ می‌دهد.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · چرا رویداد سومی به نام «شروع خدمت» نداریم؟</div>
+در این برنامه «شروع خدمت» رویداد مستقل نیست؛ داخل <code>scheduleDeparture</code> پنهان است و از دو جا صدا زده می‌شود: ورود به سیستم خالی، و پایان خدمت وقتی صف خالی نیست. این کار کد را کوتاه می‌کند ولی یک چیز را از دست می‌دهد: دیگر نمی‌توانی مستقیماً «زمان انتظار» را اندازه بگیری، چون لحظه‌ی شروع خدمت را جایی ثبت نمی‌کنی. در گراف‌های شبیه‌سازی (بخش ۹) <span class="ltr">Start service</span> یک گره‌ی مستقل است و همین مشکل را حل می‌کند.
+</div>
+</section>
+
+<!-- ===================================================== 05 -->
+<section id="java-report">
+<h2 data-short="گزارش و خروجی"><span class="num">05</span> گزارش‌گیر، خروجی و خواندن آن <span class="tag core">جزوه</span> <span class="tag book">تکمیلی</span></h2>
+<pre class="code plain">
+public static void reportGeneration() {
+    double rho  = totalBusy / clock;
+    double avgr = sumResponseTime / totalCustomers;
+    double pc4  = ((double) longService) / totalCustomers;
+    ...   // println of the eight lines below
+}
+</pre>
+<p>خروجی اسلاید (ص ۵۰) با بذر خاص خودش:</p>
+<div class="out">SINGLE SERVER QUEUE SIMULATION - GROCERY STORE CHECKOUT COUNTER
+        MEAN INTERARRIVAL TIME                   4.5
+        MEAN SERVICE TIME                        3.2
+        NUMBER OF CUSTOMERS SERVED            1000.0
+
+        SERVER UTILIZATION                       0.718
+        MAXIMUM LINE LENGTH                     13.0
+        AVERAGE RESPONSE TIME                    9.563
+        PROPORTION WHO SPEND FOUR
+         MINUTES OR MORE IN SYSTEM               0.713
+        SIMULATION RUNLENGTH                  4485.635 Time Units
+        NUMBER OF DEPARTURES                  1000.0</div>
+<div class="stats">
+  <div><div class="l">بهره‌وری شبیه‌سازی</div><div class="v">0.718</div><div class="f">theory ρ = 0.711</div></div>
+  <div><div class="l">طول اجرا</div><div class="v">4485.6</div><div class="f">1000 × 4.5 ≈ 4500 ✓</div></div>
+  <div><div class="l">میانگین زمان در سیستم</div><div class="v">9.563</div><div class="f">theory W = 11.077</div></div>
+  <div><div class="l">سهم بیش از ۴ واحد</div><div class="v">0.713</div><div class="f">theory 0.697</div></div>
+</div>
+<div class="box thm"><div class="bt">رابطه · جواب دقیق <span class="ltr">M/M/1</span> برای صحت‌سنجی <span class="tag book">کتاب</span></div>
+با $\lambda=1/4.5$ و $\mu=1/3.2$ و $\rho=\lambda/\mu$:
+$$\rho=0.7111,\qquad W=\frac{1}{\mu-\lambda}=11.077,\qquad W_q=\frac{\rho}{\mu-\lambda}=7.877$$
+$$L=\frac{\rho}{1-\rho}=2.462,\qquad L_q=\frac{\rho^2}{1-\rho}=1.750,\qquad P(R&gt;4)=e^{-4/W}=0.697$$
+زمان در سیستم در <span class="ltr">M/M/1</span> نمایی با میانگین $W$ است؛ از همین‌جا $P(R&gt;4)$ درمی‌آید.
+</div>
+<p>بهره‌وری ۰٫۷۱۸ با نظریه ۰٫۷۱۱ می‌خواند، ولی میانگین زمان در سیستم ۹٫۵۶ در برابر ۱۱٫۰۸ حدود ۱۴٪ کم است. این خطای برنامه نیست؛ <b>اریبی شروع</b> (<span class="ltr">initialization bias</span>) است: سیستم خالی شروع می‌کند و مشتری‌های اول تقریباً منتظر نمی‌مانند. هرچه اجرا بلندتر شود، اثر این شروعِ خوش‌شانس رقیق‌تر می‌شود. همان برنامه در پایتون (بخش ۶) با بذر ۱۲۳۴۵:</p>
+<div class="tablewrap"><table>
+<tr><th>تعداد مشتری</th><th>ρ</th><th>میانگین زمان در سیستم</th><th>سهم &gt; ۴</th></tr>
+<tr><td>1 000</td><td>0.6913</td><td>9.65</td><td>0.671</td></tr>
+<tr><td>10 000</td><td>0.7078</td><td>10.50</td><td>0.699</td></tr>
+<tr><td>100 000</td><td>0.7096</td><td>11.40</td><td>0.700</td></tr>
+<tr class="sum"><td>نظریه</td><td>0.7111</td><td>11.08</td><td>0.697</td></tr>
+</table></div>
+<p>بهره‌وری و سهمِ بیش از ۴ خیلی زود به جواب نظری می‌رسند، ولی <b>میانگین زمان در سیستم</b> کند همگرا می‌شود — چون به دم توزیع و به طول صف حساس است. این یکی از دلایلی است که در فصل تحلیل خروجی، برای حالت پایدار «دوره‌ی گرم‌شدن» را حذف می‌کنیم.</p>
+<div class="box mistake"><div class="bt">❌ سه ناسازگاری در همین اسلایدها</div>
+<ol>
+<li>در ص ۴۱ نوشته <span class="ltr">pc4 = Number of customers who spent more than 4 minutes</span>، ولی در کد <code>pc4 = longService/totalCustomers</code> یعنی یک <b>نسبت</b> است نه تعداد. خودِ خروجی هم آن را <span class="ltr">PROPORTION</span> می‌نامد.</li>
+<li>سرتیتر خروجی می‌گوید «<span class="ltr">FOUR MINUTES OR MORE</span>» ولی شرط کد <code>response &gt; 4.0</code> است، یعنی «بیش از ۴». برای توزیع پیوسته فرقی در عدد نمی‌کند ($P(R=4)=0$)، ولی اگر زمان‌ها گسسته باشند (مثل جدول‌های جلسه‌ی ۴) این دو تعریف جواب‌های متفاوت می‌دهند.</li>
+<li><code>maxQueueLength</code> و <code>totalCustomers</code> در خروجی به شکل <span class="ltr">13.0</span> و <span class="ltr">1000.0</span> چاپ شده‌اند، یعنی <span class="ltr">double</span> در نظر گرفته شده‌اند، در حالی که در اعلان کلاس <code>maxQueueLength</code> جزو <span class="ltr">double</span>هاست ولی <code>totalCustomers</code> جزو <span class="ltr">long</span>. یک <span class="ltr">long</span> هیچ‌وقت <span class="ltr">1000.0</span> چاپ نمی‌شود. یعنی خروجی اسلاید با اعلان‌های همان اسلاید سازگار نیست.</li>
+</ol>
+هیچ‌کدام نتیجه‌ی آماری را عوض نمی‌کنند، ولی در گزارش تمرین، <b>تعریف</b> هر شاخص را صریح بنویس: «نسبت مشتریانی که بیش از ۴ دقیقه در سیستم ماندند».
+</div>
+</section>
+
+<!-- ===================================================== 06 -->
+<section id="python">
+<h2 data-short="همان برنامه در پایتون"><span class="num">06</span> همان برنامه در پایتون با <span class="ltr">heapq</span> <span class="tag book">تکمیلی</span></h2>
+<p>ساختار یک‌به‌یک همان جاواست: یک کلاس <code>Event</code>، یک هرم به‌عنوان FEL، و چهار متد. تنها تفاوت واقعی این است که <code>heapq</code> روی لیست کار می‌کند و برای مقایسه از <code>__lt__</code> استفاده می‌کند.</p>
+<pre class="code">
+import heapq, math, random
+
+ARRIVAL, DEPARTURE = 1, 2
+
+class Event:
+    __slots__ = ("time", "type", "seq")
+    def __init__(self, type_, time, seq=0):
+        self.type = type_; self.time = time; self.seq = seq
+    def __lt__(self, other):
+        return (self.time, self.seq) &lt; (other.time, other.seq)
+
+class Sim:
+    def __init__(self, mean_ia=4.5, mean_svc=3.2, total=1000, seed=12345):
+        self.mean_ia = mean_ia; self.mean_svc = mean_svc; self.total = total
+        self.rng = random.Random(seed)
+        self.fel = []; self.customers = []; self.counter = 0
+
+    def exponential(self, mean):                 # inverse transform, like the Java helper
+        return -mean * math.log(1.0 - self.rng.random())
+
+    def push(self, ev):                          # futureEventList.enqueue
+        self.counter += 1; ev.seq = self.counter
+        heapq.heappush(self.fel, ev)
+
+    def initialization(self):
+        self.clock = 0.0
+        self.queue_length = 0;      self.number_in_service = 0
+        self.last_event_time = 0.0; self.total_busy = 0.0
+        self.max_queue_length = 0;  self.sum_response_time = 0.0
+        self.number_of_departures = 0; self.long_service = 0
+        self.push(Event(ARRIVAL, self.exponential(self.mean_ia)))   # the ONE first arrival
+
+    def process_arrival(self, event):
+        self.customers.append(event)
+        self.queue_length += 1
+        if self.number_in_service == 0:
+            self.schedule_departure()
+        else:
+            self.total_busy += self.clock - self.last_event_time
+        self.max_queue_length = max(self.max_queue_length, self.queue_length)
+        self.push(Event(ARRIVAL, self.clock + self.exponential(self.mean_ia)))
+        self.last_event_time = self.clock
+
+    def schedule_departure(self):
+        self.push(Event(DEPARTURE, self.clock + self.exponential(self.mean_svc)))
+        self.number_in_service = 1
+        self.queue_length -= 1
+
+    def process_departure(self, event):
+        finished = self.customers.pop(0)
+        if self.queue_length &gt; 0:
+            self.schedule_departure()
+        else:
+            self.number_in_service = 0
+        response = self.clock - finished.time
+        self.sum_response_time += response
+        if response &gt; 4.0:
+            self.long_service += 1
+        self.total_busy += self.clock - self.last_event_time
+        self.number_of_departures += 1
+        self.last_event_time = self.clock
+
+    def run(self):
+        self.initialization()
+        while self.number_of_departures &lt; self.total:
+            event = heapq.heappop(self.fel)      # getMin + dequeue in one step
+            self.clock = event.time
+            if event.type == ARRIVAL:
+                self.process_arrival(event)
+            else:
+                self.process_departure(event)
+        self.report()
+
+    def report(self):
+        rho  = self.total_busy / self.clock
+        avgr = self.sum_response_time / self.total
+        pc4  = self.long_service / self.total
+        print("SINGLE SERVER QUEUE SIMULATION - GROCERY STORE CHECKOUT COUNTER")
+        print(f"\tMEAN INTERARRIVAL TIME       {self.mean_ia:10.3f}")
+        print(f"\tMEAN SERVICE TIME            {self.mean_svc:10.3f}")
+        print(f"\tNUMBER OF CUSTOMERS SERVED   {self.total:10d}")
+        print()
+        print(f"\tSERVER UTILIZATION           {rho:10.3f}")
+        print(f"\tMAXIMUM LINE LENGTH          {self.max_queue_length:10d}")
+        print(f"\tAVERAGE RESPONSE TIME        {avgr:10.3f} Time Units")
+        print(f"\tPROPORTION &gt; 4 TIME UNITS    {pc4:10.3f}")
+        print(f"\tSIMULATION RUNLENGTH         {self.clock:10.3f} Time Units")
+        print(f"\tNUMBER OF DEPARTURES         {self.number_of_departures:10d}")
+
+Sim().run()
+</pre>
+<div class="out">SINGLE SERVER QUEUE SIMULATION - GROCERY STORE CHECKOUT COUNTER
+	MEAN INTERARRIVAL TIME            4.500
+	MEAN SERVICE TIME                 3.200
+	NUMBER OF CUSTOMERS SERVED         1000
+
+	SERVER UTILIZATION                0.691
+	MAXIMUM LINE LENGTH                  12
+	AVERAGE RESPONSE TIME             9.650 Time Units
+	PROPORTION &gt; 4 TIME UNITS         0.671
+	SIMULATION RUNLENGTH           4425.489 Time Units
+	NUMBER OF DEPARTURES               1000</div>
+<p>عددها با خروجی جاوا یکی نیستند (بذر و مولد فرق دارد) ولی هر چهار شاخص در همان محدوده‌اند، و با بالا بردن تعداد مشتری به جواب نظری میل می‌کنند — همان جدول بخش ۵. این «توافق با نظریه در یک حالت ساده» ارزان‌ترین آزمون صحت‌سنجی است که داری.</p>
+<div class="box tip"><div class="bt">💡 سه نکته‌ی پایتونی که در جاوا پنهان بودند</div>
+<ul>
+<li><code>heapq.heappop</code> هم‌زمان کار <code>getMin()</code> و <code>dequeue()</code> را می‌کند و $O(\log n)$ است. اگر FEL را لیست ساده نگه داری و هر بار <code>min</code> بگیری، هزینه $O(n)$ می‌شود و برای میلیون رویداد کُند است.</li>
+<li><code>-mean*log(1-u)</code> تبدیل معکوس نمایی است (جلسه‌ی ۱۴ مفصل می‌آید). <code>1-u</code> به‌جای <code>u</code> نوشته شده تا اگر مولد صفر تولید کرد، <code>log(0)</code> رخ ندهد.</li>
+<li><code>customers.pop(0)</code> روی لیست $O(n)$ است؛ برای صف واقعی از <code>collections.deque</code> استفاده کن. برای هزار مشتری فرقی نمی‌کند، برای میلیون چرا.</li>
+</ul>
+</div>
+</section>
+
+<!-- ===================================================== 07 -->
+<section id="oo">
+<h2 data-short="چارچوب شیءگرا"><span class="num">07</span> چارچوب شیءگرای شبیه‌سازی <span class="tag core">جزوه</span></h2>
+<p>برنامه‌ی بخش ۳ و ۴ یک مشکل بزرگ دارد: <b>موتور شبیه‌سازی و مدل در هم تنیده‌اند</b>. حلقه‌ی <code>main</code> می‌داند که فقط دو نوع رویداد هست و نام هر روال را مستقیم صدا می‌زند. برای مدل بعدی باید همه‌چیز را از نو بنویسی. چارچوب شیءگرا این دو را جدا می‌کند.</p>
+<div class="two">
+<div class="tablewrap"><table>
+<tr><th colspan="2">بسته‌ی <span class="ltr">core</span></th></tr>
+<tr><td><code>SimEvent</code></td><td>زمان، نوع، مبدأ، <b>مقصد</b> و شناسه</td></tr>
+<tr><td><code>SimEntity</code></td><td>انتزاعی؛ هر موجودیت باید <code>handleEvent</code> داشته باشد</td></tr>
+<tr><td><code>SimQueue</code></td><td>انتزاعی؛ همان FEL: <code>schedule</code>، <code>getNextEvent</code>، <code>isEmpty</code></td></tr>
+<tr><td><code>SimControl</code></td><td>ساعت، حلقه‌ی اصلی و <b>توزیع رویداد</b> به مقصدش</td></tr>
+</table></div>
+<div class="tablewrap"><table>
+<tr><th colspan="2">بسته‌ی <span class="ltr">rng</span></th></tr>
+<tr><td><code>RNG</code></td><td>انتزاعی؛ فقط <code>getNext()</code></td></tr>
+<tr><td><code>Exponential</code></td><td><span class="ltr">−ln(u)/λ</span></td></tr>
+<tr><td><code>Uniform</code></td><td>یکنواخت بین <span class="ltr">min</span> و <span class="ltr">max</span></td></tr>
+</table></div>
+</div>
+<p>ایده‌ی کلیدی در دو خط است:</p>
+<pre class="code plain">
+public void run() {
+    while (queue.isEmpty() == false) {
+        SimEvent event = queue.getNextEvent();
+        time = event.getTime();
+        if (event.getTime() &lt;= endTime) dispatch(event);
+        else break;
+    }
+}
+private void dispatch(SimEvent event) {
+    event.getDestination().handleEvent(event);     // &lt;- no if/else over event types
+}
+</pre>
+<div class="box def"><div class="bt">تعریف ۸.۲ · توزیع رویداد <span class="ltr">(event dispatching)</span></div>
+هر <code>SimEvent</code> یک <b>مقصد</b> دارد: یک <code>SimEntity</code>. موتور فقط رویداد قریب‌الوقوع را برمی‌دارد، ساعت را جلو می‌برد و <code>handleEvent</code> مقصد را صدا می‌زند. موتور <b>هیچ</b> اطلاعی از نوع رویدادها و منطق مدل ندارد. افزودن یک نوع رویداد تازه یعنی افزودن یک موجودیت یا یک شاخه داخل همان موجودیت — نه تغییر موتور.
+</div>
+<p>و زمان‌بندی نسبی که کد مدل را خوانا می‌کند:</p>
+<pre class="code plain">
+public void schedule(SimEvent event, double _delta) {
+    event.setTime(time + _delta);     // "delta time units from now"
+    schedule(event);
+}
+</pre>
+<p>مدل <span class="ltr">M/M/1</span> در این چارچوب فقط دو موجودیت است: <code>MM1Generator</code> که مشتری می‌سازد و <code>MM1Server</code> که خدمت می‌دهد. برنامه‌ی اصلی‌اش (جزوه ص ۶۲) فقط آن‌ها را سیم‌کشی می‌کند:</p>
+<pre class="code plain">
+SimControl simulator = new SimControl(new SimLinkedList());
+simulator.setRunTime(1000);
+MM1Server    dst = new MM1Server(new Exponential(0.3125));     // mean service 3.2
+MM1Generator src = new MM1Generator(dst, new Exponential(0.238));  // mean gap 4.2
+simulator.run();
+</pre>
+<div class="box mistake"><div class="bt">❌ دو خطا در گزارش‌گیری همین اسلاید (ص ۶۲)</div>
+<p>اسلاید بعد از اجرا این‌ها را چاپ می‌کند:</p>
+<pre class="code plain">
+double lambda = 1.0 / src.getLambda();
+double mu     = 1.0 / dst.getMu();            // getMu() returns 1.0/meanServiceTime
+double p0     = (double) dst.getServicedCustomer() / simulator.getTime();
+System.out.println("rho  " + lambda / mu);
+</pre>
+<p><b>(۱) ρ وارونه است.</b> چون <code>getMu()</code> خودش نرخ را برمی‌گرداند، متغیر <code>mu</code> در واقع <b>میانگین زمان خدمت</b> ۳٫۲ است و به همین ترتیب <code>lambda</code> میانگین بین‌ورود ۴٫۲. پس <code>lambda/mu = 4.2/3.2 = 1.313</code> چاپ می‌شود، یعنی عددی بزرگ‌تر از ۱ برای سیستمی که کاملاً پایدار است. درست با همین متغیرها <code>mu/lambda = 3.2/4.2 = 0.762</code> است. عدد درست ρ را با تعریف بگیر: $\rho=\lambda/\mu=0.238/0.3125=0.762$.</p>
+<p><b>(۲) <code>p0</code> بُعدش غلط است.</b> «تعداد مشتری خدمت‌گرفته تقسیم بر زمان» یک <b>نرخ</b> است (مشتری بر واحد زمان)، نه احتمال. آن‌چه می‌سازد توان عملیاتی است که در حالت پایدار برابر $\lambda=0.238$ است. احتمال خالی بودن سیستم در <span class="ltr">M/M/1</span> برابر $1-\rho=0.238$ است. <b>با همین پارامترها</b> این دو عدد تصادفاً یکی درمی‌آیند و خطا دیده نمی‌شود؛ اگر $\lambda$ را عوض کنی فوراً از هم جدا می‌شوند. اندازه‌گیری درست $p_0$ کسر <b>زمانی</b> است که سرور بیکار بوده.</p>
+</div>
+<h3>همان چارچوب در پایتون</h3>
+<pre class="code">
+import heapq, math, random
+from abc import ABC, abstractmethod
+
+# ---------- package core ----------
+class SimEvent:
+    _n = 0
+    def __init__(self, dst, time=0.0, src=None, prio=1):
+        self.dst, self.time, self.src, self.prio = dst, time, src, prio
+        SimEvent._n += 1; self.id = SimEvent._n
+    def __lt__(self, o):
+        return (self.time, self.prio, self.id) &lt; (o.time, o.prio, o.id)
+
+class SimEntity(ABC):
+    def __init__(self, sim_control): self.sim_control = sim_control
+    @abstractmethod
+    def handle_event(self, event): ...
+
+class SimHeap:                                     # one concrete SimQueue
+    def __init__(self): self.h = []
+    def schedule(self, event): heapq.heappush(self.h, event)
+    def get_next_event(self): return heapq.heappop(self.h)
+    def is_empty(self): return not self.h
+
+class SimControl:
+    def __init__(self, queue):
+        self.queue, self.time, self.end_time = queue, 0.0, math.inf
+    def set_run_time(self, t): self.end_time = t
+    def get_time(self): return self.time
+    def schedule(self, event, delta=None):
+        if delta is not None: event.time = self.time + delta
+        self.queue.schedule(event)
+    def run(self):
+        while not self.queue.is_empty():
+            event = self.queue.get_next_event()
+            if event.time &gt; self.end_time: break
+            self.time = event.time
+            event.dst.handle_event(event)          # dispatch: the engine knows nothing else
+
+# ---------- package rng ----------
+class Exponential:
+    def __init__(self, lam, seed=None): self.lam, self.u = lam, random.Random(seed)
+    def get_next(self): return -math.log(1.0 - self.u.random()) / self.lam
+
+# ---------- the model: two entities ----------
+class MM1Generator(SimEntity):
+    def __init__(self, sim_control, dst, rng):
+        super().__init__(sim_control)
+        self.dst, self.inter_arrival, self.n = dst, rng, 0
+        sim_control.schedule(SimEvent(self, prio=2), rng.get_next())    # the initial event
+    def handle_event(self, event):
+        self.n += 1
+        self.dst.new_customer(SimEvent(self.dst, self.sim_control.get_time(), src=self))
+        self.sim_control.schedule(SimEvent(self, prio=2), self.inter_arrival.get_next())
+
+class MM1Server(SimEntity):
+    def __init__(self, sim_control, rng):
+        super().__init__(sim_control)
+        self.service_time = rng
+        self.queue, self.in_service, self.served = [], False, 0
+        self.sum_system = self.sum_queue = self.busy_time = self.last_start = 0.0
+    def new_customer(self, event):
+        self.queue.append(event)
+        if not self.in_service: self.schedule_next_departure()
+    def schedule_next_departure(self):
+        s = self.service_time.get_next()
+        self.sim_control.schedule(SimEvent(self, prio=1), s)
+        self.in_service = True
+        self.busy_time += s
+        self.last_start = self.sim_control.get_time()
+    def handle_event(self, event):                 # a departure
+        finished = self.queue.pop(0)
+        now = self.sim_control.get_time()
+        self.sum_system += now - finished.time
+        self.sum_queue  += self.last_start - finished.time
+        self.in_service = False
+        self.served += 1
+        if self.queue: self.schedule_next_departure()
+
+sim = SimControl(SimHeap())
+sim.set_run_time(200000)
+server = MM1Server(sim, Exponential(0.3125, seed=101))
+gen    = MM1Generator(sim, server, Exponential(0.238, seed=901))
+sim.run()
+
+lam, mu = 0.238, 0.3125
+print(f"time {sim.get_time():.1f}   arrivals {gen.n}   serviced {server.served}")
+print(f"rho  measured {server.busy_time/sim.get_time():.4f}   theory {lam/mu:.4f}")
+print(f"p0   measured {1-server.busy_time/sim.get_time():.4f}   theory {1-lam/mu:.4f}")
+print(f"S    measured {server.sum_system/server.served:.4f}   theory {1/(mu-lam):.4f}")
+print(f"Wq   measured {server.sum_queue/server.served:.4f}   theory {(lam/mu)/(mu-lam):.4f}")
+</pre>
+<div class="out">time 199997.0   arrivals 47783   serviced 47782
+rho  measured 0.7621   theory 0.7616
+p0   measured 0.2379   theory 0.2384
+S    measured 13.2258   theory 13.4228
+Wq   measured 10.0359   theory 10.2228</div>
+<p>موتور (<code>SimControl</code>) حتی یک بار هم نام <code>MM1Server</code> را نمی‌بیند. اگر فردا بخواهی دو سرور متوالی داشته باشی، فقط یک موجودیت دیگر می‌سازی و مقصد رویدادها را عوض می‌کنی — همان کاری که تمرین ۳ سؤال ۸ می‌خواهد.</p>
+<div class="box warn"><div class="bt">⚠ هنوز ۱٫۵٪ فاصله با نظریه هست؛ اشتباه است؟</div>
+نه. همین اجرا را با ۱۲ بذر مستقل تکرار کردم: میانگین $S$ برابر ۱۳٫۳۴ با انحراف معیار ۰٫۳۲ بین اجراها شد، که بازه‌ی $13.34\pm0.20$ یعنی $[13.14,\,13.55]$ را می‌دهد و نظریه‌ی ۱۳٫۴۲ داخل آن است. درس: حتی با ۴۷ هزار مشتری، <b>یک</b> اجرا چند درصد نوسان دارد، چون زمان‌های اقامت پشت سر هم شدیداً هم‌بسته‌اند. برای ادعای عددی همیشه چند تکرار و بازه‌ی اطمینان لازم است (جلسه‌ی ۵).
+</div>
+<div class="tablewrap"><table>
+<tr><th></th><th>برنامه‌ی خام (بخش ۳ و ۴)</th><th>چارچوب شیءگرا</th></tr>
+<tr><td>حلقه‌ی اصلی</td><td>در <code>main</code>، با <code>if/else</code> روی نوع رویداد</td><td>در <code>SimControl.run</code>، بدون هیچ شناختی از مدل</td></tr>
+<tr><td>افزودن نوع رویداد</td><td>یک شاخه به <code>main</code> + یک روال</td><td>یک شاخه داخل <code>handleEvent</code> همان موجودیت</td></tr>
+<tr><td>حالت سیستم</td><td>متغیرهای <span class="ltr">static</span> سراسری</td><td>فیلدهای هر موجودیت؛ کپسوله</td></tr>
+<tr><td>چند نمونه هم‌زمان</td><td>تقریباً نشدنی</td><td>هر چند تا <code>SimControl</code> که بخواهی</td></tr>
+<tr><td>هزینه‌ی سرعت</td><td>کم‌ترین</td><td>فراخوانی مجازی و ساخت شیء برای هر رویداد</td></tr>
+<tr><td>مناسب برای</td><td>یک مدل کوچک و یک‌بارمصرف</td><td>کتابخانه، چند مدل، تیم چندنفره</td></tr>
+</table></div>
+</section>
+
+<!-- ===================================================== 08 -->
+<section id="graphs">
+<h2 data-short="گراف: قاعده‌ها"><span class="num">08</span> گراف‌های شبیه‌سازی: قاعده‌ها <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>جزوه با یک اعتراف صادقانه شروع می‌کند: مدل‌سازی سیستم‌های گسسته‌پیشامد <b>روش استاندارد ندارد</b> و بیشتر شبیه هنر است. گراف‌های شبیه‌سازی تلاشی است برای استانداردکردنش. شروبن (<span class="ltr">Schruben, 1983</span>) آن‌ها را با نام <b>گراف رویداد</b> (<span class="ltr">event graph</span>) معرفی کرد و بعداً به گراف شبیه‌سازی تغییر نام دادند.</p>
+<div class="box def"><div class="bt">تعریف ۸.۳ · گراف شبیه‌سازی</div>
+گرافی جهت‌دار که:
+<ul>
+<li><b>گره</b> = یک <b>رویداد</b>؛ یعنی یک تغییر لحظه‌ای در حالت سیستم. تغییر حالت را داخل آکولاد زیر گره می‌نویسند: <span class="ltr mono">{Q++}</span>.</li>
+<li><b>یال</b> = <b>زمان‌بندی</b> یک رویداد دیگر. یال از A به B یعنی «وقتی A رخ داد، B را در FEL بگذار».</li>
+<li>هر یال می‌تواند یک <b>شرط بولی</b> (بالای یال، داخل پرانتز) و یک <b>تأخیر زمانی</b> (زیر یال) داشته باشد.</li>
+</ul>
+این تنها الگوی تصویری‌ای است که <b>مستقیماً منطق فهرست رویدادهای آینده را مدل می‌کند</b>؛ نه جریان موجودیت‌ها را، نه فعالیت‌ها را.
+</div>
+<figure class="fig">
+<svg viewBox="0 0 470 250" width="470" direction="ltr" role="img" aria-label="basic simulation graph" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="100" cy="52" rx="32" ry="24"/><text class="eg-nt" x="100" y="56" text-anchor="middle">A</text></g><g class="eg-ng"><ellipse class="eg-n" cx="370" cy="52" rx="32" ry="24"/><text class="eg-nt" x="370" y="56" text-anchor="middle">B</text></g><path class="eg-e" d="M 132 52 Q 235.0 52.0 338 52" marker-end="url(#eg-ar)"/><text class="eg-c" x="235" y="38" text-anchor="middle">(i)</text><path class="eg-sq" d="M 230 46 q 7 3 1 7 q -6 4 1 7"/><text class="eg-d" x="235" y="76" text-anchor="middle">t</text><g class="eg-ng"><ellipse class="eg-n" cx="100" cy="134" rx="32" ry="24"/><text class="eg-nt" x="100" y="138" text-anchor="middle">A</text></g><g class="eg-ng"><ellipse class="eg-n" cx="370" cy="134" rx="32" ry="24"/><text class="eg-nt" x="370" y="138" text-anchor="middle">B</text></g><path class="eg-e" d="M 132 134 Q 235.0 134.0 338 134" marker-end="url(#eg-ar)"/><text class="eg-c" x="235" y="120" text-anchor="middle">(i)</text><path class="eg-sq" d="M 230 128 q 7 3 1 7 q -6 4 1 7"/><g class="eg-ng"><ellipse class="eg-n" cx="100" cy="216" rx="32" ry="24"/><text class="eg-nt" x="100" y="220" text-anchor="middle">A</text></g><g class="eg-ng"><ellipse class="eg-n" cx="370" cy="216" rx="32" ry="24"/><text class="eg-nt" x="370" y="220" text-anchor="middle">B</text></g><path class="eg-e" d="M 132 216 Q 235.0 216.0 338 216" marker-end="url(#eg-ar)"/><text class="eg-d" x="235" y="240" text-anchor="middle">t</text></svg>
+<figcaption>سه حالت پایه. <b>بالا:</b> «وقتی A رخ داد، اگر شرط $(i)$ برقرار بود، B را برای $t$ واحد زمان بعد زمان‌بندی کن». <b>وسط:</b> اگر تأخیری نباشد $t$ را نمی‌نویسند؛ B در <b>همین لحظه</b> زمان‌بندی می‌شود. <b>پایین:</b> اگر B همیشه بعد از A زمان‌بندی شود، شرط نوشته نمی‌شود و یال <b>بی‌قیدوشرط</b> است. علامت موج‌دار روی یال فقط نشانه‌ی وجود شرط است.</figcaption>
+</figure>
+<div class="box thm"><div class="bt">رابطه · معنای دقیق یک یال، خط به خط</div>
+یالِ $A \xrightarrow[\;t\;]{(i)} B$ دقیقاً یعنی: در انتهای روال رویداد $A$، این کد اجرا شود:
+$$\texttt{if } (i) \texttt{ then schedule } B \texttt{ at time } \texttt{clock} + t$$
+سه نکته‌ی ظریف که در امتحان می‌پرسند:
+<ul>
+<li>شرط $(i)$ در <b>لحظه‌ی زمان‌بندی</b> سنجیده می‌شود، نه در لحظه‌ی اجرای $B$. اگر حالت بین این دو لحظه عوض شود، $B$ باز هم اجرا می‌شود.</li>
+<li>تأخیر $t$ می‌تواند خودش یک <b>متغیر تصادفی</b> باشد؛ مقدارش در لحظه‌ی زمان‌بندی تولید و در FEL قفل می‌شود.</li>
+<li>اگر $A$ چند یال خروجی داشته باشد، همه‌ی شرط‌ها سنجیده می‌شوند و <b>همه‌ی</b> یال‌های برقرار زمان‌بندی می‌کنند — این یک انشعاب «یا» نیست.</li>
+</ul>
+</div>
+<div class="box tip"><div class="bt">💡 چطور یک گراف را بلند بخوانی</div>
+هر یال را با این الگو به فارسی بگو: «وقتی <b>[گره مبدأ]</b> رخ داد، اگر <b>[شرط]</b> بود، <b>[گره مقصد]</b> را برای <b>[تأخیر]</b> بعد زمان‌بندی کن». اگر توانستی همه‌ی یال‌ها را این‌طور بخوانی، گراف را فهمیده‌ای. بعد از خواندن، تغییرهای حالت زیر هر گره را هم اضافه کن: «و وقتی اجرا شد، <b>[تغییر حالت]</b> اعمال شود».
+</div>
+</section>
+
+<!-- ===================================================== 09 -->
+<section id="patterns">
+<h2 data-short="سه الگوی پایه"><span class="num">09</span> سه الگوی پایه و رویداد <span class="ltr">Run</span> <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<h3>الگوی ۱ · فرایند پواسون</h3>
+<figure class="fig">
+<svg viewBox="0 0 600 200" width="600" direction="ltr" role="img" aria-label="Poisson process as an event graph" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="300" cy="72" rx="40" ry="27"/><text class="eg-nt" x="300" y="76" text-anchor="middle">Arrival</text></g><text class="eg-st" x="300" y="116" text-anchor="middle">{N++}</text><path class="eg-e" d="M 314 49 C 340 5 274 5 294 47" marker-end="url(#eg-ar)"/><text class="eg-d" x="346" y="38" text-anchor="start">t&#8338;</text><line class="eg-ax" x1="40" y1="152" x2="565" y2="152"/><path class="eg-ax" d="M 566 152 l -9 -4.5 l 0 9 z" fill="currentColor" stroke="none"/><line class="eg-tick" x1="110" y1="141" x2="110" y2="163"/><text class="eg-d" x="110" y="134" text-anchor="middle">t&#8338;&#8321;</text><text class="eg-st" x="110" y="180" text-anchor="middle">N=1</text><line class="eg-tick" x1="180" y1="141" x2="180" y2="163"/><text class="eg-d" x="180" y="134" text-anchor="middle">t&#8338;&#8322;</text><text class="eg-st" x="180" y="180" text-anchor="middle">N=2</text><line class="eg-tick" x1="224" y1="141" x2="224" y2="163"/><text class="eg-d" x="224" y="134" text-anchor="middle">t&#8338;&#8323;</text><text class="eg-st" x="224" y="180" text-anchor="middle">N=3</text><line class="eg-tick" x1="350" y1="141" x2="350" y2="163"/><text class="eg-d" x="350" y="134" text-anchor="middle">t&#8338;&#8324;</text><text class="eg-st" x="350" y="180" text-anchor="middle">N=4</text><line class="eg-tick" x1="490" y1="141" x2="490" y2="163"/><text class="eg-d" x="490" y="134" text-anchor="middle">t&#8338;&#8325;</text><text class="eg-st" x="490" y="180" text-anchor="middle">N=5</text></svg>
+<figcaption>کوچک‌ترین گراف ممکن: یک گره با یک <b>یال خودزمان‌بند</b> (<span class="ltr">self-scheduling edge</span>). هر ورود، ورود بعدی را با تأخیر $t_A$ زمان‌بندی می‌کند و شمارنده‌ی $N$ را یکی زیاد می‌کند. اگر $t_A$ نمایی و مستقل باشد، $N(t)$ یک فرایند پواسون است.</figcaption>
+</figure>
+<p>همین گره، همان سه خط آخر <code>processArrival</code> در بخش ۴ است. یال خودزمان‌بند یعنی «زنجیره‌ی ورودها»؛ همان چیزی که کامنت غلط جزوه در بخش ۳ را توضیح می‌داد.</p>
+
+<h3>الگوی ۲ · صف ساده <span class="ltr">G/G/MaxB</span></h3>
+<p>نمادها: $t_A$ زمان بین‌ورود، $Q$ تعداد در صف، $B$ تعداد سرور مشغول، $\text{MaxB}$ تعداد کل سرورها، $t_S$ زمان خدمت.</p>
+<figure class="fig">
+<svg viewBox="0 0 700 290" width="700" direction="ltr" role="img" aria-label="simple queueing model as an event graph" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="120" cy="200" rx="40" ry="27"/><text class="eg-nt" x="120" y="204" text-anchor="middle">Run</text></g><text class="eg-st" x="120" y="244" text-anchor="middle">{MaxB, Q=0, B=0}</text><g class="eg-ng"><ellipse class="eg-n" cx="120" cy="78" rx="40" ry="27"/><text class="eg-nt" x="120" y="82" text-anchor="middle">Arrival</text></g><text class="eg-st" x="68" y="122" text-anchor="middle">{Q++}</text><g class="eg-ng"><ellipse class="eg-n" cx="370" cy="78" rx="40" ry="27"/><text class="eg-nt" x="370" y="75" text-anchor="middle">Start</text><text class="eg-nt" x="370" y="89" text-anchor="middle">service</text></g><text class="eg-st" x="370" y="122" text-anchor="middle">{Q--, B++}</text><g class="eg-ng"><ellipse class="eg-n" cx="610" cy="78" rx="40" ry="27"/><text class="eg-nt" x="610" y="75" text-anchor="middle">End</text><text class="eg-nt" x="610" y="89" text-anchor="middle">service</text></g><text class="eg-st" x="610" y="122" text-anchor="middle">{B--}</text><path class="eg-e" d="M 120 173 Q 120.0 139.5 120 106" marker-end="url(#eg-ar)"/><text class="eg-d" x="112" y="144" text-anchor="end">t&#8338;</text><path class="eg-e" d="M 134 55 C 160 11 94 11 114 53" marker-end="url(#eg-ar)"/><text class="eg-d" x="166" y="44" text-anchor="start">t&#8338;</text><path class="eg-e" d="M 160 78 Q 245.0 78.0 330 78" marker-end="url(#eg-ar)"/><text class="eg-c" x="245" y="58" text-anchor="middle">(B&lt;MaxB)</text><path class="eg-sq" d="M 240 68 q 7 3 1 7 q -6 4 1 7"/><path class="eg-e" d="M 405 55 Q 490.0 77.0 575 55" marker-end="url(#eg-ar)"/><text class="eg-d" x="490" y="20" text-anchor="middle">t&#8347;</text><path class="eg-e" d="M 575 103 Q 490.0 81.0 405 103" marker-end="url(#eg-ar)"/><text class="eg-c" x="490" y="146" text-anchor="middle">(Q&gt;0)</text><path class="eg-sq" d="M 485 121 q 7 3 1 7 q -6 4 1 7"/></svg>
+<figcaption>گراف کامل صف با $\text{MaxB}$ سرور، همراه با رویداد قراردادی <span class="ltr">Run</span>. سه گره‌ی اصلی: <b>ورود</b> ($Q{+}{+}$)، <b>شروع خدمت</b> ($Q{-}{-},\,B{+}{+}$) و <b>پایان خدمت</b> ($B{-}{-}$). دو شرط تمام منطق صف را می‌سازند: ورود فقط وقتی مستقیم به خدمت می‌رود که سروری آزاد باشد، و پایان خدمت فقط وقتی مشتری بعدی را شروع می‌کند که صف خالی نباشد.</figcaption>
+</figure>
+<p>دقت کن که دو یال بین «شروع» و «پایان» خدمت <b>متفاوت</b>اند: یالِ رفت بی‌قیدوشرط است با تأخیر $t_S$ (هر خدمتی که شروع شود، تمام می‌شود)، و یالِ برگشت شرط $(Q&gt;0)$ دارد و تأخیر ندارد (مشتری بعدی <b>بلافاصله</b> شروع می‌شود).</p>
+
+<h3>الگوی ۳ · مقداردهی اولیه و رویداد <span class="ltr">Run</span></h3>
+<div class="box def"><div class="bt">تعریف ۸.۴ · قاعده‌ی رویدادهای اولیه</div>
+<b>هر رویدادی که هیچ یال ورودی از گره‌های <i>دیگر</i> ندارد — یعنی تنها یال ورودی‌اش یال خودزمان‌بند خودش است، یا اصلاً یال ورودی ندارد — باید در ابتدای اجرا دستی در FEL گذاشته شود.</b> به‌عنوان قرارداد، یک رویداد ویژه به نام <span class="ltr">Run</span> ساخته می‌شود که سه کار مقداردهی اولیه را انجام می‌دهد: تنظیم پارامترها، تنظیم مقدار اولیه‌ی متغیرهای حالت، و گذاشتن اعلان‌های رویداد اولیه.
+</div>
+<p>چرا این قاعده کار می‌کند؟ گرهی که هیچ گره‌ی دیگری زمان‌بندی‌اش نمی‌کند، هرگز به‌خودیِ‌خود در FEL قرار نمی‌گیرد، پس باید دستی کاشته شود. در گراف صفِ بالا <b>پیش از افزودن</b> <span class="ltr">Run</span>، تنها یال ورودیِ <span class="ltr">Arrival</span> همان یال خودزمان‌بند خودش بود؛ پس اولین ورود هرگز رخ نمی‌داد و FEL از ابتدا خالی می‌ماند. <span class="ltr">Start service</span> (از <span class="ltr">Arrival</span> و از <span class="ltr">End</span>) و <span class="ltr">End service</span> (از <span class="ltr">Start</span>) یال ورودی از گره‌های دیگر دارند، پس کاشته نمی‌شوند. با افزودن <span class="ltr">Run</span>، حالا خودِ <span class="ltr">Run</span> تنها گرهِ بدون یال ورودی است و تنها چیزی است که مقداردهی اولیه باید در FEL بگذارد.</p>
+<div class="box mistake"><div class="bt">❌ جمله‌ی مبهم جزوه</div>
+متن اسلاید (ص ۷۰) می‌نویسد: «<span class="ltr">Every event that has only incoming or self-scheduling edges must be scheduled at the beginning of the run</span>». خوانده‌ی تحت‌اللفظی‌اش («هر رویدادی که فقط یال ورودی دارد») غلط است: <span class="ltr">End service</span> در گراف‌های راه ۱ بخش ۱۰ تقریباً همین وضع را دارد ولی قطعاً نباید کاشته شود. منظور درست همان است که در تعریف بالا آمد: گرهی که <b>هیچ یال ورودی از گره‌ی دیگری</b> ندارد. اگر این را با خودِ گراف صف محک بزنی، فوراً معلوم می‌شود کدام خوانش درست است.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی مهم · یال با تأخیر صفر و قاعده‌ی تساوی <span class="tag book">افزوده</span></div>
+<p>جزوه این را نمی‌گوید ولی بدون آن گراف درست پیاده نمی‌شود. یال‌های بدون تأخیر رویدادی را در <b>همین ساعت</b> در FEL می‌گذارند، پس چند رویداد هم‌زمان می‌شوند و ترتیبشان نتیجه را عوض می‌کند. مثال با $\text{MaxB}=1$:</p>
+<p>در لحظه‌ی $t=6$، فهرست شامل <span class="ltr mono">End@6</span> و <span class="ltr mono">Arrival@6</span> است و $Q=1$، $B=1$.</p>
+<ol>
+<li><span class="ltr mono">End</span> اجرا می‌شود: $B=0$؛ چون $Q&gt;0$، یک <span class="ltr mono">Start@6</span> زمان‌بندی می‌شود.</li>
+<li>حالا اگر <span class="ltr mono">Arrival@6</span> <b>قبل از</b> <span class="ltr mono">Start@6</span> اجرا شود: $Q=2$ و شرط $B&lt;\text{MaxB}$ یعنی $0&lt;1$ <b>درست</b> است (چون <span class="ltr mono">Start</span> هنوز اجرا نشده)، پس <b>یک شروع خدمت دوم</b> هم زمان‌بندی می‌شود.</li>
+<li>نتیجه: هر دو <span class="ltr mono">Start</span> اجرا می‌شوند و $B=2$ می‌شود، در حالی که فقط یک سرور داریم. سیستم بی‌سروصدا خراب می‌شود.</li>
+</ol>
+<p><b>قاعده‌ی درست:</b> رویدادهای حاصل از یال‌های بدون تأخیر باید <b>بالاترین اولویت</b> را میان هم‌زمان‌ها داشته باشند. اولویتی که در این صفحه و در کد بخش ۱۲ به کار می‌رود:
+<span class="ltr mono">Run &lt; Start &lt; End &lt; Arrival</span>. با این ترتیب، <span class="ltr mono">Start@6</span> اول اجرا می‌شود، $B$ به ۱ می‌رسد و شرط ورودِ بعدی درست سنجیده می‌شود.</p>
+</div>
+<div class="box ex"><div class="bt">مثال حل‌شده ۸.۱ · شش گام اول روی کاغذ</div>
+<p>$\text{MaxB}=1$. دنباله‌ی بین‌ورودها: ۲، ۳، ۱، ۴ و دنباله‌ی زمان خدمت‌ها: ۴، ۲، ۳.</p>
+<div class="evlist">
+<div class="h"><span>ساعت</span><span>رویداد</span><span>یال‌های برقرار</span><span>Q|B</span></div>
+<div><span>0</span><span class="dep">Run</span><span>→ Arrival@2 (بی‌قیدوشرط)</span><span>0|0</span></div>
+<div><span>2</span><span class="arr">Arrival</span><span>→ Arrival@5 · (B&lt;MaxB) ✓ → Start@2</span><span>1|0</span></div>
+<div class="hl"><span>2</span><span class="dep">Start</span><span>→ End@6 (t&#8347;=4)</span><span>0|1</span></div>
+<div><span>5</span><span class="arr">Arrival</span><span>→ Arrival@6 · (B&lt;MaxB) ✗ بسته</span><span>1|1</span></div>
+<div class="hl"><span>6</span><span class="dep">End</span><span>(Q&gt;0) ✓ → Start@6</span><span>1|0</span></div>
+<div class="hl"><span>6</span><span class="dep">Start</span><span>→ End@8 (t&#8347;=2)</span><span>0|1</span></div>
+<div><span>6</span><span class="arr">Arrival</span><span>→ Arrival@10 · (B&lt;MaxB) ✗ بسته</span><span>1|1</span></div>
+<div><span>8</span><span class="dep">End</span><span>(Q&gt;0) ✓ → Start@8</span><span>1|0</span></div>
+</div>
+<p>سه سطرِ لحظه‌ی ۶ همان چیزی است که کادر بالا هشدار می‌داد: <span class="ltr mono">End</span>، بعد <span class="ltr mono">Start</span>، و تازه بعد از آن <span class="ltr mono">Arrival</span>. مشتری دوم از ۵ تا ۶ منتظر مانده، یعنی انتظارش ۱ است؛ و این عدد فقط به این دلیل قابل اندازه‌گیری است که <span class="ltr">Start service</span> یک گره‌ی مستقل است.</p>
+</div>
+
+<div id="w-egraph"></div>
+
+<div class="box tip"><div class="bt">💡 با ابزار بالا این سه چیز را امتحان کن</div>
+<ul>
+<li>$\text{MaxB}$ را ۱ بگذار و تا جایی گام بزن که صف تشکیل شود؛ ببین یالِ <span class="ltr">(B&lt;MaxB)</span> قرمز (بسته) می‌شود و ورود به صف می‌نشیند.</li>
+<li>$\text{MaxB}$ را ۳ کن؛ یال شرطی تقریباً همیشه باز می‌ماند و صف عملاً تشکیل نمی‌شود.</li>
+<li>بی‌تابی مشتری را روشن کن (بخش ۱۱): حالا هر ورود یک <span class="ltr mono">Renege</span> هم زمان‌بندی می‌کند، و هر شروع خدمت آن را از FEL <b>حذف</b> می‌کند. شکیبایی را کم کن تا مشتری‌ها شروع به رفتن کنند.</li>
+</ul>
+</div>
+</section>
+
+<!-- ===================================================== 10 -->
+<section id="attr">
+<h2 data-short="ویژگی روی یال"><span class="num">10</span> ویژگی روی یال و صف‌های متوالی <span class="tag core">جزوه</span> <span class="tag hw">تمرین</span></h2>
+<figure class="fig">
+<svg viewBox="0 0 480 140" width="480" direction="ltr" role="img" aria-label="passing an attribute on an edge" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="90" cy="70" rx="32" ry="24"/><text class="eg-nt" x="90" y="74" text-anchor="middle">A</text></g><g class="eg-ng"><ellipse class="eg-n" cx="390" cy="70" rx="36" ry="24"/><text class="eg-nt" x="390" y="74" text-anchor="middle">B(j)</text></g><path class="eg-e" d="M 152 70 Q 253.0 70.0 354 70" marker-end="url(#eg-ar)"/><g><rect class="eg-ab" x="127.75" y="59" width="20.5" height="22" rx="4"/><text class="eg-at" x="138" y="75" text-anchor="middle">k</text></g><text class="eg-c" x="255" y="50" text-anchor="middle">(i)</text><path class="eg-sq" d="M 250 60 q 7 3 1 7 q -6 4 1 7"/><text class="eg-d" x="255" y="98" text-anchor="middle">t</text></svg>
+<figcaption>گسترش اول: روی یال می‌شود <b>ویژگی</b> هم فرستاد. خواندنش: «وقتی A رخ داد، اگر $(i)$ برقرار بود، $B$ را برای $t$ بعد زمان‌بندی کن و پارامتر $j$ آن را برابر $k$ بگذار». مقدار $k$ می‌تواند فهرستی از پارامترها باشد. جعبه‌ی کوچک روی یال، نزدیک مبدأ، همان مقدار ارسالی است.</figcaption>
+</figure>
+<p>چرا لازم است؟ چون بدون آن، هر رویداد فقط می‌تواند به حالت <b>سراسری</b> نگاه کند. با ویژگی، یک گره می‌تواند چند نسخه‌ی مستقل داشته باشد: <span class="ltr">Start service(1)</span>، <span class="ltr">Start service(2)</span> و... با <b>یک</b> تعریف.</p>
+<h3>کاربرد: زنجیره‌ی صف‌ها</h3>
+<p>سیستمی با $N$ ایستگاه خدمت پشت سر هم (خط تولید، زنجیره‌ی دستگاه‌ها). مشتری از ایستگاه $j$ که خارج شد، بلافاصله وارد صف ایستگاه $j+1$ می‌شود. جزوه دو راه می‌دهد.</p>
+<h4>راه ۱ — زنجیر کردن چند نسخه از گراف صف</h4>
+<figure class="fig">
+<svg viewBox="0 0 700 320" width="700" direction="ltr" role="img" aria-label="series of queues, approach 1" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="110" cy="66" rx="40" ry="27"/><text class="eg-nt" x="110" y="63" text-anchor="middle">Arrival</text><text class="eg-nt" x="110" y="77" text-anchor="middle">1</text></g><text class="eg-st" x="62" y="110" text-anchor="middle">{Q1++}</text><g class="eg-ng"><ellipse class="eg-n" cx="360" cy="66" rx="40" ry="27"/><text class="eg-nt" x="360" y="63" text-anchor="middle">Start</text><text class="eg-nt" x="360" y="77" text-anchor="middle">service 1</text></g><text class="eg-st" x="360" y="110" text-anchor="middle">{Q1--, B1++}</text><g class="eg-ng"><ellipse class="eg-n" cx="600" cy="66" rx="40" ry="27"/><text class="eg-nt" x="600" y="63" text-anchor="middle">End</text><text class="eg-nt" x="600" y="77" text-anchor="middle">service 1</text></g><text class="eg-st" x="600" y="110" text-anchor="middle">{B1--}</text><path class="eg-e" d="M 150 66 Q 235.0 66.0 320 66" marker-end="url(#eg-ar)"/><text class="eg-c" x="235" y="47" text-anchor="middle">(B1&lt;MaxB1)</text><path class="eg-sq" d="M 230 56 q 7 3 1 7 q -6 4 1 7"/><text class="eg-d" x="480" y="11" text-anchor="middle">t&#8347;1</text><path class="eg-e" d="M 395 43 Q 480.0 65.0 565 43" marker-end="url(#eg-ar)"/><path class="eg-e" d="M 565 91 Q 480.0 69.0 395 91" marker-end="url(#eg-ar)"/><text class="eg-c" x="480" y="132" text-anchor="middle">(Q1&gt;0)</text><path class="eg-sq" d="M 475 107 q 7 3 1 7 q -6 4 1 7"/><path class="eg-e" d="M 124 43 C 150 -1 84 -1 104 41" marker-end="url(#eg-ar)"/><text class="eg-d" x="156" y="28" text-anchor="start">t&#8338;</text><g class="eg-ng"><ellipse class="eg-n" cx="110" cy="242" rx="40" ry="27"/><text class="eg-nt" x="110" y="239" text-anchor="middle">Arrival</text><text class="eg-nt" x="110" y="253" text-anchor="middle">2</text></g><text class="eg-st" x="70" y="286" text-anchor="middle">{Q2++}</text><g class="eg-ng"><ellipse class="eg-n" cx="360" cy="242" rx="40" ry="27"/><text class="eg-nt" x="360" y="239" text-anchor="middle">Start</text><text class="eg-nt" x="360" y="253" text-anchor="middle">service 2</text></g><text class="eg-st" x="360" y="286" text-anchor="middle">{Q2--, B2++}</text><g class="eg-ng"><ellipse class="eg-n" cx="600" cy="242" rx="40" ry="27"/><text class="eg-nt" x="600" y="239" text-anchor="middle">End</text><text class="eg-nt" x="600" y="253" text-anchor="middle">service 2</text></g><text class="eg-st" x="600" y="286" text-anchor="middle">{B2--}</text><path class="eg-e" d="M 150 242 Q 235.0 242.0 320 242" marker-end="url(#eg-ar)"/><text class="eg-c" x="235" y="223" text-anchor="middle">(B2&lt;MaxB2)</text><path class="eg-sq" d="M 230 232 q 7 3 1 7 q -6 4 1 7"/><text class="eg-d" x="480" y="187" text-anchor="middle">t&#8347;2</text><path class="eg-e" d="M 395 219 Q 480.0 241.0 565 219" marker-end="url(#eg-ar)"/><path class="eg-e" d="M 565 267 Q 480.0 245.0 395 267" marker-end="url(#eg-ar)"/><text class="eg-c" x="480" y="308" text-anchor="middle">(Q2&gt;0)</text><path class="eg-sq" d="M 475 283 q 7 3 1 7 q -6 4 1 7"/><path class="eg-e" d="M 640 66 C 678 66 678 168 640 168 L 62 168 C 24 168 24 242 66 242" marker-end="url(#eg-ar)"/></svg>
+<figcaption>برای هر ایستگاه یک کپی کامل از گراف صف با متغیرهای خودش ($Q1,B1$ و $Q2,B2$). تنها اتصال، یال بلندی است از <span class="ltr">End service 1</span> به <span class="ltr">Arrival 2</span>: <b>بدون شرط و بدون تأخیر</b>، چون «پایان خدمت ۱» و «ورود به صف ۲» یک لحظه‌اند. دقت کن که فقط ایستگاه اول یال خودزمان‌بند $t_A$ دارد؛ ورود ایستگاه دوم از بیرون نمی‌آید.</figcaption>
+</figure>
+<h4>راه ۲ — یک گراف با ویژگی روی یال‌ها</h4>
+<figure class="fig">
+<svg viewBox="0 0 700 300" width="700" direction="ltr" role="img" aria-label="series of queues, approach 2 with edge attributes" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="115" cy="98" rx="40" ry="27"/><text class="eg-nt" x="115" y="95" text-anchor="middle">Arrival</text><text class="eg-nt" x="115" y="109" text-anchor="middle">(j)</text></g><text class="eg-st" x="52" y="142" text-anchor="middle">{Q(j)++}</text><g class="eg-ng"><ellipse class="eg-n" cx="370" cy="98" rx="40" ry="27"/><text class="eg-nt" x="370" y="95" text-anchor="middle">Start</text><text class="eg-nt" x="370" y="109" text-anchor="middle">service (j)</text></g><text class="eg-st" x="370" y="142" text-anchor="middle">{Q(j)--, B(j)++}</text><g class="eg-ng"><ellipse class="eg-n" cx="610" cy="98" rx="40" ry="27"/><text class="eg-nt" x="610" y="95" text-anchor="middle">End</text><text class="eg-nt" x="610" y="109" text-anchor="middle">service (j)</text></g><text class="eg-st" x="610" y="142" text-anchor="middle">{B(j)--}</text><path class="eg-e" d="M 129 75 C 155 31 89 31 109 73" marker-end="url(#eg-ar)"/><text class="eg-d" x="161" y="64" text-anchor="start">t&#8338;</text><g><rect class="eg-ab" x="107.75" y="25" width="20.5" height="22" rx="4"/><text class="eg-at" x="118" y="41" text-anchor="middle">1</text></g><text class="eg-c" x="62" y="42" text-anchor="middle">(j=1)</text><path class="eg-e" d="M 155 98 Q 242.5 98.0 330 98" marker-end="url(#eg-ar)"/><g><rect class="eg-ab" x="164.75" y="87" width="20.5" height="22" rx="4"/><text class="eg-at" x="175" y="103" text-anchor="middle">j</text></g><text class="eg-c" x="252" y="77" text-anchor="middle">(B(j)&lt;MaxB(j))</text><path class="eg-sq" d="M 247 87 q 7 3 1 7 q -6 4 1 7"/><path class="eg-e" d="M 405 75 Q 490.0 97.0 575 75" marker-end="url(#eg-ar)"/><text class="eg-d" x="462" y="38" text-anchor="middle">t&#8347;(j)</text><g><rect class="eg-ab" x="513.75" y="35" width="20.5" height="22" rx="4"/><text class="eg-at" x="524" y="51" text-anchor="middle">j</text></g><path class="eg-e" d="M 575 123 Q 490.0 101.0 405 123" marker-end="url(#eg-ar)"/><text class="eg-c" x="462" y="167" text-anchor="middle">(Q(j)&gt;0)</text><path class="eg-sq" d="M 457 142 q 7 3 1 7 q -6 4 1 7"/><g><rect class="eg-ab" x="525.75" y="143" width="20.5" height="22" rx="4"/><text class="eg-at" x="536" y="159" text-anchor="middle">j</text></g><path class="eg-e" d="M 626 122 C 672 206 300 268 132 128" marker-end="url(#eg-ar)"/><g><rect class="eg-ab" x="622.25" y="169" width="35.5" height="22" rx="4"/><text class="eg-at" x="640" y="185" text-anchor="middle">j+1</text></g><text class="eg-c" x="360" y="258" text-anchor="middle">(j&lt;N)</text><path class="eg-sq" d="M 355 233 q 7 3 1 7 q -6 4 1 7"/></svg>
+<figcaption>همان مدل با سه گره. ویژگی $j$ شماره‌ی ایستگاه است و روی هر یال منتقل می‌شود. یال خودزمان‌بند ورود شرط $(j{=}1)$ دارد تا فقط ایستگاه اول ورودِ بیرونی بسازد، و ویژگی ۱ را می‌فرستد. یال پایانی $(j&lt;N)$ با ویژگی $j{+}1$، مشتری را به ایستگاه بعدی می‌برد. متغیرهای حالت حالا <b>آرایه</b>اند: $Q(j)$، $B(j)$، $\text{MaxB}(j)$.</figcaption>
+</figure>
+<div class="tablewrap"><table>
+<tr><th></th><th>راه ۱: زنجیر کردن</th><th>راه ۲: ویژگی روی یال</th></tr>
+<tr><td>اندازه‌ی گراف</td><td>$3N$ گره</td><td>۳ گره، مستقل از $N$</td></tr>
+<tr><td>کد</td><td>$N$ نسخه‌ی تکراری</td><td>یک روال، با $j$ به‌عنوان آرگومان</td></tr>
+<tr><td>تغییر $N$</td><td>تغییر گراف و کد</td><td>تغییر یک عدد</td></tr>
+<tr><td>ایستگاه‌های ناهمگن</td><td>طبیعی: هر کپی توزیع خودش را دارد</td><td>با جدول پارامتر برحسب $j$</td></tr>
+<tr><td>وقتی بهتر است</td><td>$N$ کوچک و ایستگاه‌ها خیلی متفاوت</td><td>$N$ بزرگ یا ایستگاه‌ها هم‌شکل</td></tr>
+</table></div>
+<div class="box ex"><div class="bt">مثال حل‌شده ۸.۲ · ده مشتری در دو صف متوالی (عددهای متفاوت از تمرین)</div>
+<p>دو ایستگاه تک‌سروره‌ی FIFO، صف نامحدود، ابتدا خالی، ورود اول در لحظه‌ی صفر. بین‌ورود ۲، ۳ یا ۴ دقیقه با احتمال برابر (میانگین ۳)؛ خدمت ۱: ۱، ۲ یا ۳ دقیقه با احتمال ۰٫۲، ۰٫۵ و ۰٫۳ (میانگین ۲٫۱)؛ خدمت ۲: ۲ یا ۳ دقیقه با احتمال ۰٫۶ و ۰٫۴ (میانگین ۲٫۴). مقادیر تولیدشده:</p>
+<p class="ltr mono" style="font-size:.88em">interarrival (customers 2–10): 3 2 4 2 3 2 4 3 2<br>
+stage-1 service (1–10): 2 3 1 2 3 2 1 2 3 2<br>
+stage-2 service (1–10): 2 3 2 2 3 2 3 2 2 3</p>
+<p>قاعده‌ی هر سطر: $\text{begin}_1=\max(\text{arrival},\,\text{end}_1^{\text{prev}})$ و $\text{begin}_2=\max(\text{end}_1,\,\text{end}_2^{\text{prev}})$.</p>
+<div class="tablewrap"><table class="sim tandem">
+<tr><th>مشتری</th><th>ورود</th><th>شروع ۱</th><th>پایان ۱</th><th>شروع ۲</th><th>پایان ۲</th><th>W₁</th><th>W₂</th><th>در سیستم</th></tr>
+<tr><td>1</td><td>0</td><td>0</td><td>2</td><td>2</td><td>4</td><td>0</td><td>0</td><td>4</td></tr>
+<tr><td>2</td><td>3</td><td>3</td><td>6</td><td>6</td><td>9</td><td>0</td><td>0</td><td>6</td></tr>
+<tr class="hl"><td>3</td><td>5</td><td>6</td><td>7</td><td>9</td><td>11</td><td class="wait">1</td><td class="wait">2</td><td>6</td></tr>
+<tr><td>4</td><td>9</td><td>9</td><td>11</td><td>11</td><td>13</td><td>0</td><td>0</td><td>4</td></tr>
+<tr><td>5</td><td>11</td><td>11</td><td>14</td><td>14</td><td>17</td><td>0</td><td>0</td><td>6</td></tr>
+<tr class="hl"><td>6</td><td>14</td><td>14</td><td>16</td><td>17</td><td>19</td><td>0</td><td class="wait">1</td><td>5</td></tr>
+<tr class="hl"><td>7</td><td>16</td><td>16</td><td>17</td><td>19</td><td>22</td><td>0</td><td class="wait">2</td><td>6</td></tr>
+<tr><td>8</td><td>20</td><td>20</td><td>22</td><td>22</td><td>24</td><td>0</td><td>0</td><td>4</td></tr>
+<tr><td>9</td><td>23</td><td>23</td><td>26</td><td>26</td><td>28</td><td>0</td><td>0</td><td>5</td></tr>
+<tr class="hl"><td>10</td><td>25</td><td>26</td><td>28</td><td>28</td><td>31</td><td class="wait">1</td><td>0</td><td>6</td></tr>
+<tr class="sum"><td>جمع</td><td></td><td></td><td></td><td></td><td></td><td>2</td><td>5</td><td>52</td></tr>
+</table></div>
+<div class="stats">
+  <div><div class="l">میانگین انتظار صف ۱</div><div class="v">0.20</div><div class="f">2 / 10 min</div></div>
+  <div><div class="l">میانگین انتظار صف ۲</div><div class="v">0.50</div><div class="f">5 / 10 min</div></div>
+  <div><div class="l">میانگین زمان در سیستم</div><div class="v">5.20</div><div class="f">52 / 10 min</div></div>
+  <div><div class="l">افق مشترک T</div><div class="v">31</div><div class="f">آخرین خروج از مرحله‌ی ۲</div></div>
+  <div><div class="l">بهره‌وری سرور ۱</div><div class="v">0.677</div><div class="f">21 / 31</div></div>
+  <div><div class="l">بهره‌وری سرور ۲</div><div class="v">0.774</div><div class="f">24 / 31</div></div>
+  <div><div class="l">میانگین زمانی طول صف ۱</div><div class="v">0.065</div><div class="f">2 / 31</div></div>
+  <div><div class="l">میانگین زمانی طول صف ۲</div><div class="v">0.161</div><div class="f">5 / 31</div></div>
+</div>
+<p><b>آزمون صحت رایگان:</b> مساحت زیر نمودار پلکانی $Q_j(t)$ دقیقاً برابر <b>جمع انتظارهای</b> همان صف است، چون هر مشتری به اندازه‌ی مدت انتظارش یک واحد به ارتفاع پله اضافه می‌کند. این‌جا $\int Q_1 = 2$ و $\int Q_2 = 5$ که با ستون‌های $W_1$ و $W_2$ می‌خوانند. اگر در کدت این دو نخوانند، جایی اشتباه است.</p>
+<p><b>تحلیل گلوگاه:</b> ایستگاه ۲ کندتر است ($\rho_2=0.774$ در برابر $\rho_1=0.677$) و بیشتر انتظار می‌سازد. نشانه‌ی دیگر: در سطرهای ۶ و ۷، مشتری در صف اول اصلاً منتظر نمانده ولی پشت ایستگاه دوم صبر کرده است. اگر بخواهی سیستم را بهتر کنی، سرمایه را روی ایستگاه ۲ بگذار.</p>
+</div>
+</section>
+
+<!-- ===================================================== 11 -->
+<section id="cancel">
+<h2 data-short="یال لغوکننده"><span class="num">11</span> یال لغوکننده <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<figure class="fig">
+<svg viewBox="0 0 480 130" width="480" direction="ltr" role="img" aria-label="canceling edge" class="eg"><g class="eg-ng"><ellipse class="eg-n" cx="90" cy="65" rx="32" ry="24"/><text class="eg-nt" x="90" y="69" text-anchor="middle">A</text></g><g class="eg-ng"><ellipse class="eg-n" cx="390" cy="65" rx="32" ry="24"/><text class="eg-nt" x="390" y="69" text-anchor="middle">B</text></g><path class="eg-e eg-cancel" d="M 122 65 Q 240.0 65.0 358 65" marker-end="url(#eg-arx)"/><text class="eg-c" x="240" y="45" text-anchor="middle">(i)</text><path class="eg-sq" d="M 235 55 q 7 3 1 7 q -6 4 1 7"/></svg>
+<figcaption>گسترش دوم: یال <b>خط‌چین</b> یعنی لغو. «وقتی A رخ داد و شرط $(i)$ برقرار بود، <b>اولین وقوع بعدیِ</b> B از فهرست رویدادها حذف شود. اگر اعلانی برای B در فهرست نباشد، هیچ اتفاقی نمی‌افتد.»</figcaption>
+</figure>
+<p>تا این‌جا هر یال فقط چیزی به FEL <b>اضافه</b> می‌کرد. یال لغوکننده تنها راهی است که در این زبان می‌شود چیزی را از FEL <b>برداشت</b>. بدون آن، هر تعهدی که یک بار داده شد، حتماً اجرا می‌شود.</p>
+<div class="box def"><div class="bt">تعریف ۸.۵ · چهار جزء یک یال</div>
+<div class="tablewrap"><table>
+<tr><th>جزء</th><th>کجا نوشته می‌شود</th><th>اگر نباشد</th></tr>
+<tr><td>شرط <span class="ltr">(condition)</span></td><td>بالای یال، در پرانتز، با علامت موج‌دار</td><td>یال بی‌قیدوشرط است</td></tr>
+<tr><td>تأخیر <span class="ltr">(delay)</span></td><td>زیر یال</td><td>تأخیر صفر؛ در همین ساعت</td></tr>
+<tr><td>ویژگی <span class="ltr">(attribute)</span></td><td>جعبه‌ی کوچک روی یال، نزدیک مبدأ</td><td>ویژگی‌ای منتقل نمی‌شود</td></tr>
+<tr><td>لغو <span class="ltr">(cancel)</span></td><td>خط‌چین بودن خودِ یال</td><td>یال زمان‌بندی‌کننده است، نه لغوکننده</td></tr>
+</table></div>
+</div>
+<h3>کجا لازم می‌شود؟</h3>
+<div class="cards">
+  <div><b>بی‌تابی مشتری <span class="ltr">(reneging)</span></b>مشتری هنگام ورود یک «رفتن» برای $t_P$ بعد زمان‌بندی می‌کند؛ اگر خدمتش زودتر شروع شود، آن رفتن لغو می‌شود.</div>
+  <div><b>خرابی دستگاه</b>رویداد خرابی، «پایان خدمت» زمان‌بندی‌شده را لغو می‌کند و بعد از تعمیر دوباره زمان‌بندی‌اش می‌کند.</div>
+  <div><b>مهلت زمانی <span class="ltr">(timeout)</span></b>بسته‌ی شبکه هنگام ارسال یک <span class="ltr">timeout</span> زمان‌بندی می‌کند؛ رسیدن <span class="ltr">ACK</span> آن را لغو می‌کند.</div>
+  <div><b>لغو سفارش</b>مشتری سفارشی داده که تحویلش زمان‌بندی شده؛ رویداد «انصراف» آن تحویل را از FEL برمی‌دارد.</div>
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · «اولین وقوع بعدی» کافی نیست</div>
+تعریف جزوه می‌گوید «<b>اولین</b> وقوع بعدی B حذف شود». وقتی چند نمونه‌ی B هم‌زمان در FEL باشند — مثلاً ده مشتریِ بی‌تاب با ده مهلت متفاوت — این تعریف مبهم است: کدام‌یک؟ در عمل دو راه داری:
+<ul>
+<li><b>با ویژگی:</b> یال لغوکننده هم ویژگی می‌برد و موتور، اعلانی را حذف می‌کند که ویژگی‌اش بخورد (مثلاً شناسه‌ی همان مشتری). این راه همیشه درست است.</li>
+<li><b>با استدلال ساختاری:</b> در صف FIFO با شکیبایی یکسان، مشتریِ سرِ صف زودترین مهلت را دارد، پس «نزدیک‌ترین <span class="ltr">Renege</span> در FEL» دقیقاً مال همان کسی است که دارد وارد خدمت می‌شود. در این حالت تعریف ساده هم جواب می‌دهد — ابزار بخش ۹ از همین استدلال استفاده می‌کند.</li>
+</ul>
+اگر شکیبایی‌ها متفاوت باشند، راه دوم <b>غلط</b> می‌شود.
+</div>
+<div class="box tip"><div class="bt">💡 لغو در برابر شرط: کدام را به کار ببرم؟</div>
+اگر می‌توانی تصمیم را به <b>لحظه‌ی اجرا</b> موکول کنی، شرط ارزان‌تر است: رویداد را زمان‌بندی کن و در ابتدای روالش یک «اگر هنوز معتبر است» بگذار (الگوی <span class="ltr">stale event</span>). لغو وقتی لازم است که خودِ ماندنِ رویداد در FEL معنا داشته باشد — مثلاً چون می‌خواهی تعداد رویدادهای معلق محدود بماند، یا چون شرطِ اعتبار را نمی‌شود از روی حالت فعلی بازسازی کرد.
+</div>
+</section>
+
+<!-- ===================================================== 12 -->
+<section id="g2c">
+<h2 data-short="از گراف تا کد"><span class="num">12</span> از گراف تا کد <span class="tag book">تکمیلی</span> <span class="tag hw">تمرین</span></h2>
+<p>گراف شبیه‌سازی یک ترجمه‌ی مکانیکی به کد دارد. جدول زیر را حفظ نکن؛ بفهم، چون هر سطرش یک خط از الگوریتم زمان‌بندی رویداد است.</p>
+<div class="tablewrap"><table class="map">
+<tr><th>عنصر گراف</th><th>در کد</th><th>توضیح</th></tr>
+<tr><td>گره <span class="ltr">X</span></td><td>تابع <code>process_X(state, attr)</code></td><td>یک روال رویداد؛ ورودی‌اش حالت و ویژگی منتقل‌شده است</td></tr>
+<tr><td>{...} زیر گره</td><td>چند خط اول همان تابع</td><td>تغییر حالت؛ آماره‌های زمانی هم این‌جا به‌روز می‌شوند</td></tr>
+<tr><td>یال X → Y</td><td><code>schedule("Y", clock + delay, attr)</code></td><td>در انتهای <code>process_X</code>، یکی برای هر یال خروجی</td></tr>
+<tr><td>شرط (i) روی یال</td><td><code>if i(state, attr):</code> دور همان <code>schedule</code></td><td>در <b>لحظه‌ی زمان‌بندی</b> سنجیده می‌شود</td></tr>
+<tr><td>تأخیر t روی یال</td><td><code>clock + t()</code></td><td>اگر تصادفی است، همین‌جا یک نمونه تولید و قفل می‌شود</td></tr>
+<tr><td>نبودن تأخیر</td><td><code>clock + 0</code> + اولویت بالاتر در قاعده‌ی تساوی</td><td>ببین کادر هشدار بخش ۹</td></tr>
+<tr><td>جعبه‌ی ویژگی k روی یال</td><td>آرگومان <code>attr=k</code> در همان <code>schedule</code></td><td>مقصد آن را به‌عنوان پارامتر j دریافت می‌کند</td></tr>
+<tr><td>یال خودزمان‌بند</td><td><code>schedule("X", clock + t())</code> داخل <code>process_X</code></td><td>زنجیره‌ی ورودها</td></tr>
+<tr><td>یال خط‌چین (لغو)</td><td><code>cancel("Y", attr)</code></td><td>حذف از FEL؛ اگر نبود، بی‌صدا رد شود</td></tr>
+<tr><td>گره‌ی <span class="ltr">Run</span></td><td>تابع <code>initialization()</code></td><td>تنها رویدادی که دستی در FEL کاشته می‌شود</td></tr>
+<tr><td>گره‌ی بدون یال ورودی</td><td>یک <code>schedule</code> در <code>initialization</code></td><td>قاعده‌ی تعریف ۸.۴</td></tr>
+<tr><td>متغیرهای داخل {}</td><td>فیلدهای شیء حالت</td><td>همان «حالت سیستم» بخش ۲</td></tr>
+</table></div>
+<p>این ترجمه آن‌قدر مکانیکی است که می‌شود یک <b>موتور عمومی</b> نوشت که هر گرافی را اجرا کند. کد زیر کل زبان را پیاده می‌کند — گره، شرط، تأخیر، ویژگی و لغو — در حدود سی خط:</p>
+<pre class="code">
+import heapq, math, random
+from collections import namedtuple
+
+Edge = namedtuple("Edge", "target cond delay attr cancel")
+
+def E(target, cond=None, delay=None, attr=None, cancel=False):
+    """One edge: schedule `target` after `delay`, if `cond` holds, passing `attr`."""
+    return Edge(target, cond, delay, attr, cancel)
+
+class EventGraph:
+    """Nodes are events (a state change); edges are scheduling with a condition and a delay."""
+    def __init__(self, nodes, prio, state):
+        self.nodes, self.prio, self.S = nodes, prio, state
+        self.fel, self.clock, self.seq = [], 0.0, 0
+
+    def schedule(self, name, t, a=None):
+        self.seq += 1                                  # tie-break: first scheduled, first out
+        heapq.heappush(self.fel, (t, self.prio[name], self.seq, name, a))
+
+    def cancel(self, name, a=None):                    # the dashed edge
+        for e in sorted(self.fel):
+            if e[3] == name:
+                self.fel.remove(e); heapq.heapify(self.fel); return True
+        return False                                   # nothing scheduled -&gt; nothing happens
+
+    def run(self, start="Run", end=math.inf):
+        self.schedule(start, 0.0)                      # the one event planted by hand
+        while self.fel:
+            t, _, _, name, a = heapq.heappop(self.fel) # imminent event
+            if t &gt; end: break
+            self.clock = t                             # advance the clock
+            change, edges = self.nodes[name]
+            change(self, a)                            # execute the {...} under the node
+            for e in edges:                            # follow every outgoing edge
+                if e.cond and not e.cond(self, a): continue
+                b = e.attr(self, a) if e.attr else a
+                if e.cancel: self.cancel(e.target, b)
+                else:        self.schedule(e.target, t + (e.delay(self, a) if e.delay else 0.0), b)
+
+# ---------------- the G/G/MaxB graph of section 9, one to one ----------------
+rng = random.Random(2026)
+tA = lambda: -4.5 * math.log(1 - rng.random())
+tS = lambda: -3.2 * math.log(1 - rng.random())
+
+def tick(g):                                           # time-weighted accumulators
+    dt = g.clock - g.S["last"]
+    g.S["area"] += g.S["Q"] * dt; g.S["busy"] += g.S["B"] * dt; g.S["last"] = g.clock
+
+def ev_run(g, a):     tick(g); g.S.update(Q=0, B=0)
+def ev_arrival(g, a): tick(g); g.S["Q"] += 1; g.S["at"].append(g.clock)
+def ev_start(g, a):
+    tick(g); g.S["Q"] -= 1; g.S["B"] += 1
+    g.S["wait"] += g.clock - g.S["at"][g.S["started"]]; g.S["started"] += 1
+def ev_end(g, a):     tick(g); g.S["B"] -= 1
+
+nodes = {
+    "Run":     (ev_run,     [E("Arrival", delay=lambda g, a: tA())]),
+    "Arrival": (ev_arrival, [E("Arrival", delay=lambda g, a: tA()),
+                             E("Start",   cond=lambda g, a: g.S["B"] &lt; g.S["MaxB"])]),
+    "Start":   (ev_start,   [E("End",     delay=lambda g, a: tS())]),
+    "End":     (ev_end,     [E("Start",   cond=lambda g, a: g.S["Q"] &gt; 0)]),
+}
+PRIO = dict(Run=0, Start=1, End=2, Arrival=3)          # zero-delay events go first
+
+state = dict(Q=0, B=0, MaxB=1, area=0.0, busy=0.0, last=0.0, wait=0.0, started=0, at=[])
+g = EventGraph(nodes, PRIO, state)
+g.run(end=200000)
+T = g.clock
+print("MaxB = 1 (M/M/1), horizon 200000")
+print(f"  arrivals = {len(state['at'])}   served = {state['started']}")
+print(f"  rho = {state['busy']/T:.4f}   Lq = {state['area']/T:.4f}   Wq = {state['wait']/state['started']:.4f}")
+r = 3.2 / 4.5
+print(f"  theory:  rho = {r:.4f}   Lq = {r*r/(1-r):.4f}   Wq = {r*3.2/(1-r):.4f}")
+</pre>
+<div class="out">MaxB = 1 (M/M/1), horizon 200000
+  arrivals = 44504   served = 44504
+  rho = 0.7074   Lq = 1.7413   Wq = 7.8254
+  theory:  rho = 0.7111   Lq = 1.7504   Wq = 7.8769</div>
+<p>چهار خط <code>nodes</code> را با شکل بخش ۹ مقایسه کن: هر سطر یک گره است و هر <code>E(...)</code> یک یال. هیچ منطق صفی در موتور نیست؛ همه‌اش در گراف است. و همان موتور — بدون تغییر حتی یک خط در کلاس <code>EventGraph</code> — زنجیره‌ی صف‌ها را هم اجرا می‌کند. فقط دیکشنری <code>nodes</code> عوض می‌شود و متغیرهای حالت <b>آرایه‌ای برحسب $j$</b> می‌شوند، یعنی $Q(j)$ و $B(j)$ به‌جای $Q$ و $B$ (راه ۲ بخش ۱۰):</p>
+<pre class="code">
+N = 2
+nodes = {
+ "Run":     (ev_run,     [E("Arrival", delay=lambda g,j: tA(), attr=lambda g,j: 1)]),
+ "Arrival": (ev_arrival, [E("Arrival", cond=lambda g,j: j == 1,
+                             delay=lambda g,j: tA(), attr=lambda g,j: 1),
+                          E("Start",   cond=lambda g,j: g.S["B"][j] &lt; g.S["MaxB"][j])]),
+ "Start":   (ev_start,   [E("End",     delay=lambda g,j: tS(j))]),
+ "End":     (ev_end,     [E("Start",   cond=lambda g,j: g.S["Q"][j] &gt; 0),
+                          E("Arrival", cond=lambda g,j: j &lt; N, attr=lambda g,j: j + 1)]),
+}
+</pre>
+<p>با توزیع‌های مثال ۸.۲ و افق ۳۰۰۰۰۰ دقیقه، همین گراف می‌دهد: ایستگاه ۱ با <span class="ltr">ρ = 0.7010</span>، <span class="ltr">L = 0.0578</span>، <span class="ltr">W = 0.173</span>؛ ایستگاه ۲ با <span class="ltr">ρ = 0.8014</span>، <span class="ltr">L = 0.1496</span>، <span class="ltr">W = 0.448</span>. این عددها با شبیه‌سازی مستقیم همان سیستم (بدون گراف) می‌خوانند — و با جدول ده‌مشتریِ مثال ۸.۲ هم‌جهت‌اند؛ اختلاف $W_2$ (۰٫۵ در برابر ۰٫۴۵) از کوتاهی آن اجرا و شروع از سیستم خالی است.</p>
+
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۳ · سؤال ۸ (دو صف متوالی)</div>
+<p>سؤال یک برنامه می‌خواهد، نه یک جدول دستی. این‌جا <b>معماری</b> و <b>ساختار داده</b> را می‌گویم؛ عددهای خود سؤال را خودت باید دربیاوری.</p>
+<ol>
+<li><b>قراردادها را اول بنویس.</b> ورود اول در لحظه‌ی صفر. افق هر اجرا تا <b>خروج آخرین مشتری از مرحله‌ی دوم</b> (یک $T$ مشترک برای هر دو سرور، چون سؤال «بهره‌برداری هر سرور بر همین افق مشترک» خواسته). پایان خدمت ۱ = ورود به صف ۲، بدون تأخیر. هر دو صف نامحدود و FIFO، سیستم ابتدا خالی.</li>
+<li><b>دو راه پیاده‌سازی، هر دو قابل قبول:</b>
+  <ul>
+  <li><b>بازگشتی ساده (توصیه‌شده برای شروع).</b> چون صف‌ها FIFO و سرورها تک‌نفره‌اند، نیازی به FEL نداری: برای هر مشتری $k$ فقط دو عدد نگه دار، $\text{free}_1$ و $\text{free}_2$، و بنویس
+  $$b_{1,k}=\max(a_k,\,\text{free}_1),\quad e_{1,k}=b_{1,k}+s_{1,k},\quad b_{2,k}=\max(e_{1,k},\,\text{free}_2),\quad e_{2,k}=b_{2,k}+s_{2,k}$$
+  این دقیقاً تابع <code>tandem</code> مثال ۸.۲ است و در ۱۵ خط تمام می‌شود.</li>
+  <li><b>با گراف رویداد.</b> همان دیکشنری <code>nodes</code> بالا با $N=2$ و $\text{MaxB}(j)=1$. گران‌تر است ولی نشان می‌دهد روش عمومی را بلدی، و اگر سؤال بعدی صف محدود یا سرور دوم اضافه بخواهد، فقط یک عدد عوض می‌شود.</li>
+  </ul></li>
+<li><b>ساختار داده‌ی خروجی.</b> برای هر اجرا یک جدول $200\times9$: شماره، ورود، شروع ۱، پایان ۱، شروع ۲، پایان ۲، $W_1$، $W_2$، زمان در سیستم. سؤال صریحاً <b>جدول ده مشتری اول</b> و <b>داده‌ی خام</b> می‌خواهد، پس این جدول را برای حداقل یک اجرا ذخیره کن (<span class="ltr">CSV</span>).</li>
+<li><b>تولید ورودی‌ها.</b> بین‌ورود از $\{1,2,3,4\}$ با احتمال برابر، خدمت ۱ از $\{1,2,3\}$ با $(0.3,0.4,0.3)$ و خدمت ۲ از $\{1,2\}$ با $(0.6,0.4)$ — هر سه با تبدیل معکوس روی تجمعی. سؤال می‌گوید <b>بذر و مقادیر تولیدشده را ذخیره کن</b>: یک <code>random.Random(seed)</code> با بذر ثابت بساز و هر سه بردار را در فایل بنویس تا نتیجه بازتولیدپذیر باشد. برای ۳۰ تکرار <b>مستقل</b>، بذرهای متفاوت (یا یک جریان پیوسته) بگیر؛ این‌جا برخلاف جلسه‌ی ۵ اعداد مشترک نمی‌خواهیم، چون چیزی را مقایسه نمی‌کنیم.</li>
+<li><b>شاخص‌های هر اجرا.</b> میانگین $W_1$، میانگین $W_2$، میانگین زمان در سیستم، $\rho_1=\sum s_{1,k}/T$، $\rho_2=\sum s_{2,k}/T$، و میانگین زمانی طول هر صف $L_j=\frac1T\int_0^T Q_j(t)\,dt$. برای $L_j$ لازم نیست پلکان را بسازی: $\int Q_j = \sum_k W_{j,k}$، پس $L_j=\big(\sum_k W_{j,k}\big)/T$.</li>
+<li><b>دو کنترل صحتی که سؤال خواسته.</b> (الف) <b>موازنه</b>: تعداد ورودها به هر مرحله و خروج‌ها از آن هر دو ۲۰۰ باشد، و در پایان هر دو صف و هر دو سرور خالی. (ب) <b>برابری</b> $\sum_k W_{j,k}$ با مساحت زیر $Q_j(t)$. برای (ب) ارزشش را دارد که یک بار مساحت را <b>مستقل</b> هم حساب کنی (از روی رویدادهای ورود/خروج صف و مُهر زمانی قبلی) و با جمع انتظارها مقایسه کنی؛ اگر از همان فرمول بسازی، آزمون بی‌معنی می‌شود.</li>
+<li><b>گزارش ۳۰ تکرار.</b> برای هر شاخص میانگین و بازه‌ی اطمینان ۹۵٪ با $t_{0.975,29}=2.045$ بده: $\bar X \pm t\,s/\sqrt{30}$. یک جدول با هفت سطر (شاخص‌ها) و ستون‌های میانگین و نیم‌پهنا کافی است.</li>
+<li><b>تحلیل گلوگاه.</b> میانگین خدمت‌ها را با میانگین بین‌ورود مقایسه کن و بگو کدام سرور $\rho$ بزرگ‌تری دارد؛ بعد نشان بده همان سرور $W$ و $L$ بزرگ‌تری هم می‌سازد. یک جمله هم درباره‌ی این بنویس که چون سیستم خالی شروع می‌شود و فقط ۲۰۰ مشتری دارد، این عددها <b>حالت پایدار</b> نیستند.</li>
+<li><b>تله‌ها.</b> (۱) مخرج بهره‌وری را برای هر دو سرور یکی بگیر ($T$ مشترک)، نه «آخرین خروج از همان مرحله». (۲) $W_2$ را از <b>پایان خدمت ۱</b> بگیر، نه از زمان ورود به سیستم. (۳) ورودها به مرحله‌ی دوم <b>ورود مستقل نیستند</b>؛ نباید برایشان بین‌ورود تازه تولید کنی. (۴) اگر از گراف استفاده می‌کنی، قاعده‌ی تساوی بخش ۹ را رعایت کن وگرنه ممکن است یک سرور دو مشتری هم‌زمان بگیرد.</li>
+</ol>
+</div>
+</section>
+
+<!-- ===================================================== 13 -->
+<section id="exercises">
+<h2><span class="num">13</span> تمرین</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">🟢 گرم‌کردن</span></div>
+در گراف صف ساده‌ی بخش ۹، کدام یال‌ها شرط دارند و کدام‌ها تأخیر؟ هر یال را به فارسی بخوان.
+<details><summary>راه‌حل</summary>
+چهار یال داریم. (۱) <span class="ltr">Run → Arrival</span>: بدون شرط، تأخیر $t_A$ — «وقتی اجرا شروع شد، اولین ورود را برای $t_A$ بعد زمان‌بندی کن». (۲) <span class="ltr">Arrival → Arrival</span> (خودزمان‌بند): بدون شرط، تأخیر $t_A$. (۳) <span class="ltr">Arrival → Start service</span>: شرط $(B&lt;\text{MaxB})$، بدون تأخیر — «اگر سروری آزاد است، خدمت را همین حالا شروع کن». (۴) <span class="ltr">Start → End</span>: بدون شرط، تأخیر $t_S$. (۵) <span class="ltr">End → Start</span>: شرط $(Q&gt;0)$، بدون تأخیر. پس دو یال شرط دارند و سه یال تأخیر؛ هیچ یالی هر دو را ندارد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">🟢 گرم‌کردن</span></div>
+در گراف زیر کدام رویدادها باید در ابتدای اجرا در FEL گذاشته شوند؟ گره‌ها: $A$ با یال خودزمان‌بند و یالی به $B$؛ $B$ با یالی به $C$؛ $C$ با یالی به $B$؛ و $D$ که فقط یالی به $A$ دارد.
+<details><summary>راه‌حل</summary>
+قاعده‌ی تعریف ۸.۴: هر گرهی که فقط یال ورودی یا خودزمان‌بند دارد باید کاشته شود. $B$ و $C$ از هم یال ورودی دارند، پس نه. $A$ یال ورودی از $D$ دارد، پس نه. $D$ هیچ یال ورودی ندارد، پس <b>فقط $D$</b> باید در ابتدا در FEL باشد. $D$ همان نقش <span class="ltr">Run</span> را دارد. توجه: اگر $D$ نبود، $A$ فقط یال خودزمان‌بند داشت و باید خودش کاشته می‌شد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">🟡 تمرین</span></div>
+در کد جاوای بخش ۴، چه می‌شود اگر در <code>processArrival</code> خط <code>lastEventTime = clock</code> را حذف کنی؟ عدد بهره‌وری چه تغییری می‌کند — بیشتر، کمتر یا نامعلوم؟
+<details><summary>راه‌حل</summary>
+<code>lastEventTime</code> دیگر فقط در خروج‌ها به‌روز می‌شود. پس در هر ورودی که سرور مشغول باشد، بازه‌ی $(\texttt{lastEventTime},\texttt{clock})$ بیش از حد واقعی است و بخش‌هایی از زمان <b>چند بار</b> شمرده می‌شوند. نتیجه: <code>totalBusy</code> و در نتیجه $\rho$ <b>بیشتر</b> از مقدار درست می‌شود و حتی می‌تواند از ۱ بگذرد. یک تست خوب برای کدت: اگر $\rho&gt;1$ دیدی، تقریباً همیشه خطای مُهر زمانی است، نه خطای مدل.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">🟡 تمرین</span></div>
+می‌خواهی به مدل جاوا شاخص «میانگین زمان <b>انتظار</b> در صف» را اضافه کنی (نه زمان در سیستم). کمترین تغییر لازم چیست؟
+<details><summary>راه‌حل</summary>
+زمان شروع خدمتِ هر مشتری لازم است. دو راه: (الف) در <code>scheduleDeparture</code>، قبل از <code>queueLength--</code>، به مشتریِ سرِ صف نگاه کن و $\texttt{sumWait} \mathrel{+}= \texttt{clock} - \texttt{arrivalTime}$ را همان‌جا جمع بزن (چون همان لحظه خدمتش شروع می‌شود). (ب) چون در <span class="ltr">M/M/1</span> زمان انتظار = زمان در سیستم منهای زمان خدمت است، زمان خدمت تولیدشده را هم ذخیره کن و در خروج کم کن. راه (الف) تمیزتر است و دقیقاً همان کاری است که گره‌ی <span class="ltr">Start service</span> در گراف می‌کند. این نشان می‌دهد چرا گراف آن گره را جدا نگه می‌دارد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">🟡 تمرین</span></div>
+گراف یک صف با <b>ظرفیت محدود</b> بکش: اگر در لحظه‌ی ورود $Q = K$ باشد، مشتری وارد نمی‌شود (<span class="ltr">balking</span>) و فقط شمارنده‌ی <span class="ltr">Lost</span> یکی زیاد می‌شود.
+<details><summary>راه‌حل</summary>
+گره‌ی <span class="ltr">Arrival</span> دیگر نباید بی‌قیدوشرط $Q{+}{+}$ کند. راه تمیز: تغییر حالتِ زیر <span class="ltr">Arrival</span> را خالی بگذار و دو یالِ بدون تأخیر از آن بکش: یکی به گره‌ی تازه‌ی <span class="ltr">Enter</span> با شرط $(Q+B&lt;K)$ و تغییر حالت $\{Q{+}{+}\}$، و دیگری به گره‌ی <span class="ltr">Balk</span> با شرط $(Q+B\ge K)$ و تغییر حالت $\{\text{Lost}{+}{+}\}$. یال خودزمان‌بند $t_A$ روی <span class="ltr">Arrival</span> می‌ماند و یال شرطی $(B&lt;\text{MaxB})$ از <span class="ltr">Enter</span> به <span class="ltr">Start service</span> می‌رود. نکته: چون هر دو یال تأخیر صفر دارند و شرط‌هایشان مانعةالجمع است، دقیقاً یکی زمان‌بندی می‌شود.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">🟡 تمرین</span></div>
+در مثال ۸.۲ (جدول ده مشتری)، بدون اجرای دوباره‌ی کل جدول بگو اگر زمان خدمت مشتری ۳ در مرحله‌ی اول به‌جای ۱، برابر ۳ بود، پایان مرحله‌ی اولِ مشتری ۴ چه می‌شد؟
+<details><summary>راه‌حل</summary>
+مشتری ۳ در لحظه‌ی ۶ شروع می‌کرد و در $6+3=9$ تمام می‌شد (به‌جای ۷). مشتری ۴ در لحظه‌ی ۹ می‌رسد و سرور ۱ دقیقاً در ۹ آزاد می‌شود؛ طبق قرارداد «اول خروج، بعد ورود» سرور بیکار حساب می‌شود، پس $b_{1,4}=\max(9,9)=9$ و $e_{1,4}=9+2=11$ — <b>بدون تغییر</b>. یعنی دو واحد تأخیر در مرحله‌ی اول این‌جا کاملاً جذب شد، چون سرور ۱ بیکاری داشت. این همان خاصیتی است که باعث می‌شود اثر یک تغییر در صف‌های سبک زود میرا شود و در صف‌های سنگین تا آخر منتشر شود.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">🔴 تحلیلی</span></div>
+نشان بده در گراف صف بخش ۹ همواره $B\le \text{MaxB}$ باقی می‌ماند، به‌شرط آن‌که قاعده‌ی تساوی «<span class="ltr">Start</span> قبل از <span class="ltr">Arrival</span> و <span class="ltr">End</span>» رعایت شود. اگر رعایت نشود، یک دنباله‌ی رویداد بساز که آن را نقض کند.
+<details><summary>راه‌حل</summary>
+<b>درستی:</b> $B$ فقط در <span class="ltr">Start</span> زیاد می‌شود. هر <span class="ltr">Start</span> وقتی زمان‌بندی شده که $B&lt;\text{MaxB}$ بوده (یال از <span class="ltr">Arrival</span>) یا $B$ تازه یکی کم شده بوده (یال از <span class="ltr">End</span>). با قاعده‌ی تساوی، هیچ <span class="ltr">Start</span>ی در FEL معلق نمی‌ماند تا رویداد دیگری در همان ساعت شرط را از روی $B$ کهنه بسنجد: به‌محض زمان‌بندی، بلافاصله اجرا می‌شود. پس بین سنجش شرط و اعمال $B{+}{+}$ هیچ رویداد دیگری فاصله نمی‌اندازد و ناوردا حفظ می‌شود.<br>
+<b>نقض:</b> $\text{MaxB}=1$، $B=1$، $Q=1$ و در لحظه‌ی $t$ هم <span class="ltr">End</span> و هم <span class="ltr">Arrival</span> در FEL. اگر ترتیب <span class="ltr">End → Arrival → Start → Start</span> باشد: <span class="ltr">End</span> می‌دهد $B=0$ و یک <span class="ltr">Start</span> می‌کارد؛ <span class="ltr">Arrival</span> می‌بیند $B=0&lt;1$ و <span class="ltr">Start</span> دوم را می‌کارد؛ دو <span class="ltr">Start</span> اجرا می‌شوند و $B=2&gt;\text{MaxB}$.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">🔴 تحلیلی</span></div>
+یال لغوکننده‌ای از <span class="ltr">Start service</span> به <span class="ltr">Renege</span> داریم (بی‌تابی مشتری). فرض کن شکیبایی هر مشتری <b>متفاوت</b> و تصادفی است. چرا قاعده‌ی «اولین وقوع بعدی را حذف کن» غلط می‌شود؟ مثال عددی بده و راه درست را بنویس.
+<details><summary>راه‌حل</summary>
+با شکیبایی‌های متفاوت، ترتیب مهلت‌ها لزوماً ترتیب ورود نیست. مثال: مشتری A در $t=0$ با شکیبایی ۱۰ (مهلت ۱۰) و مشتری B در $t=2$ با شکیبایی ۳ (مهلت ۵). صف FIFO است، پس وقتی سرور در $t=4$ آزاد می‌شود، <b>A</b> وارد خدمت می‌شود، ولی نزدیک‌ترین <span class="ltr">Renege</span> در FEL مال <b>B</b> است (۵ در برابر ۱۰). قاعده‌ی ساده، مهلت B را حذف می‌کند و B دیگر هرگز نمی‌رود، در حالی که مهلت A در ۱۰ باقی می‌ماند و بعداً مشتری‌ای را که دارد خدمت می‌گیرد «بی‌تاب» می‌کند. راه درست: یال لغوکننده ویژگی ببرد (شناسه‌ی مشتری) و موتور اعلانی را حذف کند که ویژگی‌اش بخورد — یعنی <code>cancel("Renege", id)</code> به‌جای <code>cancel("Renege")</code>. راه جایگزین: <span class="ltr">Renege</span> را لغو نکن و در ابتدای روالش بررسی کن که آیا آن مشتری هنوز در صف است یا نه (الگوی رویداد کهنه).</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l3">🔴 تحلیلی</span></div>
+در بخش ۷ دیدی که اجرای ۴۷ هزار مشتری، $S=13.23$ داد در برابر نظریه‌ی ۱۳٫۴۲، و میانگین ۱۲ تکرار ۱۳٫۳۴ با انحراف معیار بین‌اجرایی ۰٫۳۲ شد. (الف) بازه‌ی اطمینان ۹۵٪ را بساز. (ب) چند تکرار لازم است تا نیم‌پهنا به ۰٫۱ برسد؟
+<details><summary>راه‌حل</summary>
+(الف) $t_{0.975,11}=2.201$، پس نیم‌پهنا $=2.201\times0.32/\sqrt{12}=0.203$ و بازه $[13.14,\,13.55]$ است. نظریه‌ی ۱۳٫۴۲ داخل بازه است، پس شواهدی بر خطای برنامه نداریم.<br>
+(ب) نیم‌پهنا با $1/\sqrt{R}$ کم می‌شود: $0.203\sqrt{12/R}\le0.1$ ⇒ $R\ge12(0.203/0.1)^2\approx49.5$، یعنی حدود ۵۰ تکرار (و با $t$ کمی کوچک‌تر در درجات آزادی بیشتر، کمی کمتر). نکته‌ی عملی: چهار برابر کردن تکرارها فقط نصف کردن پهناست؛ برای دقت بیشتر معمولاً کاهش واریانس (جلسه‌ی ۵) ارزان‌تر از افزایش $R$ است.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">🔵 پژوهشگر</span></div>
+گراف شبیه‌سازی را برای یک سیستم با <b>خرابی دستگاه</b> بکش: سرور در حال خدمت می‌تواند خراب شود؛ آن‌گاه «پایان خدمت» زمان‌بندی‌شده لغو می‌شود، تعمیر $t_R$ طول می‌کشد و بعد از تعمیر خدمتِ همان مشتری <b>از نو</b> شروع می‌شود. چه چیزی در این مدل ذاتاً نمی‌تواند با گراف بیان شود؟
+<details><summary>راه‌حل</summary>
+گره‌ها: <span class="ltr">Arrival</span>، <span class="ltr">Start</span>، <span class="ltr">End</span> مثل قبل، به‌علاوه‌ی <span class="ltr">Fail</span> با $\{B{-}{-},\ \text{up}=0\}$ و <span class="ltr">Repair</span> با $\{\text{up}=1\}$.
+یال‌ها: <span class="ltr">Start → Fail</span> با تأخیر $t_F$ (زمان تا خرابی) و شرط $(\text{up}{=}1)$؛ <span class="ltr">Fail ⇢ End</span> خط‌چین (لغو پایان خدمتِ معلق)؛ <span class="ltr">Fail → Repair</span> با تأخیر $t_R$؛ <span class="ltr">Repair → Start</span> بدون تأخیر با شرط «مشتری ناتمام هست». همچنین باید <span class="ltr">End → Fail</span> خط‌چین اضافه کنی تا وقتی خدمت سالم تمام شد، خرابیِ زمان‌بندی‌شده‌ی آن خدمت لغو شود.<br>
+<b>محدودیت:</b> «از نو شروع شدن خدمت» یعنی باید بدانیم چقدر از خدمت انجام شده بود یا نه — و اگر مدل «ادامه از همان‌جا» (<span class="ltr">preemptive-resume</span>) باشد، باید <b>زمان باقی‌مانده‌ی خدمت</b> را نگه داری. گراف شبیه‌سازی چنین حافظه‌ای برای موجودیت‌ها ندارد؛ تمرکزش روی رویدادهاست و مدل‌ساز باید از موجودیت‌ها انتزاع کند. همین ضعف را خودِ جزوه در جمع‌بندی ص ۷۷ می‌گوید: «تمرکز روی رویدادهاست و مدل‌ساز باید از موجودیت‌ها انتزاع کند». راه عملی: زمان باقی‌مانده را به‌عنوان ویژگی روی یال‌های <span class="ltr">Repair → Start</span> منتقل کن.</details></div>
+</section>
+
+<section id="quiz"><h2><span class="num">14</span> تست</h2><div class="quiz"></div></section>
+
+<!-- ===================================================== 15 -->
+<section id="summary">
+<h2 data-short="جمع‌بندی"><span class="num">15</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box note"><div class="bt">۶ چیزی که باید یادت بماند</div>
+<ol>
+<li>هر برنامه‌ی زمان‌بندی رویداد چهار بخش دارد: برنامه‌ی اصلی، مقداردهی اولیه، یک روال برای هر رویداد، و گزارش‌گیر. حلقه‌ی اصلی فقط سه کار می‌کند: کم‌ترین زمان را بردار، ساعت را روی آن بگذار، روال را صدا بزن.</li>
+<li>آماره‌های <b>زمانی</b> (بهره‌وری، میانگین طول صف) با مُهر زمانی رویداد قبلی ساخته می‌شوند: اول $\texttt{acc} \mathrel{+}= \texttt{مقدار}\times(\texttt{clock}-\texttt{lastEventTime})$، بعد به‌روزرسانی مُهر. جابه‌جایی این دو خط، آماره را صفر یا متورم می‌کند.</li>
+<li>چارچوب شیءگرا فقط یک چیز را عوض می‌کند و همان یک چیز همه‌چیز است: رویداد به‌جای «نوع»، <b>مقصد</b> دارد، و موتور به‌جای <code>if/else</code> روی نوع، <code>handleEvent</code> مقصد را صدا می‌زند.</li>
+<li>در گراف شبیه‌سازی، گره = رویداد (تغییر حالت) و یال = زمان‌بندی. هر یال می‌تواند شرط، تأخیر، ویژگی و حالت لغو داشته باشد. شرط در لحظه‌ی <b>زمان‌بندی</b> سنجیده می‌شود، نه اجرا.</li>
+<li>هر گرهی که فقط یال ورودی یا خودزمان‌بند دارد باید در ابتدا کاشته شود؛ قرارداد، رویداد <span class="ltr">Run</span> است که پارامترها، حالت اولیه و رویدادهای اولیه را می‌گذارد.</li>
+<li>یال‌های بدون تأخیر رویداد هم‌زمان می‌سازند. بدون قاعده‌ی تساوی صریح (<span class="ltr">Start</span> قبل از بقیه) مدل بی‌سروصدا خراب می‌شود و مثلاً $B$ از $\text{MaxB}$ می‌گذرد.</li>
+</ol>
+</div>
+<div class="box tip"><div class="bt">⏭ برای جلسه‌ی بعد</div>
+تا این‌جا هر جا «زمان بین‌ورود نمایی با میانگین ۴٫۵» گفتیم، فرض کردیم چنین توزیعی وجود دارد و می‌شود از آن نمونه گرفت. جلسه‌ی ۹ (فصل ۵) برمی‌گردد به مبانی: متغیر تصادفی، امید، واریانس، کوواریانس و قضیه‌ی حد مرکزی — همان ابزاری که بازه‌های اطمینان این صفحه را توجیه می‌کند. قبلش یک بار تعریف $E[X]$ و $\operatorname{Var}(X)$ را برای حالت گسسته و پیوسته مرور کن.
+</div>
+<div class="gloss">
+<div><b>event-scheduling program</b>: برنامه‌ی زمان‌بندی رویداد</div>
+<div><b>main program</b>: برنامه‌ی اصلی</div>
+<div><b>initialization routine</b>: روال مقداردهی اولیه</div>
+<div><b>event routine</b>: روال رویداد</div>
+<div><b>report generator</b>: گزارش‌گیر</div>
+<div><b>future event list (FEL)</b>: فهرست رویدادهای آینده</div>
+<div><b>imminent event</b>: رویداد قریب‌الوقوع</div>
+<div><b>event notice</b>: اعلان رویداد</div>
+<div><b>system state</b>: حالت سیستم</div>
+<div><b>entity attribute</b>: ویژگی موجودیت</div>
+<div><b>activity duration</b>: مدت فعالیت</div>
+<div><b>cumulative statistics</b>: آماره‌های تجمعی</div>
+<div><b>response time / time in system</b>: زمان پاسخ / زمان در سیستم</div>
+<div><b>utilization</b>: بهره‌وری</div>
+<div><b>initialization bias</b>: اریبی شروع</div>
+<div><b>object-oriented framework</b>: چارچوب شیءگرا</div>
+<div><b>dispatching</b>: توزیع رویداد به مقصد</div>
+<div><b>abstract class</b>: کلاس انتزاعی</div>
+<div><b>simulation graph / event graph</b>: گراف شبیه‌سازی / گراف رویداد</div>
+<div><b>node</b>: گره (رویداد)</div>
+<div><b>edge</b>: یال (زمان‌بندی)</div>
+<div><b>boolean condition</b>: شرط بولی روی یال</div>
+<div><b>time delay</b>: تأخیر زمانی روی یال</div>
+<div><b>self-scheduling edge</b>: یال خودزمان‌بند</div>
+<div><b>unconditional edge</b>: یال بی‌قیدوشرط</div>
+<div><b>passing attributes on edges</b>: انتقال ویژگی روی یال</div>
+<div><b>canceling edge</b>: یال لغوکننده</div>
+<div><b>series of queues / tandem queues</b>: صف‌های متوالی</div>
+<div><b>balking</b>: برگشتن بدون ورود به صف</div>
+<div><b>reneging</b>: بی‌تابی و ترک صف</div>
+<div><b>bottleneck</b>: گلوگاه</div>
+<div><b>tie-breaking rule</b>: قاعده‌ی شکستن تساوی</div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+{q:R`در یک گراف شبیه‌سازی، یک <b>گره</b> چه چیزی را نشان می‌دهد؟`,
+ o:[`یک رویداد، یعنی یک تغییر لحظه‌ای در حالت سیستم`,`یک موجودیت، مثلاً یک مشتری`,`یک فعالیت با مدت مشخص`,`یک متغیر حالت`],a:0,
+ e:R`گره = رویداد. تغییر حالتی که آن رویداد ایجاد می‌کند داخل آکولاد زیر گره نوشته می‌شود، مثلاً {Q++}. یال‌ها زمان‌بندی‌اند، نه جریان موجودیت.`},
+{q:R`یالی از A به B که هیچ برچسبی در پرانتز بالایش ندارد یعنی:`,
+ o:[`هر بار که A رخ دهد، B حتماً زمان‌بندی می‌شود`,`B هرگز زمان‌بندی نمی‌شود`,`B با احتمال ۵۰٪ زمان‌بندی می‌شود`,`شرط باید از روی تغییر حالت زیر A حدس زده شود`],a:0,
+ e:R`نبودن شرط یعنی یال بی‌قیدوشرط است. همین‌طور نبودن عدد زیر یال یعنی تأخیر صفر.`},
+{q:R`شرط روی یال $A \xrightarrow{(i)} B$ در چه لحظه‌ای سنجیده می‌شود؟`,
+ o:[`در لحظه‌ی رخ دادن A، یعنی وقتی B زمان‌بندی می‌شود`,`در لحظه‌ی اجرای B`,`در هر دو لحظه، و اگر یکی نقض شود B لغو می‌شود`,`در پایان شبیه‌سازی`],a:0,
+ e:R`شرط فقط در لحظه‌ی زمان‌بندی سنجیده می‌شود. اگر حالت بین زمان‌بندی و اجرا عوض شود، B باز هم اجرا می‌شود — برای برداشتن B از فهرست به یال لغوکننده نیاز داری.`},
+{q:R`کدام رویدادها باید در ابتدای اجرا دستی در FEL گذاشته شوند؟`,
+ o:[`آن‌هایی که هیچ یال ورودی از گره‌های دیگر ندارند (فقط یال خودزمان‌بند یا هیچ)`,`همه‌ی گره‌های گراف`,`فقط گره‌هایی که تأخیر تصادفی دارند`,`فقط گره‌هایی که تغییر حالت دارند`],a:0,
+ e:R`گرهی که هیچ گره‌ی دیگری زمان‌بندی‌اش نمی‌کند هرگز رخ نمی‌دهد مگر این‌که کاشته شود. قرارداد جزوه: یک رویداد ویژه‌ی Run که پارامترها، حالت اولیه و رویدادهای اولیه را می‌گذارد.`},
+{q:R`با $\text{MaxB}=1$، در لحظه‌ی $t$ هم یک End و هم یک Arrival در FEL است و $Q=1$. اگر Startِ تولیدشده از End بعد از Arrival اجرا شود چه می‌شود؟`,
+ o:[`Arrival شرط $B&lt;\text{MaxB}$ را با $B$ کهنه می‌سنجد و یک شروع خدمت اضافی می‌سازد؛ $B$ به ۲ می‌رسد`,`هیچ فرقی نمی‌کند، چون زمان‌ها برابرند`,`شبیه‌سازی با خطا متوقف می‌شود`,`مشتری دوم از دست می‌رود`],a:0,
+ e:R`یال‌های بدون تأخیر رویداد هم‌زمان می‌سازند و باید بالاترین اولویت را داشته باشند. ترتیب درست: Start قبل از End و Arrival. وگرنه مدل بی‌سروصدا خراب می‌شود.`},
+{q:R`یال لغوکننده (خط‌چین) از A به B رخ می‌دهد ولی هیچ اعلانی برای B در FEL نیست. چه می‌شود؟`,
+ o:[`هیچ اتفاقی نمی‌افتد`,`یک B تازه زمان‌بندی می‌شود`,`شبیه‌سازی خطا می‌دهد`,`نزدیک‌ترین رویداد دیگر حذف می‌شود`],a:0,
+ e:R`تعریف جزوه صریح است: اگر اعلانی برای B در فهرست نباشد، هیچ اتفاقی نمی‌افتد. یال لغوکننده بی‌صدا رد می‌شود.`},
+{q:R`در <span class="ltr">processArrival</span> جاوا، چرا <span class="ltr">totalBusy</span> فقط در شاخه‌ی <span class="ltr">else</span> (سرور مشغول) جمع می‌شود؟`,
+ o:[`چون فقط در آن حالت سرور در بازه‌ی بین دو رویداد مشغول بوده است`,`چون در حالت دیگر زمان خدمت هنوز تولید نشده`,`برای صرفه‌جویی در محاسبات`,`چون در حالت دیگر صف خالی است`],a:0,
+ e:R`$\int_0^T B(t)dt$ به بازه‌های بین رویدادها شکسته می‌شود و فقط بازه‌هایی شمرده می‌شوند که $B=1$ بوده. اگر سرور بیکار بوده، صفر اضافه می‌شود.`},
+{q:R`<span class="ltr">maxQueueLength</span> در برنامه‌ی جاوا دقیقاً چه چیزی را می‌سنجد؟`,
+ o:[`بیشینه‌ی طول خط انتظار، بدون مشتری‌ای که در حال خدمت است`,`بیشینه‌ی تعداد مشتری در سیستم`,`بیشینه‌ی طول FEL`,`تعداد کل مشتری‌هایی که منتظر مانده‌اند`],a:0,
+ e:R`هر ورود queueLength را یکی زیاد می‌کند، ولی اگر سرور بیکار باشد scheduleDeparture بلافاصله یکی کم می‌کند؛ بیشینه بعد از این اصلاح گرفته می‌شود. پس «در سیستم» نیست، «در صف» است.`},
+{q:R`در چارچوب شیءگرا، موتور (<span class="ltr">SimControl</span>) از کجا می‌فهمد برای هر رویداد کدام کد را اجرا کند؟`,
+ o:[`از فیلد مقصد خود رویداد؛ <span class="ltr">handleEvent</span> آن موجودیت را صدا می‌زند`,`از یک <span class="ltr">switch</span> روی نوع رویداد`,`از ترتیب ثبت موجودیت‌ها`,`از نوع توزیع تصادفی رویداد`],a:0,
+ e:R`هر SimEvent یک مقصد از نوع SimEntity دارد. موتور فقط dispatch می‌کند و هیچ شناختی از منطق مدل ندارد؛ همین، افزودن مدل تازه را بدون دست زدن به موتور ممکن می‌کند.`},
+{q:R`اسلاید، احتمال خالی بودن سیستم را با <span class="ltr">servicedCustomer / time</span> حساب می‌کند. ایراد اصلی چیست؟`,
+ o:[`این یک نرخ است (مشتری بر واحد زمان)، نه احتمال؛ احتمال خالی بودن کسری از زمان است`,`باید بر تعداد ورودها تقسیم می‌شد تا درست شود`,`باید از لگاریتم استفاده می‌کرد`,`هیچ ایرادی ندارد`],a:0,
+ e:R`تعداد تقسیم بر زمان = توان عملیاتی، که در حالت پایدار برابر $\lambda$ است. $p_0=1-\rho$ کسر زمانی بیکاری سرور است. با پارامترهای همان اسلاید این دو عدد تصادفاً نزدیک می‌شوند و خطا پنهان می‌ماند.`},
+{q:R`<span class="ltr">مرور جلسه‌ی ۶</span> — تفاوت «فعالیت» با «تأخیر مشروط» در چیست؟`,
+ o:[`مدت فعالیت در لحظه‌ی شروعش معلوم است، ولی پایان تأخیر مشروط به رخ دادن رویداد دیگری بستگی دارد`,`فعالیت همیشه تصادفی است و تأخیر همیشه ثابت`,`فعالیت فقط برای سرور است و تأخیر فقط برای مشتری`,`هیچ تفاوتی ندارند؛ دو نام برای یک چیزند`],a:0,
+ e:R`چون مدت فعالیت در لحظه‌ی شروع معلوم است، می‌شود پایانش را همان‌جا در FEL زمان‌بندی کرد. انتظار در صف تأخیر مشروط است و پایانش را نمی‌شود از پیش زمان‌بندی کرد — دقیقاً چیزی که تمرین ۳ سؤال ۱ می‌پرسد.`},
+{q:R`<span class="ltr">مرور جلسه‌ی ۷</span> — در الگوریتم زمان‌بندی رویداد، ساعت شبیه‌سازی چطور جلو می‌رود؟`,
+ o:[`به زمان قریب‌الوقوع‌ترین رویداد فهرست می‌پرد`,`در هر تکرار یک واحد جلو می‌رود`,`با گام ثابتی که کاربر تعیین می‌کند`,`به میانگین زمان رویدادهای فهرست`],a:0,
+ e:R`پیشروی زمان بر اساس رویداد بعدی است، نه گام ثابت. بین دو رویداد هیچ تغییری در حالت رخ نمی‌دهد، پس لازم نیست زمان را واحدواحد طی کنیم.`},
+{q:R`<span class="ltr">مرور جلسه‌ی ۴ و ۵</span> — بهره‌وری یک سرور در یک اجرا چطور حساب می‌شود؟`,
+ o:[`جمع زمان‌های خدمت آن سرور تقسیم بر افق شبیه‌سازی`,`تعداد مشتری‌های آن سرور تقسیم بر کل مشتری‌ها`,`میانگین زمان خدمت تقسیم بر میانگین بین‌ورود`,`جمع انتظارها تقسیم بر افق`],a:0,
+ e:R`بهره‌وری کسری از زمان است که سرور مشغول بوده. گزینه‌ی سوم شدت بار نظری ($\rho$) است، نه اندازه‌گیری یک اجرا؛ و در دو صف متوالی باید مخرج هر دو سرور یکی باشد.`},
+{q:R`در مدل دو صف متوالی، ورودهای صف دوم چطور تولید می‌شوند؟`,
+ o:[`از رویداد «پایان خدمت ۱»، بدون شرط و بدون تأخیر`,`با یک توزیع بین‌ورود تازه، مستقل از صف اول`,`با همان توزیع بین‌ورود صف اول ولی بذر دیگر`,`با میانگین‌گیری از خروجی‌های صف اول`],a:0,
+ e:R`پایان خدمت مرحله‌ی اول و ورود به صف دوم یک لحظه‌اند. تولید بین‌ورود تازه برای صف دوم، همبستگی ذاتی دو مرحله را از بین می‌برد و جواب را غلط می‌کند.`}
+];
+
+window.PAGE_INIT=function(ML){
+  const fa=ML.fa;
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function chk(label,val,on){const l=ML.h("label",{class:"chk"});const i=ML.h("input",{type:"checkbox"});i.checked=val;i.onchange=()=>on(i.checked);l.append(i,label);return l;}
+
+  /* ---------------- the event-graph runner ---------------- */
+  (function(){
+    const el=document.getElementById("w-egraph");
+    if(!el) return;
+    ML.shell(el,"🔧 اجراکننده‌ی گراف رویداد",
+      "همان گراف صف تک‌سروره‌ی بخش ۹، زنده. با «گام» رویداد قریب‌الوقوع از FEL برداشته می‌شود: گره‌اش نارنجی می‌شود، یال‌هایی که شرطشان برقرار است سبز و یال‌های بسته خاکستری. بین‌ورود از {۱،۲،۳،۴} با احتمال برابر و زمان خدمت از {۱،۲،۳} با احتمال‌های ۰٫۳، ۰٫۴ و ۰٫۳ تولید می‌شود.");
+
+    const SVG=`<svg viewBox="0 0 660 300" width="660" direction="ltr" role="img" aria-label="interactive event graph of a single queue" class="eg"><g id="wn-ARRIVAL" class="eg-ng"><ellipse class="eg-n" cx="95" cy="78" rx="40" ry="27"/><text class="eg-nt" x="95" y="82" text-anchor="middle">Arrival</text></g><text class="eg-st" x="44" y="122" text-anchor="middle">{Q++}</text><g id="wn-START" class="eg-ng"><ellipse class="eg-n" cx="335" cy="78" rx="40" ry="27"/><text class="eg-nt" x="335" y="75" text-anchor="middle">Start</text><text class="eg-nt" x="335" y="89" text-anchor="middle">service</text></g><text class="eg-st" x="335" y="122" text-anchor="middle">{Q--, B++}</text><g id="wn-END" class="eg-ng"><ellipse class="eg-n" cx="570" cy="78" rx="40" ry="27"/><text class="eg-nt" x="570" y="75" text-anchor="middle">End</text><text class="eg-nt" x="570" y="89" text-anchor="middle">service</text></g><text class="eg-st" x="570" y="122" text-anchor="middle">{B--}</text><g id="wn-RUN" class="eg-ng"><ellipse class="eg-n" cx="95" cy="212" rx="40" ry="27"/><text class="eg-nt" x="95" y="216" text-anchor="middle">Run</text></g><text class="eg-st" x="95" y="256" text-anchor="middle">{Q=0, B=0}</text><g id="wg-ren"><g id="wn-RENEGE" class="eg-ng"><ellipse class="eg-n" cx="345" cy="232" rx="40" ry="27"/><text class="eg-nt" x="345" y="236" text-anchor="middle">Renege</text></g><text class="eg-st" x="408" y="276" text-anchor="middle">{Q--}</text><path id="we-ARRIVAL-RENEGE" class="eg-e" d="M 122 104 Q 223.23621597908607 143.5503296349833 306 214" marker-end="url(#eg-ar)"/><text class="eg-d" x="168" y="192" text-anchor="start">t&#7465;</text><path id="we-START-RENEGE" class="eg-e eg-cancel" d="M 335 107 Q 335.0 155.0 335 203" marker-end="url(#eg-arx)"/><text class="eg-x" x="327" y="160" text-anchor="end">cancel</text></g><path id="we-RUN-ARRIVAL" class="eg-e" d="M 95 185 Q 95.0 146.0 95 107" marker-end="url(#eg-ar)"/><text class="eg-d" x="87" y="150" text-anchor="end">t&#8338;</text><path id="we-ARRIVAL-ARRIVAL" class="eg-e" d="M 109 55 C 135 11 69 11 89 53" marker-end="url(#eg-ar)"/><text class="eg-d" x="141" y="44" text-anchor="start">t&#8338;</text><path id="we-ARRIVAL-START" class="eg-e" d="M 135 78 Q 215.0 78.0 295 78" marker-end="url(#eg-ar)"/><text class="eg-c" x="215" y="58" text-anchor="middle">(B&lt;MaxB)</text><path class="eg-sq" d="M 210 68 q 7 3 1 7 q -6 4 1 7"/><path id="we-START-END" class="eg-e" d="M 372 55 Q 452.5 77.0 533 55" marker-end="url(#eg-ar)"/><text class="eg-d" x="452" y="20" text-anchor="middle">t&#8347;</text><path id="we-END-START" class="eg-e" d="M 533 101 Q 452.5 79.0 372 101" marker-end="url(#eg-ar)"/><text class="eg-c" x="452" y="144" text-anchor="middle">(Q&gt;0)</text><path class="eg-sq" d="M 447 119 q 7 3 1 7 q -6 4 1 7"/></svg>`;
+    const PRIO={RUN:0,START:1,END:2,RENEGE:3,ARRIVAL:4};
+    const NAME={RUN:"Run",ARRIVAL:"Arrival",START:"Start service",END:"End service",RENEGE:"Renege"};
+    const S={MaxB:1,pat:6,renege:false,seed:7};
+    let rng,st,fel,log,cur,fired,blocked,timer=null;
+
+    const holder=ML.h("div"); holder.innerHTML=SVG;
+    const root=holder.querySelector("svg");
+    const ctr=ML.h("div",{class:"controls"});
+    const cols=ML.h("div",{class:"egcols"});
+    const felBox=ML.h("div",{class:"tablewrap"});
+    const side=ML.h("div");
+    const ro=ML.h("div",{class:"readout"});
+    const logBox=ML.h("div",{class:"tablewrap"});
+    const lg=ML.h("div",{class:"legend"});
+    side.append(ro,logBox);
+    cols.append(felBox,side);
+    el.append(holder,ctr,lg,cols);
+
+    function tA(){return 1+Math.floor(rng()*4);}
+    function tS(){const u=rng();return u<0.3?1:(u<0.7?2:3);}
+    function sortFel(){fel.sort((a,b)=>a.t-b.t||PRIO[a.n]-PRIO[b.n]||a.s-b.s);}
+    function push(n,t){fel.push({n:n,t:t,s:++st.seq});}
+    function cancelFirst(n){sortFel();const i=fel.findIndex(e=>e.n===n);if(i<0)return null;return fel.splice(i,1)[0];}
+    function mark(id,ok){(ok?fired:blocked).push(id);}
+
+    function reset(){
+      if(timer){clearInterval(timer);timer=null;play.textContent="▶ پخش";}
+      rng=mulberry32(S.seed*7919+11);
+      st={clock:0,Q:0,B:0,arrived:0,served:0,reneged:0,seq:0};
+      fel=[];log=[];cur=null;fired=[];blocked=[];
+      push("RUN",0);
+      render();
+    }
+    function step(){
+      sortFel();
+      if(!fel.length) return;
+      const e=fel.shift();
+      st.clock=e.t; cur=e; fired=[]; blocked=[];
+      let note="";
+      if(e.n==="RUN"){ st.Q=0; st.B=0; mark("we-RUN-ARRIVAL",true); push("ARRIVAL",st.clock+tA()); }
+      else if(e.n==="ARRIVAL"){
+        st.Q++; st.arrived++;
+        mark("we-ARRIVAL-ARRIVAL",true); push("ARRIVAL",st.clock+tA());
+        const ok=st.B<S.MaxB; mark("we-ARRIVAL-START",ok);
+        if(ok) push("START",st.clock); else note="همه‌ی سرورها مشغول‌اند؛ مشتری در صف ماند";
+        if(S.renege){ mark("we-ARRIVAL-RENEGE",true); push("RENEGE",st.clock+S.pat); }
+      }
+      else if(e.n==="START"){
+        st.Q--; st.B++;
+        mark("we-START-END",true); push("END",st.clock+tS());
+        if(S.renege){ const c=cancelFirst("RENEGE"); mark("we-START-RENEGE",!!c);
+          note=c?(ML.L("Renege @ "+fa(c.t))+" از فهرست حذف شد"):"چیزی برای لغو نبود"; }
+      }
+      else if(e.n==="END"){
+        st.B--; st.served++;
+        const ok=st.Q>0; mark("we-END-START",ok);
+        if(ok) push("START",st.clock); else note="صف خالی است؛ سرور بیکار شد";
+      }
+      else if(e.n==="RENEGE"){ st.Q--; st.reneged++; note="مشتری بی‌تاب صف را ترک کرد"; }
+      log.unshift({t:e.t,n:e.n,Q:st.Q,B:st.B,note:note});
+      if(log.length>8) log.pop();
+      render();
+    }
+    function render(){
+      root.querySelectorAll(".eg-ng").forEach(g=>g.classList.remove("on"));
+      root.querySelectorAll("path").forEach(p=>p.classList.remove("fire","block"));
+      const rg=root.querySelector("#wg-ren"); if(rg) rg.classList.toggle("off",!S.renege);
+      if(cur){const n=root.querySelector("#wn-"+cur.n); if(n) n.classList.add("on");}
+      fired.forEach(id=>{const p=root.querySelector("#"+id); if(p) p.classList.add("fire");});
+      blocked.forEach(id=>{const p=root.querySelector("#"+id); if(p) p.classList.add("block");});
+
+      sortFel();
+      let h='<table class="egtab"><tr><th>#</th><th>زمان</th><th>رویداد</th></tr>';
+      if(!fel.length) h+='<tr><td colspan="3">فهرست خالی است</td></tr>';
+      fel.slice(0,8).forEach((e,i)=>{h+=`<tr class="${i===0?"now":""}"><td>${fa(i+1)}</td><td>${fa(e.t)}</td><td>${NAME[e.n]}</td></tr>`;});
+      if(fel.length>8) h+=`<tr><td colspan="3">…و ${fa(fel.length-8)} تای دیگر</td></tr>`;
+      felBox.innerHTML=h+"</table>";
+
+      ro.textContent=
+        `ساعت: ${ML.L(fa(st.clock))}   ·   طول صف ${ML.L("Q = "+fa(st.Q))}   ·   سرور مشغول ${ML.L("B = "+fa(st.B)+"/"+fa(S.MaxB))}\n`+
+        `واردشده: ${fa(st.arrived)} · خدمت‌گرفته: ${fa(st.served)}`+(S.renege?` · بی‌تاب‌رفته: ${fa(st.reneged)}`:"")+"\n"+
+        (cur?`رویداد جاری: ${ML.L(NAME[cur.n])} در زمان ${ML.L(fa(cur.t))}`:`هنوز گامی نزده‌ای؛ فقط ${ML.L("Run")} در فهرست است.`);
+
+      let lh='<table class="egtab"><tr><th>زمان</th><th>رویداد</th><th>Q|B</th><th>توضیح</th></tr>';
+      if(!log.length) lh+='<tr><td colspan="4">—</td></tr>';
+      log.forEach((r,i)=>{lh+=`<tr class="${i===0?"now":""}"><td>${fa(r.t)}</td><td>${NAME[r.n]}</td><td>${ML.L(fa(r.Q)+" | "+fa(r.B))}</td><td class="note">${r.note||""}</td></tr>`;});
+      logBox.innerHTML=lh+"</table>";
+    }
+
+    ctr.append(
+      ML.slider("MaxB (تعداد سرور)",1,3,1,S.MaxB,v=>{S.MaxB=v;reset();},v=>fa(v)),
+      ML.slider("شکیبایی مشتری (مهلت صبر)",1,15,1,S.pat,v=>{S.pat=v;reset();},v=>fa(v)),
+      chk("بی‌تابی مشتری (یال لغوکننده)",S.renege,v=>{S.renege=v;reset();})
+    );
+    const bStep=ML.h("button",{class:"btn",type:"button"},"گام ←");
+    bStep.onclick=()=>step();
+    const b5=ML.h("button",{class:"btn ghost",type:"button"},"۵ گام");
+    b5.onclick=()=>{for(let i=0;i<5;i++) step();};
+    const play=ML.h("button",{class:"btn ghost",type:"button"},"▶ پخش");
+    play.onclick=()=>{
+      if(timer){clearInterval(timer);timer=null;play.textContent="▶ پخش";}
+      else{play.textContent="⏸ توقف";timer=setInterval(()=>{if(st.served>40){clearInterval(timer);timer=null;play.textContent="▶ پخش";return;}step();},800);}
+    };
+    const bReset=ML.h("button",{class:"btn ghost",type:"button"},"↺ از نو");
+    bReset.onclick=()=>reset();
+    const bSeed=ML.h("button",{class:"btn ghost",type:"button"},"🎲 بذر تازه");
+    bSeed.onclick=()=>{S.seed=(S.seed*7919+37)%100000;reset();};
+    ctr.append(bStep,b5,play,bReset,bSeed);
+    lg.innerHTML='<span><i style="background:var(--event)"></i>گره‌ی در حال اجرا</span>'+
+      '<span><i style="background:var(--good)"></i>یال برقرار (زمان‌بندی شد)</span>'+
+      '<span><i style="background:var(--line-2)"></i>یال بسته (شرط برقرار نبود)</span>'+
+      '<span><i style="background:var(--bad)"></i>یال لغوکننده</span>';
+    reset();
+  })();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۶ · مفاهیم شبیه‌سازی گسسته‌پیشامد: حالت، رویداد، فعالیت و تأخیر</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.g-t{fill:currentColor;font:700 13px Vazirmatn,Tahoma,sans-serif}
+.g-l{fill:currentColor;font:700 12px Vazirmatn,Tahoma,sans-serif}
+.g-s{fill:currentColor;opacity:.72;font:11px Vazirmatn,Tahoma,sans-serif}
+.g-in{fill:#fff;font:700 11px Vazirmatn,Tahoma,sans-serif}
+.g-ax{stroke:currentColor;stroke-opacity:.45;stroke-width:1.4;fill:none}
+.g-axh{fill:currentColor;opacity:.45}
+.g-grid{stroke:currentColor;stroke-opacity:.18;stroke-width:1}
+.g-tick{stroke:currentColor;stroke-opacity:.16;stroke-width:1;stroke-dasharray:3 4}
+.g-arr{stroke:var(--plot-c1);stroke-width:2.6}
+.g-dep{stroke:var(--plot-c2);stroke-width:2.6}
+.g-ta{fill:var(--plot-c1)}
+.g-td{fill:var(--plot-c2)}
+.g-jump{fill:none;stroke:var(--plot-c4);stroke-width:1.8}
+.g-jumph{fill:var(--plot-c4)}
+.g-idle{fill:var(--plot-c3);opacity:.22}
+.g-step{fill:none;stroke:var(--plot-c1);stroke-width:2.2;stroke-linejoin:round}
+.g-fill{fill:var(--plot-c1);opacity:.13}
+.g-svc{fill:var(--plot-c1)}
+.g-brA{fill:none;stroke:var(--plot-c3);stroke-width:1.8}
+.g-brD{fill:none;stroke:var(--plot-c2);stroke-width:1.8}
+.g-wait2{stroke:var(--plot-c2);stroke-width:3.4;stroke-dasharray:4 3}
+:root[data-theme="dark"] .g-in{fill:#10161f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .g-in{fill:#10161f}}
+table.snap td,table.snap th{text-align:center;white-space:nowrap}
+table.snap td.fel{font-family:var(--mono);font-size:.84em;direction:ltr;unicode-bidi:isolate;text-align:left;white-space:nowrap}
+table.snap td.qs{font-family:var(--mono);direction:ltr;unicode-bidi:isolate}
+table.snap tr.idle td{background:var(--accent-soft)}
+table.snap td.st{font-family:var(--mono);font-weight:700}
+.evlist.w4>div{grid-template-columns:44px 46px minmax(0,1fr) 94px}
+@media (max-width:420px){.evlist.w4>div{grid-template-columns:38px 40px minmax(0,1fr) 78px;padding:3px 6px}}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px;margin:10px 0}
+.kv>div{background:var(--code);border-radius:10px;padding:6px 12px;min-width:0}
+.kv .l{font-size:.74em;color:var(--ink-3)}
+.kv .v{font-family:var(--mono);font-weight:700;direction:ltr;text-align:right;font-size:1.05em}
+.widget .feltab{font-family:var(--mono);font-size:.86em;overflow-x:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:10px;direction:ltr;min-height:96px}
+.widget .feltab .row{display:flex;gap:10px;padding:2px 6px;border-radius:6px}
+.widget .feltab .row.im{background:var(--event-soft);font-weight:700}
+.widget .feltab .cap{font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;color:var(--ink-3);font-size:.9em;margin-bottom:4px}
+.widget .feltab .ty{min-width:7.5em}
+#w-fel canvas{aspect-ratio:16/6}
+@media (max-width:640px){#w-fel canvas{aspect-ratio:4/3}}
+</style>
+</head>
+<body data-session="6">
+<main>
+<section class="hero">
+  <div class="kicker">جلسه‌ی ۶ از ۲۰ · بخش ب</div>
+  <h1>مفاهیم شبیه‌سازی گسسته‌پیشامد: <span class="hl">حالت، رویداد، فعالیت و تأخیر</span></h1>
+  <p class="lead">تا جلسه‌ی ۵ همه‌چیز با جدول دستی جلو رفت. از این‌جا به بعد همان کار را یک <b>الگوریتم</b> انجام می‌دهد: یک ساعت، یک فهرست رویدادهای آینده و پنج قدم تکراری. تمام فصل ۳ یک جمله است — «ساعت را به زمان نزدیک‌ترین رویداد ببر، آن را اجرا کن، رویدادهای تازه‌اش را بساز».</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۲۰ دقیقه</span><span>📚 منبع: جزوه Ch.3 ص ۱ تا ۲۰ · Banks فصل ۳ بخش ۱</span><span class="hot">به کار تمرین ۲ سؤال ۱ و ۶ و تمرین ۳ سؤال ۱ می‌آید</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>یازده مفهوم پایه‌ی DES (حالت، موجودیت، ویژگی، مجموعه، رویداد، اعلان رویداد، FEL، فعالیت، تأخیر، ساعت، مدل) را روی یک سیستم مشخص نام‌گذاری کنی.</li>
+      <li>با یک معیار واحد تصمیم بگیری که یک بازه‌ی زمانی «فعالیت» است یا «تأخیر»، و از همان‌جا بگویی چه چیزی در FEL می‌رود و چه چیزی نه.</li>
+      <li>جدول snapshot یک صف تک‌سرور را سطربه‌سطر پر کنی: ساعت، حالت، FEL و شمارنده‌های آماری.</li>
+      <li>الگوریتم زمان‌بندی رویداد را در پنج قدم بنویسی و دستی اجرا کنی، و بگویی چرا ساعت بین دو رویداد هیچ کاری ندارد.</li>
+      <li>رویداد اولیه و ثانویه و برون‌زا و درون‌زا را از هم جدا کنی و زنجیره‌ی خودتولید (bootstrapping) ورودها را بنویسی.</li>
+      <li>پنج شرط پایان شبیه‌سازی را بشناسی و بدانی هرکدام چه اریبی‌ای در آماره‌ها می‌سازد.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+<p>۱. در جدول جلسه‌ی ۴، ستون «زمان پایان خدمت» را از روی ستون «شروع خدمت» می‌ساختی. اگر بخواهی همین کار را یک برنامه بکند، برنامه در هر لحظه باید چه چیزهایی را «به یاد داشته باشد» تا بتواند ادامه بدهد؟ کوتاه‌ترین فهرستی که به ذهنت می‌رسد را بنویس.</p>
+<p>۲. مشتری در لحظه‌ی ۳ وارد صف می‌شود. آیا همان لحظه می‌توانی بنویسی «انتظار او در لحظه‌ی ۷ تمام می‌شود»؟ در چه حالتی می‌توانی و در چه حالتی نه؟</p>
+<p>۳. فرض کن شبیه‌سازی ساعت را یک‌صدم ثانیه یک‌صدم ثانیه جلو ببرد به‌جای این‌که روی رویدادها بپرد. چه چیزی خراب می‌شود و چه چیزی درست می‌ماند؟</p>
+</div>
+
+<!-- ===================================================== 01 -->
+<section id="concepts">
+<h2 data-short="واژگان DES"><span class="num">01</span> یازده مفهوم پایه‌ی شبیه‌سازی گسسته‌پیشامد <span class="tag core">جزوه</span></h2>
+<p>جزوه (ص ۵ و ۶ فایل، اسلایدهای ۳٫۵ و ۳٫۶) یازده اصطلاح را در دو اسلاید فهرست می‌کند و رد می‌شود. این فهرست در واقع <b>نقشه‌ی حافظه‌ی یک برنامه‌ی شبیه‌سازی</b> است: هر مفهوم یک متغیر یا یک ساختمان داده است. اگر همین نقشه را درست بسازی، نوشتن برنامه‌اش بدیهی می‌شود؛ اگر نسازی، در تمرین‌ها جدول‌هایت به‌هم می‌ریزد.</p>
+
+<div class="box def"><div class="bt">تعریف ۶.۱ · شبیه‌سازی گسسته‌پیشامد</div>
+شبیه‌سازی سیستمی که <b>حالتش فقط در تعدادی لحظه‌ی گسسته</b> تغییر می‌کند. بین دو لحظه‌ی متوالیِ تغییر، حالت سیستم <b>دقیقاً ثابت</b> است. همین «ثابت بودن در فاصله‌ها» کل سودِ روش است: چون بین دو رویداد هیچ اتفاقی نمی‌افتد، ساعت را بی‌هیچ خطایی می‌شود از یکی به بعدی پراند.
+</div>
+
+<div class="tablewrap"><table>
+<tr><th>اصطلاح</th><th>تعریف جزوه (ص ۵–۶)</th><th>در صف تک‌سرورِ این جلسه</th><th>در برنامه</th></tr>
+<tr><td><b>سیستم</b> <span class="ltr">system</span></td><td>مجموعه‌ای از موجودیت‌ها که در طول زمان با هم تعامل می‌کنند تا به یک یا چند هدف برسند</td><td>باجه‌ی خدمت + مشتری‌ها</td><td>—</td></tr>
+<tr><td><b>مدل</b> <span class="ltr">model</span></td><td>نمایش انتزاعی سیستم، معمولاً شامل روابط ساختاری، منطقی یا ریاضی</td><td>«FIFO، یک سرور، بدون انصراف، ظرفیت نامحدود»</td><td>کل کد</td></tr>
+<tr><td><b>حالت سیستم</b> <span class="ltr">system state</span></td><td>مجموعه‌ی متغیرهایی که همه‌ی اطلاعات لازم برای توصیف سیستم در هر لحظه را دارند</td><td><span class="ltr">(LS, LQ)</span>: سرور مشغول است یا نه، و چند نفر در صف‌اند</td><td>چند متغیر ساده</td></tr>
+<tr><td><b>موجودیت</b> <span class="ltr">entity</span></td><td>شیئی در سیستم که در مدل نمایش صریح لازم دارد</td><td>مشتری (چون زمان ورودش را لازم داریم)</td><td>شیء یا tuple</td></tr>
+<tr><td><b>ویژگی</b> <span class="ltr">attribute</span></td><td>خاصیت یک موجودیت مشخص</td><td>زمان ورود مشتری، اولویتش، شماره‌اش</td><td>فیلدهای آن شیء</td></tr>
+<tr><td><b>فهرست / مجموعه</b> <span class="ltr">list, set</span></td><td>مجموعه‌ای از موجودیت‌های مرتبط، مرتب‌شده با یک قاعده‌ی منطقی؛ موجودیت‌ها <b>و</b> اعلان‌های رویداد را نگه می‌دارد</td><td>صف انتظار (FIFO) — یا مرتب بر حسب اولویت</td><td><span class="ltr">deque</span> یا <span class="ltr">heap</span></td></tr>
+<tr><td><b>رویداد</b> <span class="ltr">event</span></td><td>وقوعی آنی که حالت سیستم را عوض می‌کند</td><td>ورود، پایان خدمت</td><td>یک تابع</td></tr>
+<tr><td><b>اعلان رویداد</b> <span class="ltr">event notice</span></td><td>رکوردی از رویدادی که در زمان کنونی یا آینده رخ می‌دهد، همراه با داده‌های لازم برای اجرایش</td><td><span class="ltr">(نوع=پایان خدمت، زمان=۴، مشتری=۱)</span></td><td>یک tuple در FEL</td></tr>
+<tr><td><b>FEL</b> <span class="ltr">future event list / set</span></td><td>فهرست اعلان‌های رویدادهای آینده، <b>همیشه مرتب بر حسب زمان وقوع</b></td><td>معمولاً فقط ۲ تا ۳ اعلان</td><td>صف اولویت</td></tr>
+<tr><td><b>فعالیت</b> <span class="ltr">activity</span></td><td>بازه‌ای با مدت مشخص که <b>در لحظه‌ی شروعش معلوم است</b></td><td>زمان بین‌ورود، زمان خدمت</td><td>یک قرعه از توزیع</td></tr>
+<tr><td><b>تأخیر</b> <span class="ltr">delay</span></td><td>بازه‌ای با مدت نامشخص و نامعین که <b>تا تمام‌نشدنش معلوم نیست</b></td><td>انتظار مشتری در صف</td><td>اصلاً ذخیره نمی‌شود؛ محاسبه می‌شود</td></tr>
+<tr><td><b>ساعت</b> <span class="ltr">clock</span></td><td>متغیری که زمان شبیه‌سازی‌شده را نگه می‌دارد</td><td><span class="ltr">clock</span></td><td>یک عدد اعشاری</td></tr>
+</table></div>
+
+<h3>چرا «حالت» باید کوچک‌ترین مجموعه‌ی کافی باشد</h3>
+<p>آزمون عملیِ حالت این است: <b>اگر برنامه را در لحظه‌ی $t$ متوقف کنی، حافظه را پاک کنی و فقط حالت و FEL را برگردانی، آیا اجرا دقیقاً همان‌طور ادامه پیدا می‌کند؟</b> اگر بله، حالت کافی است. اگر برای ادامه به چیزی نیاز داری که ننوشته‌ای، آن چیز هم جزو حالت است.</p>
+<p>در صف تک‌سرور $\bigl(L_S(t),\,L_Q(t)\bigr)$ برای <b>ادامه‌ی اجرا</b> کافی است، ولی برای <b>گزارش میانگین انتظار</b> کافی نیست: باید زمان ورود هر مشتریِ منتظر را هم داشته باشی. این دو را قاطی نکن — اولی حالت است، دومی ویژگیِ موجودیت‌های داخل یک مجموعه.</p>
+<div class="cards">
+<div><b>حالت سیستم</b><span class="ltr">LS ∈ {0,1}</span> و <span class="ltr">LQ ∈ {0,1,2,…}</span>. همین برای تصمیم‌گیری در هر رویداد کافی است.</div>
+<div><b>مجموعه (صف)</b>فهرست مشتری‌های منتظر، هرکدام با ویژگی «زمان ورود». بدون آن نمی‌شود انتظار را حساب کرد.</div>
+<div><b>FEL</b>اعلان‌های آینده. بدون آن نمی‌دانی ساعت کجا باید برود.</div>
+<div><b>شمارنده‌های آماری</b>جمع انتظار، مساحت زیر $L_Q(t)$، زمان مشغولی. جزو حالت <b>نیستند</b> — خروجی‌اند.</div>
+</div>
+
+<div class="box warn"><div class="bt">⚠ اشتباه رایج</div>
+«حالت سیستم» را با «snapshot سیستم» یکی نگیر. حالت فقط متغیرهای وضعیت است؛ snapshot یک سطر کامل شامل ساعت + حالت + موجودیت‌ها و ویژگی‌هایشان + مجموعه‌ها + FEL + آماره‌هاست (بخش ۰۳).
+</div>
+
+<h3>مثال مرجع این جلسه</h3>
+<p>یک صف تک‌سرور FIFO، در آغاز خالی و سرور بیکار. پنج مشتری با این داده‌های قطعی (برای این‌که دست‌کم یک بار همه‌چیز را بدون تصادف ببینی):</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>مشتری</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+<tr><th>زمان ورود</th><td>0</td><td>2</td><td>3</td><td>10</td><td>11</td></tr>
+<tr><th>زمان خدمت</th><td>4</td><td>3</td><td>2</td><td>3</td><td>2</td></tr>
+</table></div>
+<p>تا پایان این جلسه همین پنج عدد را سه بار می‌بینی: یک بار به‌صورت جدول snapshot، یک بار به‌صورت خط‌زمانی و یک بار داخل کد پایتون. جواب‌ها را همین حالا بنویس تا بعد مقایسه کنی.</p>
+
+<div class="box hw"><div class="bt">🎯 راهنمای تمرین ۲، سؤال ۱ (طبقه‌بندی مدل‌ها)</div>
+<p>سؤال از تو می‌خواهد برای چهار مدل، ایستا/پویا و قطعی/تصادفی را تعیین کنی و برای پویاها <b>با نگاه به متغیر وضعیت</b> بگویی پیوسته‌اند یا گسسته‌پیشامد. روش، سه سؤالِ جدا و مستقل است — با هم قاطی‌شان نکن:</p>
+<ol class="steps">
+<li><b>ایستا یا پویا؟</b> بپرس «آیا زمان در مدل متغیر مستقل است؟ آیا مدل تحولِ سیستم را در طول زمان نشان می‌دهد؟» اگر خروجی فقط یک عدد است که از نمونه‌گیری درمی‌آید و هیچ «قبل و بعد»ی ندارد، ایستاست.</li>
+<li><b>قطعی یا تصادفی؟</b> بپرس «آیا هیچ ورودی‌ای متغیر تصادفی است؟» اگر همه‌ی ضرایب و شرایط اولیه معلوم و ثابت‌اند، قطعی است. دو اجرای قطعی همیشه یک جواب می‌دهند.</li>
+<li><b>فقط برای پویاها: پیوسته یا گسسته‌پیشامد؟</b> به <b>متغیر وضعیت</b> نگاه کن، نه به روش حل. اگر وضعیت بین رویدادها هم پیوسته تغییر می‌کند (دما، موقعیت، ولتاژ) مدل پیوسته است. اگر وضعیت در فاصله‌ها ثابت است و فقط در لحظه‌هایی می‌پرد (تعداد در صف، موجودی انبار) گسسته‌پیشامد است.</li>
+</ol>
+<p><b>مثال مشابه حل‌شده</b> (مدل‌ها عمداً با سؤال فرق دارند):</p>
+<div class="tablewrap"><table>
+<tr><th>مدل</th><th>ایستا/پویا</th><th>قطعی/تصادفی</th><th>پیوسته/گسسته‌پیشامد</th><th>دلیل</th></tr>
+<tr><td>برآورد $\pi$ با پرتاب $N$ نقطه‌ی تصادفی در مربع واحد و شمردن نقاط داخل ربع‌دایره</td><td>ایستا</td><td>تصادفی</td><td>—</td><td>زمان در مدل اصلاً نیست؛ شماره‌ی نقطه، زمان نیست. مونت‌کارلوی ایستا.</td></tr>
+<tr><td>پرتابه با $y(t)=y_0+v_0t-\tfrac12 gt^2$ و $y_0,v_0,g$ معلوم</td><td>پویا</td><td>قطعی</td><td>پیوسته</td><td>$y$ در هر لحظه تعریف شده و پیوسته تغییر می‌کند.</td></tr>
+<tr><td>انبار با تقاضای روزانه‌ی تصادفی و بازبینی هر $N$ روز (جلسه‌ی ۵)</td><td>پویا</td><td>تصادفی</td><td>گسسته‌پیشامد</td><td>موجودی بین دو تقاضا ثابت است و فقط در رویدادها می‌پرد.</td></tr>
+<tr><td>شارژ خازن $RC\dot v + v = V_0$ با $v(0)$ و ضرایب معلوم</td><td>پویا</td><td>قطعی</td><td>پیوسته</td><td>ولتاژ در هر لحظه مقدار دارد و پیوسته بالا می‌رود.</td></tr>
+</table></div>
+<p><b>دو تله‌ای که سؤال مستقیماً می‌پرسد:</b></p>
+<ul>
+<li><b>تصادفی بودن، پویا بودن نیست.</b> دو محور مستقل‌اند. ردیف اول بالا تصادفیِ ایستاست؛ ردیف دوم قطعیِ پویاست. معیار پویایی «نقش زمان» است، نه «حضور عدد تصادفی». در ردیف اول اگر $N$ را دو برابر کنی دقت بالا می‌رود، ولی هیچ «لحظه‌ی $t$»ی در مدل معنا ندارد.</li>
+<li><b>گسسته‌سازی عددی، گسسته‌پیشامد نمی‌سازد.</b> وقتی معادله‌ی دیفرانسیل را با گام $\Delta t$ حل می‌کنی، <b>روشِ حل</b> گسسته شده، نه <b>مدل</b>. اگر $\Delta t$ را نصف کنی جواب عوض (دقیق‌تر) می‌شود — نشانه‌ی این‌که وضعیت واقعاً بین گام‌ها هم تغییر می‌کرده است. در یک مدل گسسته‌پیشامد، ریزکردن گام هیچ چیزی را عوض نمی‌کند چون بین رویدادها واقعاً هیچ اتفاقی نمی‌افتد.</li>
+</ul>
+<p>برای هر چهار قسمت سؤال، یک جمله بنویس که <b>متغیر وضعیت</b> را اسم ببرد و بگوید در فاصله‌ی بین دو تغییر چه بر سرش می‌آید. همین جمله نمره‌ی اصلی را دارد.</p>
+</div>
+</section>
+
+<!-- ===================================================== 02 -->
+<section id="activity-delay">
+<h2 data-short="فعالیت و تأخیر"><span class="num">02</span> فعالیت در برابر تأخیر <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>این تمایز مهم‌ترین چیز کل فصل ۳ است، چون <b>مستقیماً تعیین می‌کند چه چیزی در FEL می‌رود</b>. جزوه (ص ۷ فایل، اسلاید ۳٫۷) آن را در دو خط می‌گوید؛ بیایید معیارش را صریح کنیم.</p>
+
+<div class="box def"><div class="bt">تعریف ۶.۲ · معیار یکتا</div>
+یک بازه‌ی زمانی که در لحظه‌ی $t_0$ شروع می‌شود، <b>فعالیت</b> است اگر و فقط اگر مدتش در همان لحظه‌ی $t_0$ <b>محاسبه‌پذیر</b> باشد — یعنی با یک قرعه از توزیع، یک عدد ثابت، یا تابعی از متغیرهای <b>فعلی</b> سیستم. اگر برای دانستن مدتش مجبوری منتظر رویدادهای بعدی بمانی، <b>تأخیر</b> است.
+</div>
+
+<div class="tablewrap"><table>
+<tr><th></th><th>فعالیت <span class="ltr">activity</span></th><th>تأخیر <span class="ltr">delay</span></th></tr>
+<tr><td><b>نام دیگر</b></td><td>انتظار نامشروط <span class="ltr">unconditional wait</span></td><td>انتظار مشروط <span class="ltr">conditional wait</span></td></tr>
+<tr><td><b>مدت در لحظه‌ی شروع</b></td><td>معلوم و محاسبه‌پذیر</td><td>نامعلوم</td></tr>
+<tr><td><b>چه چیزی مدت را تعیین می‌کند</b></td><td>مدل‌ساز: عدد ثابت، قرعه از $F(x)$، یا تابعی از وضعیت فعلی</td><td>وضعیت سیستم و رویدادهای آینده‌ی دیگران</td></tr>
+<tr><td><b>آیا رویدادهای دیگر اثر می‌گذارند؟</b></td><td>نه — وقتی شروع شد، پایانش قطعی است</td><td>بله — کل معنایش همین است</td></tr>
+<tr><td><b>پایانش چه نوع رویدادی است؟</b></td><td>رویداد <b>اولیه</b> <span class="ltr">primary</span></td><td>رویداد <b>ثانویه / مشروط</b> <span class="ltr">secondary, conditional</span></td></tr>
+<tr><td><b>کجا مدیریت می‌شود؟</b></td><td>یک اعلان رویداد در <b>FEL</b></td><td>موجودیت در یک <b>فهرست دیگر</b> (مثلاً صف) گذاشته می‌شود</td></tr>
+<tr><td><b>در FEL هست؟</b></td><td>✅ بله</td><td>❌ خیر — هیچ‌وقت</td></tr>
+<tr><td><b>معمولاً</b></td><td><b>ورودی</b> مدل است</td><td><b>خروجی</b> مدل است (همان چیزی که می‌خواهی اندازه بگیری)</td></tr>
+<tr><td><b>نمونه</b></td><td>زمان بین‌ورود، زمان خدمت، زمان تعمیر، زمان کارکرد ماشین</td><td>انتظار در صف، انتظار برای آزاد شدن یک منبع</td></tr>
+</table></div>
+
+<div class="box tip"><div class="bt">💡 چرا دقیقاً همین تمایز، محتوای FEL را تعیین می‌کند</div>
+FEL فهرستی از <b>زمان‌های معلوم</b> است. برای این‌که بتوانی چیزی را در FEL بگذاری، باید زمانش را بدانی. پایان یک فعالیت را می‌دانی (شروع + مدتِ قرعه‌خورده)، پس می‌رود در FEL. پایان یک تأخیر را نمی‌دانی، پس اصلاً چیزی برای گذاشتن نداری. به‌جایش موجودیت را در صف می‌گذاری و الگوریتم، <b>موقع اجرای رویدادهای دیگر</b>، شرط پایان تأخیر را چک می‌کند. به بیان دیگر: فعالیت‌ها زمان‌بندی می‌شوند، تأخیرها کشف می‌شوند.
+</div>
+
+<h3>مثال عددی: همان مرکز تماس فصل ۲ (جزوه ص ۹ فایل، اسلاید ۳٫۱۱)</h3>
+<p>جزوه مرکز تماس Able–Baker جلسه‌ی ۵ را دوباره برمی‌دارد و با واژگان فصل ۳ توصیفش می‌کند:</p>
+<div class="cards">
+<div><b>حالت سیستم</b><span class="ltr">[L<sub>Q</sub>(t), L<sub>A</sub>(t), L<sub>B</sub>(t)]</span> — تعداد منتظرها، و اینکه Able و Baker هرکدام بیکار (۰) یا مشغول (۱) هستند.</div>
+<div><b>موجودیت‌ها</b>جزوه صریح می‌گوید: <b>نه تماس‌گیرنده‌ها و نه کارمندها نمایش صریح ندارند</b> — همه‌چیز در سه عدد بالا خلاصه شده است.</div>
+<div><b>رویدادها</b>ورود تماس، پایان خدمت توسط Able، پایان خدمت توسط Baker.</div>
+<div><b>فعالیت‌ها</b>زمان بین‌ورود تماس‌ها، زمان خدمت Able، زمان خدمت Baker.</div>
+<div><b>تأخیر</b>انتظار تماس‌گیرنده در صف تا آزاد شدن Able یا Baker.</div>
+</div>
+<div class="box note"><div class="bt">📎 نکته‌ی ظریف</div>
+این‌که موجودیت‌ها نمایش صریح ندارند یعنی مدل <b>نمی‌تواند</b> میانگین انتظارِ تک‌تک تماس‌ها را بدهد، چون نمی‌داند هر منتظر از کی منتظر است. اگر آن خروجی را بخواهی، باید صف را از «یک شمارنده‌ی $L_Q$» به «فهرستی از تماس‌ها با ویژگیِ زمان ورود» ارتقا بدهی. این دقیقاً همان چیزی است که تمرین ۳ سؤال ۱ می‌پرسد: برای هر سطل چه داده‌ای لازم است.
+</div>
+
+<p>اجرای کوچکی از همان مرکز تماس، با ورودها در $0,2,3,9,12$، خدمت‌های Able برابر $4,3,4$ و خدمت‌های Baker برابر $6,4$، و سیاست «هر دو بیکار ⇒ Able»:</p>
+
+<figure class="fig">
+<svg viewBox="0 0 700 272" width="700" direction="ltr" role="img" aria-label="activity vs delay"><text x="350" y="18" text-anchor="middle" class="g-t" direction="rtl">فعالیت (مدت در شروع معلوم) در برابر تأخیر (مدت در شروع نامعلوم)</text><path d="M92.0,52 L92.0,44 L228.0,44 L228.0,52" class="g-brA"/><text x="160.0" y="40" text-anchor="middle" class="g-s" direction="rtl">فعالیت: خدمت C۱ (در ۰ معلوم)</text><path d="M194.0,92 L194.0,84 L228.0,84 L228.0,92" class="g-brD"/><text x="211.0" y="80" text-anchor="middle" class="g-s" direction="rtl">تأخیر C۳</text><text x="84" y="139" text-anchor="end" class="g-l">Able</text><line x1="92" y1="146" x2="648" y2="146" class="g-ax"/><rect x="92.0" y="124" width="136.0" height="20" rx="4" class="g-svc"/><text x="160.0" y="138.0" text-anchor="middle" class="g-in" direction="rtl">C۱</text><rect x="228.0" y="124" width="102.0" height="20" rx="4" class="g-svc"/><text x="279.0" y="138.0" text-anchor="middle" class="g-in" direction="rtl">C۳</text><rect x="398.0" y="124" width="136.0" height="20" rx="4" class="g-svc"/><text x="466.0" y="138.0" text-anchor="middle" class="g-in" direction="rtl">C۴</text><text x="84" y="175" text-anchor="end" class="g-l">Baker</text><line x1="92" y1="182" x2="648" y2="182" class="g-ax"/><rect x="160.0" y="160" width="204.0" height="20" rx="4" class="g-svc"/><text x="262.0" y="174.0" text-anchor="middle" class="g-in" direction="rtl">C۲</text><rect x="500.0" y="160" width="136.0" height="20" rx="4" class="g-svc"/><text x="568.0" y="174.0" text-anchor="middle" class="g-in" direction="rtl">C۵</text><line x1="194.0" y1="114" x2="228.0" y2="114" class="g-wait2"/><text x="211.0" y="108" text-anchor="middle" class="g-s" direction="rtl">صف</text><line x1="92" y1="206" x2="664" y2="206" class="g-ax"/><path d="M664,206 l-8,-4 l0,8 z" class="g-axh"/><text x="672" y="210" text-anchor="start" class="g-s">t</text><line x1="92.0" y1="198" x2="92.0" y2="214" class="g-arr"/><text x="92.0" y="228" text-anchor="middle" class="g-l g-ta">A₁</text><text x="92.0" y="242" text-anchor="middle" class="g-s">0</text><line x1="160.0" y1="198" x2="160.0" y2="214" class="g-arr"/><text x="160.0" y="228" text-anchor="middle" class="g-l g-ta">A₂</text><text x="160.0" y="242" text-anchor="middle" class="g-s">2</text><line x1="194.0" y1="198" x2="194.0" y2="214" class="g-arr"/><text x="194.0" y="228" text-anchor="middle" class="g-l g-ta">A₃</text><text x="194.0" y="242" text-anchor="middle" class="g-s">3</text><line x1="228.0" y1="198" x2="228.0" y2="214" class="g-dep"/><text x="228.0" y="228" text-anchor="middle" class="g-l g-td">D₁</text><text x="228.0" y="242" text-anchor="middle" class="g-s">4</text><line x1="330.0" y1="198" x2="330.0" y2="214" class="g-dep"/><text x="330.0" y="228" text-anchor="middle" class="g-l g-td">D₃</text><text x="330.0" y="242" text-anchor="middle" class="g-s">7</text><line x1="364.0" y1="198" x2="364.0" y2="214" class="g-dep"/><text x="364.0" y="228" text-anchor="middle" class="g-l g-td">D₂</text><text x="364.0" y="242" text-anchor="middle" class="g-s">8</text><line x1="398.0" y1="198" x2="398.0" y2="214" class="g-arr"/><text x="398.0" y="228" text-anchor="middle" class="g-l g-ta">A₄</text><text x="398.0" y="242" text-anchor="middle" class="g-s">9</text><line x1="500.0" y1="198" x2="500.0" y2="214" class="g-arr"/><text x="500.0" y="228" text-anchor="middle" class="g-l g-ta">A₅</text><text x="500.0" y="242" text-anchor="middle" class="g-s">12</text><line x1="534.0" y1="198" x2="534.0" y2="214" class="g-dep"/><text x="534.0" y="228" text-anchor="middle" class="g-l g-td">D₄</text><text x="534.0" y="242" text-anchor="middle" class="g-s">13</text><line x1="636.0" y1="198" x2="636.0" y2="214" class="g-dep"/><text x="636.0" y="228" text-anchor="middle" class="g-l g-td">D₅</text><text x="636.0" y="242" text-anchor="middle" class="g-s">16</text><text x="350" y="262" text-anchor="middle" class="g-s" direction="rtl">C۳ در ۳ وارد صف می‌شود؛ پایان انتظارش فقط در ۴ — هنگام رویداد D۱ — معلوم می‌شود.</text></svg>
+<figcaption>نوارهای تیره فعالیت‌اند (زمان خدمت)؛ هرکدام در لحظه‌ی شروعشان معلوم شده‌اند و بلافاصله یک اعلان پایان در FEL گذاشته‌اند. خط‌چین کوتاه بالای محور، تأخیر C۳ است: در لحظه‌ی ۳ هیچ‌کس نمی‌داند کِی تمام می‌شود.</figcaption>
+</figure>
+
+<div class="evlist w4">
+<div class="h"><span>ساعت</span><span>رویداد</span><span>چه شد (و تأخیری که ساخت)</span><span>در FEL رفت</span></div>
+<div><span>0</span><span class="arr">A₁</span><span>هر دو بیکار ⇒ Able؛ خدمت ۴ قرعه خورد. تأخیر: ۰</span><span>D₁ در ۴</span></div>
+<div><span>2</span><span class="arr">A₂</span><span>Able مشغول، Baker بیکار ⇒ Baker؛ خدمت ۶. تأخیر: ۰</span><span>D₂ در ۸</span></div>
+<div class="hl"><span>3</span><span class="arr">A₃</span><span>هر دو مشغول ⇒ C۳ در صف. تأخیر شروع شد، مدتش نامعلوم</span><span class="dep">هیچ‌چیز!</span></div>
+<div class="hl"><span>4</span><span class="dep">D₁</span><span>C۱ رفت؛ C۳ از صف به Able؛ خدمت ۳. تأخیر C۳ = ۱ (تازه معلوم شد)</span><span>D₃ در ۷</span></div>
+<div><span>7</span><span class="dep">D₃</span><span>C۳ رفت؛ صف خالی ⇒ Able بیکار</span><span>—</span></div>
+<div><span>8</span><span class="dep">D₂</span><span>C۲ رفت ⇒ Baker بیکار</span><span>—</span></div>
+<div><span>9</span><span class="arr">A₄</span><span>هر دو بیکار ⇒ Able؛ خدمت ۴. تأخیر: ۰</span><span>D₄ در ۱۳</span></div>
+<div><span>12</span><span class="arr">A₅</span><span>Able مشغول، Baker بیکار ⇒ Baker؛ خدمت ۴. تأخیر: ۰</span><span>D₅ در ۱۶</span></div>
+</div>
+
+<p>به سطر پررنگ لحظه‌ی ۳ نگاه کن: <b>تنها رویدادی که هیچ اعلانی در FEL نگذاشت</b>. چون تأخیر شروع شد، نه فعالیت. مدت آن تأخیر (یعنی ۱) فقط در لحظه‌ی ۴ معلوم شد، و آن هم نه با قرعه، بلکه با <b>تفریق</b>: $4-3=1$. همین است فرقِ «ورودی» و «خروجی» مدل.</p>
+
+<div class="box mistake"><div class="bt">✗ تصحیح شکل جزوه (ص ۸ فایل، اسلاید ۳٫۹)</div>
+<p>شکل «<span class="ltr">Activity vs. Delay</span>» در جزوه دو کمان بالایی دارد که هر دو <b>Delay</b> برچسب خورده‌اند، ولی اگر مختصات‌شان را بخوانی می‌بینی کمان اول از $A_1$ تا $D_1$ و کمان دوم از $A_2$ تا $D_2$ کشیده شده است. این‌ها <b>زمان در سیستم</b> ($= $ انتظار $+$ خدمت) هستند، نه تأخیر.</p>
+<p>طبق تعریف خود همان جزوه (ص ۶) و Banks، تأخیر مشتری $i$ برابر $S_i - A_i$ است:</p>
+<ul>
+<li>تأخیر مشتری ۱ $= S_1-A_1$، یعنی همان چیزی که در شکل <b>Wait</b> برچسب خورده است.</li>
+<li>تأخیر مشتری ۲ $= S_2-A_2 = D_1-A_2$، نه $D_2-A_2$.</li>
+</ul>
+<p>پس یا برچسب کمان‌ها باید <span class="ltr">time in system</span> باشد، یا کمان دوم باید در $D_1$ تمام شود. در امتحان، تأخیر را همیشه از تعریف بگیر نه از این شکل: <b>تأخیر تا لحظه‌ی شروع خدمت است، نه تا پایان آن.</b></p>
+</div>
+
+<div class="box hw"><div class="bt">🎯 راهنمای تمرین ۳، سؤال ۱ (وضعیت، فعالیت و تأخیر)</div>
+<p>سؤال سه کار می‌خواهد: (۱) وضعیت سیستم، صف مشتریان و FEL را از هم تفکیک کنی و بگویی هرکدام چه داده‌ای لازم دارد، (۲) فعالیت با مدت معلوم را از تأخیر مشروط جدا کنی، (۳) بگویی آیا هنگام ورود هر مشتری می‌توان پایان انتظارش را بدون اطلاع از آینده زمان‌بندی کرد.</p>
+<p><b>روش — سه سطل بساز و برای هرکدام سه ستون پر کن: «چه داده‌ای»، «چرا لازم است»، «اگر نباشد چه از دست می‌رود».</b> نمره‌ی اصلی در ستون سوم است.</p>
+<p><b>مثال مشابه حل‌شده</b> — یک پمپ بنزین با دو جایگاه یکسان و یک صف مشترک (سیستم سؤال، یک مرکز خدمت با یک کارمند است؛ عمداً فرق دارد):</p>
+<div class="tablewrap"><table>
+<tr><th>سطل</th><th>چه داده‌ای</th><th>چرا</th><th>اگر نباشد</th></tr>
+<tr><td><b>وضعیت سیستم</b></td><td><span class="ltr">B(t) ∈ {0,1,2}</span> تعداد جایگاه‌های مشغول؛ <span class="ltr">L<sub>Q</sub>(t)</span> طول صف</td><td>در هر رویداد باید تصمیم بگیری «خدمت شروع شود یا نه» — این تصمیم فقط به همین دو عدد نیاز دارد</td><td>نمی‌توانی اجرا را ادامه بدهی</td></tr>
+<tr><td><b>صف (مجموعه)</b></td><td>فهرست خودروهای منتظر، هرکدام با ویژگیِ <b>زمان ورود</b> (و اگر نظم FIFO نیست، <b>اولویت</b>)</td><td>انتظار هر خودرو $=$ زمان شروع خدمت $-$ زمان ورود</td><td>اجرا درست جلو می‌رود ولی میانگین انتظار قابل محاسبه نیست</td></tr>
+<tr><td><b>FEL</b></td><td>اعلان‌ها به شکل <span class="ltr">(نوع، زمان، شناسه)</span>: ورود بعدی، و برای هر جایگاهِ مشغول یک «پایان سوخت‌گیری»؛ به‌علاوه رویداد پایان E</td><td>ساعت فقط از روی کوچک‌ترین زمان این فهرست جلو می‌رود</td><td>نمی‌دانی ساعت کجا برود — الگوریتم متوقف می‌شود</td></tr>
+</table></div>
+<p><b>فعالیت‌ها:</b> زمان بین‌ورود خودروها و زمان سوخت‌گیری هر خودرو. هر دو در لحظه‌ی شروعشان قرعه می‌خورند و بلافاصله یک اعلان در FEL می‌سازند.<br>
+<b>تأخیر:</b> انتظار خودرو در صف. هیچ اعلانی نمی‌سازد؛ خودرو فقط در فهرست صف می‌نشیند.</p>
+<p><b>برای بخش آخر سؤال</b> (آیا می‌توان هنگام ورود، پایان انتظار را زمان‌بندی کرد؟) این اسکلت را پر کن:</p>
+<ol class="steps">
+<li><b>حالت کلی: نه.</b> پایان انتظارِ مشتریِ $i$ برابر لحظه‌ای است که یک کارمند آزاد شود و نوبت به او برسد؛ آن لحظه تابعِ <b>زمان خدمت مشتری‌های جلوتر</b> است که هنوز قرعه نخورده‌اند.</li>
+<li><b>یک مثال نقض بساز.</b> دو سناریو با <b>ورودهای یکسان</b> و زمان‌های خدمتِ متفاوت بیاور که انتظارِ همان مشتری در آن‌ها فرق کند. مثلاً در پمپ بنزین بالا با یک جایگاه: ورودها $0,1$؛ اگر خدمت اول $5$ باشد انتظار مشتری دوم $4$ است و اگر $2$ باشد انتظارش $1$. پس عددی که بخواهی در لحظه‌ی ۱ زمان‌بندی کنی وجود ندارد.</li>
+<li><b>استثناها را اسم ببر</b> (این‌جا نمره‌ی اضافه است): اگر در لحظه‌ی ورود یک کارمند <b>بیکار</b> باشد، انتظار صفر است و همان لحظه معلوم؛ این یعنی تأخیر صفر، نه تأخیر نامعلوم. و اگر مدل کاملاً قطعی و همه‌ی داده‌ها از پیش معلوم باشند، می‌شود از قبل حساب کرد — ولی آن‌وقت دیگر شبیه‌سازی لازم نداری.</li>
+<li><b>نتیجه‌ی معماری را بنویس:</b> چون پایان تأخیر زمان‌بندی‌پذیر نیست، مشتری منتظر <b>در FEL نمی‌رود</b>؛ در یک فهرست جدا می‌نشیند و الگوریتم در هر رویداد پایان خدمت شرط «صف خالی نیست» را چک می‌کند. این همان «رویداد ثانویه»ی جزوه است.</li>
+</ol>
+</div>
+</section>
+
+<!-- ===================================================== 03 -->
+<section id="snapshot">
+<h2 data-short="snapshot سیستم"><span class="num">03</span> <span class="ltr">snapshot</span> سیستم <span class="tag core">جزوه</span></h2>
+<p>جزوه (ص ۱۱ فایل، اسلاید ۳٫۱۴) می‌گوید شبیه‌سازی گسسته‌پیشامد «دنباله‌ای از <span class="ltr">system snapshot</span>ها در طول زمان تولید می‌کند». هر snapshot یک سطرِ کامل است:</p>
+<div class="flow">
+<span>ساعت</span><i>+</i><span>حالت سیستم</span><i>+</i><span>موجودیت‌ها و ویژگی‌ها</span><i>+</i><span>مجموعه‌ها</span><i>+</i><span>FEL</span><i>+</i><span>آماره‌ها</span>
+</div>
+<p>چرا «مجموعه‌ها» جدا از «حالت» آمده‌اند؟ چون جزوه صریح می‌گوید مجموعه‌ها برای <b>جمع‌آوری اطلاعات لازم برای محاسبه‌ی معیارهای عملکرد</b> هستند. یعنی بخشی از snapshot برای <b>ادامه‌ی اجرا</b> لازم است و بخشی برای <b>گزارش</b>.</p>
+
+<h3>جدول کامل snapshot برای مثال مرجع</h3>
+<p>هر سطر، وضعیت را <b>بعد از</b> اجرای کامل پنج قدم الگوریتم در آن لحظه نشان می‌دهد. شمارنده‌ها تجمعی‌اند و در قدم ۵ با بازه‌ی سپری‌شده از سطر قبل به‌روز می‌شوند. نماد: $L_S$ وضعیت سرور (۰ بیکار، ۱ مشغول)، $L_Q$ طول صف، $B$ جمع زمان مشغولی سرور، $A_Q$ مساحت زیر $L_Q(t)$، $A_L$ مساحت زیر $L(t)$، $\Sigma W$ جمع انتظارهای <b>تمام‌شده</b>، $n_d$ تعداد خروج‌ها.</p>
+<div class="tablewrap"><table class="sim snap">
+<tr><th>ساعت</th><th>رویداد</th><th>L<sub>S</sub></th><th>L<sub>Q</sub></th><th>صف (زمان ورود)</th><th>FEL بعد از رویداد</th><th>B</th><th>A<sub>Q</sub></th><th>A<sub>L</sub></th><th>ΣW</th><th>n<sub>d</sub></th></tr>
+<tr><td>0</td><td>شروع + ورود ۱</td><td class="st">1</td><td class="st">0</td><td>—</td><td class="fel">(A,2,c2) (D,4,c1)</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>2</td><td>ورود ۲</td><td class="st">1</td><td class="st">1</td><td class="qs">{2}</td><td class="fel">(A,3,c3) (D,4,c1)</td><td>2</td><td>0</td><td>2</td><td>0</td><td>0</td></tr>
+<tr class="hl"><td>3</td><td>ورود ۳</td><td class="st">1</td><td class="st">2</td><td class="qs">{2, 3}</td><td class="fel">(D,4,c1) (A,10,c4)</td><td>3</td><td>1</td><td>4</td><td>0</td><td>0</td></tr>
+<tr class="hl"><td>4</td><td>خروج ۱ ⇒ شروع ۲</td><td class="st">1</td><td class="st">1</td><td class="qs">{3}</td><td class="fel">(D,7,c2) (A,10,c4)</td><td>4</td><td>3</td><td>7</td><td class="wait">2</td><td>1</td></tr>
+<tr><td>7</td><td>خروج ۲ ⇒ شروع ۳</td><td class="st">1</td><td class="st">0</td><td>—</td><td class="fel">(D,9,c3) (A,10,c4)</td><td>7</td><td>6</td><td>13</td><td class="wait">6</td><td>2</td></tr>
+<tr class="idle"><td>9</td><td>خروج ۳ ⇒ سرور بیکار</td><td class="st">0</td><td class="st">0</td><td>—</td><td class="fel">(A,10,c4)</td><td>9</td><td>6</td><td>15</td><td>6</td><td>3</td></tr>
+<tr><td>10</td><td>ورود ۴ ⇒ شروع ۴</td><td class="st">1</td><td class="st">0</td><td>—</td><td class="fel">(A,11,c5) (D,13,c4)</td><td>9</td><td>6</td><td>15</td><td>6</td><td>3</td></tr>
+<tr><td>11</td><td>ورود ۵</td><td class="st">1</td><td class="st">1</td><td class="qs">{11}</td><td class="fel">(D,13,c4)</td><td>10</td><td>6</td><td>16</td><td>6</td><td>3</td></tr>
+<tr><td>13</td><td>خروج ۴ ⇒ شروع ۵</td><td class="st">1</td><td class="st">0</td><td>—</td><td class="fel">(D,15,c5)</td><td>12</td><td>8</td><td>20</td><td class="wait">8</td><td>4</td></tr>
+<tr class="sum"><td>15</td><td>خروج ۵ ⇒ FEL خالی</td><td class="st">0</td><td class="st">0</td><td>—</td><td class="fel">∅</td><td>14</td><td>8</td><td>22</td><td>8</td><td>5</td></tr>
+</table></div>
+
+<div class="stats">
+  <div><div class="l">بهره‌وری سرور</div><div class="v">0.933</div><div class="f">B / T = 14 / 15</div></div>
+  <div><div class="l">میانگین طول صف</div><div class="v">0.533</div><div class="f">A_Q / T = 8 / 15</div></div>
+  <div><div class="l">میانگین تعداد در سیستم</div><div class="v">1.467</div><div class="f">A_L / T = 22 / 15</div></div>
+  <div><div class="l">میانگین انتظار</div><div class="v">1.600</div><div class="f">ΣW / n = 8 / 5</div></div>
+  <div><div class="l">میانگین زمان در سیستم</div><div class="v">4.400</div><div class="f">A_L / n = 22 / 5</div></div>
+  <div><div class="l">نرخ ورود مشاهده‌شده</div><div class="v">0.333</div><div class="f">λ = n / T = 5 / 15</div></div>
+</div>
+
+<div class="box proof"><div class="bt">آزمون صحتِ رایگان: رابطه‌ی لیتل روی همین نمونه</div>
+<p>دقت کن $A_L=22$ و جمع زمان‌های در سیستم هم $4+5+6+3+4=22$ شد، و $A_Q=8$ دقیقاً برابر $\Sigma W=8$ شد. این تصادفی نیست:</p>
+$$L(t)=\sum_{i=1}^{n}\mathbf{1}\{A_i\le t< D_i\}\quad\Longrightarrow\quad \int_0^{T}L(t)\,dt=\sum_{i=1}^{n}(D_i-A_i)$$
+<p>چون همه‌ی مشتری‌ها قبل از $T$ خارج شده‌اند، هیچ مساحتی بیرون بازه نمی‌ماند. پس $\bar L = \lambda\bar W_{sys}$ روی خودِ نمونه <b>دقیقاً</b> برقرار است: $22/15 = (5/15)(22/5)$. اگر در شیت یا کدت این دو عدد یکی درنیامدند، یک باگ داری.<span class="qed">∎</span></p>
+</div>
+
+<div class="box warn"><div class="bt">⚠ قرارداد به‌روزرسانی شمارنده‌ها</div>
+شمارنده‌های مساحتی ($B$, $A_Q$, $A_L$) را <b>قبل از</b> اجرای رویداد و با حالتِ <b>قبلی</b> ضرب در بازه‌ی سپری‌شده به‌روز کن، نه با حالت جدید. مثلاً در لحظه‌ی ۴، بازه‌ی $[3,4)$ با $L_Q=2$ حساب می‌شود ($A_Q$ از ۱ به ۳ می‌رود)، نه با $L_Q=1$. اگر ترتیب را برعکس کنی، همه‌ی میانگین‌هایت یک رویداد عقب‌تر می‌افتند.
+</div>
+</section>
+
+<!-- ===================================================== 04 -->
+<section id="algorithm">
+<h2 data-short="الگوریتم پیشروی زمان"><span class="num">04</span> الگوریتم زمان‌بندی رویداد / پیشروی زمان <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>جزوه (ص ۱۳ فایل، اسلاید ۳٫۱۶) اول خاصیت‌های FEL را می‌گوید: همه‌ی اعلان‌ها به ترتیب زمانی مرتب‌اند، در زمان جاری $t$ همه‌ی رویدادهای زمان‌بندی‌شده داخل آن‌اند، و زمان‌ها در</p>
+$$t < t_1 \le t_2 \le t_3 \le \cdots \le t_n$$
+<p>صدق می‌کنند. رویدادِ $t_1$ <b>رویداد قریب‌الوقوع</b> (<span class="ltr">imminent event</span>) است. دو نکته‌ی ظریف در همین رابطه پنهان است:</p>
+<ul>
+<li>نامساوی اول <b>اکید</b> است: $t<t_1$. هیچ رویدادی نمی‌تواند در گذشته یا در «همین الان» زمان‌بندی شود؛ شبیه‌سازی هرگز به عقب برنمی‌گردد.</li>
+<li>بقیه <b>اکید نیستند</b>: $t_1\le t_2$. یعنی رویدادهای هم‌زمان مجازند و تو باید قاعده‌ی شکستن تساوی را خودت اعلام کنی.</li>
+</ul>
+
+<h3>پنج قدم</h3>
+<ol class="steps">
+<li><b>اعلان رویداد قریب‌الوقوع را از FEL بردار.</b> یعنی کوچک‌ترین زمان را پیدا و حذف کن. در شکل جزوه این رویداد $(3,t_1)$ است.</li>
+<li><b>ساعت را به زمان آن رویداد ببر:</b> <span class="ltr">clock = t<sub>1</sub></span>. این تنها جایی است که ساعت تغییر می‌کند — و همیشه با یک جهش، نه با گام ثابت.</li>
+<li><b>رویداد را اجرا کن:</b> حالت سیستم را به‌روز کن، ویژگی‌های موجودیت‌ها را عوض کن، و عضویت در مجموعه‌ها را درست کن (مثلاً مشتری را از صف بردار).</li>
+<li><b>رویدادهای آینده را تولید کن و اعلان‌شان را در FEL بگذار.</b> در شکل جزوه رویداد $(4,t^*)$ ساخته و در جای درستش (به ترتیب زمانی) درج می‌شود. هر <b>فعالیتی</b> که همین حالا شروع شد، این‌جا یک اعلان می‌سازد.</li>
+<li><b>آماره‌ها و شمارنده‌ها را به‌روز کن.</b></li>
+</ol>
+<p>در شکل جزوه (ص ۱۴ فایل، اسلاید ۳٫۱۷) حالت از $(5,1,6)$ به $(5,1,5)$ می‌رود و رویداد تازه‌ی $(4,t^*)$ بین $t_2$ و $t_3$ درج می‌شود. نکته‌ی اصلی شکل همین درج‌شدن <b>وسط</b> فهرست است: FEL صف ساده‌ی FIFO نیست، صف <b>اولویت</b> است.</p>
+
+<figure class="fig">
+<svg viewBox="0 0 700 342" width="700" direction="ltr" role="img" aria-label="clock advance and L(t)"><text x="350" y="18" text-anchor="middle" class="g-t" direction="rtl">ساعت فقط روی زمان رویدادها می‌پرد</text><path d="M58.0,138 Q95.0,92.0 132.0,138" class="g-jump"/><path d="M132.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M132.0,138 Q150.5,103.0 169.0,138" class="g-jump"/><path d="M169.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M169.0,138 Q187.5,103.0 206.0,138" class="g-jump"/><path d="M206.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M206.0,138 Q261.5,92.0 317.0,138" class="g-jump"/><path d="M317.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M317.0,138 Q354.0,92.0 391.0,138" class="g-jump"/><path d="M391.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M391.0,138 Q409.5,103.0 428.0,138" class="g-jump"/><path d="M428.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M428.0,138 Q446.5,103.0 465.0,138" class="g-jump"/><path d="M465.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M465.0,138 Q502.0,92.0 539.0,138" class="g-jump"/><path d="M539.0,138 l-5,-7 l10,0 z" class="g-jumph"/><path d="M539.0,138 Q576.0,92.0 613.0,138" class="g-jump"/><path d="M613.0,138 l-5,-7 l10,0 z" class="g-jumph"/><rect x="391.0" y="142" width="37.0" height="16" class="g-idle"/><text x="409.5" y="154" text-anchor="middle" class="g-s" direction="rtl">بیکار</text><line x1="50" y1="150" x2="672" y2="150" class="g-ax"/><path d="M672,150 l-8,-4 l0,8 z" class="g-axh"/><text x="680" y="154" text-anchor="start" class="g-s">t</text><line x1="58.0" y1="142" x2="58.0" y2="158" class="g-arr"/><text x="58.0" y="172" text-anchor="middle" class="g-l g-ta">A₁</text><text x="58.0" y="186" text-anchor="middle" class="g-s">0</text><line x1="132.0" y1="142" x2="132.0" y2="158" class="g-arr"/><text x="132.0" y="172" text-anchor="middle" class="g-l g-ta">A₂</text><text x="132.0" y="186" text-anchor="middle" class="g-s">2</text><line x1="169.0" y1="142" x2="169.0" y2="158" class="g-arr"/><text x="169.0" y="172" text-anchor="middle" class="g-l g-ta">A₃</text><text x="169.0" y="186" text-anchor="middle" class="g-s">3</text><line x1="206.0" y1="142" x2="206.0" y2="158" class="g-dep"/><text x="206.0" y="172" text-anchor="middle" class="g-l g-td">D₁</text><text x="206.0" y="186" text-anchor="middle" class="g-s">4</text><line x1="317.0" y1="142" x2="317.0" y2="158" class="g-dep"/><text x="317.0" y="172" text-anchor="middle" class="g-l g-td">D₂</text><text x="317.0" y="186" text-anchor="middle" class="g-s">7</text><line x1="391.0" y1="142" x2="391.0" y2="158" class="g-dep"/><text x="391.0" y="172" text-anchor="middle" class="g-l g-td">D₃</text><text x="391.0" y="186" text-anchor="middle" class="g-s">9</text><line x1="428.0" y1="142" x2="428.0" y2="158" class="g-arr"/><text x="428.0" y="172" text-anchor="middle" class="g-l g-ta">A₄</text><text x="428.0" y="186" text-anchor="middle" class="g-s">10</text><line x1="465.0" y1="142" x2="465.0" y2="158" class="g-arr"/><text x="465.0" y="172" text-anchor="middle" class="g-l g-ta">A₅</text><text x="465.0" y="186" text-anchor="middle" class="g-s">11</text><line x1="539.0" y1="142" x2="539.0" y2="158" class="g-dep"/><text x="539.0" y="172" text-anchor="middle" class="g-l g-td">D₄</text><text x="539.0" y="186" text-anchor="middle" class="g-s">13</text><line x1="613.0" y1="142" x2="613.0" y2="158" class="g-dep"/><text x="613.0" y="172" text-anchor="middle" class="g-l g-td">D₅</text><text x="613.0" y="186" text-anchor="middle" class="g-s">15</text><text x="350" y="208" text-anchor="middle" class="g-t" direction="rtl">تعداد در سیستم L(t) — سطح زیرش ۲۲ واحد‌–زمان است</text><line x1="58" y1="312" x2="672" y2="312" class="g-ax"/><line x1="58" y1="222" x2="58" y2="312" class="g-ax"/><line x1="58" y1="284.0" x2="660" y2="284.0" class="g-grid"/><text x="50" y="288.0" text-anchor="end" class="g-s">1</text><line x1="58" y1="256.0" x2="660" y2="256.0" class="g-grid"/><text x="50" y="260.0" text-anchor="end" class="g-s">2</text><line x1="58" y1="228.0" x2="660" y2="228.0" class="g-grid"/><text x="50" y="232.0" text-anchor="end" class="g-s">3</text><text x="50" y="304" text-anchor="end" class="g-s">0</text><polyline points="58.0,312.0 58.0,284.0 132.0,284.0 132.0,256.0 169.0,256.0 169.0,228.0 206.0,228.0 206.0,256.0 317.0,256.0 317.0,284.0 391.0,284.0 391.0,312.0 428.0,312.0 428.0,284.0 465.0,284.0 465.0,256.0 539.0,256.0 539.0,284.0 613.0,284.0 613.0,312.0" class="g-step"/><polygon points="58.0,312.0 58.0,284.0 132.0,284.0 132.0,256.0 169.0,256.0 169.0,228.0 206.0,228.0 206.0,256.0 317.0,256.0 317.0,284.0 391.0,284.0 391.0,312.0 428.0,312.0 428.0,284.0 465.0,284.0 465.0,256.0 539.0,256.0 539.0,284.0 613.0,284.0 613.0,312.0 613.0,312.0" class="g-fill"/><line x1="58.0" y1="222" x2="58.0" y2="312" class="g-tick"/><line x1="132.0" y1="222" x2="132.0" y2="312" class="g-tick"/><line x1="169.0" y1="222" x2="169.0" y2="312" class="g-tick"/><line x1="206.0" y1="222" x2="206.0" y2="312" class="g-tick"/><line x1="317.0" y1="222" x2="317.0" y2="312" class="g-tick"/><line x1="391.0" y1="222" x2="391.0" y2="312" class="g-tick"/><line x1="428.0" y1="222" x2="428.0" y2="312" class="g-tick"/><line x1="465.0" y1="222" x2="465.0" y2="312" class="g-tick"/><line x1="539.0" y1="222" x2="539.0" y2="312" class="g-tick"/><line x1="613.0" y1="222" x2="613.0" y2="312" class="g-tick"/></svg>
+<figcaption>بالا: ساعت فقط روی ده زمان رویداد می‌پرد؛ طول هر کمان، زمانی است که شبیه‌سازی «رد می‌شود» بی‌آنکه چیزی حساب کند. نوار سبز بازه‌ی بیکاری سرور است. پایین: تعداد در سیستم $L(t)$ که بین دو رویداد ثابت می‌ماند — همین ثابت‌ماندن است که پریدن را بی‌خطا می‌کند.</figcaption>
+</figure>
+
+<h3>شبه‌کد</h3>
+<pre class="code plain">
+initialize:
+    clock  &lt;- 0
+    state  &lt;- initial conditions                  # e.g. LS = 0, LQ = 0
+    sets   &lt;- empty                               # waiting line
+    stats  &lt;- 0
+    FEL    &lt;- { exogenous events at time 0 }      # first arrival, stop event E, ...
+
+while FEL is not empty and not stopped:
+    (t, type, data) &lt;- remove-min(FEL)            # 1. imminent event
+    elapsed &lt;- t - clock
+    clock   &lt;- t                                  # 2. advance clock
+    update-time-integrated-stats(elapsed, state)  # 5a. areas use the OLD state
+    execute(type, data):                          # 3. change state / attributes / sets
+         ...
+         schedule(new events)                     # 4. every activity that starts now
+    update-count-stats()                          # 5b. counters that jump at events
+
+report: stats / clock
+</pre>
+
+<h3>همان الگوریتم در پایتون</h3>
+<p>مثال مرجع بخش ۰۱ را با یک <span class="ltr">heap</span> به‌عنوان FEL اجرا می‌کنیم. دقت کن که هر پنج قدم با شماره‌ی خودشان در کد کامنت خورده‌اند.</p>
+<pre class="code">
+import heapq
+
+def event_scheduling(arrivals, services):
+    """FEL entry = (event time, rank, kind, customer).  rank: 0 = departure, 1 = arrival,
+    so at equal times the departure is executed first."""
+    fel = [(arrivals[0], 1, "A", 0)]          # the only exogenous event scheduled at time 0
+    clock, busy, queue = 0.0, 0, []           # system state + the waiting-line set
+    B = AQ = AL = SW = 0.0                    # statistical accumulators
+    served = 0
+    while fel:                                                  # stop: FEL is empty
+        t, _, kind, i = heapq.heappop(fel)                      # step 1: imminent event
+        dt, clock = t - clock, t                                # step 2: advance the clock
+        B  += busy * dt                                         # step 5: update counters
+        AQ += len(queue) * dt
+        AL += (busy + len(queue)) * dt
+        if kind == "A":                                         # step 3: execute the event
+            if i + 1 &lt; len(arrivals):                           # step 4: bootstrap next arrival
+                heapq.heappush(fel, (arrivals[i + 1], 1, "A", i + 1))
+            if busy == 0:
+                busy = 1
+                heapq.heappush(fel, (clock + services[i], 0, "D", i))
+            else:
+                queue.append((clock, i))                        # a delay begins: no FEL entry
+        else:
+            served += 1
+            if queue:
+                t_arr, j = queue.pop(0)                         # FIFO
+                SW += clock - t_arr                             # the delay ends here
+                heapq.heappush(fel, (clock + services[j], 0, "D", j))
+            else:
+                busy = 0
+        print(f"t={clock:5.1f}  LS={busy} LQ={len(queue)}  B={B:4.1f} AQ={AQ:4.1f} AL={AL:4.1f} SW={SW:4.1f}")
+    return clock, B, AQ, AL, SW, served
+
+T, B, AQ, AL, SW, n = event_scheduling([0, 2, 3, 10, 11], [4, 3, 2, 3, 2])
+print(f"T={T}  rho={B/T:.4f}  Lq={AQ/T:.4f}  L={AL/T:.4f}  Wq={SW/n:.2f}  W={AL/n:.2f}")
+</pre>
+<div class="out">t=  0.0  LS=1 LQ=0  B= 0.0 AQ= 0.0 AL= 0.0 SW= 0.0
+t=  2.0  LS=1 LQ=1  B= 2.0 AQ= 0.0 AL= 2.0 SW= 0.0
+t=  3.0  LS=1 LQ=2  B= 3.0 AQ= 1.0 AL= 4.0 SW= 0.0
+t=  4.0  LS=1 LQ=1  B= 4.0 AQ= 3.0 AL= 7.0 SW= 2.0
+t=  7.0  LS=1 LQ=0  B= 7.0 AQ= 6.0 AL=13.0 SW= 6.0
+t=  9.0  LS=0 LQ=0  B= 9.0 AQ= 6.0 AL=15.0 SW= 6.0
+t= 10.0  LS=1 LQ=0  B= 9.0 AQ= 6.0 AL=15.0 SW= 6.0
+t= 11.0  LS=1 LQ=1  B=10.0 AQ= 6.0 AL=16.0 SW= 6.0
+t= 13.0  LS=1 LQ=0  B=12.0 AQ= 8.0 AL=20.0 SW= 8.0
+t= 15.0  LS=0 LQ=0  B=14.0 AQ= 8.0 AL=22.0 SW= 8.0
+T=15  rho=0.9333  Lq=0.5333  L=1.4667  Wq=1.60  W=4.40</div>
+<p>دقیقاً همان ده سطر جدول snapshot بخش ۰۳. اگر جدول دستی‌ات با خروجی کد یکی نشد، ایرادت تقریباً همیشه یکی از این دو است: قاعده‌ی تساوی، یا ترتیب به‌روزرسانی شمارنده‌ها.</p>
+
+<div class="box warn"><div class="bt">⚠ رویدادهای هم‌زمان</div>
+<p>در کد بالا عنصر دوم تاپل (<span class="ltr">rank</span>) قاعده‌ی تساوی را کدگذاری می‌کند: $0$ برای خروج و $1$ برای ورود، پس در زمان برابر <b>اول خروج</b> اجرا می‌شود. همان قراردادی که تمرین ۲ سؤال ۶ و تمرین ۳ سؤال ۲ صریحاً می‌خواهند.</p>
+<p>بدون این عنصر، پایتون سعی می‌کند رشته‌های <span class="ltr">"A"</span> و <span class="ltr">"D"</span> را مقایسه کند و تصادفاً جواب درست می‌دهد (چون <span class="ltr">"A" &lt; "D"</span> یعنی ورود اول)، ولی اگر یک نوع رویداد سوم اضافه کنی ناگهان رفتار عوض می‌شود. قاعده‌ی تساوی را <b>صریح</b> بنویس.</p>
+</div>
+
+<div class="box tip"><div class="bt">💡 چرا ساختمان‌داده‌ی FEL مهم است <span class="tag book">تکمیلی</span></div>
+<p>جزوه (ص ۱۳) می‌گوید «مدیریت کارآمد FEL اثر بزرگی روی کارایی اجرا دارد» و فهرست می‌کند: آرایه، فهرست، درخت، هیپ. عددی‌اش:</p>
+<div class="tablewrap"><table>
+<tr><th>ساختار</th><th>پیدا کردن کمینه</th><th>درج</th><th>کِی مناسب است</th></tr>
+<tr><td>فهرست مرتب‌نشده</td><td><span class="ltr">O(n)</span></td><td><span class="ltr">O(1)</span></td><td>وقتی $n$ همیشه کوچک است (صف تک‌سرور: $n\le 3$)</td></tr>
+<tr><td>فهرست مرتب (پیوندی)</td><td><span class="ltr">O(1)</span></td><td><span class="ltr">O(n)</span></td><td>وقتی رویدادهای تازه معمولاً نزدیک انتهای فهرست می‌افتند</td></tr>
+<tr><td>هیپ دودویی</td><td><span class="ltr">O(log n)</span></td><td><span class="ltr">O(log n)</span></td><td>پیش‌فرض عاقلانه؛ <span class="ltr">heapq</span> پایتون همین است</td></tr>
+</table></div>
+<p>نکته‌ی عملی: در یک صف تک‌سرور با ورودهای خودتولید، FEL هیچ‌وقت بیش از ۳ عضو ندارد (ورود بعدی + حداکثر یک پایان خدمت + رویداد پایان E)؛ آن‌جا فهرست ساده از هیپ سریع‌تر است. در یک کارگاه با ۵۰۰ ماشین، فرق از زمین تا آسمان است.</p>
+</div>
+
+<div class="box hw"><div class="bt">🎯 راهنمای تمرین ۲، سؤال ۶ (ساعت شبیه‌سازی و فهرست رویدادها)</div>
+<p>صف تک‌سرور خالی با نظم FIFO، سه ورود در زمان‌های داده‌شده، زمان خدمت ثابت، سرور در آغاز آزاد، و قرارداد «پایان خدمت قبل از ورود هم‌زمان». سه قسمت دارد.</p>
+<p><b>(آ) جدول روش «رویداد بعدی».</b> سؤال ستون‌های ساعت، رویداد، مشتریِ در خدمت، طول صف و زمان پایان خدمت بعدی را می‌خواهد. دو توصیه:</p>
+<ul>
+<li>یک ستون <b>FEL</b> هم برای خودت اضافه کن، حتی اگر در پاسخ نهایی حذفش کردی. ستون «پایان خدمت بعدی» در واقع همان تنها اعلان نوع D داخل FEL است؛ اگر FEL را ننویسی، به‌راحتی یک ورود را جا می‌اندازی.</li>
+<li>وقتی سرور آزاد است، در ستون «پایان خدمت بعدی» <b>خط تیره</b> بگذار (خودِ سؤال خواسته). خط تیره یعنی «هیچ اعلان D در FEL نیست» — نه «صفر».</li>
+</ul>
+<p><b>مثال مشابه حل‌شده</b> با عددهای متفاوت: ورودها در $0.15,\,0.60,\,0.80$ و زمان خدمت ثابت $0.40$.</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>ساعت</th><th>رویداد</th><th>در خدمت</th><th>طول صف</th><th>پایان خدمت بعدی</th><th>FEL بعد از رویداد</th></tr>
+<tr><td>0.15</td><td>ورود ۱</td><td>۱</td><td>0</td><td>0.55</td><td class="fel">(A,0.60) (D,0.55)</td></tr>
+<tr class="idle"><td>0.55</td><td>خروج ۱</td><td>—</td><td>0</td><td>—</td><td class="fel">(A,0.60)</td></tr>
+<tr><td>0.60</td><td>ورود ۲</td><td>۲</td><td>0</td><td>1.00</td><td class="fel">(A,0.80) (D,1.00)</td></tr>
+<tr class="hl"><td>0.80</td><td>ورود ۳</td><td>۲</td><td>1</td><td>1.00</td><td class="fel">(D,1.00)</td></tr>
+<tr><td>1.00</td><td>خروج ۲ ⇒ شروع ۳</td><td>۳</td><td>0</td><td>1.40</td><td class="fel">(D,1.40)</td></tr>
+<tr class="sum"><td>1.40</td><td>خروج ۳</td><td>—</td><td>0</td><td>—</td><td class="fel">∅</td></tr>
+</table></div>
+<p>انتظارها: $0,\;0,\;1.00-0.80=0.20$؛ میانگین $0.0667$. بهره‌وری $=(0.40+0.80)/1.40=0.857$.</p>
+<p><b>(ب) تعداد در سیستم در زمان‌های ثابت.</b> عددها را از نمودار پله‌ای $L(t)$ بخوان، نه از جدول رویدادها. برای مثال بالا در $t=0,\,0.5,\,1,\,1.5$ به‌ترتیب $0,\,1,\,1,\,0$. حتماً <b>قرارداد پیوستگی از راست</b> را اعلام کن: $L(1)$ یعنی مقدار بلافاصله <b>بعد از</b> اجرای رویداد لحظه‌ی ۱. برای بخش «چرا این چهار عدد کافی نیست» به این‌ها اشاره کن:</p>
+<ul>
+<li>کل بازه‌ی بیکاری $[0.55,\,0.60)$ بین دو نمونه گم می‌شود؛ از این چهار عدد اصلاً نمی‌فهمی سرور بیکار شده است.</li>
+<li>$L$ در $t=0.5$ و $t=1$ هر دو برابر ۱ است، ولی در فاصله‌شان چهار تغییر حالت رخ داده.</li>
+<li>میانگین زمانی $\bar L$ با میانگینِ چند نمونه فرق دارد: اولی $\frac1T\int_0^T L\,dt$ است و دومی میانگین ساده. با نمونه‌گیری، $\bar L$ و بهره‌وری هر دو اریب می‌شوند.</li>
+</ul>
+<p><b>(پ) چرا می‌شود جهید.</b> دو جمله کافی است، ولی هر دو را بنویس: <b>(۱)</b> در DES متغیرهای وضعیت بین دو رویداد <b>دقیقاً</b> ثابت‌اند، پس پریدن هیچ اطلاعاتی را از بین نمی‌برد و جواب <b>دقیق</b> است (نه تقریبی). <b>(۲)</b> در حل عددیِ یک مدل پیوسته با گام ثابت $\Delta t$، وضعیت بین دو گام واقعاً تغییر می‌کند، پس گام‌زدن یک <b>تقریب</b> با خطای گسسته‌سازی است و ریزکردن $\Delta t$ جواب را عوض می‌کند. اضافه کن که هزینه هم فرق دارد: کار DES متناسب با <b>تعداد رویدادها</b>ست، نه با طول افق زمانی.</p>
+</div>
+</section>
+
+<!-- ===================================================== 05 -->
+<section id="generation">
+<h2 data-short="تولید رویدادها"><span class="num">05</span> تولید رویدادها: اولیه، ثانویه، برون‌زا <span class="tag core">جزوه</span></h2>
+<p>الگوریتم بخش ۰۴ یک حلقه‌ی بسته است: رویدادها از کجا می‌آیند؟ جواب جزوه (ص ۱۶ تا ۱۹ فایل، اسلایدهای ۳٫۱۹ تا ۳٫۲۲) سه مکانیزم است.</p>
+
+<h3>۱. <span class="ltr">snapshot</span> لحظه‌ی صفر</h3>
+<p>جزوه می‌گوید snapshot زمان صفر از دو چیز ساخته می‌شود: <b>شرایط اولیه</b> و <b>تولید رویدادهای برون‌زا</b>.</p>
+<div class="box def"><div class="bt">تعریف ۶.۳ · رویداد برون‌زا و درون‌زا</div>
+<b>برون‌زا</b> (<span class="ltr">exogenous</span>): اتفاقی که «بیرون سیستم» می‌افتد ولی به سیستم برخورد می‌کند. مثال مهم: ورود یک مشتری به سیستم صف.<br>
+<b>درون‌زا</b> (<span class="ltr">endogenous</span>): اتفاقی که از منطق داخل خود سیستم زاییده می‌شود. مثال: پایان خدمت، که فقط به این دلیل وجود دارد که خدمتی شروع شده بود.<span class="tag book">تکمیلی</span>
+</div>
+<p>چرا باید در لحظه‌ی صفر رویدادهای برون‌زا را تولید کنی؟ چون اگر FEL در لحظه‌ی صفر خالی باشد، الگوریتم در قدم ۱ چیزی برای برداشتن ندارد و شبیه‌سازی تمام‌شده به دنیا می‌آید. سیستم باید «روشن» شود (<span class="ltr">prime the model</span>).</p>
+
+<h3>۲. زنجیره‌ی خودتولید ورودها (<span class="ltr">bootstrapping</span>)</h3>
+<p>جزوه (ص ۱۷) دستورالعمل را در سه خط می‌دهد:</p>
+<ol class="steps">
+<li>در $t=0$ اولین ورود تولید و زمان‌بندی می‌شود.</li>
+<li>وقتی ساعت به زمان اولین ورود رسید، <b>همان‌جا</b> ورود دوم ساخته می‌شود: یک زمان بین‌ورود $a^*$ قرعه بزن.</li>
+<li>$t^*=\text{clock}+a^*$ را حساب کن و اعلانش را در FEL بگذار.</li>
+</ol>
+<div class="flow">
+<span>ورود ۱ رخ می‌دهد</span><i>⇒</i><span>قرعه‌ی $a^*$</span><i>⇒</i><span>زمان‌بندی ورود ۲ در $t+a^*$</span><i>⇒</i><span>ورود ۲ رخ می‌دهد</span><i>⇒</i><span>…</span>
+</div>
+<p>زیبایی‌اش این است که همیشه <b>دقیقاً یک</b> اعلان ورود در FEL هست — نه صفر، نه صد. حافظه‌ی مصرفی ثابت می‌ماند، هرچقدر هم شبیه‌سازی طولانی باشد. بدی‌اش این است که FEL هیچ‌وقت خالی نمی‌شود (بخش ۰۶).</p>
+<pre class="code">
+import random, math
+
+def bootstrap_arrivals(mean_ia, horizon, seed=7):
+    """the same loop the FEL does: each arrival schedules exactly one successor"""
+    rng = random.Random(seed)
+    t, out = 0.0, []
+    t += -mean_ia * math.log(1 - rng.random())      # first arrival, scheduled at time 0
+    while t &lt; horizon:
+        out.append(round(t, 3))
+        a_star = -mean_ia * math.log(1 - rng.random())   # an activity: known right now
+        t = t + a_star                                   # t* = clock + a*
+    return out
+
+print(bootstrap_arrivals(2.0, 12))
+</pre>
+<div class="out">[0.783, 1.11, 3.215, 3.365, 4.9, 5.811, 5.93, 7.346, 7.423, 8.56, 8.705, 8.895, 10.0]</div>
+
+<h3>۳. شروع خدمت: رویداد مشروط</h3>
+<p>جزوه (ص ۱۸) دقیق می‌گوید:</p>
+<div class="box note"><div class="bt">📎 نقل از جزوه</div>
+«زمان خدمت یک <b>فعالیت</b> است. <b>شروع خدمت</b> یک رویداد <b>مشروط</b> است — شرط‌هایش: مشتری حاضر باشد و سرور بیکار باشد. <b>پایان خدمت</b> یک رویداد <b>اولیه</b> است.»
+</div>
+<p>و دو جایی که شروع خدمت ممکن است رخ دهد را فهرست می‌کند:</p>
+<div class="two">
+<div class="box ex"><div class="bt">حین رویداد پایان خدمت</div>مشتری در لحظه‌ی $t$ خدمتش تمام می‌شود. اگر مشتری بعدی حاضر باشد، $s^*$ قرعه می‌خورد، $t^*=\text{clock}+s^*$ حساب و پایان خدمت بعدی زمان‌بندی می‌شود.</div>
+<div class="box ex"><div class="bt">حین رویداد ورود</div>اگر مشتری برسد و سرور <b>بیکار</b> باشد، پایان خدمت همان‌جا — در لحظه‌ی ورود — زمان‌بندی می‌شود.</div>
+</div>
+<p>دو حالت، یک شرط مشترک. به همین دلیل در کد بخش ۰۴ تکه‌ی <span class="ltr">schedule departure</span> دو بار تکرار شده است. در عمل آن را در یک تابع <span class="ltr">try_start_service()</span> می‌گذارند که در پایان هر رویداد صدا زده می‌شود.</p>
+
+<div class="tablewrap"><table>
+<tr><th></th><th>رویداد اولیه <span class="ltr">primary</span></th><th>رویداد ثانویه / مشروط <span class="ltr">secondary, conditional</span></th></tr>
+<tr><td><b>چه چیزی را پایان می‌دهد</b></td><td>یک فعالیت</td><td>یک تأخیر</td></tr>
+<tr><td><b>زمانش از کجا می‌آید</b></td><td>از قرعه‌ی مدل‌ساز، در لحظه‌ی شروع فعالیت</td><td>از برقرارشدن یک شرط منطقی</td></tr>
+<tr><td><b>اعلان دارد؟</b></td><td>بله، در FEL</td><td>نه</td></tr>
+<tr><td><b>چطور تشخیص داده می‌شود</b></td><td>الگوریتم آن را از FEL برمی‌دارد</td><td>در پایان رویدادهای دیگر، شرطش چک می‌شود</td></tr>
+<tr><td><b>نمونه</b></td><td>ورود، پایان خدمت، پایان کارکرد، پایان خرابی، رویداد پایان E</td><td>شروع خدمت، پایان انتظار در صف، آزادشدن یک منبع برای مشتری منتظر</td></tr>
+</table></div>
+
+<h3>۴. تناوب کارکرد و خرابی (جزوه ص ۱۹)</h3>
+<p>یک ماشین که خراب می‌شود، همان ایده را با دو نوع فعالیت نشان می‌دهد:</p>
+<div class="flow">
+<span>$t=0$: قرعه‌ی کارکرد</span><i>⇒</i><span class="ltr">eor</span><i>⇒</i><span>قرعه‌ی خرابی</span><i>⇒</i><span class="ltr">eod</span><i>⇒</i><span>قرعه‌ی کارکرد</span><i>⇒</i><span class="ltr">eor</span><i>⇒</i><span>…</span>
+</div>
+<p>کارکرد و خرابی هر دو <b>فعالیت</b>اند؛ <span class="ltr">end-of-runtime</span> و <span class="ltr">end-of-downtime</span> هر دو رویداد <b>اولیه</b>اند. این هم یک زنجیره‌ی خودتولید است، فقط با دو حلقه‌ی متناوب به‌جای یک حلقه.</p>
+<div class="box think"><div class="bt">✋ یک قدم جلوتر</div>
+اگر تعمیر فقط وقتی شروع شود که <b>تعمیرکار آزاد باشد</b>، آیا <span class="ltr">end-of-downtime</span> هنوز در لحظه‌ی <span class="ltr">eor</span> زمان‌بندی می‌شود؟ نه. آن وقت بین خرابی و شروع تعمیر یک <b>تأخیر</b> اضافه می‌شود: ماشین خراب در صف تعمیرگاه می‌نشیند و <span class="ltr">eod</span> فقط وقتی زمان‌بندی می‌شود که تعمیر واقعاً شروع شود. همان الگوی «شروع خدمت» با اسم دیگر. (تمرین ۷)
+</div>
+</section>
+
+<!-- ===================================================== 06 -->
+<section id="stopping">
+<h2 data-short="شرط‌های پایان"><span class="num">06</span> شرط‌های پایان شبیه‌سازی <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>Banks جمله‌ی صریحی دارد: <b>هر شبیه‌سازی باید یک رویداد پایان داشته باشد که آن را E می‌نامیم</b> و تعیین می‌کند اجرا چقدر طول می‌کشد. دو راه کلی هست — یا $T_E$ از قبل معلوم است، یا خودِ شبیه‌سازی آن را تعیین می‌کند. در عمل پنج صورت می‌بینی:</p>
+
+<div class="tablewrap"><table>
+<tr><th>#</th><th>شرط پایان</th><th>چطور پیاده می‌شود</th><th>مثال</th><th>$T_E$ از قبل معلوم؟</th><th>تله</th></tr>
+<tr><td>۱</td><td><b>زمان ثابت</b> $T_E$</td><td>در $t=0$ یک اعلان <span class="ltr">(E, T<sub>E</sub>)</span> در FEL بگذار</td><td>شبیه‌سازی یک کارگاه برای $T_E=40$ ساعت؛ یک بانک از ۹ تا ۱۳</td><td>✅ بله</td><td>مشتری‌های داخل سیستم در لحظه‌ی $T_E$ هیچ‌وقت خارج نمی‌شوند؛ انتظارشان در آماره نمی‌آید</td></tr>
+<tr><td>۲</td><td><b>تعداد موجودیت</b></td><td>در هر رویداد خروج شمارنده را چک کن؛ به $k$ که رسید، پایان</td><td>$T_E$ $=$ زمان خروج صدمین مشتری</td><td>❌ نه</td><td>$T_E$ خودش یک متغیر تصادفی است؛ طول اجرا بین تکرارها فرق می‌کند</td></tr>
+<tr><td>۳</td><td><b>شرط حالت</b></td><td>بعد از به‌روزرسانی حالت، شرط را چک کن</td><td>تا وقتی طول صف به ۲۰ برسد؛ تا وقتی موجودی منفی شود</td><td>❌ نه</td><td>ممکن است <b>هرگز</b> برقرار نشود ⇒ همیشه یک سقف زمانی هم بگذار</td></tr>
+<tr><td>۴</td><td><b>FEL خالی</b></td><td>حلقه‌ی <span class="ltr">while FEL:</span> خودش کافی است</td><td>پردازش دسته‌ی ثابتی از ۵۰۰ سفارش تا آخرین خروج</td><td>❌ نه</td><td>با ورودهای خودتولید <b>هرگز</b> رخ نمی‌دهد (کادر زیر)</td></tr>
+<tr><td>۵</td><td><b>رویداد E ویژه</b></td><td>هر رویدادی که تعریف کنی؛ وقتی از FEL درآمد، پایان</td><td>$T_E$ $=$ زمان خرابی کل سیستم؛ زمان ارسال آخرین کارتن روز</td><td>❌ نه</td><td>اگر چند شرط هم‌زمان ممکن‌اند، «هرکدام زودتر» را صریح بنویس</td></tr>
+</table></div>
+<p>صورت‌های ۲ تا ۵ در واقع یک چیزند: همگی «$T_E$ برابر زمان وقوع رویداد مشخصی به نام E است». صورت ۱ تنها حالتی است که $T_E$ قبل از اجرا معلوم است. Banks تأکید می‌کند که در بقیه، خود $T_E$ ممکن است <b>یکی از آماره‌های اصلی مورد علاقه</b> باشد — مثلاً «چقدر طول می‌کشد تا صد سفارش تمام شود؟».</p>
+
+<div class="box warn"><div class="bt">⚠ «FEL خالی» در جزوه، و اینکه کِی واقعاً کار می‌کند <span class="tag book">تکمیلی</span></div>
+<p>جزوه (ص ۲۰ فایل، اسلاید ۳٫۲۳) «$T_E$ $=$ وقتی FEL خالی شود» را به‌عنوان مثال می‌آورد. این شرط فقط وقتی معنا دارد که <b>منبع ورودها پایان‌پذیر</b> باشد:</p>
+<ul>
+<li>اگر همه‌ی ورودها از پیش در یک فهرست باشند (مثل مثال مرجع این جلسه با ۵ مشتری) ⇒ FEL در لحظه‌ی ۱۵ خالی می‌شود. ✅</li>
+<li>اگر از زنجیره‌ی خودتولید بخش ۰۵ استفاده کنی ⇒ هر ورود، ورود بعدی را می‌سازد و FEL <b>هیچ‌وقت</b> خالی نمی‌شود؛ حلقه بی‌نهایت می‌شود. ❌</li>
+</ul>
+<p>پس در تمرین‌های عملی که ورودها را خودتولید می‌کنی، حتماً یکی از شرط‌های ۱ تا ۳ را هم بگذار. قاعده‌ی ساده: <b>اگر رویدادی وجود دارد که همیشه جانشین خودش را می‌سازد، «FEL خالی» شرط پایان نیست.</b></p>
+</div>
+
+<div class="box mistake"><div class="bt">✗ اشتباه رایج در گزارش آماره‌ها</div>
+<p>با شرط پایان نوع ۲ («تا خروج مشتری $k$ام») خیلی‌ها میانگین انتظار را روی $k$ مشتری گزارش می‌کنند و فکر می‌کنند بی‌اریب است. نیست: مشتری‌هایی که در لحظه‌ی $T_E$ هنوز در صف‌اند معمولاً <b>انتظارهای بلند</b> دارند و دقیقاً همان‌ها حذف می‌شوند. میانگین گزارش‌شده <b>کمتر از</b> واقعیت درمی‌آید.</p>
+<p>مثال عددی از همین صفحه: در مثال مرجع، اگر شرط پایان «خروج سومین مشتری» بود، $T_E=9$ می‌شد و میانگین انتظارِ سه خروجی $(0+2+4)/3=2$. ولی اگر تا آخر بروی، میانگین هر پنج نفر $8/5=1.6$ است. دو عدد کاملاً متفاوت از یک اجرا. همیشه بنویس آماره روی <b>چه جمعیتی</b> و در <b>چه بازه‌ای</b> حساب شده است.</p>
+</div>
+
+<div class="box tip"><div class="bt">💡 قرارداد رویداد دقیقاً در لحظه‌ی $T_E$</div>
+اگر یک ورود و رویداد E هر دو در $T_E$ زمان‌بندی شده باشند، کدام اول؟ قرارداد متعارف: <b>E آخر از همه</b> اجرا می‌شود (یعنی در صف اولویت کمترین اولویت را دارد) تا همه‌ی اتفاق‌های لحظه‌ی $T_E$ ثبت شوند، یا <b>E اول از همه</b> تا بازه دقیقاً نیم‌باز $[0,T_E)$ بماند. هر کدام را انتخاب کردی، در گزارشت بنویس — این دقیقاً چیزی است که تمرین ۳ سؤال ۳ می‌خواهد.
+</div>
+</section>
+
+<!-- ===================================================== 07 -->
+<section id="stepper">
+<h2 data-short="ابزار: گام‌زن FEL"><span class="num">07</span> ابزار تعاملی: گام‌زن FEL</h2>
+<p>الگوریتم بخش ۰۴ را یک بار <b>با دست</b> اجرا کن تا در تنت برود. هر بار که «گام بعدی» را بزنی دقیقاً یک دور از پنج قدم اجرا می‌شود: رویداد قریب‌الوقوع از FEL برداشته می‌شود، ساعت می‌پرد، حالت عوض می‌شود، رویدادهای تازه درج می‌شوند و شمارنده‌ها به‌روز می‌شوند.</p>
+<div id="w-fel"></div>
+<div class="box tip"><div class="bt">💡 چهار چیزی که باید با این ابزار ببینی</div>
+<ol>
+<li><b>FEL هیچ‌وقت بیشتر از ۲ عضو ندارد.</b> یک ورود (همیشه) و حداکثر یک پایان خدمت. تعداد منتظرها هرچقدر زیاد شود، FEL همان دو تاست — چون تأخیرها در FEL نیستند.</li>
+<li><b>وقتی مشتری وارد صف می‌شود، FEL کوچک نمی‌شود و بزرگ هم نمی‌شود.</b> مقایسه کن با ورودی که سرور را بیکار می‌بیند: آن‌جا یک اعلان تازه اضافه می‌شود.</li>
+<li><b>میانگین انتظار با نسبت بار می‌ترکد.</b> میانگین خدمت را نزدیک میانگین بین‌ورود ببر (نسبت بار نزدیک ۱) و ببین صف چطور رشد می‌کند و تثبیت نمی‌شود.</li>
+<li><b>«از نو با بذر تازه» با همان پارامترها، جواب‌های متفاوت می‌دهد.</b> یک اجرا هیچ‌وقت کافی نیست — همان درسی که در جلسه‌ی ۵ با بازه‌ی اطمینان گرفتی.</li>
+</ol>
+</div>
+</section>
+
+<!-- ===================================================== 08 -->
+<section id="exam">
+<h2 data-short="مسئله‌ی امتحانی"><span class="num">08</span> مسئله‌ی امتحانی حل‌شده <span class="tag exam">امتحانی</span></h2>
+<div class="box ex"><div class="bt">مسئله · ایستگاه بازرسی تک‌سرور</div>
+<p>یک ایستگاه بازرسی با یک بازرس و صف FIFO، در آغاز خالی و بازرس بیکار. پنج مسافر با این داده‌ها:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>مسافر</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+<tr><th>زمان ورود</th><td>0</td><td>1</td><td>4</td><td>5</td><td>11</td></tr>
+<tr><th>زمان بازرسی</th><td>3</td><td>2</td><td>4</td><td>1</td><td>2</td></tr>
+</table></div>
+<p>قرارداد: رویداد خروج پیش از ورودِ هم‌زمان اجرا می‌شود. ورودها از قبل معلوم‌اند (خودتولید نیستند).</p>
+<p>(الف) جدول snapshot کامل را با ستون‌های ساعت، رویداد، $L_S$، $L_Q$، FEL و شمارنده‌های $B,\,A_Q,\,A_L,\,\Sigma W$ پر کن.
+(ب) بهره‌وری بازرس، $\bar L$، $\bar L_Q$، $\bar W_Q$ و $\bar W$ را بده.
+(ج) اگر شرط پایان «خروج سومین مسافر» بود، همین سه آماره چه می‌شدند و چرا فرق دارند؟
+(د) اگر به‌جای فهرست ثابت، ورودها خودتولید بودند، شرط پایان «FEL خالی» چه می‌شد؟ و در لحظه‌ی خروج صدمین مسافر، FEL چند عضو دارد؟</p>
+</div>
+<details><summary>راه‌حل کامل</summary>
+<p><b>(الف)</b> دقت کن در لحظه‌ی ۵ تساوی داریم: خروج مسافر ۲ و ورود مسافر ۴ هر دو در ۵ هستند و طبق قرارداد اول خروج اجرا می‌شود — دو سطر جدا با یک ساعت.</p>
+<div class="tablewrap"><table class="sim snap">
+<tr><th>ساعت</th><th>رویداد</th><th>L<sub>S</sub></th><th>L<sub>Q</sub></th><th>FEL بعد از رویداد</th><th>B</th><th>A<sub>Q</sub></th><th>A<sub>L</sub></th><th>ΣW</th></tr>
+<tr><td>0</td><td>ورود ۱ ⇒ شروع</td><td class="st">1</td><td class="st">0</td><td class="fel">(A,1,c2) (D,3,c1)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>1</td><td>ورود ۲ ⇒ صف</td><td class="st">1</td><td class="st">1</td><td class="fel">(D,3,c1) (A,4,c3)</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+<tr><td>3</td><td>خروج ۱ ⇒ شروع ۲</td><td class="st">1</td><td class="st">0</td><td class="fel">(A,4,c3) (D,5,c2)</td><td>3</td><td>2</td><td>5</td><td class="wait">2</td></tr>
+<tr><td>4</td><td>ورود ۳ ⇒ صف</td><td class="st">1</td><td class="st">1</td><td class="fel">(A,5,c4) (D,5,c2)</td><td>4</td><td>2</td><td>6</td><td>2</td></tr>
+<tr class="hl"><td>5</td><td>خروج ۲ ⇒ شروع ۳ <b>(اول خروج)</b></td><td class="st">1</td><td class="st">0</td><td class="fel">(A,5,c4) (D,9,c3)</td><td>5</td><td>3</td><td>8</td><td class="wait">3</td></tr>
+<tr class="hl"><td>5</td><td>ورود ۴ ⇒ صف <b>(بعد ورود)</b></td><td class="st">1</td><td class="st">1</td><td class="fel">(D,9,c3) (A,11,c5)</td><td>5</td><td>3</td><td>8</td><td>3</td></tr>
+<tr><td>9</td><td>خروج ۳ ⇒ شروع ۴</td><td class="st">1</td><td class="st">0</td><td class="fel">(D,10,c4) (A,11,c5)</td><td>9</td><td>7</td><td>16</td><td class="wait">7</td></tr>
+<tr class="idle"><td>10</td><td>خروج ۴ ⇒ بیکار</td><td class="st">0</td><td class="st">0</td><td class="fel">(A,11,c5)</td><td>10</td><td>7</td><td>17</td><td>7</td></tr>
+<tr><td>11</td><td>ورود ۵ ⇒ شروع</td><td class="st">1</td><td class="st">0</td><td class="fel">(D,13,c5)</td><td>10</td><td>7</td><td>17</td><td>7</td></tr>
+<tr class="sum"><td>13</td><td>خروج ۵ ⇒ FEL خالی</td><td class="st">0</td><td class="st">0</td><td class="fel">∅</td><td>12</td><td>7</td><td>19</td><td>7</td></tr>
+</table></div>
+<p><b>(ب)</b> $T=13$ و مجموع زمان‌های بازرسی $3+2+4+1+2=12$:</p>
+<div class="stats">
+  <div><div class="l">بهره‌وری</div><div class="v">0.923</div><div class="f">12 / 13</div></div>
+  <div><div class="l">میانگین طول صف</div><div class="v">0.538</div><div class="f">7 / 13</div></div>
+  <div><div class="l">میانگین در سیستم</div><div class="v">1.462</div><div class="f">19 / 13</div></div>
+  <div><div class="l">میانگین انتظار</div><div class="v">1.400</div><div class="f">7 / 5</div></div>
+  <div><div class="l">میانگین زمان در سیستم</div><div class="v">3.800</div><div class="f">19 / 5</div></div>
+</div>
+<p>انتظار هر مسافر: $0,\;3-1=2,\;5-4=1,\;9-5=4,\;0$. جمع $=7$. آزمون صحت: جمع زمان‌های در سیستم $3+4+5+5+2=19=A_L$ ✓ و $A_Q=7=\Sigma W$ ✓.</p>
+<p><b>(ج)</b> با شرط «خروج سومین مسافر» داریم $T_E=9$ و اجرا بعد از اجرای همان رویداد قطع می‌شود:</p>
+<div class="tablewrap"><table>
+<tr><th>آماره</th><th>تا پایان طبیعی ($T=13$)</th><th>تا خروج سوم ($T_E=9$)</th><th>چرا فرق می‌کند</th></tr>
+<tr><td>بهره‌وری</td><td>$12/13=0.923$</td><td>$9/9=1.000$</td><td>تنها بازه‌ی بیکاری $[10,11)$ بعد از قطع افتاده است</td></tr>
+<tr><td>$\bar L$</td><td>$19/13=1.462$</td><td>$16/9=1.778$</td><td>شلوغ‌ترین قسمت اجرا در $[0,9]$ است؛ دنباله‌ی خلوت حذف شده</td></tr>
+<tr><td>$\bar W_Q$</td><td>$7/5=1.400$</td><td>$(0+2+1)/3=1.000$</td><td>مسافر ۴ که $4$ واحد منتظر مانده هنوز خارج نشده و در میانگین نیامده</td></tr>
+</table></div>
+<p>نکته‌ی اصلی: هیچ‌کدام از این دو ستون «غلط» نیست؛ ولی دو چیز متفاوت را اندازه می‌گیرند. با شرط پایانِ نوع ۲، آماره‌ی انتظار <b>به‌سمت پایین اریب</b> است چون مشتری‌های بدشانسِ هنوز-در-صف حذف می‌شوند.</p>
+<p><b>(د)</b> با ورودهای خودتولید، هر ورود ورود بعدی را می‌سازد، پس FEL همیشه دست‌کم یک اعلان ورود دارد و <b>هیچ‌وقت خالی نمی‌شود</b>؛ شرط «FEL خالی» بی‌فایده است و باید یکی از شرط‌های زمان ثابت، تعداد مسافر یا شرط حالت را بگذاری. در لحظه‌ی خروج صدمین مسافر، FEL <b>یک یا دو</b> عضو دارد: همیشه یک اعلان ورود، به‌علاوه یک اعلان پایان بازرسی اگر صف خالی نبوده و مسافر بعدی بلافاصله خدمت گرفته باشد. (و اگر رویداد E را هم زمان‌بندی کرده باشی، یکی بیشتر.)</p>
+</details>
+</section>
+
+<!-- ===================================================== 09 -->
+<section id="exercises">
+<h2><span class="num">09</span> تمرین‌ها</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">🟢 پایه</span></div>
+هرکدام فعالیت است یا تأخیر؟ (الف) زمان بین‌ورود دو مشتری. (ب) انتظار مشتری در صف. (پ) زمان خدمت. (ت) مدت تعمیر یک ماشین، از لحظه‌ای که تعمیرکار شروع می‌کند. (ث) زمانی که ماشین خرابْ منتظر آزاد شدن تعمیرکار می‌ماند. (ج) مدت کارکرد ماشین تا خرابی بعدی.
+<details><summary>راه‌حل</summary>فعالیت: الف، پ، ت، ج. تأخیر: ب، ث. معیار یکتا: مدتش در لحظه‌ی شروع قرعه می‌خورد؟ در (ت) بله — همان لحظه که تعمیر شروع می‌شود، مدتش از توزیع درمی‌آید. در (ث) نه — به این بستگی دارد که تعمیرکار کِی ماشین قبلی را تمام کند. فعالیت‌ها اعلان در FEL می‌سازند، تأخیرها نه.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">🟢 پایه</span></div>
+در لحظه‌ی $t=6.4$، محتوای FEL این است: <span class="ltr mono">(D, 7.2, c3), (A, 7.2, c9), (E, 20.0)</span> با قرارداد «خروج پیش از ورود». (الف) رویداد قریب‌الوقوع کدام است؟ (ب) بعد از قدم ۲، ساعت چند است؟ (پ) آیا قدم ۴ می‌تواند رویدادی در زمان $6.9$ بسازد؟
+<details><summary>راه‌حل</summary>(الف) <span class="ltr mono">(D, 7.2, c3)</span>: کمترین زمان را دارد و در تساوی، خروج مقدم است. (ب) $\text{clock}=7.2$. (پ) نه. رابطه‌ی $t<t_1\le t_2\le\cdots$ بعد از قدم ۲ با $t=7.2$ برقرار است، پس هر رویداد تازه باید زمانی <b>اکیداً بزرگ‌تر از ۷٫۲</b> داشته باشد. اگر کدت رویدادی در گذشته بسازد، یعنی یا یک مدت منفی قرعه خورده یا ساعت را جایی دستی عقب برده‌ای.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">🟡 مهارتی</span></div>
+صف تک‌سرور FIFO، در آغاز خالی. ورودها در $0,1,2,8$ و زمان‌های خدمت $2,3,1,2$. جدول snapshot را تا خالی‌شدن FEL پر کن و $\rho$، $\bar W_Q$ و $\bar L$ را بده. (قرارداد: خروج پیش از ورود هم‌زمان.)
+<details><summary>راه‌حل</summary>
+<div class="tablewrap"><table class="sim snap">
+<tr><th>ساعت</th><th>رویداد</th><th>L<sub>S</sub></th><th>L<sub>Q</sub></th><th>FEL</th><th>B</th><th>A<sub>Q</sub></th><th>A<sub>L</sub></th><th>ΣW</th></tr>
+<tr><td>0</td><td>ورود ۱ ⇒ شروع</td><td>1</td><td>0</td><td class="fel">(A,1) (D,2)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>1</td><td>ورود ۲ ⇒ صف</td><td>1</td><td>1</td><td class="fel">(D,2) (A,2)</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+<tr class="hl"><td>2</td><td>خروج ۱ ⇒ شروع ۲</td><td>1</td><td>0</td><td class="fel">(A,2) (D,5)</td><td>2</td><td>1</td><td>3</td><td>1</td></tr>
+<tr class="hl"><td>2</td><td>ورود ۳ ⇒ صف</td><td>1</td><td>1</td><td class="fel">(D,5) (A,8)</td><td>2</td><td>1</td><td>3</td><td>1</td></tr>
+<tr><td>5</td><td>خروج ۲ ⇒ شروع ۳</td><td>1</td><td>0</td><td class="fel">(D,6) (A,8)</td><td>5</td><td>4</td><td>9</td><td>4</td></tr>
+<tr class="idle"><td>6</td><td>خروج ۳ ⇒ بیکار</td><td>0</td><td>0</td><td class="fel">(A,8)</td><td>6</td><td>4</td><td>10</td><td>4</td></tr>
+<tr><td>8</td><td>ورود ۴ ⇒ شروع</td><td>1</td><td>0</td><td class="fel">(D,10)</td><td>6</td><td>4</td><td>10</td><td>4</td></tr>
+<tr class="sum"><td>10</td><td>خروج ۴ ⇒ ∅</td><td>0</td><td>0</td><td class="fel">∅</td><td>8</td><td>4</td><td>12</td><td>4</td></tr>
+</table></div>
+$T=10$، $\rho=8/10=0.8$، $\bar W_Q=4/4=1.0$، $\bar L=12/10=1.2$ و $\bar L_Q=4/10=0.4$. آزمون صحت: جمع زمان‌های در سیستم $2+4+4+2=12=A_L$ ✓.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">🟡 مهارتی</span></div>
+در صف تک‌سرور با ورودهای خودتولید و بدون رویداد E، نشان بده تعداد اعلان‌های FEL همیشه ۱ یا ۲ است. سه تغییر در مدل نام ببر که این عدد را بزرگ کند.
+<details><summary>راه‌حل</summary>
+<b>همیشه دقیقاً یک</b> اعلان ورود هست: در لحظه‌ی صفر یکی ساخته می‌شود، و هر رویداد ورود دقیقاً یکی مصرف و یکی تولید می‌کند. اعلان پایان خدمت <b>حداکثر یکی</b> است چون سرور یکی است: وقتی $L_S=1$ یکی هست و وقتی $L_S=0$ هیچ. پس $|FEL|\in\{1,2\}$ و دقیقاً $|FEL|=1+L_S$.<br>
+بزرگ‌کننده‌ها: (۱) <b>$c$ سرور</b> ⇒ تا $c$ اعلان پایان خدمت، پس $|FEL|\le c+1$. (۲) <b>انصراف زمان‌دار</b> (reneging با صبر $R$): مدت صبر در لحظه‌ی ورود به صف قرعه می‌خورد ⇒ فعالیت است ⇒ هر منتظر یک اعلان «پایان صبر» می‌گیرد و $|FEL|$ با طول صف رشد می‌کند. (۳) <b>چند منبع ورود</b> یا رسیدن دسته‌ای با زمان‌های جدا. (و اگر رویداد E را هم بگذاری، یکی ثابت اضافه می‌شود.)<br>
+نکته‌ی (۲) مهم است: اگر اعلان پایان صبر ساخته‌ای، وقتی مشتری خدمت می‌گیرد باید آن اعلان را از FEL <b>حذف</b> کنی، وگرنه مشتریِ در حال خدمت ناگهان «منصرف» می‌شود. پس FEL تو باید عمل حذف را هم داشته باشد، نه فقط درج و کمینه.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">🟡 مهارتی</span></div>
+از جدول snapshot مثال مرجع، ده مقدار $L_Q$ بعد از رویدادها به‌ترتیب $0,1,2,1,0,0,0,1,0,0$ در ساعت‌های $0,2,3,4,7,9,10,11,13,15$ هستند. (الف) $A_Q$ و $\bar L_Q$ را حساب کن. (ب) میانگین ساده‌ی همان ده عدد چقدر است و چرا با $\bar L_Q$ فرق دارد؟
+<details><summary>راه‌حل</summary>
+(الف) هر مقدار را در <b>طول بازه‌ی تا رویداد بعدی</b> ضرب کن:
+$A_Q=0(2)+1(1)+2(1)+1(3)+0(2)+0(1)+0(1)+1(2)+0(2)=1+2+3+2=8$، و $\bar L_Q=8/15=0.533$.<br>
+(ب) میانگین ساده $=(0+1+2+1+0+0+0+1+0+0)/10=0.5$. فرق دارد چون میانگین ساده به هر <b>رویداد</b> وزن یکسان می‌دهد، ولی $\bar L_Q$ به هر <b>واحد زمان</b> وزن یکسان می‌دهد. بازه‌های طولانی (مثل $[4,7)$ با $L_Q=1$) در میانگین زمانی وزن بیشتری دارند. هر وقت رویدادها نامنظم‌اند — که همیشه هستند — این دو عدد یکی نمی‌شوند. قاعده: آماره‌های «میانگین زمانی» همیشه با انتگرال، نه با میانگین نمونه‌ها.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">🟡 مهارتی</span></div>
+در مدلی، مشتری تازه‌وارد اگر طول صف $\ge3$ باشد بی‌خیال می‌شود و می‌رود (<span class="ltr">balking</span>). در مدل دیگری، مشتری وارد صف می‌شود ولی اگر تا $R$ دقیقه نوبتش نرسد صف را ترک می‌کند (<span class="ltr">reneging</span>). برای هرکدام بگو رویداد اولیه است یا ثانویه، و آیا اعلانی در FEL می‌سازد.
+<details><summary>راه‌حل</summary>
+<b>Balking:</b> رویداد مستقلی نیست. تصمیمش <b>داخل</b> رویداد ورود و از روی حالت فعلی گرفته می‌شود؛ یک شاخه‌ی <span class="ltr">if</span> در روال ورود است. هیچ اعلانی در FEL نمی‌رود. از نوع رویداد مشروط/ثانویه است.<br>
+<b>Reneging با صبر $R$:</b> مدت صبر در لحظه‌ی ورود به صف معلوم است (عدد ثابت یا قرعه از توزیع) ⇒ <b>فعالیت</b> است ⇒ «پایان صبر» یک رویداد <b>اولیه</b> با اعلان در FEL در زمان $t+R$. دو نکته‌ی پیاده‌سازی: (۱) اگر مشتری قبل از $t+R$ خدمت گرفت باید اعلانش لغو شود؛ (۲) خودِ «نوبت رسیدن» همچنان تأخیر است. پس یک مشتری منتظر هم‌زمان یک تأخیر (انتظار) و یک فعالیت (صبر محدود) دارد — تمام‌شدن هرکدام زودتر، سرنوشتش را تعیین می‌کند.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">🔴 تحلیلی</span></div>
+ماشینی با تناوب کارکرد/خرابی (جزوه ص ۱۹). قرعه‌ها به‌ترتیب: کارکرد ۸، خرابی ۳، کارکرد ۵، خرابی ۲، کارکرد ۶. (الف) زمان همه‌ی رویدادهای <span class="ltr">eor</span> و <span class="ltr">eod</span> تا $t=24$ و دسترس‌پذیری در $[0,24]$ را بده. (ب) حالا فرض کن یک تعمیرکار بین دو ماشین مشترک است و ممکن است در لحظه‌ی خرابی مشغول باشد. چه چیزی از فعالیت به تأخیر تبدیل می‌شود و FEL چطور عوض می‌شود؟
+<details><summary>راه‌حل</summary>
+(الف) <span class="ltr mono">eor@8, eod@11, eor@16, eod@18, eor@24</span>. زمان کارکرد در $[0,24]$: $[0,8]$، $[11,16]$ و $[18,24]$ یعنی $8+5+6=19$؛ خرابی $3+2=5$. دسترس‌پذیری $=19/24=0.792$. هر پنج رویداد اولیه‌اند و هر پنج بازه فعالیت.<br>
+(ب) تا وقتی تعمیرکار اختصاصی است، در لحظه‌ی <span class="ltr">eor</span> مدت تعمیر قرعه می‌خورد و <span class="ltr">eod</span> بلافاصله زمان‌بندی می‌شود. با تعمیرکار مشترک، بین <span class="ltr">eor</span> و شروع تعمیر یک <b>تأخیر</b> می‌نشیند: ماشین خراب در صف تعمیرگاه قرار می‌گیرد و هیچ اعلانی ساخته نمی‌شود. <span class="ltr">eod</span> فقط وقتی زمان‌بندی می‌شود که تعمیر واقعاً شروع شود — یعنی در رویداد <span class="ltr">eod</span>ِ ماشین قبلی، دقیقاً مثل «شروع خدمت» در صف. حالت سیستم هم بزرگ‌تر می‌شود: باید بدانی تعمیرکار آزاد است یا نه و چند ماشین در صف تعمیرند. این همان مدل «ماشین‌های خراب با جمعیت محدود» است که تمرین ۲ سؤال ۵ می‌پرسد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">🔴 تحلیلی</span></div>
+ثابت کن $\int_0^T L(t)\,dt=\sum_{i=1}^{n}(D_i-A_i)$ وقتی همه‌ی $n$ مشتری در $[0,T]$ وارد و خارج شده‌اند، و از آن $\bar L=\lambda\bar W$ را نتیجه بگیر. بعد بگو اگر شبیه‌سازی را در $T$ قطع کنی و $m$ مشتری هنوز داخل باشند، تساوی چطور تغییر می‌کند.
+<details><summary>راه‌حل</summary>
+تعداد در سیستم را به‌صورت جمع تابع‌های شاخص بنویس: $L(t)=\sum_{i=1}^n\mathbf 1\{A_i\le t<D_i\}$. چون جمع متناهی است می‌توان انتگرال و جمع را جابه‌جا کرد:
+$$\int_0^T L(t)\,dt=\sum_{i=1}^n\int_0^T\mathbf 1\{A_i\le t<D_i\}\,dt=\sum_{i=1}^n (D_i-A_i)$$
+حالا دو طرف را بر $T$ تقسیم کن و صورت و مخرج سمت راست را در $n$ ضرب و تقسیم کن:
+$$\bar L=\frac1T\int_0^T L=\frac{n}{T}\cdot\frac{1}{n}\sum_i (D_i-A_i)=\lambda\,\bar W$$
+با $\lambda=n/T$ نرخ ورود مشاهده‌شده. توجه کن این یک <b>اتحاد حسابداری روی همان نمونه</b> است، نه یک قضیه‌ی احتمالاتی؛ هیچ فرضی درباره‌ی توزیع لازم نشد.<span class="qed">∎</span><br>
+اگر $m$ مشتری در $T$ هنوز داخل باشند، انتگرال فقط بخش $[A_i,T]$ آن‌ها را می‌شمارد:
+$$\int_0^T L=\sum_{\text{خارج‌شده}}(D_i-A_i)+\sum_{\text{داخل}}(T-A_i)$$
+پس اگر $\bar W$ را فقط روی خارج‌شده‌ها حساب کنی، $\bar L$ و $\lambda\bar W$ دیگر یکی نمی‌شوند. دو راه درست: یا افق را تا خروج آخرین مشتری ادامه بده (همان کاری که جدول‌های این جلسه کردند)، یا جمله‌ی لبه را صریح اضافه کن. این دقیقاً همان اریبی بخش ۰۶ است، از زاویه‌ی ریاضی.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">🔵 پژوهشگر</span></div>
+یک اجرا $N=10^6$ رویداد دارد. هزینه‌ی کل مدیریت FEL را برای فهرست مرتب‌نشده، فهرست مرتبِ پیوندی و هیپ دودویی برحسب $N$ و اندازه‌ی معمول FEL یعنی $n$ بنویس. برای صف تک‌سرور ($n\le2$) و برای یک کارگاه با $n\approx500$ عدد بگذار و بگو کدام برنده است و چرا جواب شهودی «همیشه هیپ» غلط است.
+<details><summary>راه‌حل</summary>
+در هر رویداد یک بار «کمینه را بردار» و به‌طور میانگین یک بار «درج کن» داریم.
+<div class="tablewrap"><table>
+<tr><th>ساختار</th><th>کمینه</th><th>درج</th><th>کل برای $N$ رویداد</th><th>$n=2$</th><th>$n=500$</th></tr>
+<tr><td>مرتب‌نشده</td><td>$O(n)$</td><td>$O(1)$</td><td>$\approx Nn$</td><td>$2\times10^6$</td><td>$5\times10^8$</td></tr>
+<tr><td>مرتبِ پیوندی</td><td>$O(1)$</td><td>$O(n)$ در بدترین حالت</td><td>$\approx Nn/2$</td><td>$10^6$</td><td>$2.5\times10^8$</td></tr>
+<tr><td>هیپ دودویی</td><td>$O(\log n)$</td><td>$O(\log n)$</td><td>$\approx 2N\log_2 n$</td><td>$2\times10^6$</td><td>$1.8\times10^7$</td></tr>
+</table></div>
+برای $n=500$ هیپ حدود ۱۴ تا ۲۸ برابر بهتر است. برای $n=2$ هر سه هم‌مرتبه‌اند و آن‌وقت <b>ضریب ثابت</b> تعیین‌کننده می‌شود: هیپ پایتون برای هر درج یک تاپل می‌سازد و مقایسه‌ی تاپلی انجام می‌دهد که از یک مقایسه‌ی ساده‌ی عدد چند برابر گران‌تر است. پس برای صف تک‌سرور، دو متغیر ساده‌ی <span class="ltr mono">t_next_arrival</span> و <span class="ltr mono">t_next_departure</span> و یک <span class="ltr">if</span> از هر ساختمان‌داده‌ای سریع‌تر است.<br>
+درس کلی: مرتبه‌ی مجانبی فقط وقتی حرف می‌زند که $n$ بزرگ شود. در شبیه‌سازی، $n$ همان «تعداد رویدادهای معلق» است و خیلی مدل‌ها آن را کوچک و ثابت نگه می‌دارند.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">🔵 پژوهشگر</span></div>
+سیستمی با ظرفیت کل ۱ (یک سرور، بدون جای انتظار): مشتری‌ای که سیستم را پر ببیند حذف می‌شود. مشتری ۱ از $t=2$ در خدمت است و خدمتش در $t=5$ تمام می‌شود؛ مشتری ۲ دقیقاً در $t=5$ می‌رسد. (الف) با دو قاعده‌ی تساویِ متفاوت چه اتفاقی می‌افتد؟ (ب) چرا در صف تک‌سرور با ظرفیت نامحدود، همین قاعده هیچ اثری روی میانگین انتظار ندارد؟
+<details><summary>راه‌حل</summary>
+(الف) با قرارداد <b>«ورود پیش از خروج»</b>، در لحظه‌ی ۵ اول ورود اجرا می‌شود؛ مشتری ۲ سیستم را پر می‌بیند و <b>حذف</b> می‌شود. بعد خروج اجرا می‌شود و سرور بیکار می‌ماند. با قرارداد <b>«خروج پیش از ورود»</b>، اول سرور آزاد می‌شود و بعد مشتری ۲ می‌رسد و <b>خدمت می‌گیرد</b>. یک رویداد هم‌زمان، دو نتیجه‌ی کاملاً متفاوت: نرخ حذف، بهره‌وری و توان‌عملیاتی همه عوض می‌شوند. به همین دلیل تمرین ۲ سؤال ۷ صریحاً قرارداد را اعلام می‌کند.<br>
+(ب) با ظرفیت نامحدود، در هر دو ترتیب مشتری ۲ بالاخره در لحظه‌ی ۵ خدمت می‌گیرد: اگر ورود اول اجرا شود، مشتری وارد صف می‌شود و همان لحظه رویداد خروج او را از صف بیرون می‌کشد ⇒ انتظار صفر. اگر خروج اول اجرا شود، سرور بیکار است و مشتری مستقیم خدمت می‌گیرد ⇒ باز انتظار صفر. چون هیچ تصمیمِ <b>برگشت‌ناپذیری</b> (مثل حذف) در کار نیست، ترتیب فقط مسیر را عوض می‌کند نه نتیجه را.<br>
+قاعده‌ی کلی: ترتیب رویدادهای هم‌زمان فقط وقتی اهمیت دارد که در آن لحظه یک تصمیم <b>مبتنی بر ظرفیت یا در دسترس بودن</b> گرفته شود — حذف، انصراف، تخصیص منبع کمیاب. هرجا چنین تصمیمی هست، قرارداد را در گزارش بنویس.</details></div>
+</section>
+
+<section id="quiz"><h2><span class="num">10</span> تست</h2><div class="quiz"></div></section>
+
+<section id="summary">
+<h2><span class="num">11</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box note"><div class="bt">۶ چیزی که باید یادت بماند</div>
+<ol>
+<li><b>معیار فعالیت در برابر تأخیر:</b> «مدتش در لحظه‌ی شروع محاسبه‌پذیر است؟» بله ⇒ فعالیت ⇒ پایانش رویداد اولیه ⇒ یک اعلان در FEL. نه ⇒ تأخیر ⇒ پایانش رویداد ثانویه ⇒ موجودیت در یک فهرست دیگر می‌نشیند و <b>هیچ‌وقت</b> در FEL نمی‌رود.</li>
+<li><b>پنج قدم:</b> کمینه را از FEL بردار ← ساعت را به زمانش ببر ← رویداد را اجرا کن (حالت، ویژگی‌ها، مجموعه‌ها) ← رویدادهای آینده را بساز و درج کن ← شمارنده‌ها را به‌روز کن. شمارنده‌های مساحتی را با حالتِ <b>قبلی</b> ضرب در بازه‌ی سپری‌شده حساب کن.</li>
+<li><b>ساعت فقط می‌پرد و هرگز برنمی‌گردد:</b> $t<t_1\le t_2\le\cdots\le t_n$. نامساوی اول اکید است (بدون بازگشت به گذشته)، بقیه نه (رویدادهای هم‌زمان مجازند و قاعده‌ی تساوی لازم است). پریدن <b>دقیق</b> است، نه تقریبی — فرقش با گام ثابتِ مدل پیوسته همین است.</li>
+<li><b>snapshot ≠ حالت:</b> snapshot یک سطر کامل است (ساعت + حالت + موجودیت‌ها و ویژگی‌ها + مجموعه‌ها + FEL + آماره‌ها). حالت فقط آن چیزی است که برای <b>ادامه‌ی اجرا</b> لازم است؛ مجموعه‌ها و آماره‌ها برای <b>گزارش</b>اند.</li>
+<li><b>زنجیره‌ی خودتولید:</b> هر ورود دقیقاً ورود بعدی را می‌سازد، پس همیشه یک اعلان ورود در FEL هست و حافظه ثابت می‌ماند — ولی FEL هیچ‌وقت خالی نمی‌شود، پس «FEL خالی» شرط پایان بی‌فایده‌ای می‌شود.</li>
+<li><b>هر شبیه‌سازی یک رویداد پایان E لازم دارد.</b> فقط در حالت «زمان ثابت $T_E$» طول اجرا از قبل معلوم است؛ در بقیه $T_E$ خودش یک متغیر تصادفی و گاهی یکی از خروجی‌های اصلی است. هر شرط پایان یک اریبی لبه می‌سازد — بنویس آماره روی چه جمعیتی و چه بازه‌ای است.</li>
+</ol>
+</div>
+<div class="box tip"><div class="bt">⏭ برای جلسه‌ی بعد</div>
+جلسه‌ی ۷ (جزوه Ch.3 ص ۲۱ تا ۳۸) دو کار می‌کند: سه <b>دیدگاه مدل‌سازی</b> (زمان‌بندی رویداد، تعامل فرایندها، پویش فعالیت‌ها) را مقایسه می‌کند، و همین الگوریتم را روی چند مثال کامل <b>دستی</b> اجرا می‌کند. قبلش جدول snapshot بخش ۰۳ را یک بار با دست و بدون نگاه‌کردن دوباره بساز؛ اگر ده سطر را درست درآوردی، جلسه‌ی ۷ فقط تکرار همین کار با مدل‌های بزرگ‌تر است. تمرین ۳ سؤال ۲ و ۳ هم دقیقاً آن‌جاست.
+</div>
+<div class="gloss">
+<div><b>discrete-event simulation (DES)</b>: شبیه‌سازی گسسته‌پیشامد</div>
+<div><b>system state</b>: حالت (وضعیت) سیستم</div>
+<div><b>entity</b>: موجودیت</div>
+<div><b>attribute</b>: ویژگی</div>
+<div><b>list / set</b>: فهرست / مجموعه</div>
+<div><b>event</b>: رویداد (پیشامد)</div>
+<div><b>event notice</b>: اعلان رویداد</div>
+<div><b>future event list (FEL) / set (FES)</b>: فهرست (مجموعه‌ی) رویدادهای آینده</div>
+<div><b>imminent event</b>: رویداد قریب‌الوقوع</div>
+<div><b>activity</b>: فعالیت</div>
+<div><b>delay</b>: تأخیر</div>
+<div><b>unconditional wait</b>: انتظار نامشروط (فعالیت)</div>
+<div><b>conditional wait</b>: انتظار مشروط (تأخیر)</div>
+<div><b>primary event</b>: رویداد اولیه</div>
+<div><b>secondary / conditional event</b>: رویداد ثانویه / مشروط</div>
+<div><b>exogenous event</b>: رویداد برون‌زا</div>
+<div><b>endogenous event</b>: رویداد درون‌زا</div>
+<div><b>clock</b>: ساعت شبیه‌سازی</div>
+<div><b>system snapshot</b>: تصویر لحظه‌ای سیستم</div>
+<div><b>event-scheduling / time-advance algorithm</b>: الگوریتم زمان‌بندی رویداد / پیشروی زمان</div>
+<div><b>bootstrapping</b>: زنجیره‌ی خودتولید رویدادها</div>
+<div><b>prime the model</b>: روشن‌کردن اولیه‌ی مدل</div>
+<div><b>initial conditions</b>: شرایط اولیه</div>
+<div><b>stopping event (E), run length T<sub>E</sub></b>: رویداد پایان، طول اجرا</div>
+<div><b>tie-breaking rule</b>: قاعده‌ی شکستن تساوی</div>
+<div><b>priority queue / binary heap</b>: صف اولویت / هیپ دودویی</div>
+<div><b>balking</b>: انصراف پیش از ورود به صف</div>
+<div><b>reneging</b>: ترک صف پس از انتظار</div>
+<div><b>utilization</b>: بهره‌وری</div>
+<div><b>time-average</b>: میانگین زمانی</div>
+<div><b>availability</b>: دسترس‌پذیری</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+{q:`چرا پایان یک <b>تأخیر</b> هیچ‌وقت به‌صورت اعلان در FEL گذاشته نمی‌شود؟`,
+ o:[`چون زمان وقوعش در لحظه‌ی شروع تأخیر معلوم نیست، پس عددی برای درج در فهرست وجود ندارد`,`چون تأخیرها اهمیت آماری ندارند`,`چون FEL فقط ظرفیت محدودی دارد`,`چون تأخیر رویداد نیست و حالت سیستم را عوض نمی‌کند`],a:0,
+ e:R`FEL فهرستی از زمان‌های معلوم است. پایان تأخیر از برقرارشدن یک شرط منطقی می‌آید، نه از یک قرعه؛ به همین دلیل موجودیت را در فهرست دیگری (صف) می‌گذارند و شرط را در رویدادهای دیگر چک می‌کنند. ضمناً پایان تأخیر <b>حتماً</b> حالت را عوض می‌کند — ولی هم‌زمان با یک رویداد اولیه‌ی دیگر رخ می‌دهد.`},
+{q:`کدام‌یک <b>فعالیت</b> است؟`,
+ o:[`زمان خدمت یک مشتری`,`مدت انتظار مشتری در صف`,`زمان باقی‌مانده تا آزاد شدن سرور، از دید مشتریِ تازه‌وارد`,`کل زمانی که مشتری در سیستم می‌ماند`],a:0,
+ e:R`فقط زمان خدمت در لحظه‌ی شروعش قرعه می‌خورد. سه گزینه‌ی دیگر همگی به رویدادهای آینده یا به زمان خدمت دیگران وابسته‌اند، پس تأخیر (یا ترکیبی از تأخیر و فعالیت) هستند.`},
+{q:`در رابطه‌ی $t < t_1 \le t_2 \le \cdots \le t_n$ چرا نامساوی اول اکید است؟`,
+ o:[`چون همه‌ی رویدادهای زمان جاری قبلاً از FEL برداشته و اجرا شده‌اند و شبیه‌سازی به عقب برنمی‌گردد`,`چون دو رویداد نمی‌توانند هم‌زمان باشند`,`چون ساعت فقط مقادیر صحیح می‌گیرد`,`چون FEL همیشه دقیقاً یک عضو دارد`],a:0,
+ e:R`نامساوی‌های بعدی اکید <b>نیستند</b>، یعنی رویدادهای هم‌زمان کاملاً مجازند و به همین دلیل قاعده‌ی شکستن تساوی لازم است. اکید بودن اولی فقط می‌گوید هیچ رویدادی در گذشته یا در لحظه‌ی جاری باقی نمانده است.`},
+{q:`قدم ۴ الگوریتم زمان‌بندی رویداد چه می‌کند؟`,
+ o:[`رویدادهای آینده را تولید و اعلان‌شان را در جای درست FEL درج می‌کند`,`ساعت را به زمان رویداد قریب‌الوقوع می‌برد`,`آماره‌ها را به‌روز می‌کند`,`رویداد قریب‌الوقوع را از FEL حذف می‌کند`],a:0,
+ e:R`ترتیب: ۱ حذف کمینه، ۲ پیشروی ساعت، ۳ اجرای رویداد، ۴ تولید و درج رویدادهای آینده، ۵ به‌روزرسانی آماره‌ها. هر فعالیتی که در قدم ۳ شروع شده باشد، در قدم ۴ یک اعلان می‌سازد.`},
+{q:`در مثال مرجع این جلسه (ورودها ۰، ۲، ۳، ۱۰، ۱۱ و خدمت‌ها ۴، ۳، ۲، ۳، ۲) بلافاصله بعد از رویداد لحظه‌ی ۳، FEL چه چیزی دارد؟`,
+ o:[`دو اعلان: پایان خدمت در ۴ و ورود در ۱۰`,`سه اعلان: پایان خدمت در ۴ و ورودهای ۱۰ و ۱۱`,`یک اعلان: فقط پایان خدمت در ۴`,`چهار اعلان، چون دو مشتری در صف منتظرند`],a:0,
+ e:R`دو مشتری منتظر در صف‌اند ولی هیچ‌کدام اعلانی در FEL ندارند — انتظارشان تأخیر است. ورودها خودتولیدند، پس فقط ورود بعدی (در ۱۰) زمان‌بندی شده است، نه ورود ۱۱.`},
+{q:`کدام مورد جزو «حالت سیستم» نیست ولی جزو snapshot هست؟`,
+ o:[`فهرست رویدادهای آینده و شمارنده‌های آماری`,`وضعیت مشغول/بیکار سرور`,`طول صف`,`تعداد مشتریان داخل سیستم`],a:0,
+ e:R`حالت فقط متغیرهایی است که برای ادامه‌ی اجرا لازم‌اند. snapshot علاوه بر آن، ساعت، ویژگی موجودیت‌ها، محتوای مجموعه‌ها، FEL و آماره‌ها را هم دارد. آماره‌ها خروجی‌اند، نه حالت.`},
+{q:`«ورود مشتری» چه نوع رویدادی است؟`,
+ o:[`برون‌زا و اولیه`,`درون‌زا و اولیه`,`برون‌زا و ثانویه`,`درون‌زا و ثانویه`],a:0,
+ e:R`برون‌زا چون منشأش بیرون سیستم است و فقط به سیستم برخورد می‌کند؛ اولیه چون پایان یک فعالیت (زمان بین‌ورود) است و اعلان دارد. در مقابل، پایان خدمت درون‌زا و اولیه است.`},
+{q:`«شروع خدمت» چه نوع رویدادی است؟`,
+ o:[`مشروط (ثانویه)؛ اعلانی در FEL نمی‌گیرد و شرطش «مشتری حاضر است و سرور بیکار است» می‌باشد`,`اولیه؛ در لحظه‌ی ورود مشتری زمان‌بندی می‌شود`,`برون‌زا؛ چون مشتری از بیرون می‌آید`,`اصلاً رویداد نیست چون حالت را عوض نمی‌کند`],a:0,
+ e:R`جزوه صریح می‌گوید شروع خدمت رویداد مشروط است و پایان خدمت رویداد اولیه. شروع خدمت فقط در دو جا چک می‌شود: داخل رویداد ورود (اگر سرور بیکار باشد) و داخل رویداد پایان خدمت (اگر صف خالی نباشد).`},
+{q:`در مدلی که ورودها خودتولیدند، شرط پایان «وقتی FEL خالی شد» چه می‌شود؟`,
+ o:[`هیچ‌وقت برقرار نمی‌شود و حلقه بی‌نهایت می‌شود`,`دقیقاً وقتی آخرین مشتری خارج شود برقرار می‌شود`,`وقتی صف خالی شود برقرار می‌شود`,`وقتی سرور بیکار شود برقرار می‌شود`],a:0,
+ e:R`هر ورود پیش از اجرا شدن، جانشین خودش را زمان‌بندی می‌کند، پس همیشه دست‌کم یک اعلان ورود در FEL هست. این شرط فقط برای مدل‌هایی کار می‌کند که منبع ورودها پایان‌پذیر باشد (دسته‌ی ثابتی از کارها).`},
+{q:`با شرط پایان «خروج $k$امین مشتری»، میانگین انتظارِ گزارش‌شده معمولاً چه اریبی‌ای دارد؟`,
+ o:[`کمتر از واقع، چون مشتریانِ هنوز-در-صف که انتظار بلند دارند در میانگین نمی‌آیند`,`بیشتر از واقع، چون فقط شلوغ‌ترین بخش اجرا حساب می‌شود`,`بی‌اریب است، چون دقیقاً $k$ مشاهده دارد`,`بستگی به بذر تصادفی دارد و اریبی سیستماتیک ندارد`],a:0,
+ e:R`در مسئله‌ی امتحانی همین صفحه دیدی: با پایان در خروج سوم، میانگین انتظار ۱٫۰ درمی‌آید در حالی که تا آخر اجرا ۱٫۴ است — چون مسافر ۴ با انتظار ۴ هنوز خارج نشده بود.`},
+{q:`<b>مرور جلسه‌ی ۵:</b> در مرکز تماس Able–Baker وقتی هر دو کارمند مشغول‌اند، تماس تازه به چه کسی می‌رسد؟`,
+ o:[`به کسی که زودتر آزاد شود`,`همیشه به Able، چون سیاست پیش‌فرض است`,`به‌طور تصادفی به یکی از آن دو`,`تماس از دست می‌رود`],a:0,
+ e:R`قاعده‌ی تخصیص (ترجیح سیاست) فقط وقتی مهم است که <b>هر دو بیکار</b> باشند. وقتی هر دو مشغول‌اند، زمان شروع خدمت $\min$ زمان‌های آزادشدن است. با زبان این جلسه: انتظار آن تماس یک تأخیر است و پایانش با رویداد پایان خدمتِ هرکدام که زودتر بیاید رخ می‌دهد.`},
+{q:`<b>مرور جلسه‌ی ۳:</b> برآورد مساحت یک شکل با پرتاب نقاط تصادفی، چه نوع مدلی است؟`,
+ o:[`ایستا و تصادفی`,`پویا و تصادفی`,`پویا و گسسته‌پیشامد`,`ایستا و قطعی`],a:0,
+ e:R`زمان در این مدل اصلاً متغیر نیست؛ شماره‌ی نقطه زمان نیست. وجود عدد تصادفی مدل را «تصادفی» می‌کند، نه «پویا». دو محور کاملاً مستقل‌اند — همان چیزی که تمرین ۲ سؤال ۱ می‌پرسد.`},
+{q:`<b>مرور جلسه‌ی ۴:</b> بهره‌وری سرور در یک اجرای تک‌سروره چطور حساب می‌شود؟`,
+ o:[`جمع زمان‌های خدمت تقسیم بر طول کل شبیه‌سازی`,`تعداد مشتریان خدمت‌گرفته تقسیم بر تعداد کل ورودها`,`میانگین زمان خدمت تقسیم بر میانگین زمان بین‌ورود`,`جمع انتظارها تقسیم بر طول شبیه‌سازی`],a:0,
+ e:R`بهره‌وری کسر زمانی است که سرور مشغول بوده، یعنی همان $B/T$ در جدول snapshot. گزینه‌ی سوم «شدت بار» نظری است که فقط در حالت پایدار و با افق بلند به بهره‌وری نزدیک می‌شود.`}
+];
+
+
+window.PAGE_INIT=function(ML){
+  const fa=ML.fa, c=v=>ML.css(v);
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function f2(x,d=2){return fa(x.toFixed(d));}
+
+  /* ---------------- widget: FEL stepper for a single-server queue ---------------- */
+  (function(){
+    const el=document.getElementById("w-fel");
+    ML.shell(el,"🔧 گام‌زن FEL — صف تک‌سرور",
+      "هر «گام بعدی» دقیقاً یک دور از پنج قدم الگوریتم است. زمان‌های بین‌ورود و خدمت نمایی‌اند و اولین ورود در لحظه‌ی صفر زمان‌بندی می‌شود. سطر پررنگِ FEL رویداد قریب‌الوقوع است — همان چیزی که با گام بعدی برداشته می‌شود.");
+    const S={ia:2.0, sv:1.5, N:40, seed:2024};
+    let st=null;
+
+    const ctr=ML.h("div",{class:"controls"});
+    const sIA=ML.slider("میانگین بین‌ورود",0.5,5,0.1,S.ia,v=>{S.ia=v;reset();},v=>fa(v.toFixed(1)));
+    const sSV=ML.slider("میانگین خدمت",0.3,4,0.1,S.sv,v=>{S.sv=v;reset();},v=>fa(v.toFixed(1)));
+    const sN =ML.slider("تعداد کل ورودها",10,120,10,S.N,v=>{S.N=v;reset();},v=>fa(v));
+    const bStep=ML.h("button",{class:"btn",type:"button"},"▶ گام بعدی");
+    const bTen =ML.h("button",{class:"btn ghost",type:"button"},"⏩ ۱۰ گام");
+    const bEnd =ML.h("button",{class:"btn ghost",type:"button"},"⏭ تا پایان");
+    const bNew =ML.h("button",{class:"btn ghost",type:"button"},"↺ از نو با بذر تازه");
+    bStep.onclick=()=>step();
+    bTen.onclick =()=>{for(let i=0;i<10 && !st.done;i++) step(true); render();};
+    bEnd.onclick =()=>{let g=0;while(!st.done && g<20000){step(true);g++;} render();};
+    bNew.onclick =()=>{S.seed=(S.seed*7919+37)%1000000; reset();};
+    ctr.append(sIA,sSV,sN,bStep,bTen,bEnd,bNew);
+
+    const kv=ML.h("div",{class:"kv"});
+    const fel=ML.h("div",{class:"feltab"});
+    const cv=ML.h("canvas",{class:"wide"});
+    const lg=ML.h("div",{class:"legend"});
+    const ro=ML.h("div",{class:"readout"});
+    el.append(ctr,kv,fel,cv,lg,ro);
+
+    function ex(mean,rng){ return -mean*Math.log(1-rng()); }
+    const rank=e=> e.k==="D"?0:1;
+
+    function reset(){
+      const rng=mulberry32(S.seed|0);
+      st={clock:0,LS:0,LQ:0,queue:[],fel:[{k:"A",t:0,id:0}],
+          B:0,AQ:0,AL:0,SW:0,nd:0,na:0,ns:0,steps:0,done:false,rng,
+          hist:[[0,0]],msg:"هنوز هیچ گامی برداشته نشده است. FEL فقط اولین ورود (برون‌زا، زمان‌بندی‌شده در لحظه‌ی صفر) را دارد."};
+      render();
+    }
+
+    function step(quiet){
+      if(st.done){ if(!quiet) render(); return; }
+      st.fel.sort((a,b)=> (a.t-b.t) || (rank(a)-rank(b)));
+      const e=st.fel.shift();
+      const dt=e.t-st.clock;
+      st.B += st.LS*dt; st.AQ += st.LQ*dt; st.AL += (st.LS+st.LQ)*dt;
+      st.clock=e.t;
+      const nm=i=>"C"+fa(i+1);
+      if(e.k==="A"){
+        st.na++;
+        let extra="";
+        if(st.na<S.N){ st.fel.push({k:"A",t:st.clock+ex(S.ia,st.rng),id:st.na}); extra=" ورود بعدی هم همین‌جا ساخته و زمان‌بندی شد (زنجیره‌ی خودتولید)."; }
+        else extra=" این آخرین ورود بود، پس ورود تازه‌ای ساخته نشد.";
+        if(st.LS===0){
+          st.LS=1; st.ns++; st.fel.push({k:"D",t:st.clock+ex(S.sv,st.rng),id:e.id});
+          st.msg="ورود "+nm(e.id)+" — سرور بیکار بود، خدمت بی‌درنگ شروع شد. زمان خدمت یک فعالیت است، پس همین حالا یک اعلان «پایان خدمت» در FEL رفت."+extra;
+        } else {
+          st.queue.push({t:st.clock,id:e.id}); st.LQ++;
+          st.msg="ورود "+nm(e.id)+" — سرور مشغول بود، پس رفت در صف. یک تأخیر شروع شد و "+"هیچ اعلانی در FEL نرفت."+extra;
+        }
+      } else {
+        st.nd++;
+        if(st.queue.length){
+          const q=st.queue.shift(); st.LQ--;
+          const w=st.clock-q.t; st.SW+=w; st.ns++;
+          st.fel.push({k:"D",t:st.clock+ex(S.sv,st.rng),id:q.id});
+          st.msg="پایان خدمت "+nm(e.id)+" — صف خالی نبود، پس "+nm(q.id)+" از صف بیرون آمد و خدمتش شروع شد. تأخیر او "+f2(w,3)+" بود و تازه همین حالا معلوم شد.";
+        } else {
+          st.LS=0;
+          st.msg="پایان خدمت "+nm(e.id)+" — صف خالی بود، پس سرور بیکار شد و هیچ اعلان پایان خدمتی در FEL نماند.";
+        }
+      }
+      st.steps++;
+      st.hist.push([st.clock, st.LS+st.LQ]);
+      if(!st.fel.length){ st.done=true; st.msg+=" FEL خالی شد ⇒ شبیه‌سازی تمام است."; }
+      if(!quiet) render();
+    }
+
+    function felHTML(){
+      const rows=[...st.fel].sort((a,b)=> (a.t-b.t) || (rank(a)-rank(b)));
+      if(!rows.length) return '<div class="cap">FEL خالی است — شبیه‌سازی تمام شد.</div>';
+      let h='<div class="cap">FEL — مرتب بر حسب زمان؛ سطر پررنگ رویداد قریب‌الوقوع است. تأخیرها این‌جا نیستند.</div>';
+      rows.forEach((e,i)=>{
+        h+='<div class="row'+(i===0?" im":"")+'"><span class="ty">'+(e.k==="A"?"arrival":"departure")+
+           '</span><span>t = '+e.t.toFixed(3)+'</span><span>C'+(e.id+1)+'</span></div>';
+      });
+      return h;
+    }
+
+    function render(){
+      const T=Math.max(st.clock,1e-9);
+      const cells=[
+        ["ساعت", f2(st.clock,3)],
+        ["گام", fa(st.steps)],
+        ["سرور", st.LS? "مشغول":"بیکار"],
+        ["طول صف", fa(st.LQ)],
+        ["در سیستم", fa(st.LS+st.LQ)],
+        ["اندازه‌ی FEL", fa(st.fel.length)],
+        ["ورود/خروج", fa(st.na)+" / "+fa(st.nd)],
+        ["بهره‌وری B/T", st.clock>0?f2(st.B/T,3):"—"],
+        ["میانگین صف", st.clock>0?f2(st.AQ/T,3):"—"],
+        ["میانگین در سیستم", st.clock>0?f2(st.AL/T,3):"—"],
+        ["میانگین انتظار", st.ns? f2(st.SW/st.ns,3):"—"],
+        ["جمع انتظار ΣW", f2(st.SW,3)]
+      ];
+      kv.innerHTML=cells.map(([l,v])=>'<div><div class="l">'+l+'</div><div class="v">'+v+'</div></div>').join("");
+      fel.innerHTML=felHTML();
+      bStep.disabled=st.done; bTen.disabled=st.done; bEnd.disabled=st.done;
+      const rho=S.sv/S.ia;
+      ro.textContent="آخرین گام: "+st.msg+"\n"+
+        "نسبت بار (میانگین خدمت ÷ میانگین بین‌ورود) = "+f2(rho,2)+
+        (rho>=1? "  ⚠ بزرگ‌تر یا مساوی ۱: صف پایدار نمی‌شود و طول آن با زمان رشد می‌کند." :
+                 "  ✅ کوچک‌تر از ۱: صف در بلندمدت پایدار است.")+
+        "\nبذر: "+ML.L(String(S.seed))+" — با «از نو با بذر تازه» همان پارامترها دنباله‌ی دیگری می‌دهند.";
+      lg.innerHTML='<span><i style="background:'+c("--plot-c1")+'"></i>تعداد در سیستم L(t)</span>'+
+                   '<span><i style="background:'+c("--plot-c2")+'"></i>لحظه‌ی رویدادها</span>'+
+                   '<span>سطح زیر منحنی = جمع زمان‌های در سیستم</span>';
+      draw();
+    }
+
+    function draw(){
+      if(!st) return;
+      const h=st.hist;
+      const tmax=Math.max(st.clock*1.08, 1);
+      const ymax=Math.max(3, ...h.map(p=>p[1]))+1;
+      const P=new ML.Plot(cv,[0,tmax],[0,ymax],{l:40,b:30,t:12});
+      P.axes("زمان شبیه‌سازی","تعداد در سیستم",{yfmt:y=> Math.abs(y-Math.round(y))<1e-9? fa(Math.round(y)):""});
+      const pts=[];
+      for(let i=0;i<h.length-1;i++){ pts.push([h[i][0],h[i][1]],[h[i+1][0],h[i][1]]); }
+      const last=h[h.length-1];
+      pts.push([last[0],last[1]],[tmax,last[1]]);
+      const c1=c("--plot-c1"), c2=c("--plot-c2");
+      const ctx=P.ctx;
+      ctx.fillStyle=ML.alpha(c1,0.16);
+      ctx.beginPath(); ctx.moveTo(P.X(0),P.Y(0));
+      pts.forEach(([x,y])=>ctx.lineTo(P.X(x),P.Y(y)));
+      ctx.lineTo(P.X(tmax),P.Y(0)); ctx.closePath(); ctx.fill();
+      P.line(pts,c1,2);
+      h.slice(1).forEach(p=>P.dot(p[0],p[1],ML.alpha(c2,0.85),2.6));
+      if(st.clock>0) P.vline(st.clock,ML.alpha(c2,0.6),[5,4]);
+    }
+
+    ML.onResize(cv,draw);
+    reset();
+  })();
+};
+</script>
+</body>
+</html>

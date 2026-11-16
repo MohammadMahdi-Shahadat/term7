@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۵ · مرکز تماس با دو کارمند و سیستم موجودی (M, N)</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.g-t{fill:currentColor;font:700 13px Vazirmatn,Tahoma,sans-serif}
+.g-l{fill:currentColor;font:600 12px "JetBrains Mono",monospace}
+.g-s{fill:currentColor;opacity:.7;font:11px "JetBrains Mono",monospace}
+.g-in{fill:#fff;font:700 11px "JetBrains Mono",monospace}
+.g-ax{stroke:currentColor;stroke-opacity:.35;stroke-width:1}
+.g-arr{stroke:var(--plot-c2);stroke-width:2.2}
+.g-svc{fill:var(--plot-c1)}
+.g-wait{stroke:var(--plot-c2);stroke-width:2.4;stroke-dasharray:4 3}
+.g-m{stroke:var(--plot-c4);stroke-width:1.4;stroke-dasharray:6 4}
+.g-rev{stroke:currentColor;stroke-opacity:.35;stroke-dasharray:3 4}
+.g-q{fill:var(--plot-c2);font:700 12px "JetBrains Mono",monospace}
+.g-path{fill:none;stroke:var(--plot-c1);stroke-width:2.4;stroke-linejoin:round}
+.g-short{fill:var(--plot-c2);fill-opacity:.28}
+.g-shortt{fill:var(--plot-c2);opacity:1}
+:root[data-theme="dark"] .g-in{fill:#10161f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .g-in{fill:#10161f}}
+.evlist.w4>div{grid-template-columns:44px 44px minmax(0,1fr) 74px}
+table.sim td.pol{font-weight:700}
+.wtab td,.wtab th{text-align:center;font-family:var(--mono);font-size:.86em}
+.wtab td:first-child{font-family:Vazirmatn,Tahoma,sans-serif;text-align:start}
+.wtab td:not(:first-child){white-space:nowrap}
+.wtab tr.best td{background:var(--good-soft)}
+.controls .chk{display:flex;align-items:center;gap:6px}
+.controls .chk input{width:18px;height:18px;accent-color:var(--event)}
+</style>
+</head>
+<body data-session="5">
+<main>
+<section class="hero">
+  <div class="kicker">بخش الف · مبانی و شبیه‌سازی با جدول</div>
+  <h1>مرکز تماس با دو کارمند و <span class="hl">سیستم موجودی <span class="ltr" style="white-space:nowrap">(M, N)</span></span></h1>
+  <p class="lead">دو مثال آخر فصل ۲: صفی با دو سرورِ نابرابر و انباری که هر N روز پر می‌شود. ابزار هر دو همان جدول است، فقط حالا باید سیاست‌ها را مقایسه کنی و برای هر انتخاب، عدم قطعیت را هم بسنجی.</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۲۰ دقیقه</span><span>📚 منبع: جزوه Ch.2 ص ۲۱ تا ۲۹ · Banks فصل ۲، مثال‌های ۶، ۷ و ۸</span><span class="hot">به کار تمرین ۱ سؤال ۵ و ۶ می‌آید</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>جدول شبیه‌سازی صف دوسروره را با ستون‌های «آزاد از» برای هر کارمند پر کنی و قاعده‌های تساوی را درست اجرا کنی.</li>
+      <li>میانگین انتظار، درصد بدون انتظار، بهره‌وری هر کارمند و هزینه‌ی هر تماس را تعریف و محاسبه کنی.</li>
+      <li>سه سیاست تخصیص را با <strong>اعداد تصادفی مشترک</strong> مقایسه کنی و بگویی چرا مقایسه منصفانه‌تر و دقیق‌تر می‌شود.</li>
+      <li>جدول ۹۰روزه‌ی یک سیاست (M, N) را با هزینه‌ی نگهداری، کمبود و سفارش بسازی و قراردادهای حسابداری‌اش را صریح کنی.</li>
+      <li>M را با میانگین چند تکرار و بازه‌ی اطمینان t انتخاب کنی، نه با یک اجرا؛ و همه‌ی این‌ها را در اکسل پیاده کنی.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+<p>۱. دو کارمند داری: یکی سریع و گران، یکی کند و ارزان. تماسی می‌رسد و <b>هر دو بیکارند</b>. به کدام بدهی؟ جواب «معلوم است، سریع‌تر» همیشه درست است؟ اگر حقوق را فقط برای زمان مکالمه بدهی چه؟</p>
+<p>۲. اگر می‌خواهی سیاست «اول سریع» را با «اول کند» مقایسه کنی، برای هر سیاست اعداد تصادفی تازه بگیری بهتر است یا همان اعداد را دوباره استفاده کنی؟ چرا؟</p>
+<p>۳. انباری هر ۵ روز تا سطح M پر می‌شود. چرا M را خیلی بزرگ نمی‌گیریم تا هیچ‌وقت کمبود نداشته باشیم؟ و چرا خیلی کوچک نه؟</p>
+</div>
+
+<!-- ===================================================== 01 -->
+<section id="callcenter">
+<h2><span class="num">01</span> مسئله‌ی مرکز تماس <span class="tag core">جزوه</span></h2>
+<p>یک مرکز پشتیبانی فنی دو کارشناس دارد که تماس‌ها را جواب می‌دهند (جزوه ص ۲۲؛ Banks مثال ۶ «The Able–Baker Call Center Problem»):</p>
+<div class="vs">
+  <div><h4>Able</h4>باتجربه‌تر؛ تماس را <b>سریع‌تر</b> تمام می‌کند. میانگین زمان خدمت: ۳٫۲۹ دقیقه.</div>
+  <div><h4>Baker</h4>تازه‌کار؛ تماس را <b>کندتر</b> تمام می‌کند. میانگین زمان خدمت: ۴٫۲۵ دقیقه.</div>
+</div>
+<ul>
+  <li><b>قاعده‌ی فعلی:</b> اگر هر دو بیکار باشند، تماس به Able می‌رسد.</li>
+  <li><b>قاعده‌های دیگر:</b> اگر هر دو بیکار باشند تماس به Baker برسد؛ یا تماس تصادفی (۵۰–۵۰) به یکی از آن دو برسد.</li>
+  <li><b>هدف مطالعه:</b> بفهمیم قاعده‌ی فعلی چقدر خوب کار می‌کند. اگر هر دو مشغول باشند، تماس «روی خط انتظار» (hold) می‌ماند؛ یعنی یک صف مشترک.</li>
+</ul>
+<div class="box def"><div class="bt">تعریف ۵.۱ · صف چندسروره با سرورهای نابرابر</div>
+سیستمی با یک صف مشترک (FIFO) و چند سرور موازی که توزیع زمان خدمتشان فرق دارد. Banks به آن <b>صف دوکاناله</b> (two-channel queue) می‌گوید. تفاوت اصلی با صف تک‌سرور جلسه‌ی ۴: وقتی بیش از یک سرور آزاد است، باید یک <b>قاعده‌ی تخصیص</b> (routing rule) بگوید مشتری پیش کدام برود.
+</div>
+
+<h3>توزیع‌ها و تخصیص رقم‌های تصادفی (جزوه ص ۲۳)</h3>
+<div class="two">
+<div class="tablewrap"><table>
+<tr><th>بین‌ورود (دقیقه)</th><th>احتمال</th><th>تجمعی</th><th>رقم‌ها</th></tr>
+<tr><td>1</td><td>0.25</td><td>0.25</td><td>01–25</td></tr>
+<tr><td>2</td><td>0.40</td><td>0.65</td><td>26–65</td></tr>
+<tr><td>3</td><td>0.20</td><td>0.85</td><td>66–85</td></tr>
+<tr><td>4</td><td>0.15</td><td>1.00</td><td>86–00</td></tr>
+</table></div>
+<div class="stats">
+  <div><div class="l">میانگین بین‌ورود</div><div class="v">2.25</div><div class="f">λ = 1/2.25 = 0.444 / min</div></div>
+  <div><div class="l">ظرفیت دو نفر</div><div class="v">0.539</div><div class="f">1/3.29 + 1/4.25 تماس در دقیقه</div></div>
+  <div><div class="l">شدت بار کل</div><div class="v">≈ 0.82</div><div class="f">0.444 / 0.539</div></div>
+  <div><div class="l">اگر فقط Able بود</div><div class="v">1.46</div><div class="f">3.29 / 2.25 &gt; 1 ⇒ صف منفجر می‌شود</div></div>
+</div>
+</div>
+<div class="two">
+<div class="tablewrap"><table>
+<tr><th colspan="4">زمان خدمت Able</th></tr>
+<tr><th>دقیقه</th><th>احتمال</th><th>تجمعی</th><th>رقم‌ها</th></tr>
+<tr><td>2</td><td>0.30</td><td>0.30</td><td>01–30</td></tr>
+<tr><td>3</td><td>0.28</td><td>0.58</td><td>31–58</td></tr>
+<tr><td>4</td><td>0.25</td><td>0.83</td><td>59–83</td></tr>
+<tr><td>5</td><td>0.17</td><td>1.00</td><td>84–00</td></tr>
+</table></div>
+<div class="tablewrap"><table>
+<tr><th colspan="4">زمان خدمت Baker</th></tr>
+<tr><th>دقیقه</th><th>احتمال</th><th>تجمعی</th><th>رقم‌ها</th></tr>
+<tr><td>3</td><td>0.35</td><td>0.35</td><td>01–35</td></tr>
+<tr><td>4</td><td>0.25</td><td>0.60</td><td>36–60</td></tr>
+<tr><td>5</td><td>0.20</td><td>0.80</td><td>61–80</td></tr>
+<tr><td>6</td><td>0.20</td><td>1.00</td><td>81–00</td></tr>
+</table></div>
+</div>
+<p>میانگین‌ها از همین جدول‌ها درمی‌آیند: $E[S_A]=2(0.30)+3(0.28)+4(0.25)+5(0.17)=3.29$ و $E[S_B]=3(0.35)+4(0.25)+5(0.20)+6(0.20)=4.25$. کاشی آخر نشان می‌دهد چرا دو نفر لازم است: Able به‌تنهایی در هر دقیقه به‌طور میانگین ۱٫۴۶ برابر توانش کار دریافت می‌کند.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+رقم «00» یعنی ۱۰۰، پس همیشه در <b>آخرین</b> بازه می‌افتد (۸۶–۰۰ یعنی ۸۶ تا ۱۰۰). در امتحان، رقم ۰۰ را با کوچک‌ترین مقدار اشتباه نگیر.
+</div>
+</section>
+
+<!-- ===================================================== 02 -->
+<section id="algorithm">
+<h2 data-short="جدول دوسروره"><span class="num">02</span> الگوریتم و جدول دوسروره <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>جزوه (ص ۲۴) شبیه‌سازی را در سه قدم می‌نویسد. با نمادهای خودش:</p>
+<ol class="steps">
+<li><b>ورود.</b> برای تماس $k$ زمان بین‌ورود $A_k$ را تولید کن: $T_k=T_{k-1}+A_k$.</li>
+<li><b>یکی بیکار است.</b> اگر Able بیکار است، خدمت در $T_{now}=T_k$ شروع می‌شود: $T_{fin,A}=T_{now}+T_{svc,A}$، انتظار $T_{wait}=0$ و زمان در سیستم $T_{sys}=T_{fin,A}-T_k$. اگر Able مشغول و Baker بیکار است، همین کار با Baker.</li>
+<li><b>هر دو مشغول‌اند.</b> اولین زمان آزاد شدن را حساب کن: $T_{beg}=\min(T_{fin,A},\,T_{fin,B})$. خدمت در $T_{now}=T_{beg}$ شروع می‌شود، $T_{fin}$ مثل قدم ۲ حساب می‌شود و $T_{sys}=T_{fin}-T_k$.</li>
+</ol>
+<div class="box thm"><div class="bt">رابطه · «آزاد از» برای هر سرور</div>
+برای هر کارمند فقط یک عدد نگه دار: $F_A$ و $F_B$، زمانی که آن کارمند آزاد می‌شود. برای تماس $k$:
+$$s_k=\begin{cases}\text{policy's choice} & F_A\le T_k \text{ and } F_B\le T_k\\ \text{the idle one} & \text{exactly one } F\le T_k\\ \arg\min(F_A,F_B) & \text{both busy}\end{cases}$$
+$$\text{begin}_k=\max(T_k,\,F_{s_k}),\qquad F_{s_k}\leftarrow \text{begin}_k+S_k,\qquad W_k=\text{begin}_k-T_k$$
+یعنی: اگر هر دو بیکارند سیاست تصمیم می‌گیرد؛ اگر فقط یکی بیکار است، همان؛ اگر هر دو مشغول‌اند، کسی که زودتر آزاد می‌شود. شروع خدمت دیرترینِ «ورود» و «آزاد شدن کارمند» است.
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+«Able آزاد از» را از <b>سطر قبلی</b> برداشتن. اگر تماس قبلی به Baker رفته باشد، سطر قبلی اصلاً پایان Able را ندارد. «آزاد از» یعنی <b>آخرین</b> پایان خدمتِ آن کارمند در همه‌ی سطرهای بالاتر؛ در اکسل با <code>MAX</code> روی کل ستون پایان‌های همان کارمند تا سطر قبل.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · دو قاعده‌ی تساوی</div>
+<b>۱.</b> کارمندی که دقیقاً در لحظه‌ی ورود آزاد می‌شود <b>بیکار</b> حساب می‌شود (اول خروج، بعد ورود). در جدول جزوه (ص ۲۵) تماس ۲ در لحظه‌ی ۲ می‌رسد و Able هم در ۲ آزاد می‌شود؛ پس تماس به Able می‌رسد و انتظار صفر است.<br>
+<b>۲.</b> اگر هر دو مشغول‌اند و <b>هم‌زمان</b> آزاد می‌شوند، باید قاعده داشته باشی. منطقی‌ترین انتخاب: همان کسی که سیاست در حالت «هر دو بیکار» ترجیح می‌دهد. قاعده‌ات را بالای جدول بنویس.
+</div>
+
+<h3>خواندن جدول جزوه (ص ۲۵)</h3>
+<p>ستون‌های جدول ۱۰۰ تماس جزوه: شماره، بین‌ورود، ورود، <b>Able آزاد از</b>، <b>Baker آزاد از</b>، کارمند منتخب، زمان خدمت، شروع، پایان Able، پایان Baker، تأخیر، زمان در سیستم. چهار تماس اول همه به Able می‌رسند چون هر بار Able تا لحظه‌ی ورود آزاد شده است. تماس ۵ در لحظه‌ی ۹ می‌رسد، Able تا ۱۲ مشغول است و Baker از ۰ بیکار است؛ پس Baker با خدمت ۳ دقیقه، از ۹ تا ۱۲. جمع ستون تأخیر ۲۱۱ و جمع زمان در سیستم ۵۶۴ است.</p>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۵.۱ · ده تماس، دو سیاست، همان رقم‌ها</div>
+<p>توزیع‌های جزوه را با رقم‌های تصادفی زیر شبیه‌سازی می‌کنیم. برای هر تماس <b>یک</b> رقم خدمت داریم که با جدول کارمندِ منتخب به زمان خدمت تبدیل می‌شود (همان روش Banks).</p>
+<p class="ltr mono" style="font-size:.88em">interarrival digits (callers 2–10): 47 12 88 31 09 72 55 18 63<br>service digits (callers 1–10): 61 39 84 27 93 15 70 44 58 08</p>
+<p><b>سیاست ۱ (اگر هر دو بیکار، Able):</b></p>
+<div class="tablewrap"><table class="sim">
+<tr><th>تماس</th><th>رقم</th><th>بین‌ورود</th><th>ورود</th><th>Able آزاد از</th><th>Baker آزاد از</th><th>کارمند</th><th>رقم خدمت</th><th>خدمت</th><th>شروع</th><th>پایان A</th><th>پایان B</th><th>انتظار</th><th>در سیستم</th></tr>
+<tr><td>1</td><td>—</td><td>—</td><td>0</td><td>0</td><td>0</td><td class="pol">A</td><td>61</td><td>4</td><td>0</td><td>4</td><td></td><td>0</td><td>4</td></tr>
+<tr><td>2</td><td>47</td><td>2</td><td>2</td><td>4</td><td>0</td><td class="pol">B</td><td>39</td><td>4</td><td>2</td><td></td><td>6</td><td>0</td><td>4</td></tr>
+<tr class="hl"><td>3</td><td>12</td><td>1</td><td>3</td><td>4</td><td>6</td><td class="pol">A</td><td>84</td><td>5</td><td>4</td><td>9</td><td></td><td class="wait">1</td><td>6</td></tr>
+<tr><td>4</td><td>88</td><td>4</td><td>7</td><td>9</td><td>6</td><td class="pol">B</td><td>27</td><td>3</td><td>7</td><td></td><td>10</td><td>0</td><td>3</td></tr>
+<tr><td>5</td><td>31</td><td>2</td><td>9</td><td>9</td><td>10</td><td class="pol">A</td><td>93</td><td>5</td><td>9</td><td>14</td><td></td><td>0</td><td>5</td></tr>
+<tr><td>6</td><td>09</td><td>1</td><td>10</td><td>14</td><td>10</td><td class="pol">B</td><td>15</td><td>3</td><td>10</td><td></td><td>13</td><td>0</td><td>3</td></tr>
+<tr><td>7</td><td>72</td><td>3</td><td>13</td><td>14</td><td>13</td><td class="pol">B</td><td>70</td><td>5</td><td>13</td><td></td><td>18</td><td>0</td><td>5</td></tr>
+<tr><td>8</td><td>55</td><td>2</td><td>15</td><td>14</td><td>18</td><td class="pol">A</td><td>44</td><td>3</td><td>15</td><td>18</td><td></td><td>0</td><td>3</td></tr>
+<tr class="hl"><td>9</td><td>18</td><td>1</td><td>16</td><td>18</td><td>18</td><td class="pol">A</td><td>58</td><td>3</td><td>18</td><td>21</td><td></td><td class="wait">2</td><td>5</td></tr>
+<tr><td>10</td><td>63</td><td>2</td><td>18</td><td>21</td><td>18</td><td class="pol">B</td><td>08</td><td>3</td><td>18</td><td></td><td>21</td><td>0</td><td>3</td></tr>
+<tr class="sum"><td>جمع</td><td></td><td>18</td><td></td><td></td><td></td><td></td><td></td><td>38</td><td></td><td></td><td></td><td>3</td><td>41</td></tr>
+</table></div>
+<p>سه لحظه‌ی آموزنده: تماس ۶ و ۷ درست وقتی می‌رسند که Baker آزاد می‌شود (قاعده‌ی تساوی ۱، انتظار صفر). تماس ۹ در ۱۶ می‌رسد و <b>هر دو</b> تا ۱۸ مشغول‌اند (قاعده‌ی تساوی ۲): طبق سیاست به Able می‌رسد و ۲ دقیقه منتظر می‌ماند.</p>
+<p><b>سیاست ۲ (اگر هر دو بیکار، Baker)</b> با <b>همان</b> رقم‌ها:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>تماس</th><th>ورود</th><th>Able آزاد از</th><th>Baker آزاد از</th><th>کارمند</th><th>رقم خدمت</th><th>خدمت</th><th>شروع</th><th>پایان</th><th>انتظار</th><th>در سیستم</th></tr>
+<tr><td>1</td><td>0</td><td>0</td><td>0</td><td class="pol">B</td><td>61</td><td>5</td><td>0</td><td>5</td><td>0</td><td>5</td></tr>
+<tr><td>2</td><td>2</td><td>0</td><td>5</td><td class="pol">A</td><td>39</td><td>3</td><td>2</td><td>5</td><td>0</td><td>3</td></tr>
+<tr class="hl"><td>3</td><td>3</td><td>5</td><td>5</td><td class="pol">B</td><td>84</td><td>6</td><td>5</td><td>11</td><td class="wait">2</td><td>8</td></tr>
+<tr><td>4</td><td>7</td><td>5</td><td>11</td><td class="pol">A</td><td>27</td><td>2</td><td>7</td><td>9</td><td>0</td><td>2</td></tr>
+<tr><td>5</td><td>9</td><td>9</td><td>11</td><td class="pol">A</td><td>93</td><td>5</td><td>9</td><td>14</td><td>0</td><td>5</td></tr>
+<tr class="hl"><td>6</td><td>10</td><td>14</td><td>11</td><td class="pol">B</td><td>15</td><td>3</td><td>11</td><td>14</td><td class="wait">1</td><td>4</td></tr>
+<tr class="hl"><td>7</td><td>13</td><td>14</td><td>14</td><td class="pol">B</td><td>70</td><td>5</td><td>14</td><td>19</td><td class="wait">1</td><td>6</td></tr>
+<tr><td>8</td><td>15</td><td>14</td><td>19</td><td class="pol">A</td><td>44</td><td>3</td><td>15</td><td>18</td><td>0</td><td>3</td></tr>
+<tr class="hl"><td>9</td><td>16</td><td>18</td><td>19</td><td class="pol">A</td><td>58</td><td>3</td><td>18</td><td>21</td><td class="wait">2</td><td>5</td></tr>
+<tr class="hl"><td>10</td><td>18</td><td>21</td><td>19</td><td class="pol">B</td><td>08</td><td>3</td><td>19</td><td>22</td><td class="wait">1</td><td>4</td></tr>
+<tr class="sum"><td>جمع</td><td></td><td></td><td></td><td></td><td></td><td>38</td><td></td><td></td><td>7</td><td>45</td></tr>
+</table></div>
+<p>تماس ۱ این بار به Baker می‌رسد و ۵ دقیقه (نه ۴) طول می‌کشد؛ همین یک تغییر کل زنجیره را جابه‌جا می‌کند. جمع خدمت اتفاقاً باز ۳۸ شد، ولی انتظار از ۳ به ۷ دقیقه رسید.</p>
+</div>
+
+<figure class="fig">
+<svg viewBox="0 0 700 242" width="700" direction="ltr" role="img" aria-label="Gantt chart of both policies"><text x="367.0" y="16" text-anchor="middle" class="g-t" direction="rtl">سیاست ۱ · اگر هر دو بیکار بودند، Able</text><line x1="70.0" y1="30" x2="70.0" y2="42" class="g-arr"/><line x1="124.0" y1="30" x2="124.0" y2="42" class="g-arr"/><line x1="151.0" y1="30" x2="151.0" y2="42" class="g-arr"/><line x1="259.0" y1="30" x2="259.0" y2="42" class="g-arr"/><line x1="313.0" y1="30" x2="313.0" y2="42" class="g-arr"/><line x1="340.0" y1="30" x2="340.0" y2="42" class="g-arr"/><line x1="421.0" y1="30" x2="421.0" y2="42" class="g-arr"/><line x1="475.0" y1="30" x2="475.0" y2="42" class="g-arr"/><line x1="502.0" y1="30" x2="502.0" y2="42" class="g-arr"/><line x1="556.0" y1="30" x2="556.0" y2="42" class="g-arr"/><text x="70.0" y="27" text-anchor="middle" class="g-s">1</text><text x="124.0" y="27" text-anchor="middle" class="g-s">2</text><text x="151.0" y="27" text-anchor="middle" class="g-s">3</text><text x="259.0" y="27" text-anchor="middle" class="g-s">4</text><text x="313.0" y="27" text-anchor="middle" class="g-s">5</text><text x="340.0" y="27" text-anchor="middle" class="g-s">6</text><text x="421.0" y="27" text-anchor="middle" class="g-s">7</text><text x="475.0" y="27" text-anchor="middle" class="g-s">8</text><text x="502.0" y="27" text-anchor="middle" class="g-s">9</text><text x="556.0" y="27" text-anchor="middle" class="g-s">10</text><text x="58" y="72" text-anchor="end" class="g-l">Able</text><line x1="70" y1="80" x2="664.0" y2="80" class="g-ax"/><text x="58" y="100" text-anchor="end" class="g-l">Baker</text><line x1="70" y1="108" x2="664.0" y2="108" class="g-ax"/><rect x="71.0" y="58" width="106.0" height="20" rx="4" class="g-svc"/><text x="124.0" y="72" text-anchor="middle" class="g-in">1</text><rect x="125.0" y="86" width="106.0" height="20" rx="4" class="g-svc"/><text x="178.0" y="100" text-anchor="middle" class="g-in">2</text><line x1="151.0" y1="55" x2="178.0" y2="55" class="g-wait"/><rect x="179.0" y="58" width="133.0" height="20" rx="4" class="g-svc"/><text x="245.5" y="72" text-anchor="middle" class="g-in">3</text><rect x="260.0" y="86" width="79.0" height="20" rx="4" class="g-svc"/><text x="299.5" y="100" text-anchor="middle" class="g-in">4</text><rect x="314.0" y="58" width="133.0" height="20" rx="4" class="g-svc"/><text x="380.5" y="72" text-anchor="middle" class="g-in">5</text><rect x="341.0" y="86" width="79.0" height="20" rx="4" class="g-svc"/><text x="380.5" y="100" text-anchor="middle" class="g-in">6</text><rect x="422.0" y="86" width="133.0" height="20" rx="4" class="g-svc"/><text x="488.5" y="100" text-anchor="middle" class="g-in">7</text><rect x="476.0" y="58" width="79.0" height="20" rx="4" class="g-svc"/><text x="515.5" y="72" text-anchor="middle" class="g-in">8</text><line x1="502.0" y1="55" x2="556.0" y2="55" class="g-wait"/><rect x="557.0" y="58" width="79.0" height="20" rx="4" class="g-svc"/><text x="596.5" y="72" text-anchor="middle" class="g-in">9</text><rect x="557.0" y="86" width="79.0" height="20" rx="4" class="g-svc"/><text x="596.5" y="100" text-anchor="middle" class="g-in">10</text><text x="367.0" y="130" text-anchor="middle" class="g-t" direction="rtl">سیاست ۲ · اگر هر دو بیکار بودند، Baker</text><line x1="70.0" y1="144" x2="70.0" y2="156" class="g-arr"/><line x1="124.0" y1="144" x2="124.0" y2="156" class="g-arr"/><line x1="151.0" y1="144" x2="151.0" y2="156" class="g-arr"/><line x1="259.0" y1="144" x2="259.0" y2="156" class="g-arr"/><line x1="313.0" y1="144" x2="313.0" y2="156" class="g-arr"/><line x1="340.0" y1="144" x2="340.0" y2="156" class="g-arr"/><line x1="421.0" y1="144" x2="421.0" y2="156" class="g-arr"/><line x1="475.0" y1="144" x2="475.0" y2="156" class="g-arr"/><line x1="502.0" y1="144" x2="502.0" y2="156" class="g-arr"/><line x1="556.0" y1="144" x2="556.0" y2="156" class="g-arr"/><text x="70.0" y="141" text-anchor="middle" class="g-s">1</text><text x="124.0" y="141" text-anchor="middle" class="g-s">2</text><text x="151.0" y="141" text-anchor="middle" class="g-s">3</text><text x="259.0" y="141" text-anchor="middle" class="g-s">4</text><text x="313.0" y="141" text-anchor="middle" class="g-s">5</text><text x="340.0" y="141" text-anchor="middle" class="g-s">6</text><text x="421.0" y="141" text-anchor="middle" class="g-s">7</text><text x="475.0" y="141" text-anchor="middle" class="g-s">8</text><text x="502.0" y="141" text-anchor="middle" class="g-s">9</text><text x="556.0" y="141" text-anchor="middle" class="g-s">10</text><text x="58" y="186" text-anchor="end" class="g-l">Able</text><line x1="70" y1="194" x2="664.0" y2="194" class="g-ax"/><text x="58" y="214" text-anchor="end" class="g-l">Baker</text><line x1="70" y1="222" x2="664.0" y2="222" class="g-ax"/><rect x="71.0" y="200" width="133.0" height="20" rx="4" class="g-svc"/><text x="137.5" y="214" text-anchor="middle" class="g-in">1</text><rect x="125.0" y="172" width="79.0" height="20" rx="4" class="g-svc"/><text x="164.5" y="186" text-anchor="middle" class="g-in">2</text><line x1="151.0" y1="197" x2="205.0" y2="197" class="g-wait"/><rect x="206.0" y="200" width="160.0" height="20" rx="4" class="g-svc"/><text x="286.0" y="214" text-anchor="middle" class="g-in">3</text><rect x="260.0" y="172" width="52.0" height="20" rx="4" class="g-svc"/><text x="286.0" y="186" text-anchor="middle" class="g-in">4</text><rect x="314.0" y="172" width="133.0" height="20" rx="4" class="g-svc"/><text x="380.5" y="186" text-anchor="middle" class="g-in">5</text><line x1="340.0" y1="197" x2="367.0" y2="197" class="g-wait"/><rect x="368.0" y="200" width="79.0" height="20" rx="4" class="g-svc"/><text x="407.5" y="214" text-anchor="middle" class="g-in">6</text><line x1="421.0" y1="197" x2="448.0" y2="197" class="g-wait"/><rect x="449.0" y="200" width="133.0" height="20" rx="4" class="g-svc"/><text x="515.5" y="214" text-anchor="middle" class="g-in">7</text><rect x="476.0" y="172" width="79.0" height="20" rx="4" class="g-svc"/><text x="515.5" y="186" text-anchor="middle" class="g-in">8</text><line x1="502.0" y1="169" x2="556.0" y2="169" class="g-wait"/><rect x="557.0" y="172" width="79.0" height="20" rx="4" class="g-svc"/><text x="596.5" y="186" text-anchor="middle" class="g-in">9</text><line x1="556.0" y1="197" x2="583.0" y2="197" class="g-wait"/><rect x="584.0" y="200" width="79.0" height="20" rx="4" class="g-svc"/><text x="623.5" y="214" text-anchor="middle" class="g-in">10</text><text x="70.0" y="234" text-anchor="middle" class="g-s">0</text><text x="124.0" y="234" text-anchor="middle" class="g-s">2</text><text x="178.0" y="234" text-anchor="middle" class="g-s">4</text><text x="232.0" y="234" text-anchor="middle" class="g-s">6</text><text x="286.0" y="234" text-anchor="middle" class="g-s">8</text><text x="340.0" y="234" text-anchor="middle" class="g-s">10</text><text x="394.0" y="234" text-anchor="middle" class="g-s">12</text><text x="448.0" y="234" text-anchor="middle" class="g-s">14</text><text x="502.0" y="234" text-anchor="middle" class="g-s">16</text><text x="556.0" y="234" text-anchor="middle" class="g-s">18</text><text x="610.0" y="234" text-anchor="middle" class="g-s">20</text><text x="664.0" y="234" text-anchor="middle" class="g-s">22</text><text x="678" y="234" text-anchor="start" class="g-s">min</text></svg>
+<figcaption>نمودار گانت مثال ۵.۱. خط‌های کوتاه نارنجی بالای هر پنل لحظه‌ی ورود تماس‌اند، میله‌های آبی خدمت، و خط‌چین نارنجی روی هر ردیف یعنی تماس منتظر آن کارمند مانده است. در سیاست ۲، Baker تقریباً بی‌وقفه کار می‌کند و صف بیشتر شکل می‌گیرد.</figcaption>
+</figure>
+
+<p>همین شبیه‌سازی را می‌شود به شکل <b>فهرست رویدادها</b> هم دید (سیاست ۱، ده رویداد اول). ستون آخر وضعیت سیستم است: Able، Baker و طول صف.</p>
+<div class="evlist w4">
+<div class="h"><span>ساعت</span><span>تماس</span><span>رویداد</span><span>A|B|Q</span></div>
+<div><span>0</span><span>1</span><span class="arr">ورود ← Able</span><span>1|0|0</span></div>
+<div><span>2</span><span>2</span><span class="arr">ورود ← Baker</span><span>1|1|0</span></div>
+<div class="hl"><span>3</span><span>3</span><span class="arr">ورود، هر دو مشغول ← صف</span><span>1|1|1</span></div>
+<div><span>4</span><span>1</span><span class="dep">خروج از Able؛ تماس ۳ از صف به Able</span><span>1|1|0</span></div>
+<div><span>6</span><span>2</span><span class="dep">خروج از Baker</span><span>1|0|0</span></div>
+<div><span>7</span><span>4</span><span class="arr">ورود ← Baker</span><span>1|1|0</span></div>
+<div class="hl"><span>9</span><span>3</span><span class="dep">خروج از Able (اول خروج)</span><span>0|1|0</span></div>
+<div class="hl"><span>9</span><span>5</span><span class="arr">ورود ← Able (بعد ورود)</span><span>1|1|0</span></div>
+<div><span>10</span><span>4</span><span class="dep">خروج از Baker</span><span>1|0|0</span></div>
+<div><span>10</span><span>6</span><span class="arr">ورود ← Baker</span><span>1|1|0</span></div>
+</div>
+
+<p>کد زیر همین منطق را می‌نویسد و برای اطمینان، ده سطر اول جدول ۱۵ کتاب Banks (مثال ۶) را بازتولید می‌کند. Banks برای آن ده تماس جمع تأخیر ۸ و جمع زمان در سیستم ۴۶ را نشان می‌دهد.</p>
+<pre class="code">
+def two_server(arrivals, service_of, prefer="A"):
+    """arrivals: arrival clock times; service_of(k, server) -&gt; service time.
+    prefer: who takes the call when BOTH are idle (and breaks exact ties)."""
+    free = {"A": 0, "B": 0}           # clock time each server becomes available
+    rows = []
+    for k, t in enumerate(arrivals):
+        idle = [s for s in ("A", "B") if free[s] &lt;= t]   # free exactly at t counts as idle
+        if len(idle) == 2:
+            s = prefer
+        elif len(idle) == 1:
+            s = idle[0]
+        else:                                            # both busy: whoever frees first
+            s = min(("A", "B"), key=lambda x: (free[x], x != prefer))
+        begin = max(t, free[s])
+        svc = service_of(k, s)
+        free[s] = begin + svc
+        rows.append((k + 1, t, s, svc, begin, free[s], begin - t, free[s] - t))
+    return rows
+
+# check against Banks, Example 6, Table 15 (first 10 callers)
+arr = [0, 1, 2, 5, 7, 9, 10, 12, 16, 17]
+svc = [4, 4, 3, 3, 5, 5, 5, 4, 2, 3]          # service time that was generated for each caller
+rows = two_server(arr, lambda k, s: svc[k])
+for r in rows[:4]:
+    print(r)
+print("total delay =", sum(r[6] for r in rows), " total time in system =", sum(r[7] for r in rows))
+</pre>
+<div class="out">(1, 0, 'A', 4, 0, 4, 0, 4)
+(2, 1, 'B', 4, 1, 5, 0, 4)
+(3, 2, 'A', 3, 4, 7, 2, 5)
+(4, 5, 'B', 3, 5, 8, 0, 3)
+total delay = 8  total time in system = 46</div>
+</section>
+
+<!-- ===================================================== 03 -->
+<section id="stats">
+<h2 data-short="آماره‌ها و هزینه"><span class="num">03</span> تأخیر، بهره‌وری و هزینه <span class="tag core">جزوه</span> <span class="tag book">تکمیلی</span></h2>
+<h3>آن‌چه جزوه گزارش می‌کند (ص ۲۵ و ۲۶)</h3>
+<div class="stats">
+  <div><div class="l">میانگین تأخیر (یک اجرا)</div><div class="v">2.11</div><div class="f">211 / 100 دقیقه</div></div>
+  <div><div class="l">میانگین زمان در سیستم</div><div class="v">5.64</div><div class="f">564 / 100 دقیقه</div></div>
+  <div><div class="l">بدون تأخیر</div><div class="v">62%</div><div class="f">12% تأخیر ۱ تا ۲ دقیقه</div></div>
+  <div><div class="l">۴۰۰ اجرای ۱۰۰تماسه</div><div class="v">80.5%</div><div class="f">322 از 400 روز: میانگین ≤ 1</div></div>
+</div>
+<p>یک اجرای ۱۰۰تماسه: ۶۲٪ تماس‌ها بدون تأخیر، ۱۲٪ با تأخیر ۱ تا ۲ دقیقه، و دم بلندی تا حدود ۱۴ دقیقه. بعد ۴۰۰ بار همین ۱۰۰ تماس تکرار شده و هر بار <b>میانگین</b> تأخیر ثبت شده است: هیستوگرام این ۴۰۰ میانگین سه ستون اصلی دارد (۳۲۲، ۶۷، ۸) و فقط ۱۱ اجرا میانگینی بیش از ۲ دقیقه داشته‌اند. یعنی همان یک اجرای جدول (میانگین ۲٫۱۱) جزو بدترین ۲٫۷۵٪ روزها بوده است.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · هیستوگرامِ چه چیزی؟</div>
+متن اسلاید می‌گوید «۸۰٫۵٪ تماس‌گیرنده‌ها تأخیر حداکثر ۱ دقیقه داشتند». دقیق‌ترش این است: در ۸۰٫۵٪ <b>اجراها</b> (روزها)، <b>میانگین</b> تأخیر ۱۰۰ تماس حداکثر ۱ دقیقه بوده است. Banks هم تأکید می‌کند که این هیستوگرامِ تأخیر تک‌تک تماس‌ها نیست. هیستوگرام میانگین‌ها باریک‌تر است، چون میانگین‌ها کمتر از مشاهده‌های تکی نوسان دارند.
+</div>
+<div class="box note"><div class="bt">📘 Banks ویرایش ۵ (مثال ۶)</div>
+عددهای کتاب با اسلاید فرق دارد، چون اجرای تصادفی دیگری است: جمع تأخیر ۷۳ و جمع زمان در سیستم ۴۳۲ برای ۱۰۰ تماس (میانگین تأخیر ۰٫۷۳)، ۷۸٪ بدون تأخیر، و در ۴۰۰ اجرا ۳۱۳ اجرا (حدود ۷۸٪) میانگین تأخیر حداکثر ۱ دقیقه، ۸۷ اجرا بیش از ۱ و فقط ۵ اجرا بیش از ۲ دقیقه. نتیجه‌ی کتاب: «یک اجرای یک‌روزه ممکن است اصلاً نماینده‌ی عملکرد بلندمدت نباشد.»
+</div>
+
+<h3>تعریف دقیق هر شاخص</h3>
+<div class="tablewrap"><table>
+<tr><th>شاخص</th><th>فرمول</th><th>مثال ۵.۱، سیاست ۱</th><th>سیاست ۲</th></tr>
+<tr><td>میانگین انتظار (همه‌ی تماس‌ها)</td><td>$\bar W=\frac{1}{n}\sum_k W_k$</td><td>3/10 = 0.3</td><td>7/10 = 0.7</td></tr>
+<tr><td>درصد پاسخ بدون انتظار</td><td>$\#\{W_k=0\}/n$</td><td>8/10 = 80%</td><td>5/10 = 50%</td></tr>
+<tr><td>میانگین انتظارِ منتظرماندگان</td><td>$\sum W_k / \#\{W_k&gt;0\}$</td><td>3/2 = 1.5</td><td>7/5 = 1.4</td></tr>
+<tr><td>میانگین زمان در سیستم</td><td>$\frac1n\sum_k (W_k+S_k)$</td><td>41/10 = 4.1</td><td>45/10 = 4.5</td></tr>
+<tr><td>طول شبیه‌سازی</td><td>$T=\max_k \text{end}_k$</td><td>21</td><td>22</td></tr>
+<tr><td>بهره‌وری Able</td><td>$\rho_A=\frac{\sum_{k\to A}S_k}{T}$</td><td>20/21 = 0.952</td><td>16/22 = 0.727</td></tr>
+<tr><td>بهره‌وری Baker</td><td>$\rho_B=\frac{\sum_{k\to B}S_k}{T}$</td><td>18/21 = 0.857</td><td>22/22 = 1.000</td></tr>
+</table></div>
+<p>سطر سوم جالب است: در سیاست ۲ تعداد منتظرها بیشتر است ولی میانگین انتظارِ منتظرها کمی کمتر است. اگر فقط این شاخص را گزارش کنی، سیاست بدتر بهتر به نظر می‌رسد.</p>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+بهره‌وری را با «تعداد تماس‌های هر کارمند تقسیم بر ۱۰۰» حساب کردن. بهره‌وری کسری از <b>زمان</b> است که کارمند مشغول بوده؛ Baker ممکن است تماس‌های کمتری بگیرد ولی چون کندتر است، زمان بیشتری مشغول بماند. مخرج را هم برای هر دو کارمند و هر سه سیاست <b>یکسان تعریف کن</b>: پایان آخرین خدمت، یا طول ثابت شیفت.
+</div>
+
+<h3>هزینه: دو قرارداد برای حقوق</h3>
+<div class="box thm"><div class="bt">رابطه · هزینه‌ی یک روز و هزینه‌ی هر تماس</div>
+با حقوق ساعتی $w_A,w_B$ (دلار در ساعت) و هزینه‌ی انتظار $c_w$ (دلار برای هر دقیقه‌ی انتظار یک تماس):<br>
+(الف) حقوق کل شیفت: $$C_{\text{shift}}=\frac{(w_A+w_B)\,T}{60}+c_w\sum_k W_k$$
+(ب) حقوق فقط برای زمان مکالمه: $$C_{\text{talk}}=\frac{w_A\sum_{k\to A}S_k+w_B\sum_{k\to B}S_k}{60}+c_w\sum_k W_k$$
+و هزینه‌ی هر تماس: $$c_{\text{call}}=C/n$$
+</div>
+<p>در مثال ۵.۱، با $w_A=24$ و $w_B=14$ دلار در ساعت و $c_w=0.5$ دلار در دقیقه:</p>
+<div class="tablewrap"><table>
+<tr><th></th><th>قرارداد (الف)</th><th>قرارداد (ب)</th></tr>
+<tr><td>سیاست ۱</td><td>38×21/60 + 0.5×3 = 14.80 ⇒ 1.48 هر تماس</td><td>(24×20 + 14×18)/60 + 1.5 = 13.70 ⇒ 1.37</td></tr>
+<tr><td>سیاست ۲</td><td>38×22/60 + 0.5×7 = 17.43 ⇒ 1.74 هر تماس</td><td>(24×16 + 14×22)/60 + 3.5 = 15.03 ⇒ 1.50</td></tr>
+</table></div>
+<div class="box tip"><div class="bt">💡 نکته</div>
+در قرارداد (الف) هزینه‌ی دستمزد تقریباً به سیاست بستگی ندارد (هر دو نفر کل روز حقوق می‌گیرند)، پس مقایسه عملاً روی هزینه‌ی انتظار انجام می‌شود. در قرارداد (ب) سیاست مهم می‌شود، چون هر دقیقه‌ی مکالمه‌ی Baker ارزان‌تر است ولی Baker دقیقه‌های بیشتری حرف می‌زند. هر دو قرارداد معقول‌اند؛ مهم این است که <b>بنویسی کدام را فرض کرده‌ای</b>.
+</div>
+</section>
+
+<!-- ===================================================== 04 -->
+<section id="crn">
+<h2 data-short="سه سیاست و CRN"><span class="num">04</span> سه سیاست و اعداد تصادفی مشترک <span class="tag book">تکمیلی</span> <span class="tag hw">تمرین</span></h2>
+<p>فرض کن سیاست ۱ را با یک دسته عدد تصادفی و سیاست ۲ را با دسته‌ی دیگری اجرا کنی. اگر سیاست ۲ بدتر درآمد، از کجا بدانی تقصیر سیاست بوده یا آن روز تماس‌ها پشت سر هم آمده‌اند؟ راه‌حل این است که هر دو سیاست <b>همان روز</b> را تجربه کنند.</p>
+<div class="box def"><div class="bt">تعریف ۵.۲ · اعداد تصادفی مشترک (Common Random Numbers, CRN)</div>
+برای مقایسه‌ی چند سیستم یا سیاست، همه‌ی آن‌ها را با <b>همان</b> دنباله‌های اعداد تصادفی اجرا کن، و هر عدد را در همه‌ی سیستم‌ها برای <b>همان کار</b> مصرف کن (هم‌گام‌سازی یا synchronization): عدد ورودِ تماس $k$ همیشه ورود تماس $k$ را می‌سازد و عدد خدمت تماس $k$ همیشه خدمت همان تماس را.
+</div>
+<div class="box thm"><div class="bt">رابطه · چرا واریانس تفاوت کم می‌شود</div>
+اگر $X$ و $Y$ خروجی دو سیاست در یک اجرا باشند:
+$$\operatorname{Var}(X-Y)=\operatorname{Var}(X)+\operatorname{Var}(Y)-2\operatorname{Cov}(X,Y)$$
+با اعداد مستقل $\operatorname{Cov}=0$. با CRN یک روز شلوغ برای هر دو سیاست شلوغ است، پس $X$ و $Y$ با هم بالا و پایین می‌روند و $\operatorname{Cov}&gt;0$. <b>میانگین</b> تفاوت عوض نمی‌شود؛ فقط نویزش کم می‌شود.
+</div>
+<div class="box tip"><div class="bt">💡 هم‌گام‌سازی در عمل</div>
+برای هر «منظور» یک ستون جدا بگذار: ستون <code>RAND</code> بین‌ورود، ستون <code>RAND</code> خدمت (یکی برای هر تماس، که با جدول کارمند منتخب به زمان تبدیل می‌شود) و ستون <code>RAND</code> سکه برای سیاست تصادفی. اگر سکه و خدمت از یک ستون بخوانند، سیاست تصادفی عددها را جور دیگری مصرف می‌کند و هم‌گامی می‌شکند.
+</div>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۵.۲ · نگار و پویا (عددهای متفاوت از تمرین)</div>
+<p>مرکز تماسی با دو کارشناس: <b>نگار</b> (سریع) و <b>پویا</b> (کند). بین‌ورود ۱، ۲، ۳ یا ۴ دقیقه با احتمال‌های ۰٫۳۰، ۰٫۴۰، ۰٫۲۰ و ۰٫۱۰ (میانگین ۲٫۱). خدمت نگار ۲، ۳ یا ۴ دقیقه با احتمال‌های ۰٫۴۰، ۰٫۳۵ و ۰٫۲۵ (میانگین ۲٫۸۵). خدمت پویا ۳ تا ۶ دقیقه با احتمال‌های ۰٫۲۵، ۰٫۳۵، ۰٫۲۵ و ۰٫۱۵ (میانگین ۴٫۳). حقوق نگار ۲۸ و پویا ۱۶ دلار در ساعت؛ هر دقیقه انتظار یک تماس ۰٫۶۰ دلار هزینه دارد. هر روز ۱۰۰ تماس، ۵۰ تکرار، هر سه سیاست با CRN.</p>
+</div>
+<pre class="code">
+import numpy as np
+
+IA   = ([1, 2, 3, 4], [0.30, 0.40, 0.20, 0.10])      # interarrival (min)
+FAST = ([2, 3, 4],    [0.40, 0.35, 0.25])            # Negar
+SLOW = ([3, 4, 5, 6], [0.25, 0.35, 0.25, 0.15])      # Pouya
+W_FAST, W_SLOW, C_WAIT = 28, 16, 0.60                # $/hour, $/hour, $/min of waiting
+
+def draw(u, dist):                                   # inverse transform for a discrete table
+    vals, probs = dist
+    return np.array(vals)[np.searchsorted(np.cumsum(probs), u)]
+
+def one_day(uA, uS, uC, policy, n=100):
+    ia = draw(uA, IA); ia[0] = 0
+    t, free, busy, waits = 0, {"F": 0, "S": 0}, {"F": 0, "S": 0}, []
+    for k in range(n):
+        t += ia[k]
+        idle = [s for s in "FS" if free[s] &lt;= t]
+        if len(idle) == 2:
+            s = {"F": "F", "S": "S", "R": "F" if uC[k] &lt; 0.5 else "S"}[policy]
+        elif idle:
+            s = idle[0]
+        else:
+            s = "F" if free["F"] &lt;= free["S"] else "S"
+        svc = draw(uS[k], FAST if s == "F" else SLOW)   # same u, chosen server's table
+        begin = max(t, free[s]); free[s] = begin + svc; busy[s] += svc
+        waits.append(begin - t)
+    T = max(free.values())                           # end of the day = last completion
+    w = np.array(waits)
+    cost = (W_FAST + W_SLOW) * T / 60 + C_WAIT * w.sum()   # agents paid for the whole shift
+    return dict(wait=w.mean(), nowait=(w == 0).mean(), uF=busy["F"] / T, uS=busy["S"] / T, cost=cost)
+
+R = 50
+rng = np.random.default_rng(2026)
+res = {p: [] for p in "FSR"}
+for r in range(R):
+    uA, uS, uC = rng.random(100), rng.random(100), rng.random(100)
+    for p in "FSR":                                  # common random numbers: same u's for all 3
+        res[p].append(one_day(uA, uS, uC, p))
+
+print("policy        wait  no-wait  u_fast  u_slow   cost/day  cost/call")
+for p, name in zip("FSR", ["fast first", "slow first", "random"]):
+    m = {k: np.mean([x[k] for x in res[p]]) for k in res[p][0]}
+    print(f"{name:12s} {m['wait']:5.3f}  {m['nowait']:6.1%}  {m['uF']:6.3f}  {m['uS']:6.3f}"
+          f"   {m['cost']:7.2f}   {m['cost']/100:6.3f}")
+</pre>
+<div class="out">policy        wait  no-wait  u_fast  u_slow   cost/day  cost/call
+fast first   0.553   68.6%   0.863   0.706    189.98    1.900
+slow first   0.614   64.7%   0.738   0.889    194.02    1.940
+random       0.595   66.3%   0.788   0.813    192.80    1.928</div>
+<p>خواندن خروجی: «اول سریع» کمترین انتظار و بیشترین درصد بدون انتظار را دارد و «تصادفی» بین دو سیاست دیگر است، همان‌طور که انتظار داریم. بهره‌وری مثل اهرم جابه‌جا می‌شود: هر سیاست کار را به سمت کارمند ترجیحی‌اش می‌برد. با قرارداد (ب)، یعنی حقوق فقط برای زمان مکالمه، هزینه‌ی روزانه‌ی همین ۵۰ اجرا ۱۵۹٫۳۸، ۱۶۱٫۳۱ و ۱۶۰٫۷۶ دلار می‌شود. فاصله‌ها کم شده‌اند، چون هر تماس پویا ارزان‌تر است ($16\times4.3/60=1.15$ در برابر $28\times2.85/60=1.33$ دلار)، ولی انتظار اضافه این صرفه را می‌خورد.</p>
+<p>ولی آیا تفاوت ۰٫۰۶ دقیقه‌ای واقعی است؟ بیا تفاوت «اول کند» منهای «اول سریع» را یک بار با اعداد مستقل و یک بار با CRN تخمین بزنیم:</p>
+<pre class="code">
+# continues the code above (one_day defined)
+T49 = 2.010                                   # t_{0.975, 49}
+
+def compare(common, R=50, seed=7):
+    rng = np.random.default_rng(seed)
+    d = []
+    for r in range(R):
+        u_fast = (rng.random(100), rng.random(100), rng.random(100))
+        u_slow = u_fast if common else (rng.random(100), rng.random(100), rng.random(100))
+        d.append(one_day(*u_slow, "S")["wait"] - one_day(*u_fast, "F")["wait"])
+    d = np.array(d); m, s = d.mean(), d.std(ddof=1); h = T49 * s / np.sqrt(R)
+    print(f"{'CRN' if common else 'independent':11s}  mean diff = {m:+.3f}  sd = {s:.3f}  95% CI = [{m-h:+.3f}, {m+h:+.3f}]")
+
+compare(common=False)
+compare(common=True)
+</pre>
+<div class="out">independent  mean diff = +0.085  sd = 0.492  95% CI = [-0.054, +0.225]
+CRN          mean diff = +0.073  sd = 0.064  95% CI = [+0.054, +0.091]</div>
+<div class="stats">
+  <div><div class="l">انحراف معیار تفاوت، مستقل</div><div class="v">0.492</div><div class="f">بازه صفر را می‌پوشاند</div></div>
+  <div><div class="l">انحراف معیار تفاوت، CRN</div><div class="v">0.064</div><div class="f">بازه کاملاً مثبت است</div></div>
+  <div><div class="l">کاهش واریانس</div><div class="v">≈ 59×</div><div class="f">(0.492 / 0.064)²</div></div>
+</div>
+<p>با ۵۰ اجرای مستقل نمی‌توانی بگویی کدام سیاست بهتر است. با ۵۰ اجرای CRN با اطمینان ۹۵٪ می‌گویی «اول کند» به‌طور میانگین بین ۰٫۰۵ و ۰٫۰۹ دقیقه انتظار بیشتری می‌سازد. برای رسیدن به همین دقت با اعداد مستقل، حدود ۵۹ برابر اجرا لازم بود.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+بعد از CRN، بازه‌ی اطمینان را روی <b>تفاوت‌های جفتی</b> $d_r=X_r-Y_r$ بساز، نه با مقایسه‌ی دو بازه‌ی جدا. دو بازه‌ی جدا ممکن است هم‌پوشانی داشته باشند در حالی که بازه‌ی تفاوت جفتی صفر را نپوشاند؛ همبستگی مثبت فقط در بازه‌ی جفتی دیده می‌شود.
+</div>
+
+<div id="w-callcenter"></div>
+
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۵</div>
+<ol>
+<li><b>فرض‌ها را اول بنویس.</b> متن سؤال فقط می‌گوید علی سریع‌تر و بهرام کندتر است و توزیع زمان‌ها را نمی‌دهد. توزیع‌هایی را که استفاده می‌کنی (مثلاً جدول‌های بین‌ورود، Able و Baker جزوه برای علی و بهرام) بالای شیت بنویس، همراه با قاعده‌های تساوی و قرارداد حقوق: کل شیفت یا زمان مکالمه.</li>
+<li><b>ستون‌های تصادفی مشترک.</b> سه ستون <code>RAND</code> بساز: بین‌ورود، خدمت و سکه (فقط برای روش سوم). هر سه جدول سیاست باید از <b>همین</b> ستون‌ها بخوانند. این همان «دنباله‌ی یکسان برای ورود» است که سؤال خواسته؛ مشترک بودن ستون خدمت هم مقایسه را دقیق‌تر می‌کند.</li>
+<li><b>ستون‌های هر جدول ۱۰۰تماسه:</b> بین‌ورود، ورود، «علی آزاد از» (<code>MAX</code> پایان‌های علی تا سطر قبل)، «بهرام آزاد از»، کارمند منتخب (<code>IF</code> تودرتو، بخش ۵)، خدمت (<code>VLOOKUP</code> در جدول کارمند منتخب)، شروع، پایان علی، پایان بهرام، انتظار و زمان در سیستم.</li>
+<li><b>گزارش:</b> برای هر روش یک سطر جدول با میانگین انتظار، درصد بدون انتظار (<code>COUNTIF</code> روی ستون انتظار با صفر)، بهره‌وری هر کارمند با <b>یک</b> مخرج مشترک، و هزینه‌ی کل و هزینه‌ی هر تماس با فرمول بخش ۳.</li>
+<li><b>تله‌ها:</b> قبل از نوشتن گزارش اعداد را منجمد کن (Paste Values یا محاسبه‌ی دستی)، چون هر <code>F9</code> همه چیز را عوض می‌کند. هزینه‌ی انتظار را فقط برای انتظار حساب کن، نه برای زمان در سیستم. نتیجه‌ی یک اجرای ۱۰۰تماسه را قطعی اعلام نکن: یک جمله درباره‌ی نیاز به تکرار بنویس (ربط به سؤال ۷)، و اگر وقت داری، چند تکرار با Data Table بگیر.</li>
+</ol>
+</div>
+</section>
+
+<!-- ===================================================== 05 -->
+<section id="excel-cc">
+<h2 data-short="اکسل مرکز تماس"><span class="num">05</span> ساختار اکسل برای مرکز تماس <span class="tag book">تکمیلی</span> <span class="tag hw">تمرین</span></h2>
+<p>Banks کل مثال ۶ را در کارنامه‌ی <code>Example2.6AbleBaker.xls</code> پیاده کرده است: یک شیت «One Trial» برای جدول و یک شیت «Experiment» برای تکرار. چیدمان پیشنهادی برای مثال نگار/پویا (سطر ۲ تماس اول است و جدول‌های جست‌وجو در ستون‌های R تا Y):</p>
+<div class="tablewrap"><table>
+<tr><th>ستون</th><th>محتوا</th><th>ستون</th><th>محتوا</th></tr>
+<tr><td>A</td><td>شماره‌ی تماس</td><td>I</td><td>کارمند منتخب (F/S)</td></tr>
+<tr><td>B</td><td><code>RAND()</code> بین‌ورود</td><td>J</td><td>زمان خدمت</td></tr>
+<tr><td>C</td><td>بین‌ورود</td><td>K</td><td>شروع خدمت</td></tr>
+<tr><td>D</td><td>زمان ورود</td><td>L</td><td>پایان خدمت نگار</td></tr>
+<tr><td>E</td><td><code>RAND()</code> خدمت</td><td>M</td><td>پایان خدمت پویا</td></tr>
+<tr><td>F</td><td><code>RAND()</code> سکه</td><td>N</td><td>انتظار</td></tr>
+<tr><td>G</td><td>نگار آزاد از</td><td>O</td><td>زمان در سیستم</td></tr>
+<tr><td>H</td><td>پویا آزاد از</td><td>R:Y</td><td>جدول‌های توزیع (کران پایین تجمعی، مقدار)</td></tr>
+</table></div>
+<pre class="xl">Lookup tables (lower cumulative bound | value):
+  R3:S6  interarrival   0 | 1     0.30 | 2     0.70 | 3     0.90 | 4
+  U3:V5  Negar          0 | 2     0.40 | 3     0.75 | 4
+  X3:Y6  Pouya          0 | 3     0.25 | 4     0.60 | 5     0.85 | 6
+
+Row 2 (caller 1):  D2 = 0      G2 = 0      H2 = 0
+Row 3 (caller 2), fill down to row 101:
+  C3 = VLOOKUP(B3, $R$3:$S$6, 2, TRUE)
+  D3 = D2 + C3
+  G3 = MAX($L$2:L2)                         ' Negar free from = her latest completion so far
+  H3 = MAX($M$2:M2)
+  I3 = IF(D3>=G3, "F", IF(D3>=H3, "S", IF(G3<=H3, "F", "S")))          ' policy 1: fast first
+  J3 = IF(I3="F", VLOOKUP(E3, $U$3:$V$5, 2, TRUE), VLOOKUP(E3, $X$3:$Y$6, 2, TRUE))
+  K3 = MAX(D3, IF(I3="F", G3, H3))
+  L3 = IF(I3="F", K3 + J3, "")
+  M3 = IF(I3="S", K3 + J3, "")
+  N3 = K3 - D3
+  O3 = N3 + J3
+
+Policy 2 (slow first):  I3 = IF(D3>=H3, "S", IF(D3>=G3, "F", IF(H3<=G3, "S", "F")))
+Policy 3 (random):      I3 = IF(AND(D3>=G3, D3>=H3), IF(F3<0.5, "F", "S"),
+                              IF(D3>=G3, "F", IF(D3>=H3, "S", IF(G3<=H3, "F", "S"))))
+
+Summary:
+  mean wait      = AVERAGE(N2:N101)
+  % no wait      = COUNTIF(N2:N101, 0) / 100
+  T              = MAX(L2:M101)
+  util Negar     = SUMIF(I2:I101, "F", J2:J101) / T
+  util Pouya     = SUMIF(I2:I101, "S", J2:J101) / T
+  cost (shift)   = ($wF + $wS) * T / 60 + $cw * SUM(N2:N101)</pre>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+ساختن جدول <code>VLOOKUP</code> با ستون تجمعی <b>بالایی</b> (۰٫۳۰، ۰٫۷۰، ۰٫۹۰، ۱). <code>VLOOKUP(…, TRUE)</code> بزرگ‌ترین مقدارِ کوچک‌تر یا مساوی را پیدا می‌کند، پس ستون اول باید <b>کران پایین</b> هر بازه باشد (۰، ۰٫۳۰، ۰٫۷۰، ۰٫۹۰). با کران بالا همه‌ی مقدارها یک پله جابه‌جا می‌شوند. معادل بی‌دردسرش: <code>INDEX(values, MATCH(u, lower_bounds, 1))</code>.
+</div>
+<div class="box tip"><div class="bt">💡 CRN مجانی در اکسل</div>
+هر سه سیاست را <b>در یک شیت</b> کنار هم بساز (سه بلوک ستون) که همه از ستون‌های B، E و F می‌خوانند. هر بار که اکسل دوباره محاسبه می‌کند، هر سه سیاست یک روزِ تازه‌ی <b>یکسان</b> را تجربه می‌کنند؛ CRN خودکار است.
+</div>
+<h3>تکرار با Data Table</h3>
+<ol class="steps">
+<li>در یک ستون خالی عددهای ۱ تا R را بنویس (شماره‌ی تکرار).</li>
+<li>در سطر بالای آن، کنار ستون شماره‌ها، به خانه‌های خروجی ارجاع بده؛ مثلاً <code>=AVERAGE(N2:N101)</code> هر سه سیاست و هزینه‌ها.</li>
+<li>محدوده را انتخاب کن: Data ← What-If Analysis ← Data Table. در Column input cell یک خانه‌ی خالیِ بی‌اثر بده. اکسل برای هر سطر یک بار کل شیت را دوباره حساب می‌کند و <code>RAND</code>ها تازه می‌شوند؛ هر سطر یک تکرار است.</li>
+<li>زیر جدول: <code>AVERAGE</code>، <code>STDEV.S</code> و نیم‌پهنای بازه <code>=T.INV.2T(0.05, R-1)*STDEV.S(…)/SQRT(R)</code>. برای تفاوت جفتی یک ستون «سیاست ۲ منهای سیاست ۱» بساز و همین سه فرمول را رویش بزن.</li>
+</ol>
+</section>
+
+<!-- ===================================================== 06 -->
+<section id="inventory">
+<h2 data-short="موجودی (M, N)"><span class="num">06</span> سیستم موجودی (M, N) <span class="tag core">جزوه</span></h2>
+<p>جزوه (ص ۲۸ و ۲۹) سیستم‌های موجودی را دسته‌ی مهمی از مسائل شبیه‌سازی می‌داند. شاخص عملکرد <b>هزینه‌ی کل</b> (یا سود کل) است و پارامترها این‌ها هستند:</p>
+<div class="cards">
+  <div><b>N · طول دوره‌ی بازبینی</b>هر N روز (یا هر N واحد زمان) موجودی شمرده می‌شود.</div>
+  <div><b>M · سطح استاندارد موجودی</b>سفارش طوری داده می‌شود که موجودی تا M بالا برود (order-up-to level).</div>
+  <div><b>$Q_i$ · مقدار سفارش i</b>هر بار متغیر است: هرچه موجودی کمتر، سفارش بیشتر.</div>
+</div>
+<div class="box def"><div class="bt">تعریف ۵.۳ · سیاست (M, N)</div>
+یک سیاست <b>بازبینی دوره‌ای</b> (periodic review): در پایان روزهای $N, 2N, 3N, \dots$ موجودی شمرده و سفارشی داده می‌شود که موجودی را تا $M$ برساند. زمان سفارش ثابت است و مقدارش تصادفی؛ برعکسِ سیاست‌هایی که مقدار سفارش ثابت دارند و زمانش تصادفی است.
+</div>
+<p><b>رویدادهای سیستم</b> (جزوه ص ۲۹): ۱) تقاضا برای کالا؛ ۲) بازبینی موجودی؛ ۳) رسیدن سفارش در پایان هر بازبینی. اگر زمان تحویل (lead time) صفر باشد، رویداد دوم و سوم هم‌زمان‌اند (Banks). جزوه دو نکته‌ی دیگر هم دارد: برای پرهیز از کمبود <b>موجودی اطمینان</b> (buffer / safety stock) لازم است، و نگه‌داشتن موجودی هزینه دارد: انبار و نگهبان.</p>
+<figure class="fig">
+<svg viewBox="0 0 720 272" width="720" direction="ltr" role="img" aria-label="inventory path of worked example 5.3"><line x1="60" y1="184" x2="664.8" y2="184" class="g-ax"/><line x1="60" y1="32.0" x2="60" y2="248" class="g-ax"/><line x1="60" y1="56" x2="664.8" y2="56" class="g-m"/><text x="52" y="60" text-anchor="end" class="g-l">M=8</text><text x="52" y="236" text-anchor="end" class="g-s">-3</text><text x="52" y="188" text-anchor="end" class="g-s">0</text><text x="52" y="124" text-anchor="end" class="g-s">4</text><text x="60" y="264" text-anchor="middle" class="g-s">0</text><text x="108" y="264" text-anchor="middle" class="g-s">1</text><text x="156" y="264" text-anchor="middle" class="g-s">2</text><text x="204" y="264" text-anchor="middle" class="g-s">3</text><text x="252" y="264" text-anchor="middle" class="g-s">4</text><text x="300" y="264" text-anchor="middle" class="g-s">5</text><text x="348" y="264" text-anchor="middle" class="g-s">6</text><text x="396" y="264" text-anchor="middle" class="g-s">7</text><text x="444" y="264" text-anchor="middle" class="g-s">8</text><text x="492" y="264" text-anchor="middle" class="g-s">9</text><text x="540" y="264" text-anchor="middle" class="g-s">10</text><text x="588" y="264" text-anchor="middle" class="g-s">11</text><text x="636" y="264" text-anchor="middle" class="g-s">12</text><text x="664.8" y="264" text-anchor="start" class="g-s">day</text><polygon points="172.0,184 204,216 252,232 252,184" class="g-short"/><line x1="252" y1="33.6" x2="252" y2="248" class="g-rev"/><text x="257" y="35.6" text-anchor="start" class="g-q">Q=11</text><line x1="444" y1="33.6" x2="444" y2="248" class="g-rev"/><text x="449" y="35.6" text-anchor="start" class="g-q">Q=8</text><line x1="636" y1="33.6" x2="636" y2="248" class="g-rev"/><text x="641" y="35.6" text-anchor="start" class="g-q">Q=6</text><polyline points="60,56 108,120 156,168 204,216 252,232 252,56 300,88 348,88 396,120 444,184 444,56 492,72 540,120 588,152 636,152 636,56" class="g-path"/><text x="260" y="238" text-anchor="start" class="g-s g-shortt">backorder 3</text></svg>
+<figcaption>مسیر موجودی مثال ۵.۳ (بخش ۷) با M = ۸ و N = ۴، به سبک شکل جزوه (ص ۲۸). خط‌چین بنفش سطح M است و خط‌چین‌های عمودی روزهای بازبینی. بخش نارنجی زیر صفر کمبودِ پس‌افت است: در دوره‌ی اول تقاضا زیاد بود، موجودی منفی شد و سفارش Q = ۱۱ (نه ۸) هم پس‌افت‌ها را پوشاند و هم موجودی را به M برگرداند. تقاضای هر روز با خط مایل نشان داده شده است.</figcaption>
+</figure>
+<h3>منابع هزینه و درآمد (Banks بخش ۲.۴)</h3>
+<div class="two">
+<div><ol><li>درآمد فروش</li><li>هزینه‌ی خرید کالای فروخته‌شده</li><li><b>هزینه‌ی نگهداری</b> (carrying / holding): بهره‌ی پول، انبار، نگهبان</li><li><b>هزینه‌ی سفارش</b> (ordering): حمل، کار اداری</li><li><b>هزینه‌ی فروش ازدست‌رفته یا پس‌افت</b></li><li>هزینه‌ی ضایعات</li><li>درآمد فروش ضایعات</li></ol></div>
+<div><p>متغیرهای تصمیم (کنترل‌پذیر) طبق Banks: سطح حداکثر $M$، دوره‌ی بازبینی $N$، مقدار سفارش $Q$ و زمان تحویل $L$ (اگر قابل کنترل باشد). بده‌بستان اصلی: موجودی زیاد ⇒ نگهداری گران و کمبود کم؛ موجودی کم ⇒ برعکس. بازبینی بیشتر (N کوچک) موجودی را پایین نگه می‌دارد ولی سفارش بیشتر و هزینه‌ی سفارش بیشتر می‌سازد.</p></div>
+</div>
+<h3>دو مثال Banks</h3>
+<div class="vs">
+<div><h4>روزنامه‌فروش (مثال ۷)</h4>مسئله‌ی <b>تک‌دوره‌ای</b>: هر روز Q روزنامه با ۳۳ سنت می‌خرد، با ۵۰ سنت می‌فروشد و باقی‌مانده را ۵ سنت به ضایعات می‌دهد. تقاضا به نوع روز (خوب/متوسط/بد) بستگی دارد. سود روزانه = درآمد فروش − هزینه‌ی روزنامه‌ها − سودِ ازدست‌رفته‌ی تقاضای اضافی (۱۷ سنت برای هر واحد) + درآمد ضایعات. برای Q = ۷۰ و تقاضای ۵۰ در روز اول: ۲۵ − ۲۳٫۱۰ − ۰ + ۱ = <b>۲٫۹۰ دلار</b>. سود ۲۰ روزه‌ی آن اجرا ۱۱۴٫۷۰ دلار بود، در حالی که میانگین ۴۰۰ اجرا ۱۳۵٫۴۹ دلار شد (کمینه ۸۶٫۶۰، بیشینه ۱۹۸).</div>
+<div><h4>یخچال (مثال ۸)</h4>سیاست (M, N) با M = ۱۱ و N = ۵، تقاضای روزانه‌ی ۰ تا ۴ و <b>زمان تحویل تصادفی</b> ۱ تا ۳ روز. مقدار سفارش = M − موجودی پایان روز + کمبود؛ مثلاً موجودی ۳ ⇒ سفارش ۸، و کمبود ۲ ⇒ سفارش ۱۳. سفارش پایان روز داده می‌شود؛ تحویل صفر یعنی صبح فردا. شرایط اولیه: موجودی ۳ و سفارش ۸تایی که ۲ روز بعد می‌رسد. در ۲۵ روز، میانگین موجودی پایان روز ۲٫۷۶ (۶۹/۲۵) بود و ۵ روز کمبود داشت.</div>
+</div>
+<p>وقتی ممکن است یک سفارش هنوز نرسیده باشد و بازبینی بعدی برسد، Banks فرمول را اصلاح می‌کند تا دوباره‌سفارش‌دهی رخ ندهد:</p>
+$$Q=M-I_{\text{end}}-Q_{\text{on order}}+B_{\text{short}}$$
+<p>که $I_{\text{end}}\ge0$ موجودی پایان روز، $Q_{\text{on order}}$ مقدار سفارش‌های در راه و $B_{\text{short}}$ کمبود (پس‌افت) است.</p>
+</section>
+
+<!-- ===================================================== 07 -->
+<section id="accounting">
+<h2 data-short="حسابداری موجودی"><span class="num">07</span> قراردادهای حسابداری موجودی <span class="tag book">تکمیلی</span> <span class="tag exam">امتحانی</span></h2>
+<p>جدول موجودی ساده به نظر می‌رسد، ولی بیشتر اختلاف جواب‌ها از یک چیز می‌آید: <b>ترتیب کارها در یک روز</b>. این ترتیب را ثابت کن و بالای جدول بنویس:</p>
+<ol class="steps">
+<li><b>صبح:</b> سفارشی که امروز می‌رسد به موجودی اضافه می‌شود. پس‌افت‌ها (اگر هست) اول از همین محموله پر می‌شوند.</li>
+<li><b>طول روز:</b> تقاضای $D_t$ کم می‌شود. با پس‌افت (backorder) موجودی خالص می‌تواند منفی شود؛ با فروش ازدست‌رفته (lost sales) موجودی در صفر می‌ماند و مازاد تقاضا از دست می‌رود.</li>
+<li><b>پایان روز:</b> هزینه‌ها روی <b>موجودی پایان روز</b> حساب می‌شوند: نگهداری $h\cdot\max(I_t,0)$ و کمبود $p\cdot B_t$ ($B_t$ = واحدهای کمبود).</li>
+<li><b>اگر $t$ مضرب N است:</b> بازبینی؛ $Q=M-I_t-Q_{\text{on order}}$ که $I_t$ موجودی خالص است (منفی یعنی پس‌افت). اگر $Q&gt;0$، هزینه‌ی ثابت $K$. سفارش پایان روز $t$ صبح روز $t+L+1$ می‌رسد؛ «تحویل فوری» یعنی $L=0$، پس روز بعد با موجودی $M$ شروع می‌شود.</li>
+</ol>
+<div class="box thm"><div class="bt">رابطه · هزینه‌ی کل یک اجرا</div>
+$$C=\sum_{t=1}^{T}\Big[h\,\max(I_t,0)+p\,B_t\Big]+K\cdot n_{\text{orders}}$$
+که $n_{\text{orders}}$ تعداد بازبینی‌هایی است که در آن‌ها $Q&gt;0$ شده.
+با پس‌افت، $B_t=\max(-I_t,0)$ است: هر واحد پس‌افت <b>هر روز</b> که پر نشده دوباره هزینه دارد. با فروش ازدست‌رفته، $B_t=\max(D_t-I^{\text{beg}}_t,0)$ است: هر واحد فقط یک بار.
+</div>
+<div class="tablewrap"><table>
+<tr><th></th><th>پس‌افت (backorder)</th><th>فروش ازدست‌رفته (lost sales)</th></tr>
+<tr><td>موجودی پایان روز</td><td>$I_t=I_{t-1}^{+}-D_t$، می‌تواند منفی شود</td><td>$I_t=\max(I^{\text{beg}}_t-D_t,0)$</td></tr>
+<tr><td>هزینه‌ی کمبود</td><td>$p\times$ تعداد پس‌افتِ باز در پایان هر روز</td><td>$p\times$ تقاضای ازدست‌رفته‌ی همان روز</td></tr>
+<tr><td>مقدار سفارش</td><td>$M-I_t$ (بزرگ‌تر از M اگر پس‌افت هست)</td><td>$M-I_t\le M$</td></tr>
+<tr><td>کِی معقول است؟</td><td>یخچال، قطعه‌ی سفارشی؛ مشتری صبر می‌کند (Banks مثال ۸)</td><td>نان، روزنامه، لوازم‌التحریر ارزان؛ مشتری جای دیگری می‌خرد</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+عبارت «جریمه‌ی هر واحد کمبود <b>در هر روز</b>» یعنی کمبود باز روزبه‌روز هزینه می‌سازد؛ این با منطق پس‌افت جور است. اگر فرض را فروش ازدست‌رفته بگیری، هزینه‌ی هر واحد ازدست‌رفته یک بار حساب می‌شود. هر کدام را انتخاب کردی، در یک خط بنویس.
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+هزینه‌ی نگهداری را روی موجودی منفی حساب کردن (هزینه‌ی منفی!) یا فراموش کردن <code>MAX(I,0)</code>. اشتباه دوم: هزینه‌ی سفارش $K$ را هر روز گرفتن، به جای فقط روزهای بازبینی‌ای که واقعاً سفارش داده شده است.
+</div>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۵.۳ · لوازم یدکی، M = ۸ و N = ۴ (عددهای متفاوت از تمرین)</div>
+<p>تقاضای روزانه ۰ تا ۴ با احتمال‌های ۰٫۱۵، ۰٫۲۵، ۰٫۳۰، ۰٫۲۰ و ۰٫۱۰ (رقم‌ها: ۰۱–۱۵ ⇒ ۰، ۱۶–۴۰ ⇒ ۱، ۴۱–۷۰ ⇒ ۲، ۷۱–۹۰ ⇒ ۳، ۹۱–۰۰ ⇒ ۴). نگهداری ۱٫۵ دلار برای هر واحد در روز، کمبود ۸ دلار برای هر واحد در روز (پس‌افت)، هزینه‌ی ثابت سفارش ۳۰ دلار، تحویل فوری، موجودی اولیه = M. رقم‌ها: <span class="ltr mono">93 85 77 40 55 12 66 97 30 81 48 09</span>.</p>
+</div>
+<div class="tablewrap"><table class="sim">
+<tr><th>روز</th><th>رقم</th><th>تقاضا</th><th>ابتدای روز</th><th>پایان روز</th><th>کمبود</th><th>نگهداری</th><th>کمبود ($p$)</th><th>بازبینی</th><th>Q</th><th>سفارش</th></tr>
+<tr><td>1</td><td>93</td><td>4</td><td>8</td><td>4</td><td>0</td><td>6.0</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>2</td><td>85</td><td>3</td><td>4</td><td>1</td><td>0</td><td>1.5</td><td>0</td><td></td><td></td><td></td></tr>
+<tr class="hl"><td>3</td><td>77</td><td>3</td><td>1</td><td>-2</td><td class="wait">2</td><td>0</td><td>16</td><td></td><td></td><td></td></tr>
+<tr class="hl"><td>4</td><td>40</td><td>1</td><td>-2</td><td>-3</td><td class="wait">3</td><td>0</td><td>24</td><td>✓</td><td>11</td><td>30</td></tr>
+<tr><td>5</td><td>55</td><td>2</td><td>8</td><td>6</td><td>0</td><td>9.0</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>6</td><td>12</td><td>0</td><td>6</td><td>6</td><td>0</td><td>9.0</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>7</td><td>66</td><td>2</td><td>6</td><td>4</td><td>0</td><td>6.0</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>8</td><td>97</td><td>4</td><td>4</td><td>0</td><td>0</td><td>0</td><td>0</td><td>✓</td><td>8</td><td>30</td></tr>
+<tr><td>9</td><td>30</td><td>1</td><td>8</td><td>7</td><td>0</td><td>10.5</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>10</td><td>81</td><td>3</td><td>7</td><td>4</td><td>0</td><td>6.0</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>11</td><td>48</td><td>2</td><td>4</td><td>2</td><td>0</td><td>3.0</td><td>0</td><td></td><td></td><td></td></tr>
+<tr><td>12</td><td>09</td><td>0</td><td>2</td><td>2</td><td>0</td><td>3.0</td><td>0</td><td>✓</td><td>6</td><td>30</td></tr>
+<tr class="sum"><td>جمع</td><td></td><td>25</td><td></td><td></td><td>5</td><td>54</td><td>40</td><td></td><td>25</td><td>90</td></tr>
+</table></div>
+<p>هزینه‌ی ۱۲ روز: ۵۴ + ۴۰ + ۹۰ = <b>۱۸۴ دلار</b>. به روز ۴ دقت کن: ۲ واحد پس‌افت از روز ۳ مانده و ۱ تقاضای تازه هم اضافه شده است؛ پس ۳ واحد کمبود و ۲۴ دلار. همان ۲ واحد دیروز امروز دوباره هزینه دارند. سفارش ۱۱تایی ۳ پس‌افت را پر می‌کند و روز ۵ با ۸ شروع می‌شود. با <b>فروش ازدست‌رفته</b>، روز ۴ از صفر شروع می‌شود، فقط ۱ واحد از دست می‌رود (۸ دلار)، سفارش ۸ است و هزینه‌ی کل ۱۶۸ دلار می‌شود.</p>
+<div class="box note"><div class="bt">📘 دو نمایش هم‌ارز</div>
+در جدول ۲۱ کتاب، Banks موجودی را هیچ‌وقت منفی نمی‌نویسد: ستون «موجودی پایان روز» ≥ ۰ است و ستون جدای «مقدار کمبود» پس‌افت انباشته را نگه می‌دارد (روز ۱۱: موجودی ۰، کمبود ۳؛ روز ۱۲: موجودی ۰، کمبود ۵). این همان موجودی خالص منفی جدول بالاست، در دو ستون.
+</div>
+<pre class="code">
+import numpy as np
+
+DEMAND = ([0, 1, 2, 3, 4], [0.15, 0.25, 0.30, 0.20, 0.10])
+H, P, K = 1.5, 8.0, 30.0      # $ hold /unit/day, $ short /unit/day, $ per order
+
+def simulate(M, N, u, L=0, backorder=True, show=False):
+    """(M,N): review at end of days N, 2N, ...; order M - net - on_order;
+    an order placed at the end of day t is on the shelf at the start of day t+L+1.
+    Costs are charged on END-of-day inventory."""
+    vals, probs = DEMAND
+    D = np.array(vals)[np.searchsorted(np.cumsum(probs), u)]
+    I, pipe, cost = M, {}, {"hold": 0.0, "short": 0.0, "order": 0.0}
+    for t, d in enumerate(D.tolist(), start=1):
+        I += pipe.pop(t, 0)                          # 1) morning delivery
+        beg = I
+        if backorder:
+            I -= d; short = max(-I, 0)               # 2) demand; negative = backorders
+        else:
+            short = max(d - I, 0); I = max(I - d, 0) #    lost sales
+        cost["hold"] += H * max(I, 0)                # 3) end-of-day costs
+        cost["short"] += P * short
+        Q = 0
+        if t % N == 0:                               # 4) review
+            Q = M - I - sum(pipe.values())
+            if Q &gt; 0:
+                cost["order"] += K
+                pipe[t + L + 1] = pipe.get(t + L + 1, 0) + Q
+        if show:
+            print(f"day {t:2d}  beg {beg:3d}  D {d}  end {I:3d}  short {short}  Q {Q}")
+    return sum(cost.values()), cost
+
+digits = [93, 85, 77, 40, 55, 12, 66, 97, 30, 81, 48, 9]
+u = np.array(digits) / 100
+total, parts = simulate(M=8, N=4, u=u, show=True)
+print(total, parts)
+print("lost sales:", simulate(M=8, N=4, u=u, backorder=False)[0])
+</pre>
+<div class="out">day  1  beg   8  D 4  end   4  short 0  Q 0
+day  2  beg   4  D 3  end   1  short 0  Q 0
+day  3  beg   1  D 3  end  -2  short 2  Q 0
+day  4  beg  -2  D 1  end  -3  short 3  Q 11
+day  5  beg   8  D 2  end   6  short 0  Q 0
+day  6  beg   6  D 0  end   6  short 0  Q 0
+day  7  beg   6  D 2  end   4  short 0  Q 0
+day  8  beg   4  D 4  end   0  short 0  Q 8
+day  9  beg   8  D 1  end   7  short 0  Q 0
+day 10  beg   7  D 3  end   4  short 0  Q 0
+day 11  beg   4  D 2  end   2  short 0  Q 0
+day 12  beg   2  D 0  end   2  short 0  Q 6
+184.0 {'hold': 54.0, 'short': 40.0, 'order': 90.0}
+lost sales: 168.0</div>
+<h3>همین جدول در اکسل</h3>
+<pre class="xl">Inputs:  $M (cell B1)   $N (B2)   h (B3)   p (B4)   K (B5)
+Demand lookup P3:Q7 (lower bound | demand):  0|0  0.15|1  0.40|2  0.70|3  0.90|4
+Columns (row 5 = day 1, fill down 90 rows):
+  A  day            A5 = 1                     A6 = A5 + 1
+  B  u              = RAND()                   (or frozen: = INDEX(RN!$A$1:$AD$90, A5, $Rep))
+  C  demand         = VLOOKUP(B5, $P$3:$Q$7, 2, TRUE)
+  D  begin inv      D5 = $B$1                  D6 = E5 + J5       ' yesterday's end + order (L = 0)
+  E  end inv        = D5 - C5                  ' backorder;  lost sales: = MAX(D5 - C5, 0)
+  F  short units    = MAX(-E5, 0)              ' lost sales: = MAX(C5 - D5, 0)
+  G  holding $      = $B$3 * MAX(E5, 0)
+  H  shortage $     = $B$4 * F5
+  I  review?        = MOD(A5, $B$2) = 0
+  J  order Q        = IF(I5, $B$1 - E5, 0)
+  K  order $        = IF(J5 > 0, $B$5, 0)
+  L  daily cost     = G5 + H5 + K5
+Total cost = SUM(L5:L94)</pre>
+</section>
+
+<!-- ===================================================== 08 -->
+<section id="choose-m">
+<h2 data-short="انتخاب M با تکرار"><span class="num">08</span> انتخاب M با تکرار و بازه‌ی اطمینان <span class="tag book">تکمیلی</span> <span class="tag hw">تمرین</span></h2>
+<p>یک اجرای ۹۰روزه یک عدد تصادفی است. اگر برای هر M فقط یک اجرا بگیری، شاید M بدتر فقط به خاطر یک دوره‌ی خوش‌شانس برنده شود. روش درست: برای هر M، $R$ اجرای مستقل؛ بعد میانگین و بازه‌ی اطمینان.</p>
+<div class="box thm"><div class="bt">رابطه · بازه‌ی اطمینان t برای میانگین هزینه</div>
+اگر $C_1,\dots,C_R$ هزینه‌ی کل $R$ اجرای مستقل باشد:
+$$\bar C=\frac1R\sum_r C_r,\qquad s^2=\frac{1}{R-1}\sum_r (C_r-\bar C)^2,\qquad \bar C\pm t_{0.975,\,R-1}\,\frac{s}{\sqrt R}$$
+برای $R=30$: $t_{0.975,29}=2.045$؛ برای $R=25$: $2.064$؛ برای $R=10$: $2.262$. هر اجرا مستقل است، چون با اعداد تصادفی تازه شروع می‌شود و همه‌ی اجراها از یک حالت اولیه (موجودی = M) آغاز می‌شوند.
+</div>
+<p>مثال ۵.۳ را ادامه می‌دهیم: ۶۰ روز، $N=4$، $M\in\{6,8,10,12,14\}$، ۲۵ تکرار. تکرار $r$ برای همه‌ی Mها از <b>همان</b> دنباله‌ی تقاضا استفاده می‌کند (CRN):</p>
+<pre class="code">
+# continues the code above (simulate defined)
+Ms, N, DAYS, R = [6, 8, 10, 12, 14], 4, 60, 25
+T24 = 2.064                                     # t_{0.975, 24}
+rng = np.random.default_rng(1405)
+U = rng.random((R, DAYS))                       # replication r uses stream U[r] for EVERY M (CRN)
+C = np.array([[simulate(M, N, U[r])[0] for M in Ms] for r in range(R)])
+
+print("run #1 only:", {M: round(C[0, j]) for j, M in enumerate(Ms)})
+for j, M in enumerate(Ms):
+    m, s = C[:, j].mean(), C[:, j].std(ddof=1); h = T24 * s / np.sqrt(R)
+    print(f"M={M:2d}  mean={m:7.1f}  sd={s:5.1f}  95% CI=[{m-h:6.1f}, {m+h:6.1f}]")
+d = C[:, 0] - C[:, 1]                           # paired: (M=6) - (M=8), same streams
+print(f"paired diff M=6 - M=8: {d.mean():.1f} +/- {T24 * d.std(ddof=1) / np.sqrt(R):.1f}")
+print("winner of each single run:", dict(zip(Ms, np.bincount(C.argmin(1), minlength=5).tolist())))
+</pre>
+<div class="out">run #1 only: {6: 922, 8: 827, 10: 922, 12: 1092, 14: 1272}
+M= 6  mean=  933.4  sd= 64.5  95% CI=[ 906.8,  960.1]
+M= 8  mean=  868.7  sd= 35.2  95% CI=[ 854.2,  883.2]
+M=10  mean=  956.0  sd= 27.5  95% CI=[ 944.6,  967.3]
+M=12  mean= 1110.9  sd= 30.6  95% CI=[1098.3, 1123.5]
+M=14  mean= 1286.7  sd= 31.0  95% CI=[1273.9, 1299.5]
+paired diff M=6 - M=8: 64.7 +/- 21.1
+winner of each single run: {6: 2, 8: 23, 10: 0, 12: 0, 14: 0}</div>
+<p>خواندن خروجی:</p>
+<ul>
+<li>M = ۸ کمترین میانگین را دارد و بازه‌اش با هیچ M دیگری هم‌پوشانی ندارد. بازه‌ی تفاوت جفتی با M = ۶ هم ($64.7\pm21.1$) صفر را نمی‌پوشاند.</li>
+<li>منحنی هزینه <b>U شکل</b> است. سمت چپ کمبود حاکم است و انحراف معیار بزرگ (۶۴٫۵)، چون کمبود رویدادی نادر و پرهزینه است. سمت راست نگهداری حاکم است و هزینه تقریباً خطی بالا می‌رود (هر ۲ واحد M اضافه حدود ۱۵۰ تا ۱۷۵ دلار در ۶۰ روز).</li>
+<li>در ۲ تا از ۲۵ اجرا، اگر فقط همان یک اجرا را داشتی، M = ۶ را انتخاب می‌کردی. در اجرای اول هم M = ۶ و M = ۱۰ دقیقاً هم‌هزینه درآمدند.</li>
+<li>هزینه‌ی سفارش در هر ۶۰ روز تقریباً ثابت است (۱۵ بازبینی × ۳۰ دلار)، چون احتمال صفر بودن تقاضای ۴ روز پشت سر هم ناچیز است. پس انتخاب M عملاً بین نگهداری و کمبود است.</li>
+</ul>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی · Data Table و CRN</div>
+در Data Table دوبعدی (سطر = M، ستون = شماره‌ی تکرار)، اکسل برای <b>هر خانه</b> کل شیت را دوباره حساب می‌کند و <code>RAND</code>ها برای هر خانه تازه می‌شوند. پس Mهای مختلفِ یک سطر <b>دنباله‌ی مشترک ندارند</b>. برای CRN، یک شیت <code>RN</code> با ۹۰ × R عدد بساز، با Paste Values منجمدش کن و در جدول اصلی <code>u = INDEX(RN_TABLE, day, rep)</code> بنویس (<code>RN_TABLE</code> نام محدوده‌ی ۹۰ × R شیت RN است). حالا خانه‌ی rep ورودی ستونی Data Table است و M ورودی سطری.
+</div>
+
+<div id="w-inventory"></div>
+
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۶</div>
+<ol>
+<li><b>فرض‌ها:</b> موجودی اولیه = M (طبق صورت سؤال). بازبینی پایان روزهای ۵، ۱۰، …، ۹۰. تحویل فوری یعنی سفارش پایان روز $5k$ از ابتدای روز $5k+1$ در دسترس است. هزینه‌ها روی موجودی پایان روز. پس‌افت یا فروش ازدست‌رفته را انتخاب کن و بنویس (عبارت «هر واحد در هر روز» به پس‌افت نزدیک‌تر است). هزینه‌ی ثابت فقط وقتی $Q&gt;0$.</li>
+<li><b>جدول ۹۰ روزه:</b> همان ستون‌های بلوک اکسل بخش ۷ (روز، u، تقاضا، ابتدای روز، پایان روز، کمبود، نگهداری، کمبود، بازبینی، Q، سفارش، هزینه‌ی روز). توزیع تقاضای سؤال را با <b>کران پایین</b> تجمعی در جدول <code>VLOOKUP</code> بگذار. خانه‌ی M را یک ورودی جدا بگذار تا با عوض کردنش کل جدول عوض شود.</li>
+<li><b>چهار سیاست × ۳۰ تکرار:</b> شیت <code>RN</code> با ۹۰ × ۳۰ عدد منجمد بساز و Data Table دوبعدی (M در سطر، شماره‌ی تکرار در ستون) بزن. این‌طوری هر چهار M همان ۳۰ دنباله را می‌بینند. چهار Data Table یک‌بعدیِ مستقل هم از نظر سؤال درست است، فقط مقایسه نویز بیشتری دارد.</li>
+<li><b>گزارش:</b> برای هر M میانگین، انحراف معیار و بازه‌ی ۹۵٪ با <code>T.INV.2T(0.05, 29)</code>؛ یک نمودار میله‌ای با میله‌ی خطا؛ تفاوت جفتی بهترین با دومی. بعد توضیح بده چرا M کوچک‌تر یا بزرگ‌تر بدتر است: کدام جزء هزینه غالب است؟</li>
+<li><b>تله‌ها:</b> <code>MAX(E,0)</code> برای نگهداری؛ جا نینداختن پس‌افت در $Q$؛ گرفتن $K$ فقط در روزهای بازبینی؛ آغاز هر تکرار از موجودی M. «بهترین» را فقط با میانگین یک اجرا اعلام نکن؛ اگر بازه‌ها هم‌پوشانی دارند، صادقانه بگو و به بازه‌ی جفتی تکیه کن.</li>
+</ol>
+</div>
+</section>
+
+<!-- ===================================================== 09 -->
+<section id="exam">
+<h2 data-short="مسئله‌ی امتحانی"><span class="num">09</span> مسئله‌ی امتحانی حل‌شده <span class="tag exam">امتحانی</span></h2>
+<div class="box ex"><div class="bt">مسئله · میز پشتیبانی با دو کارشناس X و Y</div>
+<p>بین‌ورود: ۱، ۲ یا ۳ دقیقه با احتمال ۰٫۳، ۰٫۴ و ۰٫۳ (رقم‌ها ۰۱–۳۰، ۳۱–۷۰، ۷۱–۰۰). خدمت X (سریع): ۲ یا ۳ دقیقه با احتمال ۰٫۶ و ۰٫۴ (۰۱–۶۰، ۶۱–۰۰). خدمت Y (کند): ۳، ۴ یا ۵ دقیقه با احتمال ۰٫۵، ۰٫۳ و ۰٫۲ (۰۱–۵۰، ۵۱–۸۰، ۸۱–۰۰). کارشناس‌ها <b>دقیقه‌ای</b> حقوق می‌گیرند، فقط برای زمان مکالمه: X ۰٫۶۰ و Y ۰٫۴۰ دلار. هر دقیقه انتظار یک تماس ۱ دلار هزینه دارد. اگر هر دو مشغول‌اند و هم‌زمان آزاد می‌شوند، تماس به کارشناسِ ترجیحیِ سیاست می‌رسد.</p>
+<p class="ltr mono" style="font-size:.88em">interarrival digits (callers 2–8): 45 12 83 27 66 09 74<br>service digits (callers 1–8): 55 72 18 90 64 33 81 47</p>
+<p>(الف) جدول ۸ تماس را برای سیاست «اول X» و سیاست «اول Y» با همان رقم‌ها پر کن. (ب) میانگین انتظار، درصد بدون انتظار و بهره‌وری هر کارشناس را بده. (ج) هزینه‌ی هر تماس در هر سیاست چقدر است؟ (د) کدام سیاست را پیشنهاد می‌کنی و چقدر به این نتیجه مطمئنی؟</p>
+</div>
+<details><summary>راه‌حل کامل</summary>
+<p><b>بین‌ورودها:</b> ۴۵ ⇒ ۲، ۱۲ ⇒ ۱، ۸۳ ⇒ ۳، ۲۷ ⇒ ۱، ۶۶ ⇒ ۲، ۰۹ ⇒ ۱، ۷۴ ⇒ ۳؛ پس ورودها در ۰، ۲، ۳، ۶، ۷، ۹، ۱۰ و ۱۳.</p>
+<p><b>(الف) سیاست «اول X»:</b></p>
+<div class="tablewrap"><table class="sim">
+<tr><th>تماس</th><th>ورود</th><th>X آزاد از</th><th>Y آزاد از</th><th>کارشناس</th><th>رقم</th><th>خدمت</th><th>شروع</th><th>پایان</th><th>انتظار</th></tr>
+<tr><td>1</td><td>0</td><td>0</td><td>0</td><td>X</td><td>55</td><td>2</td><td>0</td><td>2</td><td>0</td></tr>
+<tr><td>2</td><td>2</td><td>2</td><td>0</td><td>X</td><td>72</td><td>3</td><td>2</td><td>5</td><td>0</td></tr>
+<tr><td>3</td><td>3</td><td>5</td><td>0</td><td>Y</td><td>18</td><td>3</td><td>3</td><td>6</td><td>0</td></tr>
+<tr><td>4</td><td>6</td><td>5</td><td>6</td><td>X</td><td>90</td><td>3</td><td>6</td><td>9</td><td>0</td></tr>
+<tr><td>5</td><td>7</td><td>9</td><td>6</td><td>Y</td><td>64</td><td>4</td><td>7</td><td>11</td><td>0</td></tr>
+<tr><td>6</td><td>9</td><td>9</td><td>11</td><td>X</td><td>33</td><td>2</td><td>9</td><td>11</td><td>0</td></tr>
+<tr class="hl"><td>7</td><td>10</td><td>11</td><td>11</td><td>X</td><td>81</td><td>3</td><td>11</td><td>14</td><td class="wait">1</td></tr>
+<tr><td>8</td><td>13</td><td>14</td><td>11</td><td>Y</td><td>47</td><td>3</td><td>13</td><td>16</td><td>0</td></tr>
+<tr class="sum"><td>جمع</td><td></td><td></td><td></td><td></td><td></td><td>23</td><td></td><td></td><td>1</td></tr>
+</table></div>
+<p><b>سیاست «اول Y»:</b></p>
+<div class="tablewrap"><table class="sim">
+<tr><th>تماس</th><th>ورود</th><th>X آزاد از</th><th>Y آزاد از</th><th>کارشناس</th><th>رقم</th><th>خدمت</th><th>شروع</th><th>پایان</th><th>انتظار</th></tr>
+<tr><td>1</td><td>0</td><td>0</td><td>0</td><td>Y</td><td>55</td><td>4</td><td>0</td><td>4</td><td>0</td></tr>
+<tr><td>2</td><td>2</td><td>0</td><td>4</td><td>X</td><td>72</td><td>3</td><td>2</td><td>5</td><td>0</td></tr>
+<tr class="hl"><td>3</td><td>3</td><td>5</td><td>4</td><td>Y</td><td>18</td><td>3</td><td>4</td><td>7</td><td class="wait">1</td></tr>
+<tr><td>4</td><td>6</td><td>5</td><td>7</td><td>X</td><td>90</td><td>3</td><td>6</td><td>9</td><td>0</td></tr>
+<tr><td>5</td><td>7</td><td>9</td><td>7</td><td>Y</td><td>64</td><td>4</td><td>7</td><td>11</td><td>0</td></tr>
+<tr><td>6</td><td>9</td><td>9</td><td>11</td><td>X</td><td>33</td><td>2</td><td>9</td><td>11</td><td>0</td></tr>
+<tr class="hl"><td>7</td><td>10</td><td>11</td><td>11</td><td>Y</td><td>81</td><td>5</td><td>11</td><td>16</td><td class="wait">1</td></tr>
+<tr><td>8</td><td>13</td><td>11</td><td>16</td><td>X</td><td>47</td><td>2</td><td>13</td><td>15</td><td>0</td></tr>
+<tr class="sum"><td>جمع</td><td></td><td></td><td></td><td></td><td></td><td>26</td><td></td><td></td><td>2</td></tr>
+</table></div>
+<p>تماس ۷ در هر دو سیاست با تساوی (هر دو تا ۱۱ مشغول) روبه‌رو می‌شود و قاعده‌ی تساوی تعیین می‌کند به چه کسی برسد. در سیاست «اول X»، تماس ۴ در لحظه‌ی ۶ هر دو را آزاد می‌بیند (Y دقیقاً در ۶ آزاد شده است) و به X می‌رسد.</p>
+<p><b>(ب)</b></p>
+<div class="tablewrap"><table>
+<tr><th></th><th>اول X</th><th>اول Y</th></tr>
+<tr><td>میانگین انتظار</td><td>1/8 = 0.125</td><td>2/8 = 0.25</td></tr>
+<tr><td>بدون انتظار</td><td>7/8 = 87.5%</td><td>6/8 = 75%</td></tr>
+<tr><td>T (آخرین پایان)</td><td>16</td><td>16</td></tr>
+<tr><td>بهره‌وری X</td><td>13/16 = 0.8125</td><td>10/16 = 0.625</td></tr>
+<tr><td>بهره‌وری Y</td><td>10/16 = 0.625</td><td>16/16 = 1.000</td></tr>
+</table></div>
+<p><b>(ج)</b> «اول X»: $0.60(13)+0.40(10)+1(1)=7.8+4+1=12.8$ دلار، یعنی <b>۱٫۶۰ دلار</b> برای هر تماس. «اول Y»: $0.60(10)+0.40(16)+1(2)=6+6.4+2=14.4$ دلار، یعنی <b>۱٫۸۰ دلار</b> برای هر تماس.</p>
+<p><b>(د)</b> در این نمونه «اول X» ارزان‌تر است، ولی ۸ تماس برای نتیجه‌گیری کم است. یک استدلال کلی کمک می‌کند: هزینه‌ی دستمزد مورد انتظار هر تماس با X برابر $0.60\times E[S_X]=0.60\times2.4=1.44$ و با Y برابر $0.40\times E[S_Y]=0.40\times3.7=1.48$ دلار است. پس X هم سریع‌تر است و هم (کمی) ارزان‌تر؛ «اول X» در هر دو جزء هزینه برتری دارد و نتیجه به احتمال زیاد پایدار است. برای عدد مطمئن: R اجرای مثلاً ۱۰۰تماسه با CRN، و بازه‌ی اطمینان روی تفاوت جفتی هزینه. اگر این بازه صفر را نپوشاند، توصیه قطعی است.</p>
+</details>
+</section>
+
+<!-- ===================================================== 10 -->
+<section id="exercises">
+<h2><span class="num">10</span> تمرین‌ها</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">🟢 پایه</span></div>
+با جدول زمان خدمت Baker در جزوه، رقم‌های ۳۵، ۳۶، ۸۰، ۸۱ و ۰۰ چه زمان خدمتی می‌دهند؟
+<details><summary>راه‌حل</summary>۳۵ ⇒ ۳ (آخرین رقم بازه‌ی ۰۱–۳۵)، ۳۶ ⇒ ۴، ۸۰ ⇒ ۵ (آخرین رقم ۶۱–۸۰)، ۸۱ ⇒ ۶، و ۰۰ یعنی ۱۰۰ ⇒ ۶. مرز بازه‌ها از ستون تجمعی ساخته می‌شود: ۰٫۳۵، ۰٫۶۰، ۰٫۸۰ و ۱٫۰۰.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">🟢 پایه</span></div>
+در یک اجرا، پایان آخرین خدمت دقیقه‌ی ۲۰۰ است. Able جمعاً ۱۵۰ دقیقه و Baker ۱۲۰ دقیقه مکالمه داشته‌اند. بهره‌وری هر کدام و میانگین تعداد کارمندان مشغول چقدر است؟
+<details><summary>راه‌حل</summary>$\rho_A=150/200=0.75$ و $\rho_B=120/200=0.60$. میانگین تعداد کارمندان مشغول برابر $0.75+0.60=1.35$ است، یعنی به‌طور میانگین ۰٫۶۵ کارمند بیکار.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">🟡 مهارتی</span></div>
+ورودها در ۰، ۱، ۳، ۴ و ۶. اگر تماس $k$ به A برسد خدمتش $3,2,4,2,3$ و اگر به B برسد $5,4,6,3,4$ است. با سیاست «اول A» جدول را پر کن و جمع انتظار، $T$ و بهره‌وری‌ها را بده.
+<details><summary>راه‌حل</summary>
+<div class="tablewrap"><table class="sim">
+<tr><th>تماس</th><th>ورود</th><th>A آزاد از</th><th>B آزاد از</th><th>کارمند</th><th>خدمت</th><th>شروع</th><th>پایان</th><th>انتظار</th></tr>
+<tr><td>1</td><td>0</td><td>0</td><td>0</td><td>A</td><td>3</td><td>0</td><td>3</td><td>0</td></tr>
+<tr><td>2</td><td>1</td><td>3</td><td>0</td><td>B</td><td>4</td><td>1</td><td>5</td><td>0</td></tr>
+<tr><td>3</td><td>3</td><td>3</td><td>5</td><td>A</td><td>4</td><td>3</td><td>7</td><td>0</td></tr>
+<tr class="hl"><td>4</td><td>4</td><td>7</td><td>5</td><td>B</td><td>3</td><td>5</td><td>8</td><td class="wait">1</td></tr>
+<tr class="hl"><td>5</td><td>6</td><td>7</td><td>8</td><td>A</td><td>3</td><td>7</td><td>10</td><td class="wait">1</td></tr>
+</table></div>
+جمع انتظار ۲، $T=10$، $\rho_A=(3+4+3)/10=1.0$، $\rho_B=(4+3)/10=0.7$. تماس ۳ در لحظه‌ی آزاد شدن A می‌رسد، پس انتظار ندارد. تماس ۴ هر دو را مشغول می‌بیند و B زودتر (۵) آزاد می‌شود.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">🟡 مهارتی</span></div>
+سیاست «اول Baker» است. (الف) تماسی در ۱۲ می‌رسد؛ Able از ۱۲ و Baker از ۱۰ آزاد است. (ب) تماسی در ۱۲ می‌رسد؛ هر دو تا ۱۴ مشغول‌اند. هر بار تماس به چه کسی می‌رسد و انتظارش چقدر است؟
+<details><summary>راه‌حل</summary>(الف) هر دو بیکارند (Able دقیقاً در ۱۲ آزاد شده)، پس طبق سیاست به Baker می‌رسد و انتظار صفر است. (ب) هر دو مشغول‌اند و هم‌زمان آزاد می‌شوند؛ با قاعده‌ی تساوی «ترجیح سیاست» تماس به Baker می‌رسد و ۲ دقیقه منتظر می‌ماند. انتظار به قاعده‌ی تساوی بستگی ندارد، ولی <b>آینده</b>ی جدول دارد، چون زمان خدمت به کارمند بستگی دارد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">🟡 مهارتی</span></div>
+سیاست (M, N) با $M=7$ و $N=3$، تحویل فوری، موجودی اولیه ۷، $h=1$، $p=6$ (هر واحد در روز) و $K=20$ دلار. تقاضای ۶ روز: ۲، ۳، ۴، ۱، ۰ و ۳. (الف) هزینه‌ی کل با پس‌افت و با فروش ازدست‌رفته را حساب کن. (ب) اگر تقاضای روز ۲ به جای ۳ برابر ۶ بود چه؟
+<details><summary>راه‌حل</summary>
+(الف) پس‌افت: پایان روزها ۵، ۲، −۲ (بازبینی: Q = ۹)، ۶، ۶، ۳ (بازبینی: Q = ۴). نگهداری ۵ + ۲ + ۶ + ۶ + ۳ = ۲۲، کمبود ۶ × ۲ = ۱۲، سفارش ۴۰ ⇒ <b>۷۴</b>. فروش ازدست‌رفته: روز ۳ از ۲ شروع می‌شود و ۲ واحد از دست می‌رود (۱۲)، Q = ۷ و بقیه مثل قبل ⇒ باز <b>۷۴</b>. دو قرارداد یکسان درآمدند، چون کمبود درست روز بازبینی رخ داد و فوراً جبران شد.<br>
+(ب) پس‌افت: پایان روزها ۵، −۱، −۵ (Q = ۱۲)، ۶، ۶، ۳. نگهداری ۵ + ۶ + ۶ + ۳ = ۲۰، کمبود ۶ × (۱ + ۵) = ۳۶، سفارش ۴۰ ⇒ <b>۹۶</b>. فروش ازدست‌رفته: پایان روزها ۵، ۰ (۱ واحد از دست رفت)، ۰ (۴ واحد از دست رفت، Q = ۷)، ۶، ۶، ۳. نگهداری ۲۰، کمبود ۶ × ۵ = ۳۰، سفارش ۴۰ ⇒ <b>۹۰</b>. با پس‌افت، واحد کمبود روز ۲ در روز ۳ دوباره هزینه دارد.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">🟡 مهارتی</span></div>
+در شیت موجودی بخش ۷ می‌خواهی زمان تحویل را ۱ روز کنی: سفارش پایان روز $t$ صبح روز $t+2$ برسد، و $N\ge2$ است. فرمول ستون «ابتدای روز» (D) و «Q» (J) را چطور عوض می‌کنی؟
+<details><summary>راه‌حل</summary>
+سفارش دو سطر بالاتر به ابتدای امروز می‌رسد: <code>D7 = E6 + J5</code> (پایان دیروز + سفارشِ پریروز). برای روز ۲ سفارشی در راه نیست: <code>D6 = E5</code>. چون $N\ge2$ است، در لحظه‌ی بازبینی سفارش قبلی رسیده و «در راه» صفر است؛ پس <code>J = IF(I, $B$1 - E, 0)</code> بدون تغییر می‌ماند. اگر $N=1$ بود، باید سفارشِ در راه را کم کنی: <code>J6 = IF(I6, $B$1 - E6 - J5, 0)</code>.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">🔴 تحلیلی</span></div>
+در یک مقایسه، $\operatorname{Var}(X)=4$، $\operatorname{Var}(Y)=5$، و با CRN $\operatorname{Cov}(X,Y)=3.6$. (الف) واریانس تفاوت با اعداد مستقل و با CRN چقدر است؟ (ب) اگر با CRN ۲۰ اجرا کافی باشد، با اعداد مستقل برای همان پهنای بازه حدوداً چند اجرا لازم است؟ (ج) آیا CRN می‌تواند ضرر کند؟
+<details><summary>راه‌حل</summary>
+(الف) مستقل: $4+5=9$. CRN: $9-2(3.6)=1.8$.<br>
+(ب) پهنای بازه با $\sqrt{\operatorname{Var}/R}$ متناسب است؛ پس $9/R_{ind}=1.8/20$ ⇒ $R_{ind}=100$.<br>
+(ج) اگر خروجی‌ها <b>منفی</b> همبسته شوند ($\operatorname{Cov}&lt;0$)، واریانس تفاوت از حالت مستقل بیشتر می‌شود. این وقتی رخ می‌دهد که هم‌گامی خراب باشد، مثلاً یک عدد در یک سیستم ورود و در دیگری خدمت را بسازد. با هم‌گام‌سازی درست و منطق یکنواخت (عدد بزرگ‌تر ⇒ خدمت طولانی‌تر در هر دو) معمولاً همبستگی مثبت است.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">🔴 تحلیلی</span></div>
+با ۱۰ تکرار CRN: برای $M=a$ میانگین هزینه ۵۱۲ و $s=30$؛ برای $M=b$ میانگین ۴۹۸ و $s=28$. انحراف معیار تفاوت‌های جفتی ($a-b$) هم ۱۲ است. بازه‌های ۹۵٪ را بساز و تصمیم بگیر.
+<details><summary>راه‌حل</summary>
+$t_{0.975,9}=2.262$. بازه‌ی $a$: $512\pm2.262\times30/\sqrt{10}=512\pm21.5$ ⇒ $[490.5,\,533.5]$. بازه‌ی $b$: $498\pm20.0$ ⇒ $[478.0,\,518.0]$. این دو هم‌پوشانی دارند و از آن‌ها نتیجه‌ای نمی‌گیری. بازه‌ی تفاوت جفتی: $14\pm2.262\times12/\sqrt{10}=14\pm8.6$ ⇒ $[5.4,\,22.6]$، که صفر را نمی‌پوشاند. پس $b$ با اطمینان ۹۵٪ ارزان‌تر است. همبستگی مثبتِ CRN در بازه‌های جدا دیده نمی‌شود.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l4">🔵 پژوهشگر</span></div>
+در مثال ۵.۲ با قرارداد (ب) (حقوق فقط برای مکالمه)، میانگین ۵۰ اجرا: «اول سریع» دستمزد ۱۲۶٫۲۱ دلار و جمع انتظار ۵۵٫۲۸ دقیقه؛ «اول کند» دستمزد ۱۲۴٫۴۶ دلار و جمع انتظار ۶۱٫۴۲ دقیقه. هزینه‌ی انتظار $c_w$ از چه مقداری کمتر باشد تا «اول کند» ارزان‌تر شود؟ این عدد چه معنایی برای مدیر دارد؟
+<details><summary>راه‌حل</summary>
+نقطه‌ی سربه‌سر: $126.21+55.28\,c_w=124.46+61.42\,c_w$ ⇒ $c_w=1.75/6.14\approx0.285$ دلار در دقیقه. اگر یک دقیقه انتظار مشتری کمتر از حدود ۲۸ سنت هزینه دارد، دادن تماس‌های «بی‌رقیب» به کارمند ارزان‌تر به‌صرفه است؛ بالاتر از آن، کارمند سریع. چون این عدد از ۵۰ اجرا تخمین زده شده، خودش هم عدم قطعیت دارد. برای گزارش جدی، تفاوت هزینه را در چند مقدار $c_w$ با بازه‌ی جفتی بده. نکته‌ی مدل‌سازی: تعیین $c_w$ (نارضایتی، ازدست‌رفتن مشتری) معمولاً سخت‌ترین بخش است، پس تحلیل حساسیت مهم‌تر از یک عدد است.</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">🔵 پژوهشگر</span></div>
+در مثال ۵.۱ (سیاست ۱) نشان بده رابطه‌ی لیتل $\bar L=\lambda\bar W_{sys}$ روی همین نمونه دقیقاً برقرار است: $\bar L$ میانگین زمانیِ تعداد تماس‌های داخل سیستم در بازه‌ی $[0,T]$ است، $\lambda=n/T$ و $\bar W_{sys}$ میانگین زمان در سیستم. چرا «دقیقاً»؟
+<details><summary>راه‌حل</summary>
+مساحت زیر نمودار «تعداد در سیستم» برابر جمع زمان‌های در سیستم است: ۴۱ (هر تماس به اندازه‌ی ماندنش یک واحد ارتفاع اضافه می‌کند). پس $\bar L=41/21=1.952$. از طرف دیگر $\lambda=10/21$ و $\bar W_{sys}=4.1$، پس $\lambda\bar W_{sys}=41/21=1.952$. تساوی دقیق است چون همه‌ی تماس‌ها قبل از $T$ (پایان آخرین خدمت) سیستم را ترک کرده‌اند و هیچ مساحتی بیرون بازه نمی‌ماند. اگر شبیه‌سازی را وسط کار قطع کنی، اثر لبه‌ها تساوی را تقریبی می‌کند. این یک آزمون صحت (verification) ارزان برای جدول اکسل است.</details></div>
+</section>
+
+<section id="quiz"><h2><span class="num">11</span> تست</h2><div class="quiz"></div></section>
+
+<section id="summary">
+<h2><span class="num">12</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<div class="box note"><div class="bt">۵ چیزی که باید یادت بماند</div>
+<ol>
+<li>در صف چندسروره برای هر سرور یک «آزاد از» نگه دار؛ سرور با «هر دو بیکار ⇒ سیاست، یکی بیکار ⇒ همان، هر دو مشغول ⇒ زودتر آزاد» انتخاب می‌شود؛ قاعده‌های تساوی را صریح بنویس.</li>
+<li>بهره‌وری = زمان مشغولی ÷ طول شبیه‌سازی، نه تعداد تماس‌ها. هزینه = دستمزد (کل شیفت یا زمان مکالمه) + $c_w\times$ جمع انتظار؛ قراردادت را اعلام کن.</li>
+<li>برای مقایسه‌ی سیاست‌ها از اعداد تصادفی مشترک و هم‌گام استفاده کن و بازه‌ی اطمینان را روی تفاوت‌های جفتی بساز. CRN میانگین را عوض نمی‌کند؛ واریانس تفاوت را می‌کُشد.</li>
+<li>در موجودی (M, N) ترتیب روز را ثابت کن: رسیدن سفارش ← تقاضا ← هزینه روی موجودی پایان روز ← بازبینی با $Q=M-I-Q_{\text{on order}}$. پس‌افت روزانه هزینه می‌سازد؛ فروش ازدست‌رفته یک بار.</li>
+<li>M را با میانگین R تکرار و بازه‌ی t انتخاب کن، نه با یک اجرا. یک اجرا ممکن است روز بدی باشد: اجرای ۱۰۰تماسه‌ی جزوه با میانگین تأخیر ۲٫۱۱ جزو بدترین ۳٪ روزها بود.</li>
+</ol>
+</div>
+<div class="box tip"><div class="bt">⏭ برای جلسه‌ی بعد</div>
+ستون‌های «Able آزاد از» و «Baker آزاد از» در واقع یک <b>فهرست رویدادهای آینده</b>ی کوچک‌اند: زمان رویدادهای خروجِ برنامه‌ریزی‌شده. جلسه‌ی ۶ (Banks فصل ۳) همین ایده را عمومی می‌کند: ساعت شبیه‌سازی، FEL و الگوریتم زمان‌بندی رویداد، که با آن هر سیستمی را بدون جدول دستی شبیه‌سازی می‌کنی. قبلش جدول مثال ۵.۱ را به ترتیب زمانی رویدادها دوباره بخوان.
+</div>
+<div class="gloss">
+<div><b>call center</b>: مرکز تماس</div>
+<div><b>multi-server / two-channel queue</b>: صف چندسروره / دوکاناله</div>
+<div><b>routing rule / policy</b>: قاعده‌ی تخصیص / سیاست</div>
+<div><b>tie-breaking rule</b>: قاعده‌ی شکستن تساوی</div>
+<div><b>caller delay (hold time)</b>: تأخیر تماس‌گیرنده (زمان انتظار روی خط)</div>
+<div><b>time in system</b>: زمان در سیستم</div>
+<div><b>utilization</b>: بهره‌وری (کسر زمان مشغولی)</div>
+<div><b>common random numbers (CRN)</b>: اعداد تصادفی مشترک</div>
+<div><b>synchronization</b>: هم‌گام‌سازی اعداد تصادفی</div>
+<div><b>variance reduction</b>: کاهش واریانس</div>
+<div><b>replication / trial</b>: تکرار / اجرا</div>
+<div><b>paired difference</b>: تفاوت جفتی</div>
+<div><b>confidence interval</b>: بازه‌ی اطمینان</div>
+<div><b>(M, N) inventory policy</b>: سیاست موجودی (M, N)</div>
+<div><b>review period</b>: دوره‌ی بازبینی</div>
+<div><b>order-up-to level</b>: سطح سفارش‌دهی تا آن (سطح هدف)</div>
+<div><b>lead time</b>: زمان تحویل</div>
+<div><b>holding (carrying) cost</b>: هزینه‌ی نگهداری</div>
+<div><b>shortage cost</b>: هزینه‌ی کمبود</div>
+<div><b>backorder</b>: پس‌افت (سفارش معوق)</div>
+<div><b>lost sales</b>: فروش ازدست‌رفته</div>
+<div><b>ordering (setup) cost</b>: هزینه‌ی ثابت سفارش</div>
+<div><b>safety (buffer) stock</b>: موجودی اطمینان</div>
+<div><b>news dealer (newsvendor) problem</b>: مسئله‌ی روزنامه‌فروش</div>
+</div>
+</section>
+</main>
+
+<script>
+const R=String.raw;
+window.QUIZ=[
+{q:`در جدول جزوه تماس ۲ در لحظه‌ی ۲ می‌رسد و Able هم دقیقاً در ۲ آزاد می‌شود (Baker بیکار است). چه می‌شود؟`,
+ o:[`Able جواب می‌دهد و انتظار صفر است`,`Baker جواب می‌دهد چون Able هنوز مشغول است`,`تماس ۱ دقیقه منتظر Able می‌ماند`,`به‌طور تصادفی یکی جواب می‌دهد`],a:0,
+ e:R`قرارداد: اول خروج، بعد ورود. Able در لحظه‌ی ورود بیکار حساب می‌شود و چون هر دو بیکارند، طبق قاعده‌ی فعلی تماس به Able می‌رسد.`},
+{q:`جمله‌ی «در ۴۰۰ اجرا، ۸۰٫۵٪ تأخیر حداکثر ۱ دقیقه داشتند» دقیقاً یعنی:`,
+ o:[`در ۳۲۲ اجرا از ۴۰۰، میانگین تأخیر ۱۰۰ تماسِ آن اجرا حداکثر ۱ دقیقه بوده است`,`۸۰٫۵٪ از ۴۰۰۰۰ تماس حداکثر ۱ دقیقه منتظر ماندند`,`احتمال این‌که یک تماس بیش از ۱ دقیقه منتظر بماند ۱۹٫۵٪ است`,`میانگین تأخیر کل ۰٫۸۰۵ دقیقه است`],a:0,
+ e:R`هیستوگرام دوم جزوه هیستوگرامِ میانگینِ هر اجراست، نه تأخیر تک‌تک تماس‌ها. ۳۲۲/۴۰۰ = ۸۰٫۵٪.`},
+{q:`بهره‌وری Baker در یک اجرا چطور حساب می‌شود؟`,
+ o:[R`جمع زمان خدمت‌های Baker تقسیم بر طول شبیه‌سازی $T$`,`تعداد تماس‌های Baker تقسیم بر کل تماس‌ها`,`جمع انتظار تماس‌های Baker تقسیم بر $T$`,`میانگین زمان خدمت Baker تقسیم بر میانگین بین‌ورود`],a:0,
+ e:R`بهره‌وری کسر زمانِ مشغولی است. گزینه‌ی چهارم «شدت بار» نظری است، آن هم اگر همه‌ی تماس‌ها به Baker برسند.`},
+{q:`هر دو کارمند مشغول‌اند: Able تا ۱۴ و Baker تا ۱۲. تماسی در ۱۱ می‌رسد. نتیجه؟`,
+ o:[`Baker در ۱۲ شروع می‌کند؛ انتظار ۱`,`Able در ۱۴ شروع می‌کند؛ انتظار ۳`,`Able چون قاعده‌ی فعلی ترجیح Able است`,`تماس از دست می‌رود`],a:0,
+ e:R`وقتی هر دو مشغول‌اند، تماس به کسی می‌رسد که زودتر آزاد می‌شود: $T_{beg}=\min(14,12)=12$. ترجیح سیاست فقط وقتی مهم است که هر دو بیکار باشند یا تساوی رخ دهد.`},
+{q:`هدف اصلی استفاده از اعداد تصادفی مشترک در مقایسه‌ی دو سیاست چیست؟`,
+ o:[`کم کردن واریانسِ تخمینِ تفاوت دو سیاست با ایجاد همبستگی مثبت`,`بی‌طرف کردن میانگین هر سیاست`,`کم کردن تعداد ستون‌های اکسل`,`مستقل کردن خروجی دو سیاست`],a:0,
+ e:R`$\operatorname{Var}(X-Y)=\operatorname{Var}X+\operatorname{Var}Y-2\operatorname{Cov}$. CRN کوواریانس را مثبت می‌کند و میانگین تفاوت را تغییر نمی‌دهد.`},
+{q:`در شیت مرکز تماس، سیاست تصادفی برای سکه از همان ستون RAND زمان خدمت استفاده می‌کند. مشکل چیست؟`,
+ o:[`هم‌گامی می‌شکند و سکه با زمان خدمت همبسته می‌شود`,`هیچ مشکلی نیست؛ RAND همیشه یکنواخت است`,`فقط سرعت محاسبه کم می‌شود`,`VLOOKUP خطا می‌دهد`],a:0,
+ e:R`یک عدد نباید دو کار بکند. اگر $u<0.5$ هم «سریع» را انتخاب کند و هم خدمت کوتاه بسازد، تماس‌های بی‌رقیب کوتاه‌تر از واقع به سریع می‌رسند. برای هر منظور یک ستون جدا لازم است.`},
+{q:`$M=10$ و موجودی خالص پایان روز بازبینی $-3$ است (۳ پس‌افت) و سفارشی در راه نیست. مقدار سفارش؟`,
+ o:[`۱۳`,`۱۰`,`۷`,`۳`],a:0,
+ e:R`$Q=M-I=10-(-3)=13$: سه واحد برای پس‌افت‌ها و ده واحد تا رسیدن به M (فرمول Banks: M − موجودی پایان روز + کمبود).`},
+{q:`کدام جمله درباره‌ی «فروش ازدست‌رفته» در مقایسه با «پس‌افت» درست است؟`,
+ o:[`موجودی منفی نمی‌شود و هر واحد کمبود فقط یک بار هزینه دارد`,`موجودی منفی می‌شود و کمبود هر روز تکرار می‌شود`,`مقدار سفارش ممکن است از M بیشتر شود`,`هزینه‌ی کمبود همیشه بیشتر از پس‌افت است`],a:0,
+ e:R`در فروش ازدست‌رفته مشتری می‌رود، پس چیزی برای جبران نمی‌ماند و $Q=M-I\le M$. در تمرین ۵ دیدی که هزینه‌ها می‌توانند برابر هم باشند.`},
+{q:`هزینه‌ی نگهداری روز $t$ در جدول (M, N) با پس‌افت درست کدام است؟`,
+ o:[R`$h\cdot\max(I_t,0)$ روی موجودی پایان روز`,R`$h\cdot I_t$ حتی اگر منفی باشد`,R`$h\cdot M$ هر روز`,R`$h\cdot Q$ فقط روزهای بازبینی`],a:0,
+ e:R`موجودی منفی یعنی پس‌افت، نه کالای انبارشده؛ نگهداری فقط روی بخش مثبت حساب می‌شود و کمبود جدا.`},
+{q:`در اکسل یک Data Table دوبعدی (سطر = M، ستون = شماره‌ی تکرار) روی جدولی می‌زنی که RAND() دارد. Mهای مختلف یک تکرار:`,
+ o:[`معمولاً دنباله‌ی مشترک ندارند، چون هر خانه دوباره محاسبه می‌شود؛ برای CRN باید اعداد را منجمد کرد و با INDEX خواند`,`حتماً اعداد مشترک دارند چون در یک سطرند`,`همه یک عدد هزینه‌ی یکسان می‌دهند`,`Data Table با RAND کار نمی‌کند`],a:0,
+ e:R`هر خانه‌ی Data Table یک محاسبه‌ی جدای کل شیت است و توابع volatile مثل RAND تازه می‌شوند. شیت منجمد RN و INDEX(RN, day, rep) مشکل را حل می‌کند.`},
+{q:`بازه‌های ۹۵٪ هزینه‌ی دو مقدار M هم‌پوشانی دارند، ولی هر دو با CRN اجرا شده‌اند. بهترین کار؟`,
+ o:[`بازه‌ی اطمینان تفاوت‌های جفتی را بساز`,`نتیجه بگیر که دو M هم‌ارزند`,`M با میانگین کمتر را بی‌توجه به بازه‌ها اعلام کن`,`فقط اجرای اول را ملاک بگیر`],a:0,
+ e:R`هم‌پوشانی بازه‌های جدا آزمون ضعیفی است. با CRN، $d_r=C_r^{(a)}-C_r^{(b)}$ واریانس کوچکی دارد و بازه‌اش ممکن است صفر را نپوشاند (تمرین ۸).`},
+{q:`کدام یک از رویدادهای سیستم موجودی (M, N) در جزوه <b>نیست</b>؟`,
+ o:[`پایان خدمت یک مشتری توسط فروشنده`,`تقاضا برای کالا`,`بازبینی موجودی`,`رسیدن سفارش در پایان بازبینی`],a:0,
+ e:R`جزوه سه رویداد را نام می‌برد: تقاضا، بازبینی، و رسیدن سفارش. با زمان تحویل صفر، دو رویداد آخر هم‌زمان‌اند.`}
+];
+
+window.PAGE_INIT=function(ML){
+  const fa=ML.fa, c=v=>ML.css(v);
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function tq(df){const z=1.959964;return z+(z**3+z)/(4*df)+(5*z**5+16*z**3+3*z)/(96*df*df)+(3*z**7+19*z**5+17*z**3-15*z)/(384*df**3);}
+  function msd(a){const n=a.length;const m=a.reduce((s,x)=>s+x,0)/n;const v=a.reduce((s,x)=>s+(x-m)*(x-m),0)/Math.max(1,n-1);return {m,s:Math.sqrt(v),h:n>1?tq(n-1)*Math.sqrt(v/n):0};}
+  function f2(x,d=2){return fa(x.toFixed(d));}
+  function chk(label,val,on){const l=ML.h("label",{class:"chk"});const i=ML.h("input",{type:"checkbox"});i.checked=val;i.onchange=()=>on(i.checked);l.append(i,label);return l;}
+  function sel(label,opts,val,on){const l=ML.h("label");l.append(label+" ");const s=ML.h("select");opts.forEach(([v,t])=>{const o=ML.h("option",{value:v},t);if(v===val)o.selected=true;s.append(o);});s.onchange=()=>on(s.value);l.append(s);return l;}
+
+  /* ---------------- widget A: call-center policy lab ---------------- */
+  (function(){
+    const el=document.getElementById("w-callcenter");
+    ML.shell(el,"🔧 آزمایشگاه سیاست‌های مرکز تماس","دو کارمند (سریع و کند)، هر روز ۱۰۰ تماس، R تکرار. بین‌ورود یکنواخت بین صفر و دو برابر میانگین، و خدمت یکنواخت بین ۰٫۵ و ۱٫۵ برابر میانگین. سه سیاست برای حالت «هر دو بیکار». CRN را خاموش کن و ببین بازه‌ی تفاوت‌ها چقدر پهن می‌شود.");
+    const S={ia:2.25,mf:3.0,ms:4.25,wf:28,ws:16,cw:0.6,R:40,crn:true,pay:"shift",seed:5};
+    const ctr=ML.h("div",{class:"controls"});
+    ctr.append(
+      ML.slider("میانگین بین‌ورود",1,5,0.05,S.ia,v=>{S.ia=v;run();},v=>fa(v.toFixed(2))),
+      ML.slider("خدمت سریع",1,6,0.05,S.mf,v=>{S.mf=v;run();},v=>fa(v.toFixed(2))),
+      ML.slider("خدمت کند",1,8,0.05,S.ms,v=>{S.ms=v;run();},v=>fa(v.toFixed(2))),
+      ML.slider("حقوق سریع (دلار/ساعت)",5,60,1,S.wf,v=>{S.wf=v;run();},v=>fa(v)),
+      ML.slider("حقوق کند (دلار/ساعت)",5,60,1,S.ws,v=>{S.ws=v;run();},v=>fa(v)),
+      ML.slider("هزینه‌ی انتظار (دلار/دقیقه)",0,3,0.05,S.cw,v=>{S.cw=v;run();},v=>fa(v.toFixed(2))),
+      ML.slider("تکرار R",5,200,5,S.R,v=>{S.R=v;run();},v=>fa(v)),
+      sel("حقوق:",[["shift","کل شیفت"],["busy","فقط زمان مکالمه"]],S.pay,v=>{S.pay=v;run();}),
+      chk("اعداد تصادفی مشترک (CRN)",S.crn,v=>{S.crn=v;run();})
+    );
+    const btn=ML.h("button",{class:"btn ghost",type:"button"},"🎲 بذر تازه"); btn.onclick=()=>{S.seed=(S.seed*7919+13)%100000;run();}; ctr.append(btn);
+    const tw=ML.h("div",{class:"tablewrap"});
+    const cvs=ML.h("div",{class:"canvases"}); const c1=ML.h("canvas",{class:"wide"}), c2=ML.h("canvas",{class:"wide"}); cvs.append(c1,c2);
+    const lg=ML.h("div",{class:"legend"});
+    const ro=ML.h("div",{class:"readout"});
+    el.append(ctr,tw,cvs,lg,ro);
+    const NAMES=["اول سریع","اول کند","تصادفی"], COLS=["--plot-c1","--plot-c2","--plot-c4"];
+    let OUT=null;
+    function day(U,pol){
+      const n=100; let t=0; const free=[0,0], busy=[0,0]; let W=0, nw=0;
+      for(let k=0;k<n;k++){
+        if(k>0) t+= 2*S.ia*U.a[k];
+        const i0=free[0]<=t, i1=free[1]<=t; let s;
+        if(i0&&i1) s= pol===0?0: pol===1?1: (U.c[k]<0.5?0:1);
+        else if(i0) s=0; else if(i1) s=1; else s= free[0]<=free[1]?0:1;
+        const sv= (s===0?S.mf:S.ms)*(0.5+U.s[k]);
+        const b=Math.max(t,free[s]); free[s]=b+sv; busy[s]+=sv; const w=b-t; W+=w; if(w<1e-9) nw++;
+      }
+      const T=Math.max(free[0],free[1]);
+      const labor= S.pay==="shift" ? (S.wf+S.ws)*T/60 : (S.wf*busy[0]+S.ws*busy[1])/60;
+      return {w:W/n, nw:nw/n, uf:busy[0]/T, us:busy[1]/T, cost:labor+S.cw*W};
+    }
+    function streams(rng){const a=[],s=[],cc=[];for(let k=0;k<100;k++){a.push(rng());s.push(rng());cc.push(rng());}return {a,s,c:cc};}
+    function run(){
+      const rng=mulberry32(S.seed*1000+17);
+      const res=[[],[],[]];
+      for(let r=0;r<S.R;r++){
+        const U=streams(rng);
+        for(let p=0;p<3;p++) res[p].push(day(S.crn?U:streams(rng),p));
+      }
+      const st=res.map(a=>({w:msd(a.map(x=>x.w)),nw:msd(a.map(x=>x.nw)).m,uf:msd(a.map(x=>x.uf)).m,us:msd(a.map(x=>x.us)).m,cost:msd(a.map(x=>x.cost))}));
+      const dW=[1,2].map(p=>msd(res[p].map((x,i)=>x.w-res[0][i].w)));
+      const dC=[1,2].map(p=>msd(res[p].map((x,i)=>x.cost-res[0][i].cost)));
+      OUT={st,dW,dC};
+      const best=st.reduce((b,x,i)=>x.cost.m<st[b].cost.m?i:b,0);
+      let h=`<table class="wtab"><tr><th>سیاست</th><th>میانگین انتظار</th><th>بدون انتظار</th><th>بهره‌وری سریع</th><th>بهره‌وری کند</th><th>هزینه‌ی روز (دلار)</th><th>هر تماس</th></tr>`;
+      st.forEach((x,i)=>{h+=`<tr class="${i===best?"best":""}"><td>${NAMES[i]}</td><td><span class="ltr">${x.w.m.toFixed(3)} ± ${x.w.h.toFixed(3)}</span></td><td>${(100*x.nw).toFixed(1)}%</td><td>${x.uf.toFixed(3)}</td><td>${x.us.toFixed(3)}</td><td><span class="ltr">${x.cost.m.toFixed(1)} ± ${x.cost.h.toFixed(1)}</span></td><td>${(x.cost.m/100).toFixed(3)}</td></tr>`;});
+      tw.innerHTML=h+"</table>";
+      lg.innerHTML=NAMES.map((n,i)=>`<span><i style="background:${c(COLS[i])}"></i>${n}</span>`).join("")+`<span>میله‌ی خطا = بازه‌ی ۹۵٪ میانگین</span>`;
+      const fmtD=d=>ML.L(`${f2(d.m,3)} ± ${f2(d.h,3)}`);
+      const sig=d=> (d.m-d.h>0||d.m+d.h<0)?"✅ صفر بیرون بازه است":"⚠ بازه صفر را می‌پوشاند";
+      ro.textContent=`تفاوت جفتی با «اول سریع» (${S.crn?"CRN روشن":"اعداد مستقل"}، ${ML.L("R = "+fa(S.R))}):\n`+
+        `  انتظار «اول کند» − «اول سریع» = ${fmtD(dW[0])} دقیقه  ${sig(dW[0])}\n`+
+        `  انتظار «تصادفی» − «اول سریع» = ${fmtD(dW[1])} دقیقه  ${sig(dW[1])}\n`+
+        `  هزینه «اول کند» − «اول سریع» = ${ML.L(f2(dC[0].m,1)+" ± "+f2(dC[0].h,1))} دلار  ${sig(dC[0])}\n`+
+        `بار کل ≈ ${f2((1/S.ia)/(1/S.mf+1/S.ms),2)}${(1/S.ia)>=(1/S.mf+1/S.ms)?"  (بیشتر از ظرفیت: صف دائماً بلندتر می‌شود)":""}`;
+      draw();
+    }
+    function bars(cv,key,label){
+      if(!OUT) return;
+      const st=OUT.st; const ymax=Math.max(...st.map(x=>x[key].m+x[key].h))*1.18||1;
+      const P=new ML.Plot(cv,[-0.6,2.6],[0,ymax],{l:50,b:30});
+      P.axes("",label,{xstep:1,xfmt:i=>NAMES[Math.round(i)]||"",yfmt:y=>fa(+y.toFixed(key==="cost"?0:2))});
+      st.forEach((x,i)=>{const col=c(COLS[i]);P.bar(i,0.55,0,x[key].m,ML.alpha(col,0.8));
+        const ink=c("--ink-2"); P.line([[i,x[key].m-x[key].h],[i,x[key].m+x[key].h]],ink,1.6);
+        P.line([[i-0.08,x[key].m-x[key].h],[i+0.08,x[key].m-x[key].h]],ink,1.6);P.line([[i-0.08,x[key].m+x[key].h],[i+0.08,x[key].m+x[key].h]],ink,1.6);
+        P.text(i,x[key].m+x[key].h,fa(x[key].m.toFixed(key==="cost"?1:3)),ink,"center",-6);});
+    }
+    function draw(){bars(c1,"w","میانگین انتظار (دقیقه)");bars(c2,"cost","هزینه‌ی روز (دلار)");}
+    ML.onResize(c1,draw); ML.onResize(c2,draw);
+    run();
+  })();
+
+  /* ---------------- widget B: (M,N) inventory simulator ---------------- */
+  (function(){
+    const el=document.getElementById("w-inventory");
+    ML.shell(el,"🔧 شبیه‌ساز موجودی (M, N)","تقاضای روزانه ۰ تا ۴ با احتمال‌های ۰٫۱۵، ۰٫۲۵، ۰٫۳۰، ۰٫۲۰ و ۰٫۱۰ (مثال ۵.۳). نمودار بالا مسیر موجودی خالص یک اجرا با M انتخابی است؛ نمودار پایین میانگین هزینه‌ی کل برای هر M از ۱ تا ۳۰ با بازه‌ی ۹۵٪ روی R تکرار، با اعداد مشترک برای همه‌ی Mها.");
+    const S={M:10,N:4,L:0,bo:true,h:1.5,p:8,K:30,days:90,R:30,seed:11};
+    const ctr=ML.h("div",{class:"controls"});
+    ctr.append(
+      ML.slider("M",1,30,1,S.M,v=>{S.M=v;run();},v=>fa(v)),
+      ML.slider("N (روز)",1,10,1,S.N,v=>{S.N=v;run();},v=>fa(v)),
+      sel("زمان تحویل L:",[["0","۰ (فوری)"],["1","۱ روز"]],"0",v=>{S.L=+v;run();}),
+      sel("کمبود:",[["bo","پس‌افت"],["lost","فروش ازدست‌رفته"]],"bo",v=>{S.bo=v==="bo";run();}),
+      ML.slider("h نگهداری",0.5,5,0.5,S.h,v=>{S.h=v;run();},v=>fa(v.toFixed(1))),
+      ML.slider("p کمبود",1,20,1,S.p,v=>{S.p=v;run();},v=>fa(v)),
+      ML.slider("K سفارش",0,100,5,S.K,v=>{S.K=v;run();},v=>fa(v)),
+      ML.slider("روزها",30,180,10,S.days,v=>{S.days=v;run();},v=>fa(v)),
+      ML.slider("تکرار R",5,100,5,S.R,v=>{S.R=v;run();},v=>fa(v))
+    );
+    const btn=ML.h("button",{class:"btn ghost",type:"button"},"🎲 بذر تازه"); btn.onclick=()=>{S.seed=(S.seed*7919+29)%100000;run();}; ctr.append(btn);
+    const cv1=ML.h("canvas",{class:"wide"}), cv2=ML.h("canvas",{class:"wide"});
+    const lg=ML.h("div",{class:"legend"});
+    lg.innerHTML=`<span><i style="background:${c("--plot-c1")}"></i>موجودی خالص</span><span><i style="background:${c("--plot-c2")}"></i>کمبود / بازبینی</span><span><i style="background:${c("--plot-c4")}"></i>سطح M</span><span><i style="background:${c("--plot-c3")}"></i>کمترین میانگین هزینه</span>`;
+    const ro=ML.h("div",{class:"readout"});
+    el.append(ctr,cv1,lg,cv2,ro);
+    const DC=[0.15,0.40,0.70,0.90,1.0];
+    const dem=u=>{for(let i=0;i<5;i++) if(u<DC[i]) return i; return 4;};
+    function sim(M,D,keep){
+      let I=M; const pipe={}; let hold=0,short=0,order=0,sd=0; const path=keep?[]:null, rev=keep?[]:null;
+      for(let t=1;t<=D.length;t++){
+        if(pipe[t]){I+=pipe[t]; delete pipe[t];}
+        const beg=I, d=D[t-1]; let sh;
+        if(S.bo){I-=d; sh=Math.max(-I,0);} else {sh=Math.max(d-I,0); I=Math.max(I-d,0);}
+        hold+=S.h*Math.max(I,0); short+=S.p*sh; if(sh>0) sd++;
+        let Q=0;
+        if(t%S.N===0){ let on=0; for(const k in pipe) on+=pipe[k]; Q=M-I-on; if(Q>0){order+=S.K; const at=t+S.L+1; pipe[at]=(pipe[at]||0)+Q;} }
+        if(keep){path.push([t-1,beg],[t,I]); if(t%S.N===0) rev.push([t,Q]);}
+      }
+      return {total:hold+short+order,hold,short,order,sd,path,rev};
+    }
+    let DATA=null;
+    function run(){
+      const rng=mulberry32(S.seed*977+3);
+      const Ds=[]; for(let r=0;r<S.R;r++){const D=[];for(let t=0;t<S.days;t++) D.push(dem(rng())); Ds.push(D);}
+      const grid=[]; for(let M=1;M<=30;M++){ const tot=Ds.map(D=>sim(M,D,false).total); grid.push({M,...msd(tot)}); }
+      const cur=Ds.map(D=>sim(S.M,D,false));
+      const sample=sim(S.M,Ds[0],true);
+      DATA={grid,sample};
+      const best=grid.reduce((b,x)=>x.m<b.m?x:b,grid[0]);
+      const c0=msd(cur.map(x=>x.total)), avg=k=>cur.reduce((s,x)=>s+x[k],0)/cur.length;
+      const overl=grid.filter(x=>x.M!==best.M && x.m-x.h<=best.m+best.h).map(x=>fa(x.M));
+      ro.textContent=`${ML.L("M = "+fa(S.M))}، ${ML.L("N = "+fa(S.N))}، ${ML.L("L = "+fa(S.L))}، ${S.bo?"پس‌افت":"فروش ازدست‌رفته"}، ${fa(S.days)} روز، ${ML.L("R = "+fa(S.R))}:\n`+
+        `  میانگین هزینه‌ی کل = ${ML.L(f2(c0.m,1)+" ± "+f2(c0.h,1))} دلار  (نگهداری ${f2(avg("hold"),1)}، کمبود ${f2(avg("short"),1)}، سفارش ${f2(avg("order"),1)})\n`+
+        `  روزهای با کمبود: ${f2(100*avg("sd")/S.days,1)}٪\n`+
+        `بهترین M روی شبکه‌ی ۱ تا ۳۰: ${ML.L("M* = "+fa(best.M))} با ${ML.L(f2(best.m,1)+" ± "+f2(best.h,1))}\n`+
+        `  Mهایی که بازه‌شان با بهترین هم‌پوشانی دارد: ${overl.length?overl.join("، "):"هیچ"}${overl.length?"  (برای جدا کردن‌شان تفاوت جفتی لازم است)":""}`;
+      draw();
+    }
+    function draw(){
+      if(!DATA) return;
+      const {grid,sample}=DATA;
+      // path
+      const ys=sample.path.map(p=>p[1]); const ylo=Math.min(-1,...ys)-0.5, yhi=Math.max(S.M,...ys)+1.5;
+      const P=new ML.Plot(cv1,[0,S.days],[ylo,yhi],{l:40,b:30,t:14});
+      P.axes("روز","موجودی خالص",{yfmt:y=>fa(Math.round(y))});
+      const ctx=P.ctx, c1=c("--plot-c1"), c2=c("--plot-c2"), c4=c("--plot-c4");
+      // shortage fill below zero
+      ctx.save(); ctx.beginPath(); ctx.rect(P.p.l,P.Y(0),P.W-P.p.l-P.p.r,P.Y(ylo)-P.Y(0)); ctx.clip();
+      ctx.fillStyle=ML.alpha(c2,0.3); ctx.beginPath(); ctx.moveTo(P.X(0),P.Y(0)); sample.path.forEach(([x,y])=>ctx.lineTo(P.X(x),P.Y(y))); ctx.lineTo(P.X(S.days),P.Y(0)); ctx.closePath(); ctx.fill(); ctx.restore();
+      P.line([[0,0],[S.days,0]],c("--ink-3"),1);
+      P.line([[0,S.M],[S.days,S.M]],c4,1.4,[6,4]);
+      P.line(sample.path,c1,1.8);
+      sample.rev.forEach(([t,Q])=>{ ctx.fillStyle=Q>0?c2:ML.alpha(c2,0.35); const X=P.X(t),Y=P.p.t; ctx.beginPath(); ctx.moveTo(X-4,Y); ctx.lineTo(X+4,Y); ctx.lineTo(X,Y+7); ctx.closePath(); ctx.fill(); });
+      // bars
+      const best=grid.reduce((b,x)=>x.m<b.m?x:b,grid[0]);
+      const cap=Math.max(best.m*2.6, best.m+3*best.h+1);
+      const Q2=new ML.Plot(cv2,[0.3,30.7],[0,cap],{l:52,b:30,t:12});
+      Q2.axes("M","میانگین هزینه‌ی کل (دلار)",{xstep:1,xfmt:x=>(x%5===0||x===1)?fa(x):"",yfmt:y=>fa(Math.round(y))});
+      const ink=c("--ink-2");
+      grid.forEach(g=>{
+        const col= g.M===best.M?c("--plot-c3"): g.M===S.M? c2 : ML.alpha(c1,0.55);
+        const top=Math.min(g.m,cap); Q2.bar(g.M,0.7,0,top,col);
+        if(g.m>cap){ Q2.text(g.M,cap,"↑",c2,"center",12); }
+        else { const lo=g.m-g.h, hi=Math.min(g.m+g.h,cap); Q2.line([[g.M,lo],[g.M,hi]],ink,1.3); Q2.line([[g.M-0.2,lo],[g.M+0.2,lo]],ink,1.3); if(g.m+g.h<=cap) Q2.line([[g.M-0.2,hi],[g.M+0.2,hi]],ink,1.3); }
+      });
+      Q2.text(best.M,Math.min(best.m+best.h,cap),"M*",c("--plot-c3"),"center",-6);
+    }
+    ML.onResize(cv1,draw); ML.onResize(cv2,draw);
+    run();
+  })();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,1185 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>جلسه ۳ · معیارهای عملکرد، مونت‌کارلو، مدل پیوسته و مراحل یک مطالعه</title>
+<link rel="stylesheet" href="assets/katex/katex.min.css"><link rel="stylesheet" href="assets/style.css">
+<script defer src="assets/katex/katex.min.js"></script><script defer src="assets/katex/auto-render.min.js"></script><script defer src="assets/app.js"></script>
+<style>
+.fig .tablewrap{border:0;margin:0;background:none}
+.fig svg text{fill:currentColor;font-family:"Vazirmatn",Tahoma,sans-serif}
+.fig svg .sm{font-size:11px}
+.fig svg .md{font-size:13px}
+.fig svg .lg{font-size:14px;font-weight:700}
+.fig svg .en{font-family:"JetBrains Mono",monospace;font-size:10px;fill:var(--ink-3)}
+.fig svg .ln{stroke:var(--ink-3);fill:none;stroke-width:1.5}
+.fig svg .ax{stroke:var(--ink-2);fill:none;stroke-width:1.6}
+.fig svg .b-gray{fill:var(--code);stroke:var(--ink-3)}
+.fig svg .b-req{fill:var(--event-soft);stroke:var(--event)}
+.fig svg .b-blue{fill:var(--accent-soft);stroke:var(--accent)}
+.fig svg .b-red{fill:var(--bad-soft);stroke:var(--bad)}
+.fig svg .b-green{fill:var(--good-soft);stroke:var(--good)}
+.fig svg .b-thm{fill:var(--thm-soft);stroke:var(--thm)}
+.fig svg .b-warn{fill:var(--warn-soft);stroke:var(--warn)}
+.fig svg .c-user{fill:var(--event)} .fig svg .c-sys{fill:var(--accent)}
+.fig svg .s-ev{stroke:var(--event)} .fig svg .s-ac{stroke:var(--accent)} .fig svg .s-gd{stroke:var(--good)} .fig svg .s-th{stroke:var(--thm)} .fig svg .s-bad{stroke:var(--bad)}
+.fig svg .t-ev{fill:var(--event)} .fig svg .t-ac{fill:var(--accent)} .fig svg .t-gd{fill:var(--good)} .fig svg .t-th{fill:var(--thm)} .fig svg .t-bad{fill:var(--bad)} .fig svg .t-mut{fill:var(--ink-3)}
+.fig svg .band1{fill:var(--accent-soft)} .fig svg .band2{fill:var(--good-soft)} .fig svg .band3{fill:var(--warn-soft)} .fig svg .band4{fill:var(--thm-soft)}
+.svg-min620{min-width:620px} .svg-min520{min-width:520px}
+td.num,th.num{direction:ltr;font-family:var(--mono);font-size:.9em}
+</style>
+</head>
+<body data-session="3">
+<main>
+<section class="hero">
+  <div class="kicker">بخش الف · مبانی و شبیه‌سازی با جدول</div>
+  <h1>معیارهای عملکرد، <span class="hl">مونت‌کارلو</span>، مدل پیوسته و مراحل یک مطالعه</h1>
+  <p class="lead">شبیه‌سازی عدد تولید می‌کند. این جلسه سه سؤال را جواب می‌دهد: کدام عدد را باید اندازه گرفت؟ وقتی زمان در کار نیست یا پیوسته است چه می‌کنیم؟ و یک پروژه‌ی واقعی شبیه‌سازی از کجا شروع می‌شود و کجا تمام می‌شود؟</p>
+  <div class="meta"><span>⏱ زمان پیشنهادی: ۱۵۰ دقیقه</span><span>📚 منبع: جزوه Ch.1 ص ۶۰ تا ۷۲ · Banks §۱.۲، §۱.۸، §۱.۱۰، §۱.۱۲ و فصل ۱۰</span><span class="hot">به کار تمرین ۱ سؤال ۲، ۳ و ۸ می‌آید</span></div>
+  <div class="goals"><b>بعد از این جلسه باید بتوانی:</b>
+    <ul>
+      <li>برای هر سیستم، درخت «درست انجام شد / نادرست انجام شد / انجام نشد» را بکشی و برای هر شاخه معیار و واحدش را بنویسی.</li>
+      <li>زمان واکنش، دو تعریف زمان پاسخ و زمان فکر را روی یک خط زمانی از هم جدا کنی.</li>
+      <li>معیارها را در سه دسته‌ی «کمتر بهتر»، «بیشتر بهتر» و «مقدار اسمی بهترین» بگذاری و بگویی چرا بهره‌وری ۱۰۰٪ خوب نیست.</li>
+      <li>یک تخمین مونت‌کارلو را در پایتون و اکسل بسازی، خطایش را با $1/\sqrt n$ بسنجی و بازه‌ی اطمینان گزارش کنی.</li>
+      <li>دستگاه شکارچی–شکار را با روش اویلر در یک جدول اکسل حل کنی و خطا و ناپایداری Δt بزرگ را تشخیص بدهی.</li>
+      <li>۱۲ گام و ۴ فاز یک مطالعه‌ی شبیه‌سازی را بگویی و صحت‌سنجی، اعتبارسنجی و کالیبراسیون را با مثال جدا کنی.</li>
+    </ul></div>
+  <nav class="toc"></nav>
+</section>
+
+<div class="box think"><div class="bt">✋ قبل از خواندن، ۵ دقیقه فکر کن</div>
+مدیر یک داروخانه می‌گوید: «داروخانه‌ی ما خوب کار می‌کند، چون دو نسخه‌پیچ ما ۹۸٪ وقت سرشان شلوغ است.» یک مشتری همان روز می‌نویسد: «۴۰ دقیقه منتظر ماندم و آخرش هم یک قلم دارو را اشتباه دادند.»
+<ul>
+<li>هر کدام از این دو نفر کدام معیار را نگاه می‌کند؟</li>
+<li>آیا «شلوغ بودن کارکنان» واقعاً خبر خوبی است؟</li>
+<li>اگر بخواهی عملکرد داروخانه را فقط با سه عدد گزارش کنی، کدام سه عدد را انتخاب می‌کنی؟</li>
+</ul>
+جواب‌هایت را نگه دار؛ در بخش‌های ۰۲ تا ۰۵ دوباره سراغشان می‌رویم.
+</div>
+
+<!-- ============================================================ 01 -->
+<section id="metric">
+<h2><span class="num">01</span> معیار عملکرد چیست؟ <span class="tag core">جزوه</span></h2>
+<p>شبیه‌سازی یک «آزمایشگاه» است، ولی آزمایشگاه بدون دستگاه اندازه‌گیری فایده ندارد. قبل از ساختن مدل باید بدانی <b>کدام عدد</b> قرار است دو طرح را از هم جدا کند. اسلاید ۶۰ جزوه فقط یک سؤال می‌پرسد: «معیار عملکرد چیست؟» جواب این است:</p>
+<div class="box def"><div class="bt">تعریف ۳.۱ · معیار عملکرد (performance metric)</div>
+یک کمیت عددی، با واحد مشخص، که می‌گوید سیستم چقدر خوب به درخواست‌ها رسیدگی می‌کند. هر معیار سه جزء دارد: <b>چه چیزی</b> شمرده یا اندازه گرفته می‌شود (زمان، تعداد، احتمال)، <b>روی چه چیزی</b> (یک درخواست، یک منبع، کل سیستم) و <b>با چه واحدی</b> (ثانیه، درخواست بر ساعت، درصد).
+</div>
+<p>در شبیه‌سازی گسسته‌پیشامد، خروجی مدل همیشه همین معیارهاست: میانگین زمان انتظار، طول صف، بهره‌وری سرور، تعداد مشتری خدمت‌گرفته. وقتی ورودی‌ها تصادفی‌اند، هر اجرا مقدار کمی متفاوتی می‌دهد. پس معیار در شبیه‌سازی یک <b>تخمین آماری</b> است، نه یک عدد قطعی (Banks §۱.۱۰).</p>
+<div class="cards">
+<div><b>معیار خوب: تغییرپذیری کم</b>معیاری که از اجرایی به اجرای دیگر خیلی نوسان کند، برای مقایسه به اجراهای خیلی زیادی نیاز دارد.</div>
+<div><b>معیار خوب: بدون تکرار</b>اگر دو معیار عملاً یک چیز را می‌گویند، یکی کافی است. مثلاً در صف تک‌سرور، طول متوسط صف و زمان متوسط انتظار به هم وابسته‌اند.</div>
+<div><b>معیار خوب: کامل</b>مجموعه‌ی معیارها باید هر سه حالت را بپوشاند: کار درست، کار غلط و کار انجام‌نشده. این دقیقاً منطق درخت بخش بعد است.</div>
+</div>
+<div class="box tip"><div class="bt">💡 نکته</div>
+«میانگین» همه‌ی داستان نیست. داروخانه‌ای با میانگین انتظار ۸ دقیقه ممکن است برای ۵٪ مشتری‌ها ۳۰ دقیقه انتظار داشته باشد. در گزارش واقعی، کنار میانگین معمولاً صدک ۹۵ (95th percentile) یا بیشینه را هم می‌آورند.
+</div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section id="select">
+<h2 data-short="درخت انتخاب معیار"><span class="num">02</span> انتخاب معیار: درخت «درست، نادرست، انجام‌نشده» <span class="tag core">جزوه</span> <span class="tag hw">تمرین</span></h2>
+<p>اسلاید ۶۱ یک روش ساده و کامل برای پیدا کردن معیارها پیشنهاد می‌کند: یک درخواست خدمت (request for service) را دنبال کن. سیستم با این درخواست فقط سه کار می‌تواند بکند:</p>
+<ol class="steps">
+<li><b>درست انجام می‌دهد (done correctly).</b> این‌جا سؤال این است که با چه سرعتی و با چه هزینه‌ای. سه معیار: <b>زمان</b> (زمان پاسخ)، <b>نرخ</b> (گذردهی) و <b>منابع</b> (بهره‌وری).</li>
+<li><b>انجام می‌دهد ولی نادرست (done incorrectly).</b> هر نوع خطا (error <i>j</i>) دو معیار دارد: <b>احتمال</b> رخ دادن آن خطا و <b>زمان بین دو خطا</b>.</li>
+<li><b>نمی‌تواند انجام دهد (cannot do).</b> یک رویداد (event <i>k</i>) مثل خرابی یا تمام شدن موجودی، سیستم را از کار انداخته است. دو معیار: <b>مدت رویداد</b> و <b>زمان بین دو رویداد</b>.</li>
+</ol>
+<figure class="fig"><div class="tablewrap">
+<svg class="svg-min620" viewBox="0 0 760 360" role="img" aria-label="درخت انتخاب معیار عملکرد">
+<defs><marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<rect class="b-req" x="10" y="8" width="120" height="44" rx="6"/>
+<text class="md" x="70" y="28" text-anchor="middle">درخواست خدمت i</text><text class="en" x="70" y="44" text-anchor="middle">request for service</text>
+<line x1="70" y1="52" x2="70" y2="78" class="s-ev" stroke-width="3" marker-end="url(#ar1)" style="color:var(--event)"/>
+<rect class="b-gray" x="30" y="80" width="80" height="262" rx="6"/>
+<text class="lg" x="70" y="215" text-anchor="middle">سیستم</text>
+<path class="ln" d="M110,175 L150,162" marker-end="url(#ar1)"/>
+<path class="ln" d="M110,250 L150,302" marker-end="url(#ar1)"/>
+<rect class="b-gray" x="152" y="140" width="96" height="44" rx="6"/><text class="md" x="200" y="160" text-anchor="middle">انجام شد</text><text class="en" x="200" y="175" text-anchor="middle">done</text>
+<rect class="b-gray" x="152" y="280" width="110" height="44" rx="6"/><text class="md" x="207" y="300" text-anchor="middle">انجام نشد</text><text class="en" x="207" y="315" text-anchor="middle">cannot do</text>
+<path class="ln" d="M248,155 L282,78" marker-end="url(#ar1)"/>
+<path class="ln" d="M248,170 L282,196" marker-end="url(#ar1)"/>
+<rect class="b-gray" x="284" y="52" width="110" height="44" rx="6"/><text class="md" x="339" y="72" text-anchor="middle">درست انجام شد</text><text class="en" x="339" y="87" text-anchor="middle">done correctly</text>
+<rect class="b-gray" x="284" y="175" width="110" height="44" rx="6"/><text class="md" x="339" y="195" text-anchor="middle">نادرست انجام شد</text><text class="en" x="339" y="210" text-anchor="middle">done incorrectly</text>
+<path class="ln" d="M394,197 L428,197" marker-end="url(#ar1)"/>
+<rect class="b-gray" x="430" y="177" width="84" height="40" rx="6"/><text class="md" x="472" y="202" text-anchor="middle">خطای j</text>
+<path class="ln" d="M262,302 L428,307" marker-end="url(#ar1)"/>
+<rect class="b-gray" x="430" y="287" width="84" height="40" rx="6"/><text class="md" x="472" y="312" text-anchor="middle">رویداد k</text>
+<path class="ln" d="M394,70 L556,28" marker-end="url(#ar1)"/>
+<path class="ln" d="M394,74 L556,70" marker-end="url(#ar1)"/>
+<path class="ln" d="M394,78 L556,112" marker-end="url(#ar1)"/>
+<path class="ln" d="M514,193 L556,177" marker-end="url(#ar1)"/>
+<path class="ln" d="M514,201 L556,219" marker-end="url(#ar1)"/>
+<path class="ln" d="M514,303 L556,287" marker-end="url(#ar1)"/>
+<path class="ln" d="M514,311 L556,329" marker-end="url(#ar1)"/>
+<rect class="b-blue" x="558" y="10" width="194" height="36" rx="6"/><text class="md" x="655" y="26" text-anchor="middle">زمان ← زمان پاسخ</text><text class="en" x="655" y="40" text-anchor="middle">time · response time</text>
+<rect class="b-blue" x="558" y="52" width="194" height="36" rx="6"/><text class="md" x="655" y="68" text-anchor="middle">نرخ ← گذردهی</text><text class="en" x="655" y="82" text-anchor="middle">rate · throughput</text>
+<rect class="b-blue" x="558" y="94" width="194" height="36" rx="6"/><text class="md" x="655" y="110" text-anchor="middle">منابع ← بهره‌وری</text><text class="en" x="655" y="124" text-anchor="middle">resource · utilization</text>
+<rect class="b-red" x="558" y="159" width="194" height="36" rx="6"/><text class="md" x="655" y="175" text-anchor="middle">احتمال خطا</text><text class="en" x="655" y="189" text-anchor="middle">probability</text>
+<rect class="b-red" x="558" y="201" width="194" height="36" rx="6"/><text class="md" x="655" y="217" text-anchor="middle">زمان بین دو خطا</text><text class="en" x="655" y="231" text-anchor="middle">time between errors</text>
+<rect class="b-green" x="558" y="269" width="194" height="36" rx="6"/><text class="md" x="655" y="285" text-anchor="middle">مدت رویداد</text><text class="en" x="655" y="299" text-anchor="middle">duration of the event</text>
+<rect class="b-green" x="558" y="311" width="194" height="36" rx="6"/><text class="md" x="655" y="327" text-anchor="middle">زمان بین دو رویداد</text><text class="en" x="655" y="341" text-anchor="middle">time between events</text>
+</svg></div>
+<figcaption>شکل ۳.۱ · بازسازی اسلاید ۶۱. هر درخواست یکی از سه سرنوشت را دارد و هر سرنوشت معیارهای خودش را. آبی: کیفیت کار درست؛ قرمز: قابلیت اطمینان (reliability)؛ سبز: دسترس‌پذیری (availability).</figcaption></figure>
+
+<h3>مثال اسلاید ۶۲: وب‌سرور</h3>
+<p>درخواست «صفحه‌ی <span class="ltr">name.html</span> را بده» به یک وب‌سرور می‌رسد. اسلاید برای هر برگ درخت یک عدد نمونه گذاشته است. دقت کن که هر عدد واحد دارد و اسلاید آن را به واحد پایه (ثانیه) هم تبدیل کرده است:</p>
+<div class="tablewrap"><table>
+<tr><th>شاخه</th><th>معیار</th><th>مقدار در اسلاید</th><th>واحد پایه</th></tr>
+<tr><td>درست</td><td>زمان پاسخ</td><td class="num">300 msec</td><td class="num">0.3 s</td></tr>
+<tr><td>درست</td><td>گذردهی</td><td class="num">8420 queries/min</td><td class="num">12.5 MB/s</td></tr>
+<tr><td>درست</td><td>بهره‌وری</td><td class="num">48.4% load</td><td>کسر بدون واحد</td></tr>
+<tr><td>نادرست («صفحه پیدا نشد»)</td><td>احتمال خطا</td><td class="num">p = 0.3</td><td>بدون واحد</td></tr>
+<tr><td>نادرست</td><td>زمان بین دو خطا</td><td class="num">30 min</td><td class="num">1800 s</td></tr>
+<tr><td>انجام‌نشده («سرور از کار افتاد»)</td><td>مدت رویداد</td><td class="num">1 hour</td><td class="num">3600 s</td></tr>
+<tr><td>انجام‌نشده</td><td>زمان بین دو رویداد</td><td class="num">1 day</td><td class="num">86400 s</td></tr>
+</table></div>
+<p>گذردهی را می‌شود با دو واحد گفت: «تعداد درخواست بر دقیقه» یا «حجم داده بر ثانیه». هر دو درست‌اند، به شرطی که واحد را بنویسی. عددهای اسلاید نمایشی‌اند؛ مثلاً احتمال خطای ۰٫۳ برای یک وب‌سرور واقعی خیلی بالاست.</p>
+
+<div class="box ex"><div class="bt">مثال حل‌شده ۳.۱ · پیشخوان یک داروخانه</div>
+درخواست: «نسخه‌ی i را بپیچ و تحویل بده». درخت کامل با واحدها:
+<div class="tablewrap"><table>
+<tr><th>شاخه</th><th>چه چیزی</th><th>معیار</th><th>واحد</th><th>چطور اندازه بگیریم</th></tr>
+<tr><td rowspan="3">درست انجام شد</td><td>زمان</td><td>زمان پاسخ: از تحویل نسخه تا گرفتن دارو</td><td>دقیقه</td><td>ثبت ساعت در سیستم نوبت‌دهی</td></tr>
+<tr><td>نرخ</td><td>گذردهی: نسخه‌ی پیچیده‌شده</td><td>نسخه بر ساعت</td><td>شمارش در هر ساعت</td></tr>
+<tr><td>منابع</td><td>بهره‌وری نسخه‌پیچ</td><td>درصد زمان</td><td>زمان مشغول ÷ زمان کل شیفت</td></tr>
+<tr><td rowspan="2">نادرست انجام شد<br><small>خطای j: داروی اشتباه، دوز اشتباه، بقیه‌ی پول اشتباه</small></td><td>احتمال</td><td>احتمال خطای j در هر نسخه</td><td>بدون واحد (یا درصد)</td><td>تعداد نسخه‌ی برگشتی ÷ کل نسخه‌ها</td></tr>
+<tr><td>فاصله</td><td>میانگین زمان بین دو خطا</td><td>ساعت (یا «نسخه بین دو خطا»)</td><td>فاصله‌ی ثبت‌شده‌ی شکایت‌ها</td></tr>
+<tr><td rowspan="2">انجام نشد<br><small>رویداد k: دارو تمام شده، سامانه‌ی بیمه قطع است</small></td><td>مدت</td><td>مدت قطعی سامانه‌ی بیمه</td><td>دقیقه</td><td>لاگ سامانه</td></tr>
+<tr><td>فاصله</td><td>زمان بین دو قطعی</td><td>روز</td><td>لاگ سامانه</td></tr>
+</table></div>
+هر خطا یا رویداد نوع خودش را دارد. «داروی اشتباه» و «بقیه‌ی پول اشتباه» دو شاخه‌ی جدا با دو احتمال جدا هستند، چون هزینه‌شان خیلی فرق دارد.
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+فقط شاخه‌ی «درست» را پر کردن. دانشجو زمان پاسخ و گذردهی را می‌نویسد و تمام. ولی سیستمی که سریع است و ۱۰٪ وقت‌ها داروی اشتباه می‌دهد، سیستم خوبی نیست. درخت را تا آخر برو: حداقل یک معیار برای هر سه شاخه.
+</div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+«مدت رویداد» و «زمان بین دو رویداد» را قاطی نکن. اولی می‌گوید هر بار خرابی چقدر طول می‌کشد (مثلاً ۱ ساعت). دومی می‌گوید هر چند وقت یک بار خرابی رخ می‌دهد (مثلاً هر ۱ روز). هر دو واحد زمان دارند، ولی معنایشان کاملاً فرق دارد. از این دو عدد در بخش ۰۴ دسترس‌پذیری را حساب می‌کنیم.
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۲ (بند ۱)</div>
+<ul>
+<li>درخواست را دقیق تعریف کن: «سفارش i در کافه شریف پلاس». ریشه‌ی درخت همین است.</li>
+<li>سه شاخه را مثل شکل ۳.۱ بکش: درست / نادرست / ناتوان. برای «نادرست» یک یا دو <b>نوع خطای مشخص کافه‌ای</b> نام ببر و برای «ناتوان» یک یا دو <b>رویداد مشخص</b>. از مثال‌های داروخانه کپی نکن.</li>
+<li>در هر برگ: نام معیار + واحد. یادت باشد گذردهی «بر واحد زمان» است، احتمال واحد ندارد و «زمان بین دو خطا» با «مدت رویداد» فرق دارد.</li>
+<li>سؤال گفته «حداقل یک شاخص کمّی برای هر حالت». اگر برای شاخه‌ی درست هر سه معیار (زمان، نرخ، منابع) را بیاوری، جوابت کامل‌تر است.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 03 -->
+<section id="times">
+<h2 data-short="زمان پاسخ، واکنش و فکر"><span class="num">03</span> زمان پاسخ، زمان واکنش و زمان فکر <span class="tag core">جزوه</span> <span class="tag exam">امتحانی</span></h2>
+<p>اسلاید ۶۳ ساده‌ترین تصویر را می‌دهد: کاربر درخواست می‌دهد، سیستم پاسخ می‌دهد و فاصله‌ی این دو <b>زمان پاسخ (response time)</b> است. ولی «درخواست دادن» و «پاسخ دادن» لحظه نیستند؛ هر دو مدتی طول می‌کشند. اسلاید ۶۴ این را باز می‌کند و شش لحظه روی محور زمان می‌گذارد. در شکل زیر همان خط زمانی را با عددهای یک مشتری داروخانه می‌بینی.</p>
+<figure class="fig"><div class="tablewrap">
+<svg class="svg-min620" viewBox="0 0 760 270" role="img" aria-label="خط زمانی زمان واکنش، زمان پاسخ و زمان فکر">
+<defs>
+<marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
+</defs>
+<line x1="20" y1="96" x2="745" y2="96" class="ax" marker-end="url(#ar2)"/>
+<text class="sm" x="745" y="80" text-anchor="start">زمان</text><text class="en" x="745" y="128" text-anchor="start">t (s)</text>
+<!-- events: t=0,30,75,255,315,345 ; x = 40 + 1.9 t -->
+<g class="sm" text-anchor="middle">
+<text x="40" y="18" class="c-user">کاربر</text><text x="40" y="33" class="c-user">شروع درخواست</text>
+<text x="97" y="50" class="c-user">کاربر</text><text x="97" y="65" class="c-user">پایان درخواست</text>
+<text x="182" y="18" class="c-sys">سیستم</text><text x="182" y="33" class="c-sys">شروع اجرا</text>
+<text x="524" y="18" class="c-sys">سیستم</text><text x="524" y="33" class="c-sys">شروع پاسخ</text>
+<text x="638" y="50" class="c-sys">سیستم</text><text x="638" y="65" class="c-sys">پایان پاسخ</text>
+<text x="710" y="18" class="c-user">کاربر</text><text x="710" y="33" class="c-user">درخواست بعدی</text>
+</g>
+<g stroke-width="1.6" style="color:var(--ink-2)">
+<line x1="40" y1="38" x2="40" y2="92" stroke="currentColor" marker-end="url(#ar2)"/>
+<line x1="97" y1="70" x2="97" y2="92" stroke="currentColor" marker-end="url(#ar2)"/>
+<line x1="182" y1="38" x2="182" y2="92" stroke="currentColor" marker-end="url(#ar2)"/>
+<line x1="524" y1="38" x2="524" y2="92" stroke="currentColor" marker-end="url(#ar2)"/>
+<line x1="638" y1="70" x2="638" y2="92" stroke="currentColor" marker-end="url(#ar2)"/>
+<line x1="695" y1="38" x2="695" y2="92" stroke="currentColor" marker-end="url(#ar2)"/>
+</g>
+<g class="en" text-anchor="middle"><text x="40" y="112">0</text><text x="97" y="112">30</text><text x="182" y="112">75</text><text x="524" y="112">255</text><text x="638" y="112">315</text><text x="695" y="112">345</text></g>
+<g stroke-dasharray="3 3" class="ln" stroke-width="1"><line x1="97" y1="100" x2="97" y2="250"/><line x1="182" y1="100" x2="182" y2="150"/><line x1="524" y1="100" x2="524" y2="200"/><line x1="638" y1="100" x2="638" y2="250"/><line x1="695" y1="100" x2="695" y2="150"/></g>
+<g stroke-width="2">
+<line x1="99" y1="142" x2="180" y2="142" class="s-ev" style="color:var(--event)" stroke="currentColor" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+<line x1="99" y1="192" x2="522" y2="192" class="s-ac" style="color:var(--accent)" stroke="currentColor" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+<line x1="99" y1="242" x2="636" y2="242" class="s-ac" style="color:var(--accent)" stroke="currentColor" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+<line x1="640" y1="142" x2="693" y2="142" class="s-gd" style="color:var(--good)" stroke="currentColor" marker-start="url(#ar2)" marker-end="url(#ar2)"/>
+</g>
+<text class="sm t-ev" x="140" y="134" text-anchor="middle">واکنش = ۴۵</text>
+<text class="sm t-ac" x="310" y="184" text-anchor="middle">زمان پاسخ (تعریف ۱: تا شروع پاسخ) = ۲۲۵</text>
+<text class="sm t-ac" x="368" y="234" text-anchor="middle">زمان پاسخ (تعریف ۲: تا پایان پاسخ) = ۲۸۵</text>
+<text class="sm t-gd" x="666" y="134" text-anchor="middle">فکر = ۳۰</text>
+</svg></div>
+<figcaption>شکل ۳.۲ · بازسازی اسلاید ۶۴ با عددهای مثال ۳.۲. نارنجی: لحظه‌های کاربر؛ آبی: لحظه‌های سیستم. هر سه بازه‌ی واکنش و پاسخ از «پایان درخواست» شروع می‌شوند.</figcaption></figure>
+
+<div class="box def"><div class="bt">تعریف ۳.۲ · چهار زمان روی یک محور</div>
+<ul>
+<li><b>زمان واکنش (reaction time):</b> از پایان درخواست کاربر تا شروع اجرای آن در سیستم. سیستم چقدر طول می‌کشد تا «دست به کار شود».</li>
+<li><b>زمان پاسخ، تعریف ۱:</b> از پایان درخواست تا <b>شروع</b> پاسخ سیستم. برای کاربری مهم است که می‌خواهد زود اولین نشانه‌ی جواب را ببیند.</li>
+<li><b>زمان پاسخ، تعریف ۲:</b> از پایان درخواست تا <b>پایان</b> پاسخ سیستم. برای کاربری مهم است که تا کل جواب نرسد کاری نمی‌تواند بکند.</li>
+<li><b>زمان فکر (think time):</b> از پایان پاسخ سیستم تا شروع درخواست بعدی همان کاربر. این زمان مال کاربر است، نه سیستم.</li>
+</ul>
+</div>
+<div class="box ex"><div class="bt">مثال حل‌شده ۳.۲ · یک مشتری داروخانه</div>
+ساعت‌ها بر حسب ثانیه از لحظه‌ی شروع حرف زدن مشتری:
+<div class="tablewrap"><table class="sim">
+<tr><th>لحظه</th><th>چه کسی</th><th>چه اتفاقی</th><th>t (s)</th></tr>
+<tr><td>1</td><td>مشتری</td><td>شروع توضیح نسخه</td><td>0</td></tr>
+<tr><td>2</td><td>مشتری</td><td>پایان توضیح، نسخه روی پیشخوان</td><td>30</td></tr>
+<tr><td>3</td><td>داروخانه</td><td>نسخه‌پیچ شروع به جمع کردن دارو می‌کند</td><td>75</td></tr>
+<tr><td>4</td><td>داروخانه</td><td>اولین قلم دارو را تحویل می‌دهد</td><td>255</td></tr>
+<tr><td>5</td><td>داروخانه</td><td>آخرین قلم + رسید تحویل شد</td><td>315</td></tr>
+<tr class="hl"><td>6</td><td>مشتری</td><td>بعد از خواندن برچسب، سؤال بعدی را شروع می‌کند</td><td>345</td></tr>
+</table></div>
+<div class="stats">
+<div><div class="l">زمان واکنش</div><div class="v">45 s</div><div class="f">75 − 30</div></div>
+<div><div class="l">زمان پاسخ (تعریف ۱)</div><div class="v">225 s</div><div class="f">255 − 30</div></div>
+<div><div class="l">زمان پاسخ (تعریف ۲)</div><div class="v">285 s</div><div class="f">315 − 30</div></div>
+<div><div class="l">زمان فکر</div><div class="v">30 s</div><div class="f">345 − 315</div></div>
+</div>
+دقت کن: ۳۰ ثانیه‌ی اول (توضیح دادن مشتری) در هیچ‌کدام از این زمان‌ها حساب نشد. هر سه بازه‌ی سیستم از <b>پایان</b> درخواست شروع می‌شوند.
+</div>
+<div class="vs">
+<div><h4>زمان فکر (think time)</h4>زمانی که کاربر صرف تصمیم گرفتن می‌کند: نگاه به منو، خواندن برچسب دارو، فکر کردن به سؤال بعدی. سیستم در این مدت کاری برای این کاربر نمی‌کند و می‌تواند به بقیه برسد.</div>
+<div><h4>زمان پردازش / خدمت (service time)</h4>زمانی که سیستم واقعاً روی درخواست کار می‌کند: بین «شروع اجرا» و «پایان پاسخ». اگر صف نباشد، زمان پاسخ تقریباً برابر زمان واکنش به‌اضافه‌ی زمان خدمت است.</div>
+</div>
+<p><b>زمان چرخه (turnaround time)</b> نسخه‌ی «دسته‌ای» زمان پاسخ است: از تحویل یک کار کامل (مثلاً یک سفارش چاپ ۵۰۰ برگی) تا گرفتن کل خروجی آن. وقتی تعامل لحظه‌به‌لحظه‌ای در کار نیست، به‌جای زمان پاسخ از همین استفاده می‌کنند.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+در امتحان معمولاً یک خط زمانی با چند لحظه می‌دهند و می‌پرسند کدام بازه کدام زمان است. سه قاعده: (۱) بازه‌های سیستم از «پایان درخواست» شروع می‌شوند؛ (۲) زمان واکنش به «شروع اجرا» ختم می‌شود، نه شروع پاسخ؛ (۳) زمان فکر از «پایان پاسخ» تا «شروع درخواست بعدی» است.
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+زمان فکر را جزو زمان پاسخ حساب کردن. اگر مشتری ۲ دقیقه جلوی منو فکر کند، سیستم کند نیست! وقتی داده جمع می‌کنی، دقیق مشخص کن ساعت را از کجا شروع می‌کنی. اگر ساعت را از «ورود به صف» بزنی، زمان تصمیم‌گیری مشتری در صف هم داخل عدد تو می‌رود و سیستم را بی‌دلیل کند نشان می‌دهد.
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۲ (بند ۲)</div>
+<ul>
+<li>شش لحظه‌ی شکل ۳.۲ را برای کافه تعریف کن. «سیستم شروع اجرا» یعنی چه؟ (مثلاً لحظه‌ای که سفارش به دست باریستا می‌رسد و او شروع می‌کند.) «شروع پاسخ» و «پایان پاسخ» در کافه چه لحظه‌هایی‌اند؟</li>
+<li>زمان واکنش و هر دو تعریف زمان پاسخ را با یک مثال عددی ساختگیِ خودت روی همین شش لحظه نشان بده. یک خط زمانی مثل شکل ۳.۲ بکش.</li>
+<li>برای زمان فکر: بگو این زمان در کافه کجاست (قبل از سفارش یا بین دو سفارش یک مشتری) و چرا مال مشتری است، نه کافه. بعد آن را با زمان پردازش سفارش مقایسه کن: کدام را کافه می‌تواند با استخدام یا ماشین بهتر کم کند و کدام را با طراحی منو؟</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 04 -->
+<section id="capacity">
+<h2 data-short="گذردهی، ظرفیت، بهره‌وری"><span class="num">04</span> گذردهی، ظرفیت، بهره‌وری و دسترس‌پذیری <span class="tag core">جزوه</span> <span class="tag book">تکمیلی</span></h2>
+<p>عنوان اسلاید ۶۳ و ۶۴ «معیارهای رایج» است. غیر از زمان‌ها، چند معیار دیگر هم همیشه در گزارش شبیه‌سازی می‌آیند. همه را این‌جا یک‌جا با تعریف دقیق می‌بینی:</p>
+<div class="tablewrap"><table>
+<tr><th>معیار</th><th>تعریف</th><th>واحد</th><th>مثال داروخانه</th></tr>
+<tr><td><b>گذردهی (throughput)</b></td><td>تعداد درخواستی که در واحد زمان <i>درست</i> انجام می‌شود</td><td>درخواست بر زمان</td><td>۲۴ نسخه در ساعت</td></tr>
+<tr><td><b>ظرفیت اسمی (nominal capacity)</b></td><td>بیشترین گذردهی ممکن در شرایط ایده‌آل</td><td>درخواست بر زمان</td><td>اگر هر نسخه دقیقاً ۲ دقیقه باشد و نسخه‌پیچ هرگز بیکار نماند: ۳۰ در ساعت</td></tr>
+<tr><td><b>ظرفیت قابل‌استفاده (usable capacity)</b></td><td>بیشترین گذردهی که در آن زمان پاسخ از یک حد مجاز بیشتر نشود</td><td>درخواست بر زمان</td><td>با حد ۱۰ دقیقه انتظار: ۲۴ در ساعت</td></tr>
+<tr><td><b>کارایی (efficiency)</b></td><td>ظرفیت قابل‌استفاده ÷ ظرفیت اسمی</td><td>کسر</td><td>۲۴ ÷ ۳۰ = ۰٫۸</td></tr>
+<tr><td><b>بهره‌وری (utilization)</b></td><td>کسری از زمان که منبع مشغول است</td><td>کسر یا درصد</td><td>۴۸ دقیقه کار در یک ساعت = ۰٫۸</td></tr>
+<tr><td><b>قابلیت اطمینان (reliability)</b></td><td>احتمال خطا، یا میانگین زمان بین دو خطا</td><td>بدون واحد / زمان</td><td>۱ خطا در هر ۵۰۰ نسخه</td></tr>
+<tr><td><b>دسترس‌پذیری (availability)</b></td><td>کسری از زمان که سیستم آماده‌ی خدمت است</td><td>کسر</td><td>سامانه‌ی بیمه ۹۵٪ وقت‌ها وصل است</td></tr>
+</table></div>
+<div class="box thm"><div class="bt">رابطه‌ها</div>
+بهره‌وری یک منبع در بازه‌ی $[0,T]$:
+$$\rho=\frac{\text{زمان مشغول}}{T}\qquad\text{و در حالت پایدار}\qquad \rho=\lambda\cdot\bar S$$
+که $\lambda$ نرخ ورود درخواست‌ها و $\bar S$ میانگین زمان خدمت است. دسترس‌پذیری با میانگین زمان تا خرابی (MTTF) و میانگین زمان تعمیر (MTTR):
+$$A=\frac{\text{MTTF}}{\text{MTTF}+\text{MTTR}}$$
+</div>
+<p>مثال: سامانه‌ی بیمه به‌طور میانگین ۱۹۰ ساعت وصل می‌ماند و هر قطعی ۱۰ ساعت طول می‌کشد. پس $A=190/(190+10)=0.95$. «زمان بین دو رویداد» در درخت بخش ۰۲ همان MTTF + MTTR است و «مدت رویداد» همان MTTR.</p>
+<figure class="fig"><div class="tablewrap">
+<svg class="svg-min620" viewBox="0 0 740 250" role="img" aria-label="گذردهی و زمان پاسخ بر حسب بار">
+<defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g style="color:var(--ink-2)"><path class="ax" d="M50,24 L50,200 L340,200" marker-start="url(#ar3)" marker-end="url(#ar3)"/><path class="ax" d="M420,24 L420,200 L710,200" marker-start="url(#ar3)" marker-end="url(#ar3)"/></g>
+<line x1="50" y1="58.3" x2="335" y2="58.3" class="ln s-bad" stroke-dasharray="6 4"/>
+<text class="sm t-bad" x="335" y="50" text-anchor="start">ظرفیت اسمی</text>
+<path d="M50.0,200.0 L53.5,196.5 L57.0,192.9 L60.5,189.4 L64.0,185.8 L67.5,182.3 L71.0,178.8 L74.5,175.2 L78.0,171.7 L81.5,168.1 L85.0,164.6 L88.5,161.1 L92.0,157.6 L95.5,154.1 L99.0,150.6 L102.5,147.1 L106.0,143.7 L109.5,140.3 L113.0,136.9 L116.5,133.5 L120.0,130.2 L123.5,127.0 L127.0,123.8 L130.5,120.6 L134.0,117.6 L137.5,114.5 L141.0,111.6 L144.5,108.8 L148.0,106.0 L151.5,103.4 L155.0,100.8 L158.5,98.3 L162.0,96.0 L165.5,93.7 L169.0,91.6 L172.5,89.5 L176.0,87.6 L179.5,85.8 L183.0,84.0 L186.5,82.4 L190.0,80.9 L193.5,79.4 L197.0,78.1 L200.5,76.8 L204.0,75.6 L207.5,74.5 L211.0,73.5 L214.5,72.5 L218.0,71.6 L221.5,70.8 L225.0,70.0 L228.5,69.3 L232.0,68.6 L235.5,67.9 L239.0,67.4 L242.5,66.8 L246.0,66.3 L249.5,65.8 L253.0,65.4 L256.5,65.0 L260.0,64.6 L263.5,64.2 L267.0,63.9 L270.5,63.6 L274.0,63.3 L277.5,63.0 L281.0,62.7 L284.5,62.5 L288.0,62.3 L291.5,62.1 L295.0,61.9 L298.5,61.7 L302.0,61.5 L305.5,61.4 L309.0,61.2 L312.5,61.1 L316.0,60.9 L319.5,60.8 L323.0,60.7 L326.5,60.6 L330.0,60.5" fill="none" class="s-ac" stroke-width="2.6"/>
+<line x1="165.5" y1="93.7" x2="165.5" y2="200" class="ln s-gd" stroke-dasharray="4 4"/>
+<line x1="50" y1="93.7" x2="165.5" y2="93.7" class="ln s-gd" stroke-dasharray="4 4"/>
+<circle cx="165.5" cy="93.7" r="5" style="fill:var(--good)"/>
+<text class="sm t-gd" x="172" y="115" text-anchor="end">ظرفیت قابل‌استفاده</text>
+<text class="sm t-gd" x="172" y="130" text-anchor="end">(نزدیک «زانوی» منحنی)</text>
+<text class="sm" x="195" y="232" text-anchor="middle">بار ورودی (offered load)</text>
+<text class="sm" x="14" y="112" text-anchor="middle" transform="rotate(-90 14 112)">گذردهی</text>
+<path d="M420.0,178.8 L423.5,178.2 L427.0,177.6 L430.5,177.0 L434.0,176.4 L437.5,175.7 L441.0,175.0 L444.5,174.2 L448.0,173.4 L451.5,172.6 L455.0,171.7 L458.5,170.7 L462.0,169.7 L465.5,168.6 L469.0,167.4 L472.5,166.1 L476.0,164.7 L479.5,163.3 L483.0,161.7 L486.5,160.0 L490.0,158.1 L493.5,156.1 L497.0,154.0 L500.5,151.7 L504.0,149.2 L507.5,146.4 L511.0,143.5 L514.5,140.3 L518.0,136.9 L521.5,133.2 L525.0,129.1 L528.5,124.8 L532.0,120.1 L535.5,115.0 L539.0,109.5 L542.5,103.5 L546.0,97.2 L549.5,90.3 L553.0,82.9 L556.5,75.0 L560.0,66.4 L563.5,57.3 L567.0,47.5 L570.5,37.1" fill="none" class="s-ev" stroke-width="2.6"/>
+<line x1="420" y1="115" x2="705" y2="115" class="ln s-bad" stroke-dasharray="6 4"/>
+<text class="sm t-bad" x="705" y="107" text-anchor="start">حد مجاز زمان پاسخ</text>
+<line x1="535.5" y1="115" x2="535.5" y2="200" class="ln s-gd" stroke-dasharray="4 4"/>
+<circle cx="535.5" cy="115" r="5" style="fill:var(--good)"/>
+<text class="sm" x="565" y="232" text-anchor="middle">بار ورودی (offered load)</text>
+<text class="sm" x="384" y="112" text-anchor="middle" transform="rotate(-90 384 112)">زمان پاسخ</text>
+</svg></div>
+<figcaption>شکل ۳.۳ · با زیاد شدن بار، گذردهی (آبی) به ظرفیت اسمی نزدیک می‌شود ولی هرگز به آن نمی‌رسد؛ هم‌زمان زمان پاسخ (نارنجی) منفجر می‌شود. ظرفیت قابل‌استفاده جایی است که زمان پاسخ به حد مجاز می‌رسد (نقطه‌ی سبز). در این منحنی نمونه، ظرفیت قابل‌استفاده ۷۵٪ ظرفیت اسمی است، پس کارایی ۰٫۷۵ است.</figcaption></figure>
+<p>چرا زمان پاسخ نزدیک ظرفیت منفجر می‌شود؟ در صف ساده‌ی M/M/1 (جلسه‌ی ۱۱) میانگین زمان در سیستم $W=\bar S/(1-\rho)$ است. با زمان خدمت میانگین ۲ دقیقه:</p>
+<div class="tablewrap"><table class="sim">
+<tr><th>بهره‌وری ρ</th><th>0.50</th><th>0.80</th><th>0.90</th><th>0.95</th><th>0.99</th></tr>
+<tr><td>W = 2/(1−ρ) (دقیقه)</td><td>4</td><td>10</td><td>20</td><td>40</td><td class="wait">200</td></tr>
+</table></div>
+<p>از ۹۰٪ به ۹۹٪ بهره‌وری، زمان در سیستم ۱۰ برابر شد. این مهم‌ترین دلیل است که در بخش بعد بهره‌وری را «مقدار اسمی بهترین» می‌نامیم.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+گذردهی هیچ‌وقت از نرخ ورود بیشتر نمی‌شود. اگر داروخانه ساعتی ۲۰ مشتری دارد، گذردهی‌اش حداکثر ۲۰ در ساعت است، حتی اگر ظرفیت اسمی‌اش ۳۰ باشد. پس «گذردهی بالاتر» فقط تا وقتی بهتر است که تقاضا وجود داشته باشد. در سیستمی که درخواست‌ها را رد می‌کند یا گم می‌کند، گذردهی از نرخ ورود کمتر است.
+</div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section id="utility">
+<h2 data-short="کلاس سودمندی"><span class="num">05</span> کلاس سودمندی: کمتر بهتر، بیشتر بهتر، مقدار اسمی بهترین <span class="tag core">جزوه</span> <span class="tag hw">تمرین</span></h2>
+<p>اسلاید ۶۵ هر معیار را با یک سؤال دسته‌بندی می‌کند: اگر مقدار معیار زیاد شود، سودمندی (utility) سیستم برای ما چه می‌شود؟ سه جواب ممکن است:</p>
+<figure class="fig"><div class="tablewrap">
+<svg class="svg-min520" viewBox="0 0 720 200" role="img" aria-label="سه کلاس سودمندی">
+<defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g style="color:var(--ink-2)">
+<path class="ax" d="M40,40 L40,165 L210,165" marker-start="url(#ar4)" marker-end="url(#ar4)"/>
+<path class="ax" d="M280,40 L280,165 L450,165" marker-start="url(#ar4)" marker-end="url(#ar4)"/>
+<path class="ax" d="M520,40 L520,165 L690,165" marker-start="url(#ar4)" marker-end="url(#ar4)"/>
+</g>
+<path d="M52,52 C60,120 90,150 195,158" fill="none" class="s-ev" stroke-width="2.6"/>
+<path d="M292,158 C380,150 420,130 432,52" fill="none" class="s-ev" stroke-width="2.6"/>
+<path d="M540,160 C575,60 590,48 605,48 C620,48 635,60 670,160" fill="none" class="s-ev" stroke-width="2.6"/>
+<line x1="605" y1="48" x2="605" y2="165" class="ln" stroke-dasharray="3 3"/>
+<text class="md" x="125" y="24" text-anchor="middle">کمتر بهتر (LB)</text>
+<text class="md" x="365" y="24" text-anchor="middle">بیشتر بهتر (HB)</text>
+<text class="md" x="605" y="24" text-anchor="middle">مقدار اسمی بهترین (NB)</text>
+<text class="sm" x="125" y="188" text-anchor="middle">مقدار معیار</text><text class="sm" x="365" y="188" text-anchor="middle">مقدار معیار</text><text class="sm" x="605" y="188" text-anchor="middle">مقدار معیار</text>
+<text class="sm" x="26" y="102" text-anchor="middle" transform="rotate(-90 26 102)">سودمندی</text>
+<text class="sm" x="266" y="102" text-anchor="middle" transform="rotate(-90 266 102)">سودمندی</text>
+<text class="sm" x="506" y="102" text-anchor="middle" transform="rotate(-90 506 102)">سودمندی</text>
+</svg></div>
+<figcaption>شکل ۳.۴ · بازسازی اسلاید ۶۵. در NB سودمندی در یک مقدار میانی بیشینه است و از هر دو طرف افت می‌کند.</figcaption></figure>
+<div class="tablewrap"><table>
+<tr><th>کلاس</th><th>معنا</th><th>نمونه‌ها</th></tr>
+<tr><td><b>LB</b> · Lower is Better</td><td>هر چه کمتر، بهتر</td><td>زمان پاسخ، زمان انتظار، طول صف، احتمال خطا، هزینه، مدت قطعی</td></tr>
+<tr><td><b>HB</b> · Higher is Better</td><td>هر چه بیشتر، بهتر</td><td>گذردهی (تا سقف تقاضا)، دسترس‌پذیری، زمان بین دو خطا، رضایت مشتری</td></tr>
+<tr><td><b>NB</b> · Nominal is Best</td><td>یک مقدار میانی بهترین است</td><td>بهره‌وری، اندازه‌ی موجودی انبار، تعداد کارکنان، دمای یخچال دارو</td></tr>
+</table></div>
+<div class="box def"><div class="bt">چرا بهره‌وری NB است؟</div>
+<ul>
+<li><b>خیلی کم</b> (مثلاً ۲۰٪): پول کارمند یا دستگاهی را می‌دهیم که بیشتر وقت بیکار است. هزینه‌ی سرمایه‌گذاری هدر رفته است.</li>
+<li><b>خیلی زیاد</b> (نزدیک ۱۰۰٪): هیچ ظرفیت اضافه‌ای برای نوسان ورودها نمانده. جدول بخش ۰۴ نشان داد زمان انتظار مثل $1/(1-\rho)$ منفجر می‌شود. کارمندی که هیچ‌وقت نفس نمی‌کشد، خسته می‌شود و خطایش بیشتر می‌شود. وقتی برای تمیزکاری، آموزش یا رسیدگی به یک مشتری مشکل‌دار هم نمی‌ماند.</li>
+<li><b>ناحیه‌ی خوب</b> بستگی به هدف دارد: معمولاً جایی که زمان پاسخ زیر حد مجاز بماند و هزینه هم معقول باشد. این همان «ظرفیت قابل‌استفاده» در شکل ۳.۳ است.</li>
+</ul>
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+«بهره‌وری بالاتر یعنی استفاده‌ی بهتر از منابع، پس HB است.» این فقط از دید صاحب منبع درست است و فقط تا جایی که زمان پاسخ قابل‌تحمل بماند. معیار NB یعنی دقیقاً همین: تا یک نقطه بهتر می‌شود و بعد بدتر.
+</div>
+<div class="box note"><div class="bt">یادداشت</div>
+کلاس یک معیار به <b>دیدگاه</b> هم بستگی دارد. «گذردهی» برای مدیر HB است. «زمان بین دو رویداد» وقتی رویداد خرابی است HB است، ولی وقتی رویداد «تحویل محموله‌ی تازه» است NB می‌شود: خیلی کم یعنی انبار پر و خیلی زیاد یعنی کمبود. همیشه بگو معیار از دید چه کسی سنجیده می‌شود.
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۲ (بند ۳)</div>
+<ul>
+<li>برای هر کدام از سه معیار (میانگین زمان پاسخ، نرخ انجام سفارش، بهره‌وری کارکنان) سه چیز بنویس: کلاس (LB/HB/NB)، یک جمله دلیل، و از دید چه کسی.</li>
+<li>برای گذردهی، قید «تا سقف تقاضا» را فراموش نکن.</li>
+<li>برای «چرا ۱۰۰٪ مشغول بودن یعنی کافه‌ی بهتر نیست» حداقل دو دلیل جدا بیاور: یکی صف‌محور (انفجار انتظار نزدیک ρ = ۱؛ می‌توانی به جدول بخش ۰۴ اشاره کنی) و یکی انسانی/عملیاتی مخصوص کافه.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section id="montecarlo">
+<h2 data-short="مونت‌کارلو"><span class="num">06</span> مونت‌کارلو: شبیه‌سازی مدل‌های ایستا <span class="tag core">جزوه</span> <span class="tag hw">تمرین</span></h2>
+<p>تا این‌جا هر مدلی که دیدیم یک ساعت داشت: مشتری می‌آید، منتظر می‌ماند، می‌رود. اسلاید ۶۷ «پارادایم» دیگری را معرفی می‌کند: مدل <b>ایستا (static)</b> که در آن زمان اصلاً نقشی ندارد. Banks در §۱.۱۰ می‌گوید مدل ایستا که گاهی به آن شبیه‌سازی مونت‌کارلو (Monte Carlo simulation) می‌گویند، سیستم را «در یک لحظه‌ی خاص» نشان می‌دهد.</p>
+<div class="box def"><div class="bt">تعریف ۳.۳ · شبیه‌سازی مونت‌کارلو</div>
+برای محاسبه‌ی یک کمیت $\theta$ که حل تحلیلی‌اش سخت یا ناممکن است، آن را به شکل <b>امید ریاضی</b> یک متغیر تصادفی بنویس: $\theta=E[Y]$. بعد $n$ نمونه‌ی مستقل $Y_1,\dots,Y_n$ بساز و میانگین بگیر:
+$$\hat\theta_n=\frac1n\sum_{i=1}^n Y_i$$
+طبق قانون اعداد بزرگ، با بزرگ شدن $n$ این میانگین به $\theta$ نزدیک می‌شود. نه ساعتی هست، نه رویدادی، نه صفی.
+</div>
+<h3>مثال اسلاید: تخمین π با ربع دایره</h3>
+<p>یک نقطه‌ی تصادفی $(U,V)$ با $U,V\sim U(0,1)$ مستقل در مربع واحد بیانداز. احتمال اینکه داخل ربع دایره‌ی واحد بیفتد برابر نسبت مساحت‌هاست:</p>
+$$P(U^2+V^2\le 1)=\frac{\pi\cdot1^2/4}{1}=\frac\pi4\quad\Longrightarrow\quad \pi=E\big[\,4\cdot\mathbf 1\{U^2+V^2\le1\}\,\big]$$
+<p>پس $Y_i=4$ اگر نقطه‌ی $i$ داخل ربع دایره باشد و $Y_i=0$ اگر نه. میانگین $Y$ها تخمین π است.</p>
+<ol class="steps">
+<li><b>کمیت را به امید ریاضی تبدیل کن.</b> اینجا: $\pi=4P(\text{داخل})$.</li>
+<li><b>یک آزمایش تصادفی بساز</b> که نتیجه‌اش $Y$ باشد: دو عدد تصادفی، یک شرط.</li>
+<li><b>آزمایش را $n$ بار مستقل تکرار کن</b> و $Y_i$ها را ثبت کن.</li>
+<li><b>میانگین و خطای استاندارد را گزارش کن</b>، همراه با بازه‌ی اطمینان (بخش ۰۷).</li>
+</ol>
+<pre class="code">import numpy as np
+
+rng = np.random.default_rng(3)
+N = 1_000_000
+u, v = rng.random(N), rng.random(N)          # points in the unit square
+inside = (u**2 + v**2 &lt;= 1.0).astype(float)  # 1 if inside the quarter circle
+y = 4 * inside                               # each sample is an estimate of pi
+
+for n in [100, 1_000, 10_000, 100_000, 1_000_000]:
+    est = y[:n].mean()
+    se = y[:n].std(ddof=1) / np.sqrt(n)      # standard error
+    print(f"n={n:&gt;9,}  pi_hat={est:.4f}  ±1.96·SE={1.96*se:.4f}  "
+          f"CI=[{est-1.96*se:.4f}, {est+1.96*se:.4f}]  |err|={abs(est-np.pi):.4f}")</pre>
+<div class="out">n=      100  pi_hat=3.0000  ±1.96·SE=0.3412  CI=[2.6588, 3.3412]  |err|=0.1416
+n=    1,000  pi_hat=3.1200  ±1.96·SE=0.1028  CI=[3.0172, 3.2228]  |err|=0.0216
+n=   10,000  pi_hat=3.1504  ±1.96·SE=0.0321  CI=[3.1183, 3.1825]  |err|=0.0088
+n=  100,000  pi_hat=3.1499  ±1.96·SE=0.0101  CI=[3.1398, 3.1601]  |err|=0.0083
+n=1,000,000  pi_hat=3.1409  ±1.96·SE=0.0032  CI=[3.1377, 3.1442]  |err|=0.0006</div>
+<p>همین را در اکسل این‌طور می‌سازی: هر سطر یک «پرتاب» است.</p>
+<pre class="xl">A1: u       B1: v       C1: inside      D1: Y = 4*inside     E1: running mean
+A2  =RAND()
+B2  =RAND()
+C2  =IF(A2^2+B2^2&lt;=1, 1, 0)
+D2  =4*C2
+E2  =AVERAGE($D$2:D2)                    ← for a running-estimate chart
+(copy row 2 down to row 10001  →  n = 10000)
+
+H2  n         =COUNT(D2:D10001)
+H3  pi_hat    =AVERAGE(D2:D10001)
+H4  SE        =STDEV.S(D2:D10001)/SQRT(H2)
+H5  CI low    =H3-1.96*H4
+H6  CI high   =H3+1.96*H4</pre>
+<div class="box tip"><div class="bt">💡 نکته‌ی اکسل</div>
+<code>RAND()</code> با هر تغییر در شیت (یا F9) دوباره حساب می‌شود. برای اینکه عددهای گزارشت ثابت بماند، ستون‌ها را Copy و بعد Paste Values کن. برای تکرار کل آزمایش (مثلاً ۳۰ بار) می‌توانی از Data → What-If Analysis → Data Table با یک خانه‌ی ورودی خالی استفاده کنی: هر سطر جدول یک بار کل شیت را دوباره حساب می‌کند و $\hat\pi$ تازه می‌دهد.
+</div>
+<div class="cards">
+<div><b>سوزن بوفون (Buffon's needle)</b>سوزنی به طول $\ell$ را روی کفی با خط‌های موازی به فاصله‌ی $d\ge\ell$ می‌اندازیم. احتمال قطع یک خط $2\ell/(\pi d)$ است. پس با شمردن قطع‌ها π را تخمین می‌زنیم. قدیمی‌ترین آزمایش مونت‌کارلوی معروف (قرن ۱۸).</div>
+<div><b>مساحت زیر منحنی</b>$\int_0^1 e^{-x^2}dx$ فرمول بسته ندارد. نقطه‌ی تصادفی در مربع واحد بیانداز؛ کسر نقطه‌های زیر منحنی تخمین انتگرال است (≈ ۰٫۷۴۶۸). در ابزار بخش ۰۷ امتحانش کن.</div>
+<div><b>فاصله‌ی دو نقطه‌ی تصادفی</b>میانگین فاصله‌ی دو نقطه‌ی تصادفی در یک ناحیه، مثلاً یک دایره. در بخش بعد با همین مثال کار می‌کنیم.</div>
+</div>
+<p>اسلاید ۶۷ یادآوری می‌کند که مونت‌کارلو اولین بار در مقیاس وسیع در ۱۹۴۴ در پروژه‌ی منهتن به کار رفت. ایده همیشه یکی است: کمیتی که حسابش سخت است، با میانگین گرفتن از تعداد زیادی آزمایش تصادفی ساده تقریب زده می‌شود.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+تفاوت «ایستا» و «پویا» این نیست که مدل تصادفی هست یا نه. مدل مونت‌کارلو تصادفی و ایستاست؛ شبیه‌سازی صف بانک تصادفی و پویاست؛ مدل شکارچی–شکار (بخش ۰۸) قطعی و پویاست. سؤال کلیدی: <b>آیا حالت سیستم با زمان تغییر می‌کند و ما این تغییر را دنبال می‌کنیم؟</b>
+</div>
+</section>
+
+<!-- ============================================================ 07 -->
+<section id="mcerror">
+<h2 data-short="خطای مونت‌کارلو و دام یکنواختی"><span class="num">07</span> خطای مونت‌کارلو، بازه‌ی اطمینان و دام «یکنواخت» <span class="tag book">تکمیلی</span> <span class="tag exam">امتحانی</span> <span class="tag hw">تمرین</span></h2>
+<p>خروجی بخش قبل را دوباره نگاه کن: با ۱۰۰ نقطه خطا حدود ۰٫۱۴ بود و با یک میلیون نقطه حدود ۰٫۰۰۰۶. چقدر نقطه لازم است و از کجا بفهمیم تخمین چقدر قابل‌اعتماد است؟</p>
+<div class="box thm"><div class="bt">قضیه · خطای مونت‌کارلو مثل 1/√n کم می‌شود</div>
+اگر $Y_i$ها مستقل و هم‌توزیع با واریانس $\sigma^2$ باشند:
+$$\operatorname{Var}(\hat\theta_n)=\frac{\sigma^2}{n}\qquad\Rightarrow\qquad \operatorname{SE}(\hat\theta_n)=\frac{\sigma}{\sqrt n}$$
+و طبق قضیه‌ی حد مرکزی، برای $n$ بزرگ بازه‌ی اطمینان ۹۵٪ تقریبی این است:
+$$\hat\theta_n\;\pm\;1.96\,\frac{s}{\sqrt n}$$
+که $s$ انحراف معیار نمونه‌ای $Y_i$هاست (در اکسل <code>STDEV.S</code>).
+</div>
+<div class="box proof"><div class="bt">چرا √n؟</div>
+واریانس جمع $n$ متغیر مستقل، جمع واریانس‌هاست: $\operatorname{Var}(\sum Y_i)=n\sigma^2$. میانگین یعنی تقسیم بر $n$، و واریانس با مجذور ضریب عوض می‌شود: $\operatorname{Var}(\frac1n\sum Y_i)=\frac{n\sigma^2}{n^2}=\frac{\sigma^2}{n}$. انحراف معیار جذر واریانس است، پس $\sigma/\sqrt n$. <span class="qed">∎</span>
+</div>
+<p><b>مثال عددی برای π.</b> اینجا $Y\in\{0,4\}$ با $p=P(Y=4)=\pi/4\approx0.7854$. پس</p>
+$$\sigma=4\sqrt{p(1-p)}=4\sqrt{0.7854\times0.2146}\approx1.642$$
+<div class="tablewrap"><table class="sim">
+<tr><th>n</th><th>SE = 1.642/√n</th><th>نیم‌پهنای بازه‌ی ۹۵٪</th><th>خروجی پایتون بالا</th></tr>
+<tr><td>100</td><td>0.164</td><td>0.322</td><td>0.341</td></tr>
+<tr><td>10,000</td><td>0.0164</td><td>0.0322</td><td>0.0321</td></tr>
+<tr><td>1,000,000</td><td>0.00164</td><td>0.00322</td><td>0.0032</td></tr>
+</table></div>
+<p>برای اینکه نیم‌پهنای بازه به ۰٫۰۱ برسد: $n=(1.96\times1.642/0.01)^2\approx 103{,}600$. برای ۰٫۰۰۱ (یک رقم اعشار بیشتر) ۱۰۰ برابر بیشتر، یعنی حدود ۱۰ میلیون نقطه لازم است.</p>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+<b>نصف کردن خطا = چهار برابر کردن n.</b> یک رقم اعشار دقت بیشتر = صد برابر n. این قیمت مونت‌کارلوست. در امتحان زیاد می‌پرسند: «با ۴۰۰۰ تکرار نیم‌پهنا ۰٫۰۵ بود؛ برای ۰٫۰۲۵ چند تکرار لازم است؟» جواب: ۱۶۰۰۰.
+</div>
+<p>بازه‌ی ۹۵٪ یعنی اگر کل آزمایش را بارها تکرار کنیم، حدود ۹۵٪ بازه‌ها مقدار واقعی را می‌پوشانند. این را هم با مونت‌کارلو می‌شود آزمود:</p>
+<pre class="code">import numpy as np
+rng = np.random.default_rng(1)
+R, n, hit = 2000, 1000, 0
+for _ in range(R):
+    y = 4 * (rng.random(n)**2 + rng.random(n)**2 &lt;= 1)
+    m, se = y.mean(), y.std(ddof=1) / np.sqrt(n)
+    hit += (m - 1.96*se &lt;= np.pi &lt;= m + 1.96*se)
+print("coverage of 95% CI:", hit / R)</pre>
+<div class="out">coverage of 95% CI: 0.9505</div>
+
+<div id="w-mc"></div>
+
+<h3>مثال کامل: میانگین فاصله‌ی دو نقطه‌ی تصادفی در دایره‌ی واحد</h3>
+<p>دو نقطه را مستقل و یکنواخت در دایره‌ای به شعاع ۱ انتخاب کن. میانگین فاصله‌شان چقدر است؟ جواب دقیق $128/(45\pi)\approx0.9054$ است، ولی رسیدن به آن انتگرال چهارگانه‌ی سختی است. مونت‌کارلو: هر سطر یک جفت نقطه، $Y$ = فاصله‌ی آن جفت.</p>
+<p>ولی «نقطه‌ی یکنواخت در دایره» را چطور بسازیم؟ این‌جا اولین دام است.</p>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج · یکنواخت در مختصات ≠ یکنواخت در ناحیه</div>
+وسوسه‌انگیز است که بنویسی $r=U_1$ و $\theta=2\pi U_2$. هر دو مختصات یکنواخت‌اند، ولی نقطه‌ها <b>در مرکز جمع می‌شوند</b>. دلیل: حلقه‌ای به شعاع $r$ و پهنای $dr$ مساحتی متناسب با $r$ دارد. حلقه‌های بیرونی بزرگ‌ترند ولی به همان اندازه نقطه می‌گیرند. راه درست: $r=\sqrt{U_1}$. چون $P(R\le r)$ باید برابر نسبت مساحت $r^2$ باشد، و $P(\sqrt{U}\le r)=P(U\le r^2)=r^2$.
+</div>
+<pre class="code">import numpy as np
+rng = np.random.default_rng(5)
+n = 100_000
+r_naive = rng.random(n)            # WRONG: r ~ U(0,1)
+r_right = np.sqrt(rng.random(n))   # RIGHT: r = sqrt(U)
+print("share with r &lt; 0.5  naive:", (r_naive &lt; 0.5).mean(), " correct:", (r_right &lt; 0.5).mean())
+print("true share = area ratio  :", 0.5**2)</pre>
+<div class="out">share with r &lt; 0.5  naive: 0.4994  correct: 0.25114
+true share = area ratio  : 0.25</div>
+<p>روش ساده‌ی جایگزین <b>پذیرش–رد (rejection)</b> است: $x,y\sim U(-1,1)$ بساز و فقط نقطه‌هایی را نگه دار که $x^2+y^2\le1$. حدود $\pi/4\approx79\%$ نقطه‌ها پذیرفته می‌شوند. حالا مسئله‌ی اصلی:</p>
+<pre class="code">import numpy as np
+
+rng = np.random.default_rng(42)
+
+def uniform_disk(n):
+    """n points uniform in the unit disk (by area): r = sqrt(U)."""
+    r = np.sqrt(rng.random(n))
+    th = 2 * np.pi * rng.random(n)
+    return r * np.cos(th), r * np.sin(th)
+
+n = 200_000
+x1, y1 = uniform_disk(n)
+x2, y2 = uniform_disk(n)
+d = np.hypot(x1 - x2, y1 - y2)          # one distance per replication
+m, se = d.mean(), d.std(ddof=1) / np.sqrt(n)
+print(f"mean distance ≈ {m:.4f}   95% CI = [{m-1.96*se:.4f}, {m+1.96*se:.4f}]")
+print(f"exact 128/(45π) = {128/(45*np.pi):.4f}")</pre>
+<div class="out">mean distance ≈ 0.9060   95% CI = [0.9041, 0.9078]
+exact 128/(45π) = 0.9054</div>
+<p>بازه‌ی ۹۵٪ مقدار دقیق را پوشانده است. چیدمان اکسل:</p>
+<pre class="xl">      A: r1            B: th1            C: x1           D: y1
+A2  =SQRT(RAND())     B2 =2*PI()*RAND()  C2 =A2*COS(B2)   D2 =A2*SIN(B2)
+      E: r2            F: th2            G: x2           H: y2
+E2  =SQRT(RAND())     F2 =2*PI()*RAND()  G2 =E2*COS(F2)   H2 =E2*SIN(F2)
+I2  =SQRT((C2-G2)^2+(D2-H2)^2)                     ← distance of this pair
+(copy row 2 down to row 20001)
+K2  =AVERAGE(I2:I20001)     K3 =STDEV.S(I2:I20001)/SQRT(COUNT(I2:I20001))
+K4  =K2-1.96*K3             K5 =K2+1.96*K3</pre>
+<div class="box note"><div class="bt">یادداشت · مستطیل و مربع</div>
+در یک مستطیل، «یکنواخت در مختصات دکارتی» دقیقاً همان «یکنواخت در ناحیه» است: $x$ و $y$ مستقل و یکنواخت‌اند. دام دایره از اینجا می‌آید که مختصات قطبی مساحت را یکنواخت تقسیم نمی‌کند. هر بار ناحیه یا دستگاه مختصات عوض شد، از خودت بپرس: «احتمال افتادن در یک تکه‌ی کوچک با مساحت آن تکه متناسب است؟»
+</div>
+
+<h3>مقصد یکنواخت ≠ حضور یکنواخت</h3>
+<p>دام دوم ظریف‌تر است. فرض کن یک ربات در راهروی مستقیمی به طول ۱ رفت‌وآمد می‌کند. هر بار مقصد بعدی را <b>یکنواخت</b> روی راهرو انتخاب می‌کند و با سرعت ثابت و در خط مستقیم به آن می‌رود. مقصدها یکنواخت‌اند. آیا ربات هم به یک اندازه در همه‌جای راهرو دیده می‌شود؟</p>
+<pre class="code">import numpy as np
+
+rng = np.random.default_rng(8)
+legs = 200_000
+pts = rng.random(legs + 1)            # waypoints: uniform on a corridor [0, 1]
+a, b = pts[:-1], pts[1:]
+lo, hi = np.minimum(a, b), np.maximum(a, b)
+
+edges = np.linspace(0, 1, 6)          # 5 zones of the corridor
+time_in = []
+for z0, z1 in zip(edges[:-1], edges[1:]):
+    # constant speed -&gt; time in a zone = length of the leg inside that zone
+    time_in.append(np.clip(np.minimum(hi, z1) - np.maximum(lo, z0), 0, None).sum())
+time_in = np.array(time_in) / np.sum(time_in)
+dest = np.histogram(b, bins=edges)[0] / legs
+
+print("zone        :", [f"{z0:.1f}-{z1:.1f}" for z0, z1 in zip(edges[:-1], edges[1:])])
+print("destinations:", np.round(dest, 3))
+print("time share  :", np.round(time_in, 3))
+F = lambda x: 3*x**2 - 2*x**3          # CDF of density 6x(1-x)
+print("theory 6x(1-x):", np.round(np.diff(F(edges)), 3))</pre>
+<div class="out">zone        : ['0.0-0.2', '0.2-0.4', '0.4-0.6', '0.6-0.8', '0.8-1.0']
+destinations: [0.198 0.2   0.202 0.2   0.2  ]
+time share  : [0.103 0.248 0.297 0.248 0.104]
+theory 6x(1-x): [0.104 0.248 0.296 0.248 0.104]</div>
+<p>مقصدها در هر پنج ناحیه ۲۰٪اند، ولی ربات حدود ۳۰٪ وقتش را در ناحیه‌ی وسط و فقط ۱۰٪ را در هر لبه می‌گذراند. دلیل: برای رفتن از یک سمت به سمت دیگر <b>باید از وسط عبور کرد</b>. تقریباً هر مسیری از وسط می‌گذرد، ولی فقط مسیرهایی به لبه می‌رسند که مقصد یا مبدأشان آن‌جا باشد. چگالی حضور در این مثال ۱بعدی $f(x)=6x(1-x)$ است. این پدیده در شبکه‌های بی‌سیم به اسم مدل <b>نقطه‌ی مسیر تصادفی (random waypoint)</b> شناخته می‌شود.</p>
+<div class="box tip"><div class="bt">💡 قاعده‌ی کلی</div>
+وقتی می‌پرسند «X یکنواخت است؟» اول بپرس: <b>یکنواخت نسبت به چه؟</b> نسبت به مساحت؟ نسبت به زاویه؟ نسبت به لحظه‌ی انتخاب مقصد یا نسبت به زمان؟ توزیع مقصدها (یک توزیع روی «انتخاب‌ها») با توزیع موقعیت در زمان (یک توزیع روی «لحظه‌ها») فرق دارد. اگر ربات در هر مقصد مکث کند، بخشی از زمان حضور یکنواخت می‌شود و نتیجه بین این دو حالت قرار می‌گیرد.
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۳ (بخش اول)</div>
+<ul>
+<li><b>طراحی شیت:</b> هر سطر یک تکرار مستقل است. ستون‌های $x_1,y_1,x_2,y_2$ را با <code>RAND()</code> و ضریب مناسب ابعاد زمین بساز. زمین مستطیلی است، پس تبدیل قطبی لازم نیست. یک ستون فاصله با <code>SQRT</code> بساز.</li>
+<li><b>گزارش:</b> تعداد تکرار (حداقل چند هزار)، <code>AVERAGE</code>، <code>STDEV.S</code>، خطای استاندارد و بازه‌ی ۹۵٪، همه با فرمول نمایش‌داده‌شده. یک نمودار «میانگین تجمعی بر حسب n» نشان می‌دهد تخمین همگرا شده است.</li>
+<li><b>توضیح بده</b> چرا این روش مونت‌کارلوست (ایستا، بدون ساعت) و چرا با چهار برابر کردن تعداد سطرها خطا نصف می‌شود.</li>
+<li><b>بولت دوم سؤال:</b> مثل مثال راهرو استدلال کن: مقصدها روی زمین یکنواخت‌اند، ولی آدم بیشتر وقتش را در مسیر بین مقصدها می‌گذراند. مسیرهای مستقیم از کجای زمین بیشتر عبور می‌کنند؟ اگر بخواهی ادعایت را با شبیه‌سازی نشان بدهی، زمین را به چند خانه تقسیم کن و سهم زمان یا سهم طول مسیر را در هر خانه بشمار. این‌جا عدد نهایی سؤال را نمی‌دهیم؛ آن را خودت با شیتت به دست بیاور.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 08 -->
+<section id="continuous">
+<h2 data-short="مدل پیوسته و روش اویلر"><span class="num">08</span> مدل پویای پیوسته: شکارچی–شکار و روش اویلر <span class="tag core">جزوه</span> <span class="tag hw">تمرین</span></h2>
+<p>پارادایم سوم در اسلاید ۶۸: سیستمی که حالتش <b>پیوسته</b> با زمان تغییر می‌کند و با معادله‌ی دیفرانسیل توصیف می‌شود. Banks در §۱.۸ مثال آب پشت سد را می‌زند: ارتفاع آب لحظه‌به‌لحظه عوض می‌شود، نه فقط در لحظه‌ی چند رویداد. اسلاید می‌گوید «شبیه‌سازی» این مدل‌ها در عمل همان <b>حل عددی</b> معادله‌هاست و تفاوت واقعی با یک حل عددی ریاضی ندارد.</p>
+<h3>مدل شکارچی–شکار (لوتکا–ولترا)</h3>
+<p>$x(t)$ اندازه‌ی جمعیت شکار و $y(t)$ اندازه‌ی جمعیت شکارچی است:</p>
+$$\frac{dx}{dt}=r\,x-a\,x\,y\qquad\qquad\frac{dy}{dt}=-s\,y+b\,x\,y$$
+<p>هر جمله یک داستان دارد: $rx$ رشد شکار وقتی شکارچی نیست (اسلاید: growth rate of the prey)؛ $axy$ شکار شدن، متناسب با تعداد برخوردهای شکار و شکارچی؛ $sy$ مرگ شکارچی بدون غذا (predator change rate)؛ و $bxy$ رشد شکارچی با غذایی که می‌خورد. جمله‌های $xy$ همان «تعامل‌ها» (interactions) در اسلاید ۶۸ هستند.</p>
+<div class="tablewrap"><table>
+<tr><th>نماد</th><th>معنا</th><th>اگر بزرگ‌تر شود</th></tr>
+<tr><td>$r$</td><td>نرخ رشد شکار وقتی شکارچی نیست</td><td>شکار سریع‌تر زیاد می‌شود</td></tr>
+<tr><td>$a$</td><td>کارایی شکار: چقدر برخورد به مرگ شکار ختم می‌شود</td><td>شکار سریع‌تر کم می‌شود</td></tr>
+<tr><td>$s$</td><td>نرخ مرگ شکارچی بدون غذا</td><td>شکارچی سریع‌تر کم می‌شود</td></tr>
+<tr><td>$b$</td><td>تبدیل غذا به شکارچی تازه</td><td>شکارچی سریع‌تر زیاد می‌شود</td></tr>
+</table></div>
+<p>پارامترها (اسلاید): $x(0),y(0),a,b,r,s$. معیارها: $x(t)$ و $y(t)$. نقطه‌ی تعادل جایی است که هر دو مشتق صفر شوند: $x^*=s/b$ و $y^*=r/a$. جمعیت‌ها دور این نقطه <b>مدار بسته</b> می‌زنند. دوره‌ی تناوب برای نوسان‌های کوچک تقریباً $2\pi/\sqrt{rs}$ است.</p>
+<div class="box def"><div class="bt">تعریف ۳.۴ · روش اویلر (Euler)</div>
+زمان را به گام‌های کوچک $\Delta t$ تقسیم کن و فرض کن در طول هر گام شیب ثابت است:
+$$x_{n+1}=x_n+\Delta t\cdot f(x_n,y_n),\qquad y_{n+1}=y_n+\Delta t\cdot g(x_n,y_n),\qquad t_{n+1}=t_n+\Delta t$$
+یعنی «مقدار تازه = مقدار قدیم + گام × شیبِ همین الان». این همان ایده‌ی «ساعت» در شبیه‌سازی است، با این فرق که ساعت با گام ثابت جلو می‌رود، نه از رویدادی به رویداد بعد.
+</div>
+<div class="box ex"><div class="bt">مثال حل‌شده ۳.۳ · شته‌ها و کفشدوزک‌ها</div>
+در یک گلخانه $x$ = جمعیت شته (به صد) و $y$ = جمعیت کفشدوزک است. پارامترها: $r=1.0,\ a=0.1,\ s=0.5,\ b=0.02$ (واحد زمان: هفته). شرط اولیه $x_0=40,\ y_0=9$ و $\Delta t=0.1$. تعادل: $x^*=0.5/0.02=25$ و $y^*=1.0/0.1=10$.
+<p>گام اول با دست:</p>
+$$f(40,9)=1.0(40)-0.1(40)(9)=40-36=4,\qquad g(40,9)=-0.5(9)+0.02(40)(9)=-4.5+7.2=2.7$$
+$$x_1=40+0.1\times4=40.4,\qquad y_1=9+0.1\times2.7=9.27$$
+<p>بقیه را برنامه حساب می‌کند:</p>
+</div>
+<pre class="code">import numpy as np
+
+r, a, s, b = 1.0, 0.1, 0.5, 0.02     # aphids x (hundreds), ladybugs y
+x, y, dt = 40.0, 9.0, 0.1
+
+print(" n     t        x         y       dx/dt     dy/dt")
+for n in range(6):
+    fx = r*x - a*x*y                  # slope of prey
+    fy = -s*y + b*x*y                 # slope of predator
+    print(f"{n:2d}  {n*dt:4.1f}  {x:8.4f}  {y:8.4f}  {fx:8.4f}  {fy:8.4f}")
+    x, y = x + dt*fx, y + dt*fy       # both use OLD x, y</pre>
+<div class="out"> n     t        x         y       dx/dt     dy/dt
+ 0   0.0   40.0000    9.0000    4.0000    2.7000
+ 1   0.1   40.4000    9.2700    2.9492    2.8552
+ 2   0.2   40.6949    9.5555    1.8088    2.9995
+ 3   0.3   40.8758    9.8555    0.5908    3.1293
+ 4   0.4   40.9349   10.1684   -0.6893    3.2406
+ 5   0.5   40.8660   10.4925   -2.0125    3.3295</div>
+<p>دقت کن چطور شته‌ها کمی زیاد می‌شوند، بعد که کفشدوزک‌ها از ۱۰ بیشتر شدند ($y>y^*$)، شیب $x$ منفی می‌شود. این همان چرخه‌ی معروف است: غذا زیاد ← شکارچی زیاد ← غذا کم ← شکارچی کم ← غذا زیاد.</p>
+<p>جدول اکسل همین کار را می‌کند. پارامترها را در خانه‌های جدا بگذار و با آدرس مطلق ($) صدا بزن تا با یک تغییر، کل جدول عوض شود:</p>
+<pre class="xl">H1: r   I1: 1.0        H2: a   I2: 0.1        H3: s   I3: 0.5
+H4: b   I4: 0.02       H5: dt  I5: 0.1
+
+      A: t                  B: x (aphids)                          C: y (ladybugs)
+A2  0                   B2  40                                  C2  9
+A3  =A2+$I$5            B3  =B2+$I$5*($I$1*B2-$I$2*B2*C2)       C3  =C2+$I$5*(-$I$3*C2+$I$4*B2*C2)
+(copy row 3 down: 300 rows → t = 30)
+Charts:  x and y against t (line) ;  y against x (scatter = phase plot)</pre>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+در فرمول $y$ از $x$ <b>تازه</b> استفاده کردن. در اکسل اگر بنویسی <code>C3 = C2 + dt*(... B3*C2)</code> (یعنی B3 به‌جای B2)، روش دیگر اویلر نیست. هر دو فرمول سطر ۳ باید فقط از سطر ۲ بخوانند.
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۳ (بخش دوم)</div>
+<ul>
+<li>همین چیدمان را بساز: یک بلوک پارامتر ($r,a,s,b,\Delta t$ و شرط‌های اولیه) و سه ستون $t,x,y$. فرمول‌ها را در گزارش نشان بده. پارامترها و شرط اولیه را خودت انتخاب و ذکر کن (سؤال عدد خاصی نداده است).</li>
+<li>توضیح بده Δt را چطور انتخاب کردی: مثلاً جدول را با Δt و Δt/2 بساز و نشان بده مقدارها در چند زمان مشخص تقریباً عوض نمی‌شوند (بخش ۰۹).</li>
+<li>مقدار تقریبی $x$ و $y$ را در چند زمان مختلف (مثلاً یک جدول کوچک خلاصه) گزارش کن و نمودار زمانی و فضای فاز را بیاور. اگر جمعیت منفی شد یا مدارها باز شدند، بنویس که این خطای عددی است، نه رفتار واقعی خرگوش‌ها و روباه‌ها.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 09 -->
+<section id="euler">
+<h2 data-short="دقت و پایداری اویلر"><span class="num">09</span> دقت و پایداری اویلر: Δt چقدر کوچک؟ <span class="tag book">تکمیلی</span> <span class="tag exam">امتحانی</span></h2>
+<p>اویلر شیب را در طول گام ثابت فرض می‌کند، در حالی که شیب واقعاً عوض می‌شود. پس هر گام کمی خطا دارد. برای دیدن اندازه‌ی خطا، معادله‌ای لازم داریم که جواب دقیقش را بدانیم. حذف دارو از خون: $dC/dt=-0.5\,C$ با $C(0)=100$ میلی‌گرم. جواب دقیق $C(t)=100e^{-0.5t}$ است.</p>
+<pre class="code">import numpy as np
+
+k, C0, T = 0.5, 100.0, 4.0
+exact = C0 * np.exp(-k * T)
+print(f"exact C(4) = {exact:.4f}")
+for dt in [2.0, 1.0, 0.5, 0.1, 0.01]:
+    C = C0
+    for _ in range(round(T / dt)):
+        C = C + dt * (-k * C)           # Euler: new = old + dt * slope
+    print(f"dt={dt:&lt;5} C(4)≈{C:9.4f}   error={C-exact:+.4f}")</pre>
+<div class="out">exact C(4) = 13.5335
+dt=2.0   C(4)≈   0.0000   error=-13.5335
+dt=1.0   C(4)≈   6.2500   error=-7.2835
+dt=0.5   C(4)≈  10.0113   error=-3.5222
+dt=0.1   C(4)≈  12.8512   error=-0.6823
+dt=0.01  C(4)≈  13.4658   error=-0.0677</div>
+<div class="box thm"><div class="bt">قاعده · اویلر روشی مرتبه‌ی اول است</div>
+خطا در یک زمان ثابت تقریباً با $\Delta t$ متناسب است: Δt نصف ← خطا نصف (۷٫۲۸ ← ۳٫۵۲)؛ Δt یک‌دهم ← خطا تقریباً یک‌دهم (۰٫۶۸ ← ۰٫۰۶۸). پس برای یک رقم دقت بیشتر، ده برابر گام لازم داری. روش‌هایی مثل رونگه–کوتا (RK4) با هزینه‌ی کمی بیشتر در هر گام، خطایی متناسب با $\Delta t^4$ دارند.
+</div>
+<h3>ناپایداری: وقتی Δt خیلی بزرگ است</h3>
+<p>برای $dC/dt=-kC$ هر گام اویلر $C$ را در $(1-k\Delta t)$ ضرب می‌کند. سه حالت:</p>
+<pre class="code">k, C0 = 0.5, 100.0
+for dt in [1.0, 3.0, 5.0]:
+    C, row = C0, [C0]
+    for _ in range(6):
+        C = C + dt * (-k * C)
+        row.append(C)
+    print(f"dt={dt}: factor 1-k*dt={1-k*dt:+.2f} -&gt;", [round(c, 2) for c in row])</pre>
+<div class="out">dt=1.0: factor 1-k*dt=+0.50 -&gt; [100.0, 50.0, 25.0, 12.5, 6.25, 3.12, 1.56]
+dt=3.0: factor 1-k*dt=-0.50 -&gt; [100.0, -50.0, 25.0, -12.5, 6.25, -3.12, 1.56]
+dt=5.0: factor 1-k*dt=-1.50 -&gt; [100.0, -150.0, 225.0, -337.5, 506.25, -759.38, 1139.06]</div>
+<div class="tablewrap"><table>
+<tr><th>شرط</th><th>ضریب $1-k\Delta t$</th><th>رفتار عددی</th></tr>
+<tr><td>$\Delta t&lt;1/k$</td><td>بین ۰ و ۱</td><td>نزولی و مثبت، مثل جواب واقعی</td></tr>
+<tr><td>$1/k&lt;\Delta t&lt;2/k$</td><td>بین ۱− و ۰</td><td>علامت عوض می‌شود (غلظت منفی!) ولی میرا است</td></tr>
+<tr><td>$\Delta t&gt;2/k$</td><td>کمتر از ۱−</td><td><b>ناپایدار</b>: نوسان با دامنه‌ی رو به انفجار</td></tr>
+</table></div>
+<p>جواب واقعی همیشه مثبت و نزولی است. پس غلظت منفی یا عدد منفجرشونده، تقصیر روش عددی است، نه مدل.</p>
+<h3>اویلر و شکارچی–شکار: مدارهایی که باز می‌شوند</h3>
+<p>در مدل لوتکا–ولترا کمیت زیر در طول هر مسیر دقیقاً ثابت می‌ماند و برای همین مدارها بسته‌اند:</p>
+$$V(x,y)=b\,x-s\ln x+a\,y-r\ln y$$
+<p>اویلر در هر گام کمی از مماس مدار به بیرون می‌رود (منحنی محدب است و خط مماس بیرونش می‌افتد). پس $V$ گام‌به‌گام زیاد می‌شود و مسیر به‌جای دایره، <b>مارپیچ رو به بیرون</b> می‌شود. با مثال شته–کفشدوزک تا ۳۰ هفته:</p>
+<pre class="code">import numpy as np
+from scipy.integrate import solve_ivp
+
+r, a, s, b = 1.0, 0.1, 0.5, 0.02
+x0, y0, T = 40.0, 9.0, 30.0
+V = lambda x, y: b*x - s*np.log(x) + a*y - r*np.log(y)   # conserved by the exact ODE
+
+def euler(dt):
+    x, y = x0, y0
+    xmax = x
+    for _ in range(round(T / dt)):
+        x, y = x + dt*(r*x - a*x*y), y + dt*(-s*y + b*x*y)
+        xmax = max(xmax, x)
+    return x, y, xmax
+
+ref = solve_ivp(lambda t, z: [r*z[0]-a*z[0]*z[1], -s*z[1]+b*z[0]*z[1]],
+                (0, T), [x0, y0], rtol=1e-10, atol=1e-10, dense_output=True)
+xs = ref.sol(np.linspace(0, T, 30001))
+print(f"reference (RK45):  x(30)={ref.y[0,-1]:.3f}  y(30)={ref.y[1,-1]:.3f}  max x={xs[0].max():.2f}  V0={V(x0,y0):.4f}")
+for dt in [0.3, 0.1, 0.01, 0.001]:
+    x, y, xmax = euler(dt)
+    print(f"Euler dt={dt:&lt;6} x(30)={x:8.3f}  y(30)={y:7.3f}  max x={xmax:7.2f}  V(30)-V0={V(x,y)-V(x0,y0):+.4f}")</pre>
+<div class="out">reference (RK45):  x(30)=18.969  y(30)=13.616  max x=40.70  V0=-2.3417
+Euler dt=0.3    x(30)=   0.004  y(30)=  0.614  max x= 126.06  V(30)-V0=+5.6980
+Euler dt=0.1    x(30)=  19.775  y(30)= 20.067  max x=  61.49  V(30)-V0=+0.2526
+Euler dt=0.01   x(30)=  18.666  y(30)= 13.967  max x=  42.01  V(30)-V0=+0.0116
+Euler dt=0.001  x(30)=  18.938  y(30)= 13.649  max x=  40.83  V(30)-V0=+0.0011</div>
+<p>با Δt = ۰٫۳ شته‌ها به ۰٫۰۰۴ رسیدند: یعنی «تقریباً منقرض». در مدل واقعی هیچ‌وقت چنین اتفاقی نمی‌افتد؛ این فقط مصنوع عددی (numerical artifact) است. با Δt = ۰٫۰۰۱ نتیجه با جواب مرجع تا دو رقم اعشار یکی است. ابزار زیر را بازی کن تا ببینی.</p>
+<div id="w-lv"></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+اگر در جدول اویلر مدل شکارچی–شکار، دامنه‌ی نوسان‌ها مرتب بزرگ‌تر می‌شود یا جمعیت منفی می‌شود، جواب درست این است: «Δt خیلی بزرگ است؛ اویلر مدار بسته را به مارپیچ بیرون‌رونده تبدیل می‌کند.» چک ساده: Δt را نصف کن. اگر نتیجه محسوس عوض شد، Δt هنوز کافی نیست.
+</div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section id="steps">
+<h2 data-short="مراحل مطالعه: ۱۲ گام"><span class="num">10</span> مراحل یک مطالعه‌ی شبیه‌سازی: ۱۲ گام، ۴ فاز <span class="tag core">جزوه</span> <span class="tag book">Banks §۱.۱۲</span> <span class="tag hw">تمرین</span></h2>
+<p>اسلایدهای ۷۰ و ۷۱ نقشه‌ی راه کل پروژه را می‌دهند، از «مسئله چیست؟» تا «نتیجه را اجرا کنیم». شکل زیر همان شکل ۳ کتاب Banks است، به‌اضافه‌ی چهار فاز اسلاید ۷۲. برای هر گام، یک پروژه‌ی واقعی را دنبال می‌کنیم: <b>پارکینگ طبقاتی یک بیمارستان</b> که صبح‌ها جلوی ورودی‌اش صف ماشین تا خیابان می‌رسد.</p>
+<figure class="fig"><div class="tablewrap">
+<svg class="svg-min520" viewBox="0 0 640 640" role="img" aria-label="نمودار ۱۲ گام مطالعه‌ی شبیه‌سازی و ۴ فاز">
+<defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<rect class="band1" x="0" y="0" width="640" height="112" rx="8"/>
+<rect class="band2" x="0" y="114" width="640" height="256" rx="8"/>
+<rect class="band3" x="0" y="372" width="640" height="148" rx="8"/>
+<rect class="band4" x="0" y="522" width="640" height="118" rx="8"/>
+<g class="md" text-anchor="start" font-weight="700"><text x="630" y="36" class="t-ac">فاز ۱</text><text x="630" y="200" class="t-gd">فاز ۲</text><text x="630" y="420" class="t-th" style="fill:var(--warn)">فاز ۳</text><text x="630" y="570" class="t-th">فاز ۴</text></g>
+<g class="sm" text-anchor="start"><text x="630" y="54">کشف و جهت‌یابی</text><text x="630" y="218">ساخت مدل و</text><text x="630" y="234">جمع‌آوری داده</text><text x="630" y="438">اجرای مدل</text><text x="630" y="588">پیاده‌سازی</text></g>
+<g style="color:var(--ink-2)">
+<g class="ln" marker-end="url(#ar5)">
+<path d="M300,50 L300,62"/>
+<path d="M300,104 L300,116 L170,116 L170,126"/><path d="M300,116 L430,116 L430,126"/>
+<path d="M170,162 L170,176 L300,176 L300,188"/><path d="M430,162 L430,176 L300,176"/>
+<path d="M300,224 L300,232"/>
+<path d="M300,282 L300,300"/>
+<path d="M230,256 L200,256 L200,206 L213,206"/>
+<path d="M300,350 L300,378"/>
+<path d="M230,326 L40,326 L40,144 L83,144"/>
+<path d="M370,326 L525,326 L525,144 L517,144"/>
+<path d="M300,414 L300,422"/>
+<path d="M300,458 L300,466"/>
+<path d="M370,490 L405,490 L405,440 L387,440"/>
+<path d="M300,512 L300,532"/>
+<path d="M300,568 L300,584"/>
+</g></g>
+<g class="sm" text-anchor="end"><text x="204" y="250">خیر</text><text x="50" y="320">خیر</text><text x="505" y="320">خیر</text><text x="306" y="295">بله</text><text x="306" y="366">بله</text><text x="410" y="484">بله</text><text x="306" y="527">خیر</text></g>
+<rect class="b-gray" x="215" y="14" width="170" height="36" rx="6"/><text class="md" x="300" y="37" text-anchor="middle">۱ – تعریف مسئله</text>
+<rect class="b-gray" x="205" y="64" width="190" height="40" rx="6"/><text class="md" x="300" y="89" text-anchor="middle">۲ – هدف‌ها و برنامه‌ی پروژه</text>
+<rect class="b-gray" x="85" y="128" width="170" height="34" rx="6"/><text class="md" x="170" y="150" text-anchor="middle">۳ – مفهوم‌سازی مدل</text>
+<rect class="b-gray" x="345" y="128" width="170" height="34" rx="6"/><text class="md" x="430" y="150" text-anchor="middle">۴ – جمع‌آوری داده</text>
+<rect class="b-gray" x="215" y="190" width="170" height="34" rx="6"/><text class="md" x="300" y="212" text-anchor="middle">۵ – ترجمه‌ی مدل (برنامه)</text>
+<path class="b-blue" d="M300,234 L370,258 L300,282 L230,258 z"/><text class="md" x="300" y="263" text-anchor="middle">۶ – صحت‌سنجی؟</text>
+<path class="b-red" d="M300,302 L370,326 L300,350 L230,326 z"/><text class="md" x="300" y="331" text-anchor="middle">۷ – اعتبارسنجی؟</text>
+<rect class="b-gray" x="215" y="380" width="170" height="34" rx="6"/><text class="md" x="300" y="402" text-anchor="middle">۸ – طراحی آزمایش</text>
+<rect class="b-gray" x="215" y="424" width="170" height="34" rx="6"/><text class="md" x="300" y="446" text-anchor="middle">۹ – اجرای اصلی و تحلیل</text>
+<path class="b-gray" d="M300,468 L370,490 L300,512 L230,490 z"/><text class="md" x="300" y="495" text-anchor="middle">۱۰ – اجرای بیشتر؟</text>
+<rect class="b-gray" x="215" y="534" width="170" height="34" rx="6"/><text class="md" x="300" y="556" text-anchor="middle">۱۱ – مستندسازی و گزارش</text>
+<ellipse class="b-gray" cx="300" cy="606" rx="78" ry="20"/><text class="md" x="300" y="611" text-anchor="middle">۱۲ – پیاده‌سازی</text>
+<rect class="b-warn" x="56" y="196" width="136" height="58" rx="6"/>
+<g class="sm" text-anchor="middle"><text x="124" y="214" font-weight="700">گام بحرانی: ۷</text><text x="124" y="230">مدل نامعتبر ⇐ تصمیم</text><text x="124" y="246">پرهزینه و خطرناک</text></g>
+</svg></div>
+<figcaption>شکل ۳.۵ · ۱۲ گام Banks (شکل ۳ فصل ۱) با چهار فاز اسلاید ۷۲. حلقه‌های «خیر» نشان می‌دهند که مسیر خطی نیست: صحت‌سنجی ناموفق به برنامه‌نویسی برمی‌گردد و اعتبارسنجی ناموفق به مفهوم‌سازی و داده.</figcaption></figure>
+
+<div class="tablewrap"><table>
+<tr><th>گام</th><th>سؤال اصلی</th><th>در پروژه‌ی پارکینگ بیمارستان</th></tr>
+<tr><td>۱ · تعریف مسئله</td><td>مشکل دقیقاً چیست؟ مدیر و تحلیل‌گر یک برداشت دارند؟</td><td>«صف ورودی بین ۷ و ۹ صبح تا خیابان می‌رسد و آمبولانس‌ها گیر می‌کنند.» نه «پارکینگ کوچک است».</td></tr>
+<tr><td>۲ · هدف‌ها و برنامه</td><td>به کدام سؤال باید جواب داد؟ شبیه‌سازی مناسب است؟ هزینه و زمان پروژه؟</td><td>«با ۲ یا ۳ گیت و با بلیت کاغذی یا پلاک‌خوان، صف ورودی کی کمتر از ۱۰ ماشین می‌ماند؟» دو نفر، ۶ هفته.</td></tr>
+<tr><td>۳ · مفهوم‌سازی</td><td>کدام موجودیت‌ها، رویدادها و منطق؟ ساده شروع کن.</td><td>موجودیت: ماشین. منبع: گیت، جای پارک. رویداد: رسیدن به گیت، رد شدن از گیت، پیدا کردن جا، خروج.</td></tr>
+<tr><td>۴ · جمع‌آوری داده</td><td>چه داده‌ای، از کجا، چه توزیعی؟ زود شروع کن.</td><td>لاگ گیت (زمان ورود هر ماشین در هر ۵ دقیقه)، زمان خدمت گیت با کرنومتر، مدت ماندن (از لاگ خروج)، طول صف ساعت ۸ برای اعتبارسنجی.</td></tr>
+<tr><td>۵ · ترجمه</td><td>مدل را به برنامه تبدیل کن.</td><td>پایتون + SimPy یا یک نرم‌افزار شبیه‌سازی.</td></tr>
+<tr><td>۶ · صحت‌سنجی</td><td>برنامه همان کاری را می‌کند که مدل مفهومی می‌گوید؟</td><td>یک ماشین را قدم‌به‌قدم دنبال کن؛ ورودی = خروجی + داخل؛ با ورود قطعی، جواب را با دست چک کن.</td></tr>
+<tr><td>۷ · اعتبارسنجی</td><td>مدل رفتار سیستم واقعی را بازتولید می‌کند؟</td><td>طول صف شبیه‌سازی‌شده در ساعت ۸ را با طول صف اندازه‌گیری‌شده‌ی امروز مقایسه کن (کالیبراسیون اگر فاصله زیاد بود).</td></tr>
+<tr><td>۸ · طراحی آزمایش</td><td>کدام سناریوها؟ طول اجرا؟ چند تکرار؟</td><td>۴ سناریو: {۲ گیت، ۳ گیت} × {بلیت، پلاک‌خوان}؛ اجرا از ۶ تا ۱۲؛ ۳۰ تکرار برای هر سناریو.</td></tr>
+<tr><td>۹ · اجرا و تحلیل</td><td>معیارها را تخمین بزن (با بازه‌ی اطمینان).</td><td>میانگین و صدک ۹۵ طول صف، میانگین انتظار، بهره‌وری گیت‌ها.</td></tr>
+<tr><td>۱۰ · اجرای بیشتر؟</td><td>نتیجه‌ها کافی‌اند یا سناریوی تازه لازم است؟</td><td>«۳ گیت + بلیت» مرزی است؛ سناریوی «۳ گیت که یکی فقط برای کارکنان است» اضافه شود.</td></tr>
+<tr><td>۱۱ · مستندسازی</td><td>برنامه چطور کار می‌کند (program)؛ پروژه چطور پیش رفت (progress).</td><td>راهنمای پارامترها برای واحد فنی؛ گزارش ماهانه و گزارش نهایی برای هیئت‌مدیره.</td></tr>
+<tr><td>۱۲ · پیاده‌سازی</td><td>تصمیم اجرا می‌شود؟</td><td>نصب پلاک‌خوان روی ۲ گیت. موفقیت به حضور کاربر در تمام مسیر بستگی دارد.</td></tr>
+</table></div>
+<div class="cards">
+<div><b>فاز ۱ · کشف و جهت‌یابی</b>گام ۱ و ۲. صورت مسئله اول کار معمولاً مبهم است و ممکن است بارها اصلاح شود.</div>
+<div><b>فاز ۲ · ساخت مدل و داده</b>گام ۳ تا ۷. رفت‌وبرگشت مداوم بین مدل و داده. کنار گذاشتن کاربر مدل در این فاز، بعداً گران تمام می‌شود.</div>
+<div><b>فاز ۳ · اجرای مدل</b>گام ۸ تا ۱۰. شبیه‌سازی تصادفی یک <b>آزمایش آماری</b> است؛ یک اجرا و یک عدد کافی نیست.</div>
+<div><b>فاز ۴ · پیاده‌سازی</b>گام ۱۱ و ۱۲. موفقیت به درگیر بودن کاربر در همه‌ی گام‌ها بستگی دارد.</div>
+</div>
+<h3>کی شبیه‌سازی <u>نکنیم</u>؟ (Banks §۱.۲)</h3>
+<p>در گام ۲ باید بپرسی «اصلاً شبیه‌سازی لازم است؟». Banks ده قاعده از Banks و Gibson نقل می‌کند. شبیه‌سازی مناسب نیست وقتی:</p>
+<div class="tablewrap"><table>
+<tr><th>قاعده</th><th>مثال</th></tr>
+<tr><td>با عقل سلیم حل می‌شود</td><td>دفتر پلاک: ۱۰۰ مراجعه در ساعت، هر کارمند ۱۲ در ساعت ← حداقل ۹ کارمند. محاسبه‌ی $100/12=8.33$ کافی است.</td></tr>
+<tr><td>تحلیلی حل می‌شود</td><td>میانگین انتظار در صفی که فرمول بسته دارد (M/M/c).</td></tr>
+<tr><td>آزمایش مستقیم ارزان‌تر است</td><td>رستوران: یک نفر را با تبلت در صف ماشین‌ها بگذار و اثر ایستگاه سفارش دوم را واقعاً ببین.</td></tr>
+<tr><td>هزینه بیشتر از صرفه‌جویی است</td><td>مطالعه ۲۰ هزار دلار، صرفه‌جویی احتمالی ۱۰ هزار دلار.</td></tr>
+<tr><td>منابع یا زمان کافی نیست</td><td>تصمیم تا دو هفته‌ی دیگر لازم است و مدل یک ماه طول می‌کشد.</td></tr>
+<tr><td>داده (حتی تخمین) وجود ندارد</td><td>سیستم کاملاً تازه و بدون هیچ تجربه‌ی مشابه.</td></tr>
+<tr><td>وقت یا نیروی صحت‌سنجی و اعتبارسنجی نیست</td><td>مدلی که کسی نمی‌تواند چکش کند.</td></tr>
+<tr><td>انتظار مدیر غیرواقعی است</td><td>«همه چیز را تا فردا پیش‌بینی کن.»</td></tr>
+<tr><td>رفتار سیستم خیلی پیچیده یا تعریف‌نشدنی است</td><td>رفتار انسانی بسیار پیچیده.</td></tr>
+</table></div>
+<div class="box warn"><div class="bt">⚠ نکته‌ی امتحانی</div>
+سه سؤال پرتکرار: (۱) «مهم‌ترین گام کدام است؟» ← اعتبارسنجی (گام ۷)، چون مدل نامعتبر به تصمیم‌های خطرناک و گران می‌رسد (اسلاید ۷۲). (۲) «جمع‌آوری داده کی شروع شود؟» ← هم‌زمان با مفهوم‌سازی، چون طولانی‌ترین بخش کار است. (۳) «طراحی آزمایش در کدام فاز است؟» ← فاز ۳.
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۸ (بند ۱ و ۲)</div>
+<ul>
+<li><b>بند ۱:</b> دو دلیل بیاور که اندازه‌گیری مستقیم یا فرمول ساده (مثلاً «تعداد کامیون × ۵۰ دقیقه ÷ تعداد سکو») کافی نیست: تصادفی بودن ورودها و تجمع در ساعت‌های اوج، اثر صف که در میانگین دیده نمی‌شود، هزینه‌ی آزمایش واقعی با ساختن سکوی اضافه. بعد یک مثال از قاعده‌های جدول بالا بیاور که شبیه‌سازی در آن مناسب نیست. مثالت را خودت بساز.</li>
+<li><b>بند ۲:</b> ۱۲ گام را در ۴ فاز بچین (مثل شکل ۳.۵). برای جمع‌آوری داده، فهرستی مثل ستون «پروژه‌ی پارکینگ» بنویس، ولی برای انبار: ورود کامیون‌ها (توزیع زمان بین ورود، به تفکیک ساعت)، زمان بارگیری، تعداد سکو، هزینه‌ها، و داده‌ی اعتبارسنجی (زمان انتظار فعلی، اگر وجود دارد). منبع هر داده را هم بگو.</li>
+<li><b>سناریوها:</b> چند تعداد سکوی متفاوت (مثلاً ۳ یا ۴ مقدار) × شاید یک عامل دوم (ورود عادی / روز اوج). برای هر سناریو طول اجرا و تعداد تکرار را هم بنویس.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 11 -->
+<section id="vv">
+<h2 data-short="صحت‌سنجی و اعتبارسنجی"><span class="num">11</span> صحت‌سنجی، اعتبارسنجی و کالیبراسیون <span class="tag core">جزوه</span> <span class="tag book">Banks فصل ۱۰</span> <span class="tag hw">تمرین</span></h2>
+<p>اسلاید ۷۰ برای گام ۶ و ۷ دو سؤال کوتاه دارد: «برنامه همان کاری را می‌کند که مدل می‌گوید؟» و «نتیجه‌ها با واقعیت جور است؟ کالیبراسیون؟». Banks فصل ۱۰ این دو را این‌طور خلاصه می‌کند:</p>
+<div class="vs">
+<div><h4>صحت‌سنجی (verification)</h4><b>مدل را درست ساخته‌ایم؟</b> مقایسه‌ی برنامه با مدل مفهومی. سؤال برنامه‌نویسی است: باگ، منطق اشتباه، پارامتر اشتباه. به سیستم واقعی کاری ندارد.</div>
+<div><h4>اعتبارسنجی (validation)</h4><b>مدل درست را ساخته‌ایم؟</b> مقایسه‌ی مدل با سیستم واقعی. سؤال مدل‌سازی است: فرض‌ها، سطح جزئیات، داده‌ی ورودی.</div>
+</div>
+<div class="box def"><div class="bt">تعریف ۳.۵ · کالیبراسیون (calibration)</div>
+فرایند تکراریِ مقایسه‌ی مدل با رفتار سیستم واقعی، و استفاده از اختلاف‌ها برای اصلاح مدل (مثلاً تنظیم یک پارامتر که مستقیم اندازه‌گیری نشده). این کار تا وقتی ادامه دارد که دقت مدل قابل‌قبول شود. Banks می‌گوید اعتبارسنجی معمولاً از طریق کالیبراسیون به دست می‌آید.
+</div>
+<div class="tablewrap"><table>
+<tr><th>بررسی مشخص</th><th>نوع</th><th>در پارکینگ بیمارستان</th></tr>
+<tr><td>یک موجودیت را قدم‌به‌قدم دنبال کن (trace)</td><td>صحت‌سنجی</td><td>ماشین شماره‌ی ۱۷: ورود ۷:۴۲، گیت ۲، جای B-12، خروج ۱۰:۰۵. همه منطقی؟</td></tr>
+<tr><td>قانون بقا (conservation)</td><td>صحت‌سنجی</td><td>تعداد واردشده = خارج‌شده + داخل پارکینگ + داخل صف</td></tr>
+<tr><td>ورودی قطعی، جواب دستی</td><td>صحت‌سنجی</td><td>هر ۳۰ ثانیه یک ماشین، خدمت ۲۰ ثانیه ← هرگز صف نباید تشکیل شود</td></tr>
+<tr><td>شرط حدی (extreme condition)</td><td>صحت‌سنجی</td><td>ظرفیت ۰ ← هیچ ماشینی پارک نکند؛ نرخ ورود ۰ ← همه‌چیز خالی</td></tr>
+<tr><td>چاپ پارامترها در پایان اجرا</td><td>صحت‌سنجی</td><td>مطمئن شو تعداد گیت وسط اجرا عوض نشده</td></tr>
+<tr><td>قانون لیتل $L=\lambda w$</td><td>هر دو</td><td>طول متوسط صف ≈ نرخ ورود × انتظار متوسط</td></tr>
+<tr><td>اعتبار ظاهری (face validity)</td><td>اعتبارسنجی</td><td>نگهبان گیت انیمیشن را می‌بیند: «آره، صبح‌ها همین‌طور است»</td></tr>
+<tr><td>تحلیل حساسیت (جهت تغییر)</td><td>اعتبارسنجی</td><td>نرخ ورود ↑ ← صف و انتظار باید ↑ شوند</td></tr>
+<tr><td>آزمون آماری داده‌ی ورودی</td><td>اعتبارسنجی</td><td>توزیع زمان بین ورود با داده‌ی لاگ جور است؟</td></tr>
+<tr><td>مقایسه‌ی ورودی–خروجی با سیستم واقعی</td><td>اعتبارسنجی</td><td>طول صف ساعت ۸ در مدل با اندازه‌گیری امروز</td></tr>
+<tr><td>آزمون تورینگ (Turing test)</td><td>اعتبارسنجی</td><td>به مدیر دو گزارش (واقعی و شبیه‌سازی‌شده) بده؛ می‌تواند تشخیص دهد؟</td></tr>
+<tr><td>تنظیم پارامتر «زمان پیدا کردن جا» تا صف مدل با واقعیت بخواند</td><td>کالیبراسیون</td><td>—</td></tr>
+</table></div>
+<div class="box thm"><div class="bt">رویکرد سه‌مرحله‌ای Naylor و Finger (Banks §۱۰.۳)</div>
+<ol>
+<li>مدلی با <b>اعتبار ظاهری</b> بالا بساز: کاربران و کارشناسان سیستم را از اول درگیر کن.</li>
+<li><b>فرض‌های مدل</b> را بسنج: فرض‌های ساختاری (مثلاً صف FIFO است؟) و فرض‌های داده (توزیع‌ها، استقلال).</li>
+<li><b>تبدیل ورودی–خروجی</b> مدل را با سیستم واقعی مقایسه کن: با همان ورودی، خروجی‌ها نزدیک‌اند؟</li>
+</ol>
+</div>
+<h3>اعتبارسنجی سیستمی که هنوز ساخته نشده</h3>
+<p>اگر سیستم واقعی وجود ندارد، مرحله‌ی ۳ مستقیم ممکن نیست. ولی دست خالی هم نیستیم:</p>
+<ol class="steps">
+<li><b>اعتبار ظاهری با کارشناس:</b> کسانی که سیستم‌های مشابه را اداره کرده‌اند منطق و خروجی مدل را بررسی کنند.</li>
+<li><b>اعتبارسنجی اجزا:</b> هر جزء را جدا با داده‌ی واقعی مشابه بسنج. مثلاً زمان خدمت یک گیت پلاک‌خوان را از پارکینگ دیگری که همین دستگاه را دارد اندازه بگیر.</li>
+<li><b>مدل سیستم موجود:</b> اگر سیستم فعلی (مثلاً پارکینگ قدیمی) هست، اول مدل آن را بساز و با داده‌ی واقعی اعتبارسنجی کن. بعد فقط بخش‌های تغییرکرده را عوض کن.</li>
+<li><b>تحلیل حساسیت و شرط حدی:</b> مدل باید در جهت درست و با شدت معقول به تغییرها پاسخ دهد.</li>
+<li><b>مقایسه با محاسبه‌ی تقریبی:</b> در حالت‌های ساده، خروجی را با فرمول صف یا محاسبه‌ی دستی مقایسه کن.</li>
+<li><b>اعتبارسنجی بعد از ساخت:</b> وقتی سیستم ساخته شد، داده جمع کن و مدل را دوباره بسنج (Banks: این به‌تنهایی کافی نیست).</li>
+</ol>
+<h3>کدام جزئیات بماند؟</h3>
+<p>Banks در گام ۳ می‌گوید: ساده شروع کن، فقط «جوهره‌ی» سیستم را مدل کن و پیچیدگی را بیشتر از نیاز هدف نکن. معیار انتخاب: <b>آیا این جزئیات روی معیار هدف اثر محسوس دارد؟</b></p>
+<div class="two">
+<div class="box ex" style="margin:0"><div class="bt">نگه دار (پارکینگ)</div>الگوی ورود در طول روز (اوج صبح)، زمان خدمت گیت، تعداد گیت، ظرفیت طبقات، اولویت آمبولانس، مدت ماندن (چون پر شدن پارکینگ روی صف ورودی اثر دارد).</div>
+<div class="box note" style="margin:0"><div class="bt">کنار بگذار (پارکینگ)</div>رنگ و مدل ماشین، نام راننده، مسیر دقیق داخل هر طبقه (اگر پیدا کردن جا سریع است)، رفتار پیاده‌ها بعد از پارک، تأخیرهای کمتر از چند ثانیه.</div>
+</div>
+<div class="box mistake"><div class="bt">❌ اشتباه رایج</div>
+«مدل اجرا شد و عدد داد، پس اعتبارسنجی شده.» اجرا شدن بدون خطا فقط نشان می‌دهد برنامه کرش نمی‌کند؛ حتی صحت‌سنجی کامل هم نیست. و مدلی که کاملاً صحت‌سنجی شده (بی‌باگ) ممکن است کاملاً نامعتبر باشد، اگر فرضش غلط باشد (مثلاً ورود یکنواخت در طول روز، در حالی که همه‌ی ماشین‌ها ۷ تا ۸ می‌آیند).
+</div>
+<div class="box hw"><div class="bt">📝 راهنمای تمرین ۱ · سؤال ۸ (بند ۳ و ۴)</div>
+<ul>
+<li><b>بند ۳:</b> تعریف دو مفهوم را با جمله‌های «مدل را درست ساخته‌ایم؟» و «مدل درست را ساخته‌ایم؟» بنویس و برای هر کدام دو بررسی مشخص <b>برای انبار</b> بیاور (از ستون «نوع» جدول بالا ایده بگیر، ولی مثال‌ها را برای سکو و کامیون بازنویسی کن).</li>
+<li>برای «انبار هنوز ساخته نشده»: از فهرست شش‌تایی بالا حداقل سه روش را انتخاب کن و بگو در عمل برای انبار یعنی چه (مثلاً داده از انبار مشابه، یا مدل انبار فعلی شرکت).</li>
+<li><b>بند ۴:</b> جدول «نگه دار / کنار بگذار» بساز. برای هر جزئیات یک جمله دلیل بنویس که به هدف (کاهش انتظار کامیون‌ها) وصل شود. جزئیاتی که سؤال نام برده (ورود و خروج، زمان بارگیری، تعداد سکو) را حتماً بررسی کن.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section id="exam">
+<h2 data-short="مسئله‌ی امتحانی حل‌شده"><span class="num">12</span> مسئله‌ی امتحانی حل‌شده: کیوسک بلیت مترو <span class="tag exam">امتحانی</span></h2>
+<div class="box ex"><div class="bt">صورت مسئله</div>
+یک کیوسک خودکار فروش بلیت در ایستگاه مترو یک ساعت (۳۶۰۰ ثانیه) زیر نظر بوده است. لاگ کیوسک:
+<ul>
+<li>۲۰۰ تلاش خرید. ۱۸۰ خرید درست انجام شد. ۴ خرید «نادرست» بود: کارت شارژ شد ولی بلیت چاپ نشد. ۱۶ تلاش اصلاً انجام نشد، چون کیوسک یک بار ۵ دقیقه (۳۰۰ ثانیه) از کار افتاده بود. سابقه می‌گوید چنین خرابی‌ای به‌طور میانگین هر ۲ روز یک بار رخ می‌دهد.</li>
+<li>کیوسک در کل ۱۸۴۰ ثانیه مشغول پردازش بوده است (میانگین ۱۰ ثانیه برای هر یک از ۱۸۴ تراکنش انجام‌شده).</li>
+<li>برای یک مسافر نمونه (ثانیه): شروع وارد کردن مقصد ۰، پایان وارد کردن ۱۲، شروع پردازش ۱۳، شروع چاپ بلیت ۱۹، پایان چاپ ۲۲. همین مسافر در ثانیه‌ی ۳۰ خرید دوم (بلیت برای همراهش) را شروع می‌کند.</li>
+</ul>
+خواسته‌ها: (الف) درخت معیارها با مقدار و واحد. (ب) زمان واکنش، هر دو زمان پاسخ و زمان فکر برای مسافر نمونه. (ج) کلاس LB/HB/NB هر معیار. (د) مدیر پیشنهاد می‌کند کیوسک کناری را که بار مشابهی دارد جمع کنند تا «این کیوسک بهره‌وری بالاتری داشته باشد». با یک محاسبه‌ی تقریبی نقد کن.
+</div>
+<details><summary>پاسخ کامل</summary>
+<p><b>(الف) درخت معیارها.</b> درخواست = «یک خرید بلیت».</p>
+<div class="tablewrap"><table>
+<tr><th>شاخه</th><th>معیار</th><th>محاسبه</th><th>مقدار</th></tr>
+<tr><td>درست</td><td>گذردهی</td><td>۱۸۰ ÷ ۱ ساعت</td><td>۱۸۰ خرید/ساعت = ۳ خرید/دقیقه</td></tr>
+<tr><td>درست</td><td>بهره‌وری</td><td>۱۸۴۰ ÷ ۳۶۰۰</td><td>۰٫۵۱۱ (۵۱٫۱٪)</td></tr>
+<tr><td>درست</td><td>زمان پاسخ</td><td>از بند (ب)</td><td>۷ یا ۱۰ ثانیه (بسته به تعریف)</td></tr>
+<tr><td>نادرست (شارژ بدون بلیت)</td><td>احتمال خطا</td><td>۴ ÷ ۱۸۴</td><td>≈ ۰٫۰۲۲</td></tr>
+<tr><td>نادرست</td><td>زمان بین دو خطا</td><td>۳۶۰۰ ÷ ۴</td><td>≈ ۹۰۰ ثانیه = ۱۵ دقیقه</td></tr>
+<tr><td>انجام‌نشده (خرابی)</td><td>مدت رویداد</td><td>لاگ</td><td>۳۰۰ ثانیه</td></tr>
+<tr><td>انجام‌نشده</td><td>زمان بین دو رویداد</td><td>سابقه</td><td>۲ روز = ۱۷۲۸۰۰ ثانیه</td></tr>
+<tr><td>(مشتق)</td><td>دسترس‌پذیری در این ساعت</td><td>۳۳۰۰ ÷ ۳۶۰۰</td><td>≈ ۰٫۹۱۷</td></tr>
+</table></div>
+<p>یادداشت: بهره‌وری را می‌شود به زمان آماده‌به‌کار هم تقسیم کرد: $1840/3300\approx0.558$. هر کدام را انتخاب کردی، تعریفت را بنویس. همچنین دسترس‌پذیری یک‌ساعته نماینده‌ی بلندمدت نیست؛ بلندمدت: $A=172800/(172800+300)\approx0.998$ (با این تقریب که «هر ۲ روز» فاصله‌ی بین شروع دو خرابی است).</p>
+<p><b>(ب) زمان‌ها.</b> همه از «پایان درخواست» = ۱۲:</p>
+<div class="stats">
+<div><div class="l">زمان واکنش</div><div class="v">1 s</div><div class="f">13 − 12</div></div>
+<div><div class="l">پاسخ (تا شروع چاپ)</div><div class="v">7 s</div><div class="f">19 − 12</div></div>
+<div><div class="l">پاسخ (تا پایان چاپ)</div><div class="v">10 s</div><div class="f">22 − 12</div></div>
+<div><div class="l">زمان فکر</div><div class="v">8 s</div><div class="f">30 − 22</div></div>
+</div>
+<p><b>(ج) کلاس‌ها.</b> زمان پاسخ، احتمال خطا و مدت خرابی: LB. گذردهی (تا سقف تقاضا)، زمان بین دو خطا، زمان بین دو خرابی و دسترس‌پذیری: HB. بهره‌وری: NB.</p>
+<p><b>(د) نقد پیشنهاد مدیر.</b> اگر کیوسک کناری را جمع کنیم و همه‌ی مسافرانش به این کیوسک بیایند، نرخ ورود دو برابر می‌شود. بهره‌وری مورد نیاز $\rho\approx2\times0.511=1.022$ می‌شود که بیشتر از ۱ است. یعنی کیوسک حتی اگر یک لحظه بیکار نماند، به همه نمی‌رسد و صف بی‌نهایت رشد می‌کند. با تقریب M/M/1 همین الان $W\approx10/(1-0.511)\approx20.5$ ثانیه است، و با $\rho\ge1$ هیچ حالت پایداری وجود ندارد. نتیجه: بهره‌وری NB است. «بالاتر» فقط تا جایی خوب است که زمان پاسخ زیر حد بماند. این پیشنهاد سیستم را از آن حد عبور می‌دهد.</p>
+</details>
+</section>
+
+<!-- ============================================================ 13 -->
+<section id="exercises">
+<h2><span class="num">13</span> تمرین‌ها</h2>
+
+<div class="exercise"><div class="et">تمرین ۱<span class="lvl l1">🟢 پایه</span></div>
+در اورژانس یک بیمارستان، کلاس سودمندی (LB/HB/NB) هر معیار را بگو: (الف) میانگین زمان از ورود تا ویزیت پزشک، (ب) درصد اشغال تخت‌ها، (ج) تعداد بیمار ویزیت‌شده در روز، (د) احتمال تشخیص اشتباه، (ه) دسترس‌پذیری دستگاه سی‌تی‌اسکن.
+<details><summary>راه‌حل</summary>
+(الف) LB. (ب) NB: اشغال خیلی کم یعنی تخت و پرستار بلااستفاده؛ نزدیک ۱۰۰٪ یعنی بیمار تازه جا ندارد و در راهرو منتظر می‌ماند. (ج) HB، تا سقف تعداد مراجعه. (د) LB. (ه) HB.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۲<span class="lvl l1">🟢 پایه</span></div>
+در سامانه‌ی ثبت‌نام آنلاین دانشگاه (ثانیه): کاربر از ۰ تا ۴ فرم را پر می‌کند و «ثبت» را می‌زند (پایان درخواست = ۴). سرور در ۴٫۶ شروع به پردازش می‌کند، در ۶٫۱ اولین بخش صفحه‌ی نتیجه را می‌فرستد و در ۷٫۵ صفحه کامل بارگذاری می‌شود. کاربر در ۲۲٫۵ درس بعدی را شروع می‌کند. چهار زمان را حساب کن.
+<details><summary>راه‌حل</summary>
+واکنش = ۴٫۶ − ۴ = ۰٫۶ ثانیه. پاسخ (تعریف ۱) = ۶٫۱ − ۴ = ۲٫۱ ثانیه. پاسخ (تعریف ۲) = ۷٫۵ − ۴ = ۳٫۵ ثانیه. فکر = ۲۲٫۵ − ۷٫۵ = ۱۵ ثانیه. ۴ ثانیه‌ی پر کردن فرم در هیچ‌کدام نیست.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۳<span class="lvl l2">🟡 مهارتی</span></div>
+در آزمایش سوزن بوفون با $\ell=d$، سوزن ۱۰۰۰ بار انداخته شد و ۶۴۰ بار خط را قطع کرد. (الف) π را تخمین بزن. (ب) یک بازه‌ی اطمینان تقریبی ۹۵٪ بساز. (راهنما: اول برای $\hat p$ بازه بساز، یا از تقریب $\operatorname{SE}(2/\hat p)\approx\frac{2}{\hat p^2}\operatorname{SE}(\hat p)$ استفاده کن.)
+<details><summary>راه‌حل</summary>
+(الف) $P(\text{قطع})=2/\pi$ پس $\hat\pi=2/\hat p=2\times1000/640=3.125$.<br>
+(ب) $\hat p=0.64$ و $\operatorname{SE}(\hat p)=\sqrt{0.64\times0.36/1000}=0.0152$. پس $\operatorname{SE}(\hat\pi)\approx\frac{2}{0.64^2}\times0.0152=0.0741$ و بازه‌ی ۹۵٪ تقریباً $3.125\pm0.145=[2.98,\,3.27]$. π داخل بازه است. با ۱۰۰۰ پرتاب دقت بیشتری از این انتظار نداریم.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۴<span class="lvl l2">🟡 مهارتی</span></div>
+(الف) برای تخمین π با روش ربع دایره، چند نقطه لازم است تا نیم‌پهنای بازه‌ی ۹۵٪ حداکثر ۰٫۰۰۵ شود؟ (ب) با ۵۰۰۰ تکرار شبیه‌سازی یک فروشگاه، نیم‌پهنای بازه‌ی میانگین انتظار ۰٫۴ دقیقه شد. برای ۰٫۱ دقیقه چند تکرار لازم است؟
+<details><summary>راه‌حل</summary>
+(الف) $n=(1.96\times1.642/0.005)^2\approx414{,}400$ نقطه.<br>
+(ب) نیم‌پهنا باید ۴ برابر کوچک‌تر شود، پس $n$ باید $4^2=16$ برابر شود: $5000\times16=80{,}000$ تکرار.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۵<span class="lvl l2">🟡 مهارتی</span></div>
+مدل لوتکا–ولترا با $r=0.8,\ a=0.04,\ s=0.6,\ b=0.01$، شرط اولیه $x_0=50,\ y_0=15$ و $\Delta t=0.25$. دو گام اویلر را با دست حساب کن. نقطه‌ی تعادل کجاست؟
+<details><summary>راه‌حل</summary>
+گام ۱: $f=0.8(50)-0.04(50)(15)=40-30=10$ و $g=-0.6(15)+0.01(50)(15)=-9+7.5=-1.5$. پس $x_1=50+0.25(10)=52.5$ و $y_1=15+0.25(-1.5)=14.625$.<br>
+گام ۲: $f=0.8(52.5)-0.04(52.5)(14.625)=42-30.7125=11.2875$ و $g=-0.6(14.625)+0.01(52.5)(14.625)=-8.775+7.678=-1.0969$. پس $x_2=52.5+2.8219=55.3219$ و $y_2=14.625-0.2742=14.3508$.<br>
+تعادل: $x^*=s/b=60$ و $y^*=r/a=20$. چون $y_0=15&lt;20$، شکار در حال رشد است و چون $x_0=50&lt;60$، شکارچی در حال کم شدن. عددها همین را نشان می‌دهند.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۶<span class="lvl l2">🟡 مهارتی</span></div>
+قهوه‌ای ۹۰ درجه در اتاق ۲۰ درجه سرد می‌شود: $dT/dt=-0.2(T-20)$ (دقیقه). (الف) یک گام اویلر با $\Delta t=1$ و مقایسه با جواب دقیق $T(1)=20+70e^{-0.2}$. (ب) بزرگ‌ترین Δt که جواب عددی نوسان نکند و بزرگ‌ترین Δt که منفجر نشود؟ (ج) با $\Delta t=12$ چهار گام برو.
+<details><summary>راه‌حل</summary>
+(الف) $T_1=90+1\times(-0.2\times70)=76$. دقیق: $20+70e^{-0.2}=77.31$. خطا ۱٫۳۱− درجه.<br>
+(ب) با $u=T-20$ همان $du/dt=-0.2u$ است و ضریب هر گام $1-0.2\Delta t$. بدون نوسان: $\Delta t\le 1/0.2=5$. بدون انفجار: $\Delta t&lt;2/0.2=10$.<br>
+(ج) ضریب $1-2.4=-1.4$. پس $u$: ۷۰ ← ۹۸− ← ۱۳۷٫۲ ← ۱۹۲٫۰۸− ← ۲۶۸٫۹. یعنی $T$: ۷۸− ← ۱۵۷٫۲ ← ۱۷۲٫۰۸− ← ۲۸۸٫۹. قهوه‌ای که در اتاق ۲۰ درجه به ۲۸۹ درجه برسد، فقط محصول Δt بزرگ است.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۷<span class="lvl l3">🔴 تحلیلی</span></div>
+می‌خواهیم نقطه‌های تصادفی «یکنواخت روی کره‌ی زمین» بسازیم. دانشجویی عرض جغرافیایی را یکنواخت در $[-90^\circ,90^\circ]$ و طول را یکنواخت در $[-180^\circ,180^\circ]$ می‌گیرد. (الف) نقطه‌ها کجا تجمع می‌کنند؟ چرا؟ (ب) روش درست را پیشنهاد کن.
+<details><summary>راه‌حل</summary>
+(الف) نزدیک قطب‌ها. نوار عرض $\phi$ با پهنای $d\phi$ مساحتی متناسب با $\cos\phi$ دارد: نوارهای نزدیک استوا خیلی بزرگ‌ترند، ولی همان سهم نقطه را می‌گیرند. این همان دام «یکنواخت در مختصات ≠ یکنواخت در ناحیه» است.<br>
+(ب) $z=\sin\phi$ را یکنواخت در $[-1,1]$ بگیر (قضیه‌ی ارشمیدس: مساحت نوار کره بین دو صفحه‌ی موازی فقط به فاصله‌ی صفحه‌ها بستگی دارد)، یعنی $\phi=\arcsin(2U_1-1)$، و طول را یکنواخت. یا: سه نرمال استاندارد مستقل بساز و بردار را نرمال کن.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۸<span class="lvl l3">🔴 تحلیلی</span></div>
+برای مدل شبیه‌سازی یک نانوایی، هر کار را در یکی از سه دسته‌ی صحت‌سنجی، اعتبارسنجی یا کالیبراسیون بگذار: (الف) با ورود قطعی هر ۲ دقیقه و پخت ۱ دقیقه، چک می‌کنیم صف هرگز تشکیل نشود. (ب) طول صف ساعت ۷ صبح مدل را با فیلم دوربین مقایسه می‌کنیم. (ج) چون صف مدل کوتاه‌تر از واقعیت است، «زمان پرداخت» را از ۲۰ به ۳۵ ثانیه افزایش می‌دهیم تا جور شود. (د) نانوا انیمیشن را می‌بیند و می‌گوید «مشتری‌ها هیچ‌وقت دو صف نمی‌شوند». (ه) بعد از اجرا چاپ می‌کنیم تعداد شاطرها هنوز ۲ است.
+<details><summary>راه‌حل</summary>
+(الف) صحت‌سنجی: منطق برنامه با محاسبه‌ی دستی چک شد. (ب) اعتبارسنجی: مقایسه‌ی ورودی–خروجی با سیستم واقعی. (ج) کالیبراسیون: اصلاح پارامتر با استفاده از اختلاف با واقعیت. دقت کن که بعد از کالیبراسیون باید با داده‌ی <b>دیگری</b> (مثلاً روز دیگر) دوباره اعتبارسنجی کرد، وگرنه مدل فقط به همان داده «برازش» شده است. (د) اعتبار ظاهری (بخشی از اعتبارسنجی) که یک اشکال ساختاری را نشان داد. (ه) صحت‌سنجی (Banks: پارامترها را در پایان اجرا چاپ کن).
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۹<span class="lvl l3">🔴 تحلیلی</span></div>
+(Banks تمرین ۲.۱۲) سه نقطه‌ی تصادفی روی محیط یک دایره انتخاب می‌کنیم. احتمال اینکه هر سه روی یک نیم‌دایره باشند را با مونت‌کارلو و ۵ تکرار تخمین بزن. منطق «روی یک نیم‌دایره بودن» را با یک شرط ساده بنویس.
+<details><summary>راه‌حل</summary>
+زاویه‌ها را مرتب کن. سه نقطه سه کمان روی دایره می‌سازند. سه نقطه روی یک نیم‌دایره‌اند اگر و فقط اگر بزرگ‌ترین کمان حداقل π باشد (نیم‌دایره‌ی مکمل آن کمان، هر سه را در بر می‌گیرد).
+<pre class="code">import numpy as np
+rng = np.random.default_rng(12)
+def same_semicircle(n):
+    th = np.sort(2*np.pi*rng.random((n, 3)), axis=1)      # 3 random angles
+    gaps = np.diff(np.c_[th, th[:, :1] + 2*np.pi], axis=1)  # 3 arcs between them
+    return (gaps.max(axis=1) &gt;= np.pi)                    # some gap ≥ half circle
+for rep in range(5):
+    print(f"rep {rep+1}: p_hat = {same_semicircle(10_000).mean():.4f}")</pre>
+<div class="out">rep 1: p_hat = 0.7585
+rep 2: p_hat = 0.7568
+rep 3: p_hat = 0.7416
+rep 4: p_hat = 0.7546
+rep 5: p_hat = 0.7465</div>
+جواب دقیق $3/4$ است: احتمال اینکه دو نقطه‌ی دیگر در نیم‌دایره‌ای باشند که از یک نقطه‌ی مشخص در جهت ساعت‌گرد شروع می‌شود $1/4$ است، و این سه پیشامد ناسازگارند: $3\times1/4$. پنج تکرار حول ۰٫۷۵ پخش‌اند. با $n=10{,}000$، SE برابر $\sqrt{0.75\times0.25/10000}\approx0.0043$ است، پس پراکندگی حدود ۰٫۰۱ طبیعی است.
+</details></div>
+
+<div class="exercise"><div class="et">تمرین ۱۰<span class="lvl l4">🔵 پژوهشگر</span></div>
+برای نوسانگر $x'=y,\ y'=-x$ (مدارهای دقیق: دایره) نشان بده که هر گام اویلر $x^2+y^2$ را دقیقاً در $(1+\Delta t^2)$ ضرب می‌کند. بعد حساب کن تا $t=10$ شعاع مدار با $\Delta t=0.01$ و با $\Delta t=0.1$ چند برابر می‌شود. این چه ربطی به مارپیچ لوتکا–ولترا دارد؟
+<details><summary>راه‌حل</summary>
+$x_{n+1}=x_n+\Delta t\,y_n$ و $y_{n+1}=y_n-\Delta t\,x_n$. پس
+$x_{n+1}^2+y_{n+1}^2=x_n^2+2\Delta t\,x_ny_n+\Delta t^2y_n^2+y_n^2-2\Delta t\,x_ny_n+\Delta t^2x_n^2=(1+\Delta t^2)(x_n^2+y_n^2)$.<br>
+تا $t=10$: با $\Delta t=0.01$ (۱۰۰۰ گام) $r^2$ در $1.0001^{1000}\approx1.105$ ضرب می‌شود و شعاع در $\approx1.051$. با $\Delta t=0.1$ (۱۰۰ گام) $r^2$ در $1.01^{100}\approx2.705$ و شعاع در $\approx1.645$.<br>
+نزدیک تعادل، لوتکا–ولترا تقریباً همین نوسانگر است (با فرکانس $\sqrt{rs}$). پس اویلر آن‌جا هم در هر گام مدار را کمی بزرگ می‌کند. افزایش در هر دور تقریباً با $\Delta t$ متناسب است (چون در هر دور $\propto 1/\Delta t$ گام برمی‌داریم و هر گام $\Delta t^2$ اضافه می‌کند). این همان مارپیچ بیرون‌رونده است. روش‌هایی مثل اویلر نیمه‌ضمنی (symplectic Euler) این مشکل را ندارند.
+</details></div>
+</section>
+
+<!-- ============================================================ quiz -->
+<section id="quiz"><h2><span class="num">14</span> تست</h2><div class="quiz"></div></section>
+
+<!-- ============================================================ summary -->
+<section id="summary"><h2><span class="num">15</span> جمع‌بندی و اصطلاح‌نامه</h2>
+<p>اسلاید ۷۳ جمع‌بندی کل فصل ۱ است: انگیزه با مثال‌ها، تعریف شبیه‌سازی، کاربردهایش، اصطلاحات عمومی (سیستم، موجودیت، ویژگی، رویداد، حالت)، معرفی شبیه‌سازی گسسته‌پیشامد، مراحل یک مطالعه و معیارهای عملکرد. دو مورد آخر موضوع همین جلسه بود.</p>
+<div class="box note"><div class="bt">۵ چیزی که باید یادت بماند</div>
+<ol>
+<li><b>درخت سه‌شاخه:</b> هر درخواست یا درست انجام می‌شود (زمان، نرخ، منابع)، یا نادرست (احتمال، زمان بین خطاها)، یا انجام نمی‌شود (مدت رویداد، زمان بین رویدادها). هر معیار واحد دارد.</li>
+<li><b>همه‌ی زمان‌های سیستم از «پایان درخواست» شروع می‌شوند.</b> واکنش ← شروع اجرا؛ پاسخ ← شروع یا پایان پاسخ؛ فکر مال کاربر است.</li>
+<li><b>بهره‌وری NB است.</b> نزدیک ۱۰۰٪ انتظار مثل $1/(1-\rho)$ منفجر می‌شود.</li>
+<li><b>مونت‌کارلو = میانگین آزمایش‌های تصادفی؛ خطا $\propto1/\sqrt n$.</b> همیشه با بازه‌ی اطمینان گزارش کن و بپرس «یکنواخت نسبت به چه؟».</li>
+<li><b>اویلر: مقدار تازه = قدیم + Δt × شیب قدیم.</b> خطا ∝ Δt؛ Δt بزرگ مدارها را باز و جمعیت را منفی می‌کند. و در هر پروژه، اعتبارسنجی (گام ۷) بحرانی‌ترین گام است.</li>
+</ol>
+</div>
+<div class="box tip"><div class="bt">💡 برای جلسه‌ی بعد</div>
+جلسه‌ی ۴ وارد فصل ۲ می‌شود: <b>شبیه‌سازی دستی با جدول برای صف تک‌سرور</b>. همان «ساعت» و «حالت» جلسه‌ی ۲ و همان معیارهای این جلسه (انتظار، بهره‌وری سرور، زمان در سیستم) را در یک جدول با اعداد تصادفی حساب می‌کنیم. قبل از جلسه، بخش ۰۴ (رابطه‌ی $\rho=\lambda\bar S$) و جدول انفجار انتظار را یک بار دیگر ببین.
+</div>
+<div class="gloss">
+<div><b>performance metric</b>: معیار عملکرد</div>
+<div><b>response time</b>: زمان پاسخ</div>
+<div><b>reaction time</b>: زمان واکنش</div>
+<div><b>think time</b>: زمان فکر</div>
+<div><b>turnaround time</b>: زمان چرخه</div>
+<div><b>throughput</b>: گذردهی</div>
+<div><b>nominal / usable capacity</b>: ظرفیت اسمی / قابل‌استفاده</div>
+<div><b>efficiency</b>: کارایی</div>
+<div><b>utilization</b>: بهره‌وری</div>
+<div><b>reliability</b>: قابلیت اطمینان</div>
+<div><b>availability</b>: دسترس‌پذیری</div>
+<div><b>LB / HB / NB</b>: کمتر بهتر / بیشتر بهتر / مقدار اسمی بهترین</div>
+<div><b>static model</b>: مدل ایستا</div>
+<div><b>Monte Carlo simulation</b>: شبیه‌سازی مونت‌کارلو</div>
+<div><b>standard error</b>: خطای استاندارد</div>
+<div><b>confidence interval</b>: بازه‌ی اطمینان</div>
+<div><b>rejection sampling</b>: نمونه‌گیری پذیرش–رد</div>
+<div><b>continuous system</b>: سیستم پیوسته</div>
+<div><b>predator–prey model</b>: مدل شکارچی–شکار</div>
+<div><b>Euler method / time step</b>: روش اویلر / گام زمانی</div>
+<div><b>numerical artifact</b>: مصنوع عددی</div>
+<div><b>experimental design</b>: طراحی آزمایش</div>
+<div><b>verification</b>: صحت‌سنجی</div>
+<div><b>validation</b>: اعتبارسنجی</div>
+<div><b>calibration</b>: کالیبراسیون</div>
+<div><b>face validity</b>: اعتبار ظاهری</div>
+</div>
+</section>
+</main>
+<script>
+const R=String.raw;
+window.QUIZ=[
+{q:`در خط زمانی اسلاید ۶۴، «زمان واکنش» از کجا تا کجاست؟`,o:[`از پایان درخواست کاربر تا شروع اجرا در سیستم`,`از شروع درخواست کاربر تا شروع اجرا`,`از پایان درخواست تا شروع پاسخ سیستم`,`از پایان پاسخ سیستم تا درخواست بعدی`],a:0,e:`واکنش یعنی سیستم چقدر طول می‌کشد تا دست به کار شود: پایان درخواست ← شروع اجرا. گزینه‌ی سوم تعریف ۱ زمان پاسخ و گزینه‌ی آخر زمان فکر است.`},
+{q:`دو تعریف زمان پاسخ در اسلاید ۶۴ در چه چیزی با هم فرق دارند؟`,o:[`نقطه‌ی پایان: شروع پاسخ سیستم یا پایان پاسخ سیستم`,`نقطه‌ی شروع: شروع درخواست یا پایان درخواست`,`یکی زمان واکنش را شامل می‌شود و دیگری نه`,`یکی برای کاربر است و دیگری برای سیستم`],a:0,e:`هر دو از پایان درخواست شروع می‌شوند؛ اولی به شروع پاسخ و دومی به پایان پاسخ ختم می‌شود. هر دو زمان واکنش را در خود دارند.`},
+{q:`مشتری کافه ۹۰ ثانیه جلوی منو فکر می‌کند و بعد سفارش می‌دهد. این ۹۰ ثانیه جزو کدام است؟`,o:[`زمان فکر (مال کاربر)`,`زمان واکنش`,`زمان پاسخ با تعریف ۲`,`زمان خدمت باریستا`],a:0,e:`زمان فکر بین پایان یک پاسخ (یا ورود) و شروع درخواست بعدی است و به کاربر تعلق دارد. اگر آن را در زمان پاسخ حساب کنی، سیستم را بی‌دلیل کند نشان داده‌ای.`},
+{q:`در درخت انتخاب معیار، «زمان بین دو رویداد» زیر کدام شاخه است؟`,o:[`انجام‌نشده (cannot do)`,`درست انجام شد`,`نادرست انجام شد`,`هر سه شاخه`],a:0,e:`شاخه‌ی cannot do به یک رویداد (مثل خرابی) می‌رسد که دو معیار دارد: مدت رویداد و زمان بین دو رویداد. شاخه‌ی نادرست «زمان بین دو خطا» دارد.`},
+{q:`بهره‌وری کارکنان در کدام کلاس سودمندی است؟`,o:[`NB (مقدار اسمی بهترین)`,`HB (بیشتر بهتر)`,`LB (کمتر بهتر)`,`به کلاس سودمندی ربطی ندارد`],a:0,e:`خیلی کم یعنی منابع هدررفته؛ نزدیک ۱۰۰٪ یعنی انتظار مثل 1/(1−ρ) منفجر می‌شود و هیچ ظرفیت اضافه‌ای برای نوسان نیست.`},
+{q:`یک تخمین مونت‌کارلو با n = 2500 نیم‌پهنای بازه‌ی ۰٫۰۸ دارد. برای نیم‌پهنای ۰٫۰۲ تقریباً چند نمونه لازم است؟`,o:[`۴۰٬۰۰۰`,`۱۰٬۰۰۰`,`۲۰٬۰۰۰`,`۱۶۰٬۰۰۰`],a:0,e:R`خطا ۴ برابر کوچک‌تر ← n باید $4^2=16$ برابر شود: $2500\times16=40{,}000$.`},
+{q:R`با $n=10{,}000$ نمونه، میانگین $Y$ برابر 3.130 و انحراف معیار نمونه‌ای 1.64 است. بازه‌ی ۹۵٪ تقریبی کدام است؟`,o:[R`$3.130\pm0.032$`,R`$3.130\pm0.0164$`,R`$3.130\pm3.21$`,R`$3.130\pm0.32$`],a:0,e:R`$\text{SE}=1.64/\sqrt{10000}=0.0164$ و نیم‌پهنا $1.96\times0.0164\approx0.032$. گزینه‌ی دوم SE است، نه نیم‌پهنا.`},
+{q:R`برای نقطه‌ی تصادفی در دایره‌ی واحد، $r=U_1$ و $\theta=2\pi U_2$ گرفته‌ایم. نتیجه چیست؟`,o:[`نقطه‌ها نزدیک مرکز متراکم‌تر می‌شوند`,`نقطه‌ها یکنواخت در دایره پخش می‌شوند`,`نقطه‌ها نزدیک لبه متراکم‌تر می‌شوند`,`نقطه‌ها فقط روی یک قطر می‌افتند`],a:0,e:R`حلقه‌های بیرونی مساحت بیشتری دارند ولی همان سهم نقطه را می‌گیرند. باید $r=\sqrt{U_1}$ گرفت. شبیه‌سازی: سهم $r<0.5$ به‌جای ۰٫۲۵، حدود ۰٫۵ می‌شود.`},
+{q:R`برای $dC/dt=-0.5C$ با اویلر و $\Delta t=5$ چه اتفاقی می‌افتد؟`,o:[`جواب با تغییر علامت نوسان می‌کند و دامنه‌اش منفجر می‌شود`,`جواب آرام و یکنوا به صفر می‌رسد`,`جواب با تغییر علامت نوسان می‌کند ولی میرا است`,`جواب در همان ۱۰۰ ثابت می‌ماند`],a:0,e:R`ضریب هر گام $1-0.5\times5=-1.5$ است و $|{-1.5}|>1$. ناپایدار: ۱۰۰، ۱۵۰−، ۲۲۵، ۳۳۷٫۵− ... مرز پایداری $\Delta t<2/k=4$ است.`},
+{q:`در جدول اویلر مدل شکارچی–شکار، دامنه‌ی نوسان جمعیت‌ها دوره به دوره بزرگ‌تر می‌شود. بهترین توضیح؟`,o:[`مصنوع عددی اویلر؛ با کوچک کردن Δt کم می‌شود`,`مدل لوتکا–ولترا ذاتاً ناپایدار است`,`پارامتر r خیلی بزرگ انتخاب شده`,`شرط اولیه روی نقطه‌ی تعادل است`],a:0,e:`مدارهای دقیق لوتکا–ولترا بسته‌اند (کمیت V ثابت است). اویلر در هر گام کمی به بیرون مماس می‌رود و V را زیاد می‌کند؛ نتیجه مارپیچ بیرون‌رونده است.`},
+{q:`«طول صف مدل در ساعت ۸ را با طول صف اندازه‌گیری‌شده‌ی سیستم واقعی مقایسه کردیم.» این چه کاری است؟`,o:[`اعتبارسنجی (validation)`,`صحت‌سنجی (verification)`,`طراحی آزمایش`,`مستندسازی`],a:0,e:`مقایسه با سیستم واقعی یعنی «مدل درست را ساخته‌ایم؟» = اعتبارسنجی. صحت‌سنجی برنامه را با مدل مفهومی مقایسه می‌کند، نه با واقعیت.`},
+{q:`طبق اسلاید ۷۲ و Banks §۱.۱۲، کدام گام بحرانی‌ترین است و «طراحی آزمایش» در کدام فاز است؟`,o:[`اعتبارسنجی؛ فاز ۳ (اجرای مدل)`,`صحت‌سنجی؛ فاز ۲`,`تعریف مسئله؛ فاز ۱`,`اعتبارسنجی؛ فاز ۴`],a:0,e:`مدل نامعتبر به تصمیم‌های خطرناک و گران می‌رسد. فاز ۳ شامل گام‌های ۸ (طراحی آزمایش)، ۹ (اجرا و تحلیل) و ۱۰ (اجرای بیشتر) است.`}
+];
+
+window.PAGE_INIT=function(ML){
+  function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  const faN=(v,d)=>ML.fa((+v).toFixed(d)).replace(".","٫").replace("-","−");
+
+  /* ================= Widget A: Monte Carlo lab ================= */
+  (function(){
+    const el=document.getElementById("w-mc"); if(!el) return;
+    ML.shell(el,"🔧 آزمایشگاه مونت‌کارلو: تخمین π و یک مساحت",
+      "نقطه‌های تصادفی در مربع واحد. نمودار اول: خود نقطه‌ها (آبی = موفق، نارنجی = ناموفق). نمودار دوم: تخمین تجمعی بر حسب n (محور افقی لگاریتمی)، با نوار اطمینان ۹۵٪ و خط‌چین مقدار واقعی. n را بالا ببر و ببین نوار با چه سرعتی باریک می‌شود: هر ۱۰۰ برابر n، نوار ۱۰ برابر باریک‌تر.");
+    const NMAX=20000; let mode="pi", k=3, seed=3, U, V;
+    const wrap=ML.h("div",{class:"canvases"}); const cA=ML.h("canvas"), cB=ML.h("canvas"); wrap.append(cA,cB); el.append(wrap);
+    const lg=ML.h("div",{class:"legend"}); el.append(lg);
+    const ctr=ML.h("div",{class:"controls"});
+    const lm=ML.h("label",null,"مسئله ");
+    const sel=ML.h("select");
+    [["pi","π با ربع دایره"],["area","مساحت زیر منحنی \u2066e^(−x²)\u2069"]].forEach(([v,t])=>sel.append(ML.h("option",{value:v},t)));
+    sel.onchange=()=>{mode=sel.value;draw();}; lm.append(sel);
+    const sl=ML.slider("n",1,Math.log10(NMAX),0.02,k,v=>{k=v;draw();},v=>ML.fa(Math.round(Math.pow(10,v))));
+    const bSeed=ML.h("button",{type:"button",class:"btn ghost"},"نمونه‌ی تازه");
+    bSeed.onclick=()=>{seed=(seed*7919+13)%100003;gen();draw();};
+    const bPlay=ML.h("button",{type:"button",class:"btn"},"▶ پخش از n = ۱۰");
+    let anim=null;
+    bPlay.onclick=()=>{ if(anim){cancelAnimationFrame(anim);anim=null;return;} const inp=sl.querySelector("input"); let kk=1; const step=()=>{kk+=0.025; if(kk>Math.log10(NMAX)){kk=Math.log10(NMAX);} inp.value=kk; inp.dispatchEvent(new Event("input")); if(kk<Math.log10(NMAX)) anim=requestAnimationFrame(step); else anim=null;}; step(); };
+    ctr.append(lm,sl,bSeed,bPlay); el.append(ctr);
+    const out=ML.h("div",{class:"readout"}); el.append(out);
+    function gen(){const rng=mulberry32(seed); U=new Float64Array(NMAX); V=new Float64Array(NMAX); for(let i=0;i<NMAX;i++){U[i]=rng();V[i]=rng();}}
+    gen();
+    const hit=(u,v)=> mode==="pi" ? (u*u+v*v<=1) : (v<=Math.exp(-u*u));
+    function draw(){
+      const n=Math.round(Math.pow(10,k)); const scale=mode==="pi"?4:1; const truth=mode==="pi"?Math.PI:0.746824132812427;
+      const cIn=ML.css("--plot-c1"), cOut=ML.css("--plot-c2"), ink=ML.css("--ink-2"), cFn=ML.css("--plot-fn");
+      lg.innerHTML=`<span><i style="background:${cIn}"></i>موفق (داخل)</span><span><i style="background:${cOut}"></i>ناموفق</span><span><i style="background:${ML.css("--plot-c3")}"></i>تخمین تجمعی</span><span><i style="background:${ML.alpha(ML.css("--plot-c3"),.25)}"></i>نوار اطمینان ۹۵٪</span>`;
+      // scatter
+      const P=new ML.Plot(cA,[0,1],[0,1],{l:34,r:10,t:10,b:28}); P.axes("مختصات u","مختصات v",{xstep:0.25,ystep:0.25});
+      const r=n>5000?1.1:n>1000?1.6:n>200?2.4:3.2; const a=n>5000?.55:.85;
+      let hits=0, s=0, s2=0;
+      for(let i=0;i<n;i++){ const h=hit(U[i],V[i]); if(h) hits++; P.dot(U[i],V[i],ML.alpha(h?cIn:cOut,a),r); }
+      const curve=[]; for(let j=0;j<=200;j++){const x=j/200; curve.push([x, mode==="pi"?Math.sqrt(Math.max(0,1-x*x)):Math.exp(-x*x)]);}
+      P.line(curve,cFn,2);
+      // running estimate
+      const xs=[], est=[], lo=[], hi=[];
+      let cnt=0; let next=10;
+      for(let i=0;i<n;i++){ const y=hit(U[i],V[i])?scale:0; s+=y; s2+=y*y; cnt++;
+        if(cnt>=next || i===n-1){ const m=s/cnt; const sd=Math.sqrt(Math.max(0,(s2-cnt*m*m)/(cnt-1))); const se=sd/Math.sqrt(cnt);
+          xs.push(Math.log10(cnt)); est.push(m); lo.push(m-1.96*se); hi.push(m+1.96*se); next=Math.ceil(next*1.06); } }
+      const yr= mode==="pi"?[2.4,3.9]:[0.5,1.0];
+      const Q=new ML.Plot(cB,[1,Math.max(2,Math.log10(NMAX))],yr,{l:42,r:10,t:10,b:28});
+      Q.axes("n","تخمین",{xstep:1,xfmt:v=>ML.fa(Math.round(Math.pow(10,v))),yfmt:v=>ML.fmt(v,2)});
+      if(xs.length>1){ const c=Q.ctx; c.fillStyle=ML.alpha(ML.css("--plot-c3"),.22); c.beginPath();
+        const cl=v=>Math.max(yr[0],Math.min(yr[1],v));
+        xs.forEach((x,i)=>{ const X=Q.X(x),Y=Q.Y(cl(hi[i])); i?c.lineTo(X,Y):c.moveTo(X,Y); });
+        for(let i=xs.length-1;i>=0;i--) c.lineTo(Q.X(xs[i]),Q.Y(cl(lo[i]))); c.closePath(); c.fill(); }
+      Q.hline(truth,cFn,[6,4]);
+      Q.line(xs.map((x,i)=>[x,est[i]]),ML.css("--plot-c3"),2.2);
+      Q.text(Math.max(2,Math.log10(NMAX))-0.05,truth,mode==="pi"?"π":"0.7468",ink,"right",-6);
+      const m=s/n, sd=Math.sqrt(Math.max(0,(s2-n*m*m)/(n-1))), se=sd/Math.sqrt(n), inside=Math.abs(m-truth)<=1.96*se;
+      out.textContent=`${ML.L("n = "+n)} · تعداد موفق: ${ML.fa(hits)} · تخمین: ${ML.L(m.toFixed(4))} · ${ML.L("SE = "+se.toFixed(4))}\n`+
+        `بازه‌ی ۹۵٪: ${ML.L("["+(m-1.96*se).toFixed(4)+", "+(m+1.96*se).toFixed(4)+"]")} ${inside?"← مقدار واقعی داخل بازه است ✓":"← این بار مقدار واقعی بیرون افتاد (حدود ۵٪ وقت‌ها طبیعی است)"}\n`+
+        `خطای واقعی: ${ML.L(Math.abs(m-truth).toFixed(4))} · برای نصف کردن نیم‌پهنا حدود ${ML.fa(4*n)} نقطه لازم است.`;
+    }
+    ML.onResize(cA,draw); ML.onResize(cB,draw); draw();
+  })();
+
+  /* ================= Widget B: Lotka–Volterra with Euler ================= */
+  (function(){
+    const el=document.getElementById("w-lv"); if(!el) return;
+    ML.shell(el,"🔧 شکارچی–شکار با اویلر: Δt را بزرگ کن و مدار را باز کن",
+      "خط پررنگ: جواب اویلر با گام Δt. خط‌چین کم‌رنگ: جواب مرجع (RK4 با گام ۰٫۰۱) که مدارش بسته است. نمودار اول: فضای فاز (شکار x روی محور افقی، شکارچی y روی محور عمودی). نمودار دوم: هر دو جمعیت بر حسب زمان (سبز = شکار، نارنجی = شکارچی). شرط اولیه x₀ = ۴۰ و y₀ = ۹.");
+    let r=1.0,a=0.1,s=0.5,b=0.02,dt=0.1,T=30; const x0=40,y0=9;
+    const wrap=ML.h("div",{class:"canvases"}); const cP=ML.h("canvas"), cT=ML.h("canvas"); wrap.append(cP,cT); el.append(wrap);
+    const lg=ML.h("div",{class:"legend"}); el.append(lg);
+    const ctr=ML.h("div",{class:"controls"});
+    const sR=ML.slider("r",0.3,2,0.05,r,v=>{r=v;draw();},v=>v.toFixed(2));
+    const sA=ML.slider("a",0.03,0.2,0.005,a,v=>{a=v;draw();},v=>v.toFixed(3));
+    const sS=ML.slider("s",0.2,1.5,0.05,s,v=>{s=v;draw();},v=>v.toFixed(2));
+    const sB=ML.slider("b",0.008,0.05,0.001,b,v=>{b=v;draw();},v=>v.toFixed(3));
+    const sD=ML.slider("Δt",0.005,0.5,0.005,dt,v=>{dt=v;draw();},v=>v.toFixed(3));
+    const sT=ML.slider("افق T",5,100,1,T,v=>{T=v;draw();},v=>ML.fa(v));
+    const setS=(lab,v)=>{const i=lab.querySelector("input"); i.value=v; i.dispatchEvent(new Event("input"));};
+    const b1=ML.h("button",{type:"button",class:"btn ghost"},"Δt = ۰٫۰۱ (دقیق)"); b1.onclick=()=>setS(sD,0.01);
+    const b2=ML.h("button",{type:"button",class:"btn ghost"},"Δt = ۰٫۳ (مصنوع عددی)"); b2.onclick=()=>setS(sD,0.3);
+    const b3=ML.h("button",{type:"button",class:"btn ghost"},"بازنشانی"); b3.onclick=()=>{setS(sR,1);setS(sA,0.1);setS(sS,0.5);setS(sB,0.02);setS(sD,0.1);setS(sT,30);};
+    ctr.append(sR,sA,sS,sB,sD,sT,b1,b2,b3); el.append(ctr);
+    const out=ML.h("div",{class:"readout"}); el.append(out);
+    const Vf=(x,y)=>b*x-s*Math.log(x)+a*y-r*Math.log(y);
+    function draw(){
+      const f=(x,y)=>[r*x-a*x*y,-s*y+b*x*y];
+      // reference RK4
+      const h=0.01, ref=[[0,x0,y0]]; let X=x0,Y=y0;
+      for(let i=1;i<=Math.round(T/h);i++){ const k1=f(X,Y),k2=f(X+h/2*k1[0],Y+h/2*k1[1]),k3=f(X+h/2*k2[0],Y+h/2*k2[1]),k4=f(X+h*k3[0],Y+h*k3[1]);
+        X+=h/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]); Y+=h/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]); if(i%2===0||i===Math.round(T/h)) ref.push([i*h,X,Y]); }
+      // Euler
+      const eu=[[0,x0,y0]]; X=x0;Y=y0; let neg=false, blow=false, minx=x0;
+      const N=Math.round(T/dt);
+      for(let i=1;i<=N;i++){ const d=f(X,Y); X+=dt*d[0]; Y+=dt*d[1]; if(X<0||Y<0) neg=true; if(!isFinite(X)||!isFinite(Y)||Math.abs(X)>1e5||Math.abs(Y)>1e5){blow=true;break;} minx=Math.min(minx,X); eu.push([i*dt,X,Y]); }
+      const rx=Math.max(...ref.map(p=>p[1])), ry=Math.max(...ref.map(p=>p[2]));
+      const ex=Math.max(...eu.map(p=>p[1])), ey=Math.max(...eu.map(p=>p[2]));
+      const xm=Math.min(Math.max(rx,ex)*1.08, rx*4), ym=Math.min(Math.max(ry,ey)*1.08, ry*4);
+      const xlo=Math.min(0,Math.max(-0.3*xm,Math.min(...eu.map(p=>p[1])))), ylo=Math.min(0,Math.max(-0.3*ym,Math.min(...eu.map(p=>p[2]))));
+      const cPrey=ML.css("--plot-c3"), cPred=ML.css("--plot-c2"), cE=ML.css("--plot-c1"), cRef=ML.css("--ink-3");
+      lg.innerHTML=`<span><i style="background:${cE}"></i>مسیر اویلر در فضای فاز</span><span><i style="background:${cRef}"></i>مرجع (RK4)</span><span><i style="background:${cPrey}"></i>شکار x(t)</span><span><i style="background:${cPred}"></i>شکارچی y(t)</span>`;
+      const P=new ML.Plot(cP,[xlo,xm],[ylo,ym],{l:40,r:10,t:10,b:30});
+      P.axes("شکار x","شکارچی y",{xfmt:v=>ML.fmt(v,0),yfmt:v=>ML.fmt(v,0)});
+      P.line(ref.map(p=>[p[1],p[2]]),ML.alpha(cRef,.9),1.6,[5,4]);
+      P.line(eu.map(p=>[p[1],p[2]]),cE,2);
+      const xs=s/b, ys=r/a; if(xs<=xm&&ys<=ym) { P.dot(xs,ys,ML.css("--plot-c4"),4.5); P.text(xs,ys,"تعادل",ML.css("--plot-c4"),"center",-9); }
+      P.dot(x0,y0,ML.css("--ink-2"),4);
+      const Q=new ML.Plot(cT,[0,T],[Math.min(xlo,ylo),Math.max(xm,ym)],{l:40,r:10,t:10,b:30});
+      Q.axes("زمان t","جمعیت",{xfmt:v=>ML.fmt(v,0),yfmt:v=>ML.fmt(v,0)});
+      Q.line(ref.map(p=>[p[0],p[1]]),ML.alpha(cPrey,.55),1.4,[5,4]);
+      Q.line(ref.map(p=>[p[0],p[2]]),ML.alpha(cPred,.55),1.4,[5,4]);
+      Q.line(eu.map(p=>[p[0],p[1]]),cPrey,2);
+      Q.line(eu.map(p=>[p[0],p[2]]),cPred,2);
+      const last=eu[eu.length-1], rl=ref[ref.length-1];
+      const V0=Vf(x0,y0); const dV=(last[1]>0&&last[2]>0)?Vf(last[1],last[2])-V0:NaN;
+      let msg=`تعادل: ${ML.L("x* = s/b = "+xs.toFixed(1))} و ${ML.L("y* = r/a = "+ys.toFixed(1))} · دوره‌ی تقریبی: ${ML.L("2π/√(rs) = "+(2*Math.PI/Math.sqrt(r*s)).toFixed(2))}\n`+
+        `تعداد گام: ${ML.fa(N)} · در پایان افق ${ML.L("(t = "+T+")")}: اویلر ${ML.L("x = "+last[1].toFixed(2)+", y = "+last[2].toFixed(2))} · مرجع ${ML.L("x = "+rl[1].toFixed(2)+", y = "+rl[2].toFixed(2))}\n`+
+        `تغییر کمیت پایستار V (باید ۰ باشد): ${isFinite(dV)?ML.L((dV>=0?"+":"")+dV.toFixed(4)):"تعریف‌نشده (جمعیت منفی)"} · کمینه‌ی شکار در اویلر: ${ML.L(minx.toFixed(3))}`;
+      if(blow) msg+=`\n⚠ جواب عددی منفجر شد و محاسبه متوقف شد. Δt را کوچک کن.`;
+      else if(neg) msg+=`\n⚠ جمعیت منفی شد! این فقط مصنوع عددی است؛ جواب واقعی همیشه مثبت است.`;
+      else if(dV>0.2) msg+=`\n⚠ مدار اویلر به‌وضوح رو به بیرون مارپیچ می‌زند. Δt را نصف کن و ببین چقدر بهتر می‌شود.`;
+      else if(isFinite(dV)&&dV<0.02) msg+=`\n✓ با این Δt مسیر اویلر تقریباً روی مدار بسته‌ی مرجع است.`;
+      out.textContent=msg;
+    }
+    ML.onResize(cP,draw); ML.onResize(cT,draw); draw();
+  })();
+};
+</script>
+</body>
+</html>
