@@ -582,10 +582,10 @@ alpha = 0.1
 <div class="box ex"><div class="bt">مثال عددی: همان ۵ نقطه با چهار مقیاس مختلف</div>
 <div class="tablewrap"><table>
 <tr><th>مقیاس $x$</th><th>$X^\top X$</th><th>$\lambda_{\min}$ / $\lambda_{\max}$</th><th>$\kappa$</th><th>$\alpha_{\max}$</th><th>گام تا خطای نسبی ۰٫۱٪</th></tr>
-<tr><td>ساعت (۱ تا ۵)</td><td>$\begin{pmatrix}5&15\\15&55\end{pmatrix}$</td><td>0.845 / 59.15</td><td><b>۷۰</b></td><td>0.0845</td><td>۲۰۷</td></tr>
-<tr><td>دقیقه (۶۰×)</td><td>$\begin{pmatrix}5&900\\900&198000\end{pmatrix}$</td><td>0.909 / 198000</td><td><b>۲۱۷٬۸۰۹</b></td><td>$2.5\times10^{-5}$</td><td>۸۳۵٬۷۹۱</td></tr>
-<tr><td>فقط مرکزشده</td><td>$\begin{pmatrix}5&0\\0&10\end{pmatrix}$</td><td>5 / 10</td><td><b>۲</b></td><td>0.5</td><td>۲۶</td></tr>
-<tr class="hi"><td>استاندارد (z-score)</td><td>$\begin{pmatrix}5&0\\0&5\end{pmatrix}$</td><td>5 / 5</td><td><b>۱</b></td><td>1</td><td>۳۱ (یا <b>۱</b> با $\alpha$ بهینه)</td></tr>
+<tr><td>ساعت (۱ تا ۵)</td><td>$\begin{pmatrix}5&15\\15&55\end{pmatrix}$</td><td>0.845 / 59.15</td><td><b>70</b></td><td>0.0845</td><td>207</td></tr>
+<tr><td>دقیقه (۶۰×)</td><td>$\begin{pmatrix}5&900\\900&198000\end{pmatrix}$</td><td>0.909 / 198000</td><td><b>217,809</b></td><td>$2.5\times10^{-5}$</td><td>835,791</td></tr>
+<tr><td>فقط مرکزشده</td><td>$\begin{pmatrix}5&0\\0&10\end{pmatrix}$</td><td>5 / 10</td><td><b>2</b></td><td>0.5</td><td>26</td></tr>
+<tr class="hi"><td>استاندارد (z-score)</td><td>$\begin{pmatrix}5&0\\0&5\end{pmatrix}$</td><td>5 / 5</td><td><b>1</b></td><td>1</td><td>31 (یا <b>1</b> با $\alpha$ بهینه)</td></tr>
 </table></div>
 <p class="mini">ستون آخر: تعداد گام batch GD از $w=(0,0)$ تا وقتی $\|w_t-w^\ast\|/\|w^\ast\|&lt;10^{-3}$ شود، با $\alpha=0.9\,\alpha_{\max}$.</p>
 فقط با عوض‌کردن واحد از ساعت به دقیقه، تعداد گام لازم <b>۴٬۰۰۰ برابر</b> می‌شود، بدون اینکه ذره‌ای اطلاعات اضافه یا کم شده باشد. و بعد از استانداردسازی، $\kappa$ به ۱ می‌رسد: کانتورها دایره‌ی کامل‌اند و با $\alpha_{\text{opt}}=2/(h_{\min}+h_{\max})=0.5$ گرادیان کاهشی در <b>یک گام</b> دقیقاً به جواب می‌رسد.
@@ -836,7 +836,7 @@ baseline (train mean) RMSE = 8.986</div>
 
 <!-- ============================================================ 11 -->
 <section id="metrics">
-<h2><span class="num">۱۱</span> ارزیابی رگرسیون: MAE، RMSE و $R^2$ <span class="tag core">اسلاید ۳۰</span></h2>
+<h2 data-short="۱۱ ارزیابی رگرسیون: MAE، RMSE و R²"><span class="num">۱۱</span> ارزیابی رگرسیون: MAE، RMSE و $R^2$ <span class="tag core">اسلاید ۳۰</span></h2>
 <p>اسلاید سه معیار را معرفی می‌کند و می‌گوید «<span class="ltr">Report held-out performance, residual diagnostics, and meaningful units.</span>» اینجا فرمول‌ها، یک مثال عددی و — مهم‌تر — جایی که هرکدام گمراه می‌کند.</p>
 
 <div class="box def"><div class="bt">سه فرمول</div>
